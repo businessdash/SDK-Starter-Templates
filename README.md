@@ -1,103 +1,83 @@
-# biab-sdk-starters
+# SDK-Starter-Templates
 
-Working starter projects for [`@biab-dev/sdk`](https://www.npmjs.com/package/@biab-dev/sdk) — the developer SDK for [Business In A Box](https://www.biab.app). One starter per framework. Each one boots into a contractor-shaped landing page that pulls its copy from a BIAB host through the package API.
+Working starter projects for [`@businessdash/sdk`](https://www.npmjs.com/package/@businessdash/sdk) — the developer SDK for [Business Dash](https://businessdash.us). One starter per framework. Each boots into a contractor-shaped landing page that pulls its copy from a Business Dash host through the package API.
+
+> Published as `@biab-dev/sdk` through 0.9.53. That package is deprecated and frozen — install `@businessdash/sdk`.
 
 ## Why this repo exists
 
-`@biab-dev/sdk` is framework-agnostic — it's just a typed HTTP client. But every framework has its own convention for *where the bearer key lives*, *how server routes are declared*, and *how data flows into a component*. This repo ships one minimal but production-shaped project per framework so you can:
+`@businessdash/sdk` is framework-agnostic — it's just a typed HTTP client. But every framework has its own convention for *where the bearer key lives*, *how server routes are declared*, and *how data flows into a component*. This repo ships one minimal but production-shaped project per framework so you can:
 
 - **Start fresh** — `git clone` the starter you want and rename it.
-- **Add to an existing codebase** — copy the `lib/biab*` files and a representative section component into your project. Each starter keeps the BIAB-specific code small enough to lift wholesale.
+- **Add to an existing codebase** — copy the `lib/biab*` files and a representative section component into your project. Each starter keeps the Business Dash-specific code small enough to lift wholesale.
 
-## Starters
+## JavaScript / TypeScript starters
+
+These consume the published npm package directly.
 
 | Framework | Path | Server style | Notes |
 |---|---|---|---|
 | **Next.js (T3)** | [`T3-App/`](./T3-App) | App Router + RSC | tRPC wrapping the SDK. |
 | **Astro** | [`Astro/`](./Astro) | `output: "server"` | Standard server endpoints. |
 | **Nuxt 3** | [`Nuxt/`](./Nuxt) | Nitro `server/api/*` | `useFetch` consumers. |
-| **Remix** | [`Remix/`](./Remix) | Resource routes | `loader` + `action`. |
+| **Remix** | [`Remix/`](./Remix) | Resource routes | React Router 7 framework mode. |
 | **SvelteKit** | [`Svelte/`](./Svelte) | `+page.server.ts` | Includes Storybook + Playwright wiring. |
 | **TanStack Start** | [`Tanstack-Start/`](./Tanstack-Start) | `createServerFn` / `createAPIFileRoute` | Solid + React variants. |
 | **Qwik** | [`Qwik/`](./Qwik) | Route loaders | |
-| **Angular 18+** | [`Angular/`](./Angular) | Express SSR | Signals-based `BiabService`. |
+| **Angular 18+** | [`Angular/`](./Angular) | Express SSR | Signals-based service. |
 | **React (Vite)** | [`React-Bun/`](./React-Bun) | Bun companion server | Browser SPA + same-origin proxy. |
-| **HTMX** | [`HTMX/`](./HTMX) | Bun HTTP server | Server-rendered HTML fragments, `hx-get` triggers. |
-| **Vanilla JS** | [`Vanilla-JS/`](./Vanilla-JS) | Bun HTTP server | No bundler. ES modules + `/api/biab/*` proxy. |
+| **HTMX** | [`HTMX/`](./HTMX) | Bun HTTP server | Server-rendered fragments, `hx-get` triggers. |
+| **Vanilla JS** | [`Vanilla-JS/`](./Vanilla-JS) | Bun HTTP server | No bundler. ES modules + a proxy route. |
+
+## Mobile
+
+| Platform | Path | Notes |
+|---|---|---|
+| **React Native (Expo)** | [`React-Native/`](./React-Native) | The one mobile starter that reuses `@businessdash/sdk` directly. |
+| **Swift / iOS** | [`Swift/`](./Swift) | SwiftPM package + example app. Hand-written client. |
+| **Kotlin / Android** | [`Kotlin/`](./Kotlin) | Two Gradle modules. Hand-written client. |
+| **Flutter** | [`Flutter/`](./Flutter) | Two Dart packages. Hand-written client. |
+
+Mobile clients talk to the package API **directly** — no proxy tier needed. Publishable scopes cover the whole customer-facing surface, so a mobile app ships a publishable token (`pk_…`) rather than a secret key.
+
+## Non-JavaScript servers
+
+No npm package to install — each ships a small hand-written client against the same REST surface.
+
+| Language | Path | Notes |
+|---|---|---|
+| **PHP / Laravel** | [`Laravel/`](./Laravel) | Blade views + a service-container client. |
+| **Elixir / Phoenix** | [`Phoenix/`](./Phoenix) | HEEx templates + a Req-based client. |
+| **Swift / Vapor** | [`Vapor-Server/`](./Vapor-Server) | Server-side Swift, Leaf templates. |
 
 ## How to use
 
 ```bash
-git clone https://github.com/Gold240sx/biab-sdk-starters.git
-cd biab-sdk-starters/<framework>/
-cp .env.example .env.local   # fill in BIAB_API_KEY, BIAB_SITE_ID, BIAB_PACKAGE_API_BASE_URL
-pnpm install                  # or npm / bun / yarn — each starter declares its preferred manager
+git clone https://github.com/businessdash/SDK-Starter-Templates.git
+cd SDK-Starter-Templates/<framework>/
+cp .env.example .env.local   # fill in the API key, site id, and package API base URL
+pnpm install                 # or npm / bun / yarn — each starter declares its preferred manager
 pnpm dev
 ```
 
-Get the three env values from **Site Builder → Developer → Package API & Unkey keys** inside the BIAB dashboard. See the [Getting Started](https://biab-dev-docs.vercel.app/docs/getting-started) doc for the full walkthrough.
+Non-JS starters use their own toolchain (`composer install`, `mix deps.get`, `swift run`, `flutter pub get`, Gradle) — see each starter's own README.
 
-## Schema as code via MCP
+Get the env values from **Site Builder → Developer → Package API keys** inside the Business Dash dashboard. See the [Getting Started](https://businessdash.us/docs/developer) doc for the full walkthrough.
 
-Each starter ships ready to read data. To **define a schema and seed data programmatically** — instead of clicking through the dashboard — every BIAB tenant exposes two surfaces:
+## Schema as code
 
-1. **MCP endpoint** at `https://<tenant-host>/api/mcp` — JSON-RPC 2.0 tools an AI client (Claude desktop, Cursor, ChatGPT, Goose, VSCode) can call to read the catalog or capture quote requests. Discovery manifest at `/.well-known/mcp.json`.
-2. **Package API** at `https://<tenant-host>/api/package/v1` — bearer-key client (`@biab-dev/sdk`) that creates collections, upserts rows, and reads them back.
+Each starter ships ready to read data. To **define a schema and seed data programmatically** — instead of clicking through the dashboard — every Business Dash tenant exposes:
 
-The MCP surface today covers visitor-facing agent tools (catalog reads, quote capture). **Schema definition + bulk-seed live on the SDK side.** From any starter:
-
-```ts
-const site = biab.site(process.env.BIAB_SITE_ID!);
-
-// 1. Define schema
-await site.collections.create({
-  name: "Launch Inventory",
-  slug: "launch-inventory",
-  fields: [
-    { name: "sku", type: "string", required: true, queryable: true },
-    { name: "title", type: "string", required: true, searchable: true },
-    { name: "priceCents", type: "number", required: true },
-    { name: "available", type: "boolean", required: true, queryable: true },
-  ],
-});
-
-// 2. Seed rows (loop or bounded concurrency)
-for (const data of seedRows) {
-  await site.rows.upsert("launch-inventory", { data });
-}
-```
-
-Full walkthrough — MCP handshake, all 11 framework patterns, error handling, and the roadmap for `define_collection` / `seed_rows` MCP tools — at [MCP, Schema, and Seeding](https://biab-dev-docs.vercel.app/docs/mcp-schema-and-seeding).
+1. **MCP** — a per-site Model Context Protocol server, so an AI agent can read your data model directly.
+2. **Package API** at `https://<tenant-host>/api/package/v1` — the bearer-key client that creates collections, upserts rows, and reads them back.
+3. **CLI** — `npx businessdash export-data-model` writes a versionable snapshot of the org's custom data model to disk. `export-graphql-schema` emits GraphQL SDL for the same model.
 
 ## Docs
 
-- [SDK overview & getting started](https://biab-dev-docs.vercel.app/docs/getting-started)
-- [Authentication & scopes](https://biab-dev-docs.vercel.app/docs/authentication-and-scopes)
-- [Collections & rows](https://biab-dev-docs.vercel.app/docs/collections-and-rows)
-- [MCP, schema, and seeding](https://biab-dev-docs.vercel.app/docs/mcp-schema-and-seeding)
-- [Customer portal](https://biab-dev-docs.vercel.app/docs/customer-portal)
-- [All framework starters reference](https://biab-dev-docs.vercel.app/docs/starter-templates)
+- [Developer docs](https://businessdash.us/docs/developer)
+- [Changelog](https://businessdash.us/docs/developer/changelog)
+- npm: <https://www.npmjs.com/package/@businessdash/sdk>
 
-## SDK package
+## About this repo
 
-- npm: <https://www.npmjs.com/package/@biab-dev/sdk>
-
-```bash
-npm install @biab-dev/sdk
-# or
-pnpm add @biab-dev/sdk
-```
-
-## Picking a starter
-
-Pick the row that matches your stack. The body of each starter's section files (`hero`, `services`, `blog`, `contact-form`) is intentionally similar across frameworks so you can compare patterns side-by-side. The difference is *where the SDK lives* and *how the value reaches the view layer* — those are the framework-shaped decisions.
-
-If you're new to BIAB, start with the **Next.js (T3)** starter — it has the most thorough internal docs and is the canonical reference for the Customer Portal + Marketing Pages walkthroughs in the docs site.
-
-## Contributing
-
-These templates track the live SDK. When `@biab-dev/sdk` ships a major breaking change, each starter gets a matching bump here. PRs that bring a starter to feature-parity with another (e.g. adding the chatbot embed to a starter missing it) are welcome.
-
-## License
-
-MIT.
+This is a **one-way public mirror**. The source of truth is the private Business Dash monorepo; changes here flow back only by manual cherry-pick. Open issues against the docs rather than PRs against this mirror.
