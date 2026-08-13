@@ -52,9 +52,35 @@ No npm package to install — each ships a small hand-written client against the
 
 ## How to use
 
+Grab **only the starter you want** — there's no reason to download eighteen
+projects to run one:
+
 ```bash
-git clone https://github.com/businessdash/SDK-Starter-Templates.git
-cd SDK-Starter-Templates/<framework>/
+npx degit businessdash/SDK-Starter-Templates/T3-App my-app
+cd my-app
+```
+
+`degit` copies a single subdirectory with no git history, so you land in a clean
+folder ready to `git init` as your own project. Swap `T3-App` for any path in
+the tables above.
+
+<details>
+<summary>No degit? Use a sparse checkout instead</summary>
+
+```bash
+git clone --filter=blob:none --sparse https://github.com/businessdash/SDK-Starter-Templates.git
+cd SDK-Starter-Templates
+git sparse-checkout set T3-App
+```
+
+`--filter=blob:none` skips file contents until they're needed and `--sparse`
+checks out nothing up front, so you pay for one starter rather than all of them.
+
+</details>
+
+Then:
+
+```bash
 cp .env.example .env.local   # fill in the API key, site id, and package API base URL
 pnpm install                 # or npm / bun / yarn — each starter declares its preferred manager
 pnpm dev
