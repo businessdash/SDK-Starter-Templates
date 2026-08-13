@@ -1,0 +1,30 @@
+#extend("base"):
+  #export("title"):Cart#endexport
+  #export("content"):
+    <h1>Cart</h1>
+
+    #if(isEmpty):
+      <p class="muted">Your cart is empty. <a href="/store">Browse the store</a>.</p>
+    #else:
+      <ul class="cart-lines">
+        #for(line in lines):
+          <li>
+            <span>#(line.name)</span>
+            <span class="muted">#(line.unitPrice) × #(line.quantity)</span>
+          </li>
+        #endfor
+      </ul>
+
+      #(""" Totals arrive DECIMAL; product prices arrive in integer cents. """)
+      <p class="total">Subtotal: #(subtotal)</p>
+
+      <form method="post" action="/cart/clear">
+        <button type="submit">Clear</button>
+      </form>
+
+      <form method="post" action="/cart/checkout">
+        <button type="submit" class="button">Checkout</button>
+      </form>
+    #endif
+  #endexport
+#endextend

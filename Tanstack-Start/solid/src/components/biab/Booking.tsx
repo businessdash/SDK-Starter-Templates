@@ -189,6 +189,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 										Your name
 									</label>
 									<input
+										autocomplete="name"
 										class="biab-input"
 										id="booking-name"
 										onInput={(e) =>
@@ -203,6 +204,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 										Email
 									</label>
 									<input
+										autocomplete="email"
 										class="biab-input"
 										id="booking-email"
 										onInput={(e) =>
@@ -219,6 +221,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 									Phone (optional)
 								</label>
 								<input
+									autocomplete="tel"
 									class="biab-input"
 									id="booking-phone"
 									onInput={(e) =>
@@ -245,9 +248,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 							</div>
 							<button
 								class="biab-btn"
-								disabled={
-									confirming() || !invitee().email || !invitee().name
-								}
+								disabled={confirming() || !invitee().email || !invitee().name}
 								onClick={handleConfirm}
 								type="button"
 							>

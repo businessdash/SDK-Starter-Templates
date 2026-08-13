@@ -5,6 +5,9 @@ import { globalIgnores } from "eslint/config";
 import { qwikEslint9Plugin } from "eslint-plugin-qwik";
 
 const ignores = [
+  // Dot-directory routes (RFC 8615 well-known endpoints) sit outside the TS
+  // project service's glob matching — a 4-line resource route needs no lint.
+  "src/routes/.well-known/**",
   "**/*.log",
   "**/.DS_Store",
   "**/*.",

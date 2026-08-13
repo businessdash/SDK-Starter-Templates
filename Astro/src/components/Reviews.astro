@@ -1,0 +1,169 @@
+---
+/**
+ * Reviews wall — aggregate (average / count) + first page of reviews from the
+ * marketing bundle, plus a "load more" client island that paginates deeper via
+ * the `/api/biab/reviews` endpoint (which wraps `reviews.list`).
+ *
+ * The aggregate + first page ride the bundle, so the initial render is pure
+ * server-render with zero JS; "Load more" is the only interactive part.
+ */
+import { getBundle, getReviewsFromBundle } from "../lib/biab-bundle";
+
+const bundle = await getBundle();
+const reviews = getReviewsFromBundle(bundle);
+
+const average =
+	reviews?.rating != null ? reviews.rating.toFixed(1) : null;
+const totalCount = reviews?.totalCount ?? 0;
+const firstPage = reviews?.items ?? [];
+
+function stars(rating: number): string {
+	const full = Math.round(Math.max(0, Math.min(5, rating)));
+	return "★★★★★".slice(0, full) + "☆☆☆☆☆".slice(0, 5 - full);
+}
+
+function formatDate(iso: string): string {
+	const d = new Date(iso);
+	return Number.isNaN(d.getTime())
+		? ""
+		: d.toLocaleDateString(undefined, {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			});
+}
+---
+
+<section class="biab-section" id="reviews">
+	<div class="biab-section__lead">
+		<span class="biab-section__eyebrow">What people say</span>
+		<h2 class="biab-section__title">Reviews</h2>
+		{
+			average ? (
+				<p class="biab-section__sub">
+					<strong style="color: var(--accent);">{average} ★</strong> average
+					across {totalCount} review{totalCount === 1 ? "" : "s"}.
+				</p>
+			) : (
+				<p class="biab-section__sub">
+					Aggregate + reviews are delivered live from BIAB once you've collected
+					a few.
+				</p>
+			)
+		}
+	</div>
+
+	{
+		firstPage.length === 0 ? (
+			<div class="biab-empty">
+				No reviews yet. Connect a review source in BIAB (Google / Yelp /
+				Housecall Pro) and they'll appear here.
+			</div>
+		) : (
+			<>
+				<div class="biab-grid-3" data-reviews-list>
+					{firstPage.map((r) => (
+						<article class="biab-card review-card">
+							<div class="review-card__stars" aria-label={`${r.rating} stars`}>
+								{stars(r.rating)}
+							</div>
+							<p class="review-card__text">{r.description}</p>
+							<div class="review-card__meta">
+								<span>{r.reviewee}</span>
+								<span>{formatDate(r.date)}</span>
+							</div>
+						</article>
+					))}
+				</div>
+				{totalCount > firstPage.length ? (
+					<div style="text-align: center; margin-top: 2rem;">
+						<button
+							class="biab-btn biab-btn--ghost"
+							data-reviews-more
+							data-offset={String(firstPage.length)}
+							type="button"
+						>
+							Load more reviews
+						</button>
+					</div>
+				) : null}
+				<div data-reviews-error hidden></div>
+			</>
+		)
+	}
+</section>
+
+<script>
+	const list = document.querySelector<HTMLDivElement>("[data-reviews-list]");
+	const moreBtn = document.querySelector<HTMLButtonElement>(
+		"[data-reviews-more]",
+	);
+	const errorBox = document.querySelector<HTMLDivElement>(
+		"[data-reviews-error]",
+	);
+
+	function starsFor(rating: number): string {
+		const full = Math.round(Math.max(0, Math.min(5, rating)));
+		return "★★★★★".slice(0, full) + "☆☆☆☆☆".slice(0, 5 - full);
+	}
+	function fmtDate(iso: string): string {
+		const d = new Date(iso);
+		return Number.isNaN(d.getTime())
+			? ""
+			: d.toLocaleDateString(undefined, {
+					year: "numeric",
+					month: "short",
+					day: "numeric",
+				});
+	}
+
+	moreBtn?.addEventListener("click", async () => {
+		if (!list || !moreBtn) return;
+		const offset = Number(moreBtn.dataset.offset ?? "0");
+		moreBtn.disabled = true;
+		moreBtn.textContent = "Loading…";
+		try {
+			const res = await fetch(`/api/biab/reviews?offset=${offset}&limit=6`);
+			if (!res.ok) throw new Error(await res.text());
+			const data = (await res.json()) as {
+				items: Array<{
+					id: string;
+					rating: number;
+					text: string;
+					reviewerName: string;
+					timeCreated: string;
+				}>;
+				nextOffset: number | null;
+			};
+			for (const r of data.items) {
+				const card = document.createElement("article");
+				card.className = "biab-card review-card";
+				card.innerHTML = `
+					<div class="review-card__stars" aria-label="${r.rating} stars">${starsFor(r.rating)}</div>
+					<p class="review-card__text"></p>
+					<div class="review-card__meta"><span class="rc-name"></span><span class="rc-date"></span></div>`;
+				card.querySelector(".review-card__text")!.textContent = r.text;
+				card.querySelector(".rc-name")!.textContent = r.reviewerName;
+				card.querySelector(".rc-date")!.textContent = fmtDate(r.timeCreated);
+				list.append(card);
+			}
+			if (data.nextOffset == null) {
+				moreBtn.remove();
+			} else {
+				moreBtn.dataset.offset = String(data.nextOffset);
+				moreBtn.disabled = false;
+				moreBtn.textContent = "Load more reviews";
+			}
+		} catch (err) {
+			if (errorBox) {
+				errorBox.hidden = false;
+				errorBox.textContent =
+					err instanceof Error ? err.message : "Couldn't load more.";
+				errorBox.style.cssText =
+					"color: var(--danger); text-align: center; margin-top: 1rem; font-size: 0.9rem;";
+			}
+			moreBtn.disabled = false;
+			moreBtn.textContent = "Load more reviews";
+		}
+	});
+</script>

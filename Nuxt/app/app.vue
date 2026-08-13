@@ -2,12 +2,14 @@
 	<div>
 		<NuxtRouteAnnouncer />
 		<NuxtPage />
+		<SdkSetupBanner />
 	</div>
 </template>
 
 <script setup lang="ts">
 import { onMounted, onBeforeUnmount } from "vue";
-import { initBiabAnalytics } from "@biab-dev/sdk/analytics-core";
+import { initBiabAnalytics } from "@businessdash/sdk/analytics-core";
+import SdkSetupBanner from "~/components/biab/SdkSetupBanner.vue";
 
 const config = useRuntimeConfig();
 let tracker: ReturnType<typeof initBiabAnalytics> | null = null;

@@ -1,34 +1,62 @@
-import { createSignal, For, Show } from "solid-js";
+import { Show, createSignal } from "solid-js";
 
 import {
-	type FormSchema,
-	submitContactForm,
-} from "../../lib/biab-server-fns";
+	BiabForm,
+	type BiabClient,
+	type FormSchema as SdkFormSchema,
+	type FormSubmitResult,
+} from "@businessdash/sdk/solid";
 
+import { type FormSchema, submitContactForm } from "../../lib/biab-server-fns";
+
+/**
+ * The contact form, rendered by the SDK's `<BiabForm>` drop-in.
+ *
+ * Why a "submit shim" instead of a real browser client:
+ * this starter keeps the BIAB API key strictly server-side (it is never
+ * `VITE_`-prefixed, so it never reaches the browser bundle — see
+ * `src/lib/biab.ts`). `<BiabForm>` needs a `client` for the submit round-trip,
+ * so we hand it a tiny object that satisfies only the `forms.submit` surface the
+ * controller calls, delegating to the existing `submitContactForm` server
+ * function (which holds the real client). The schema is pre-fetched server-side
+ * in `getHomeData` and passed in via `schema`, so no `forms.schema` call (and no
+ * key) is ever needed in the browser.
+ *
+ * Swap target: this replaced the hand-rolled `<For>`-over-fields form. The whole
+ * field tree, per-field rendering, validation (mirrored from the server),
+ * multi-step nav, progress, concurrent reveal, and the submit lifecycle now live
+ * inside `<BiabForm>`. To point it at a different published form, change the
+ * `slug` here and in `FORM_SLUG` in `biab-server-fns.ts`.
+ */
 export function ContactForm(props: { schema: FormSchema; slug: string }) {
-	const [values, setValues] = createSignal<Record<string, string>>({});
-	const [submitting, setSubmitting] = createSignal(false);
 	const [confirmation, setConfirmation] = createSignal<string | null>(null);
-	const [error, setError] = createSignal<string | null>(null);
 
-	async function handleSubmit(event: SubmitEvent) {
-		event.preventDefault();
-		setSubmitting(true);
-		setError(null);
-		try {
-			await submitContactForm({
-				data: { slug: props.slug, values: values() },
-			});
-			setConfirmation(
-				"Thanks — we'll be in touch within one business day.",
-			);
-			setValues({});
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Couldn't submit.");
-		} finally {
-			setSubmitting(false);
-		}
-	}
+	// Minimal client shim — only `forms.submit` is exercised because we pass a
+	// pre-fetched `schema`. The cast is deliberate: we implement exactly the slice
+	// of `BiabClient` the form controller touches in schema-prefetched mode.
+	const submitClient = {
+		forms: {
+			async submit(
+				slug: string,
+				data: Record<string, unknown>,
+			): Promise<FormSubmitResult> {
+				try {
+					const res = (await submitContactForm({
+						data: { slug, values: data },
+					})) as FormSubmitResult;
+					return res;
+				} catch (err) {
+					return {
+						ok: false,
+						status: 0,
+						reason: "network_error",
+						message:
+							err instanceof Error ? err.message : "Couldn't submit the form.",
+					};
+				}
+			},
+		},
+	} as unknown as BiabClient;
 
 	return (
 		<section class="biab-section biab-section--narrow" id="contact">
@@ -53,69 +81,21 @@ export function ContactForm(props: { schema: FormSchema; slug: string }) {
 						<p class="biab-section__sub">{props.schema.description}</p>
 					</Show>
 				</div>
-				<form class="biab-card contact" onSubmit={handleSubmit}>
-					<For each={props.schema.fields}>
-						{(field) => (
-							<div>
-								<label class="biab-label" for={`field-${field.id}`}>
-									{field.label}
-									{field.required ? " *" : ""}
-								</label>
-								<Show
-									when={field.type === "textarea"}
-									fallback={
-										<input
-											class="biab-input"
-											id={`field-${field.id}`}
-											onInput={(e) =>
-												setValues({
-													...values(),
-													[field.id]: e.currentTarget.value,
-												})
-											}
-											placeholder={field.placeholder ?? ""}
-											required={field.required}
-											type={field.type === "email" ? "email" : "text"}
-											value={values()[field.id] ?? ""}
-										/>
-									}
-								>
-									<textarea
-										class="biab-textarea"
-										id={`field-${field.id}`}
-										onInput={(e) =>
-											setValues({
-												...values(),
-												[field.id]: e.currentTarget.value,
-											})
-										}
-										placeholder={field.placeholder ?? ""}
-										required={field.required}
-										value={values()[field.id] ?? ""}
-									/>
-								</Show>
-								<Show when={field.helpText}>
-									<small style="color: var(--text-muted);">
-										{field.helpText}
-									</small>
-								</Show>
-							</div>
-						)}
-					</For>
-					<button
-						class="biab-btn"
-						disabled={submitting()}
-						style="align-self: flex-start;"
-						type="submit"
-					>
-						{submitting() ? "Sending…" : "Send message"}
-					</button>
-					<Show when={error()}>
-						<div style="color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;">
-							{error()}
-						</div>
-					</Show>
-				</form>
+				<div class="biab-card contact">
+					<BiabForm
+						slug={props.slug}
+						// Pre-fetched server-side in getHomeData — the controller adopts it
+						// synchronously, so no schema network call runs in the browser.
+						schema={props.schema as unknown as SdkFormSchema}
+						client={submitClient}
+						submitLabel="Send message"
+						onSuccess={() =>
+							setConfirmation(
+								"Thanks — we'll be in touch within one business day.",
+							)
+						}
+					/>
+				</div>
 			</Show>
 		</section>
 	);

@@ -1,10 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 
-import type { FormSchema } from "@/server/api/routers/biab";
+import { BiabForm, type BiabFormsClient } from "@businessdash/sdk/react";
+import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
+
 import { api } from "@/trpc/react";
 
+/**
+ * Schema-driven contact form as a one-line drop-in.
+ *
+ * The schema is fetched on the server (RSC) and handed in as `schema`, so
+ * `<BiabForm>` adopts it synchronously — no client round-trip to render. Submits
+ * go through the existing tRPC `submitForm` mutation via a thin `client` adapter,
+ * so the BIAB bearer key stays server-side and we reuse the app's data layer.
+ *
+ * `<BiabForm>` (from `@businessdash/sdk/react`) renders every field by `type`, runs
+ * the same validation BIAB enforces, drives multi-step / conditional / grouped
+ * forms, and uses the `biab-*` light-DOM classes this template already styles —
+ * so it inherits the site look and any hook is overridable from your CSS.
+ */
 export function ContactForm({
 	schema,
 	slug,
@@ -12,111 +27,56 @@ export function ContactForm({
 	schema: FormSchema;
 	slug: string;
 }) {
-	const [data, setData] = useState<Record<string, string>>({});
-	const [confirmation, setConfirmation] = useState<string | null>(null);
+	const submit = api.biab.submitForm.useMutation();
 
-	const submit = api.biab.submitForm.useMutation({
-		onSuccess: () => {
-			setConfirmation("Thanks — we'll be in touch within one business day.");
-			setData({});
-		},
-	});
-
-	function handleSubmit(event: React.FormEvent) {
-		event.preventDefault();
-		submit.mutate({
-			slug,
-			data,
-			submitterEmail: data.email,
-			submitterName: data.name,
-		});
-	}
-
-	if (confirmation) {
-		return (
-			<section className="biab-section biab-section--narrow" id="contact">
-				<div className="biab-card contact">
-					<span className="biab-badge" style={{ alignSelf: "flex-start" }}>
-						Received
-					</span>
-					<h2 className="biab-section__title">Got it.</h2>
-					<p>{confirmation}</p>
-				</div>
-			</section>
-		);
-	}
+	// Adapter satisfying the component's `BiabFormsClient` contract. Only `submit`
+	// is exercised here (the schema is pre-fetched); `schema` is provided for
+	// completeness so the same `client` works without a pre-fetched schema too.
+	const client = useMemo<BiabFormsClient>(
+		() => ({
+			forms: {
+				async schema() {
+					return schema;
+				},
+				async submit(
+					formSlug: string,
+					data: Record<string, unknown>,
+					opts?: Record<string, unknown>,
+				): Promise<FormSubmitResult> {
+					return (await submit.mutateAsync({
+						slug: formSlug,
+						data,
+						submitterEmail: (opts?.submitterEmail as string) ?? undefined,
+						submitterName: (opts?.submitterName as string) ?? undefined,
+					})) as FormSubmitResult;
+				},
+			},
+		}),
+		[schema, submit],
+	);
 
 	return (
 		<section className="biab-section biab-section--narrow" id="contact">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">Contact</span>
-				<h2 className="biab-section__title">
-					{schema.title ?? "Get in touch"}
-				</h2>
-				{schema.description ? (
-					<p className="biab-section__sub">{schema.description}</p>
-				) : null}
+			<div className="biab-card contact">
+				<BiabForm
+					slug={slug}
+					schema={schema}
+					client={client}
+					submitLabel="Send message"
+					successFallback={() => (
+						<div>
+							<span
+								className="biab-badge"
+								style={{ alignSelf: "flex-start" }}
+							>
+								Received
+							</span>
+							<h2 className="biab-section__title">Got it.</h2>
+							<p>We'll be in touch within one business day.</p>
+						</div>
+					)}
+				/>
 			</div>
-			<form className="biab-card contact" onSubmit={handleSubmit}>
-				{schema.fields.map((field) => (
-					<div key={field.id}>
-						<label className="biab-label" htmlFor={`field-${field.id}`}>
-							{field.label}
-							{field.required ? " *" : ""}
-						</label>
-						{field.type === "textarea" ? (
-							<textarea
-								className="biab-textarea"
-								id={`field-${field.id}`}
-								onChange={(e) =>
-									setData({ ...data, [field.id]: e.target.value })
-								}
-								placeholder={field.placeholder ?? ""}
-								required={field.required}
-								value={data[field.id] ?? ""}
-							/>
-						) : (
-							<input
-								className="biab-input"
-								id={`field-${field.id}`}
-								onChange={(e) =>
-									setData({ ...data, [field.id]: e.target.value })
-								}
-								placeholder={field.placeholder ?? ""}
-								required={field.required}
-								type={field.type === "email" ? "email" : "text"}
-								value={data[field.id] ?? ""}
-							/>
-						)}
-						{field.helpText ? (
-							<small style={{ color: "var(--text-muted)" }}>
-								{field.helpText}
-							</small>
-						) : null}
-					</div>
-				))}
-				<button
-					className="biab-btn"
-					disabled={submit.isPending}
-					style={{ alignSelf: "flex-start" }}
-					type="submit"
-				>
-					{submit.isPending ? "Sending…" : "Send message"}
-				</button>
-				{submit.error ? (
-					<div
-						style={{
-							color: "var(--danger)",
-							background: "var(--danger-bg)",
-							padding: "0.75rem 1rem",
-							borderRadius: "0.5rem",
-							fontSize: "0.9rem",
-						}}
-					>
-						{submit.error.message}
-					</div>
-				) : null}
-			</form>
 		</section>
 	);
 }

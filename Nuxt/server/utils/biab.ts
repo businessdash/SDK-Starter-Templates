@@ -1,4 +1,4 @@
-import { createBiabClient, type BiabClient } from "@biab-dev/sdk";
+import { createBiabClient, type BiabClient } from "@businessdash/sdk";
 
 /**
  * Server-only BIAB client. Lives under `server/utils/`, which Nuxt

@@ -19,6 +19,6 @@ import { BiabService } from "../lib/biab.service";
 export class AboutComponent implements OnInit {
 	readonly svc = inject(BiabService);
 	ngOnInit() {
-		void this.svc.loadAbout();
+		void this.svc.loadHome();
 	}
 }

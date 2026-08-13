@@ -1,0 +1,115 @@
+# BIAB SDK — React Native (Expo) starter
+
+The one mobile starter that **reuses `@businessdash/sdk` directly**. Laravel, Phoenix, Swift, Flutter, Kotlin and Vapor all hand-write a client because the SDK is TypeScript; React Native *is* JavaScript, so it imports the real thing.
+
+## Two things make that work
+
+### 1. Import from `/native`, never the root
+
+The root export re-exports the auth handler, which calls `Buffer.from(state, 'base64url')`. `Buffer` is a Node global React Native doesn't provide and Metro doesn't polyfill.
+
+The call sits inside a function, so the root import **appears** to work — right up until a sign-in callback is decoded and it throws `ReferenceError: Buffer is not defined` in production, on a device, in front of a customer.
+
+`@businessdash/sdk/native` is the same data layer with the server-only surface removed: no auth handler, no same-origin proxy, no `node:crypto` revalidation verifier. None of those mean anything in an app anyway — they're things a *server* mounts.
+
+### 2. Metro needs package exports on
+
+Subpath exports don't resolve without it, and the failure reads like a missing dependency rather than a resolver setting. `metro.config.js` sets it explicitly:
+
+```js
+config.resolver.unstable_enablePackageExports = true
+```
+
+Recent Expo SDKs default this to true. It's set anyway — "the default changed" isn't something a starter should depend on, and setting it when it's already true costs nothing.
+
+## The token rule
+
+`EXPO_PUBLIC_` vars are inlined into the JS bundle at build time, so anything here ships in the app. This app can only hold a **publishable `pk_…` token**, and `getBiab()` throws on an `sk_…` key rather than letting a secret reach the store.
+
+Barely limiting: the publishable scope set covers the entire customer-facing surface — storefront, cart, checkout, blog, marketing content, chat, forms, **the whole customer portal**, sign-in, and public custom-object reads. **No backend-for-frontend is needed.**
+
+Expo is also the only mobile target with a real public-prefix convention. That prefix is an instruction to the bundler — *publish this* — so it is exactly and only correct for values that are safe to publish. Every var in `.env.example` is.
+
+## Setup
+
+```sh
+cp .env.example .env
+# Fill EXPO_PUBLIC_BIAB_SITE_ID and EXPO_PUBLIC_BIAB_PK
+
+npm install
+npx expo start
+```
+
+**With no env at all the app still launches** — screens render empty states and a setup banner. A starter you can't run before signing up isn't a starter.
+
+For the schema + custom-database flows:
+
+```sh
+npm run sync-schema          # push biab.config.ts to BIAB's draft slot
+npm run sync-data-model      # push the todos data model (+ generated form)
+npm run seed                 # upsert the rows in ./biab-records
+npm run view-data-model      # what's LIVE in BIAB right now
+```
+
+The CLI is Node, and it is the **only** part of any starter that needs Node.
+It runs through `tsx` so the TypeScript config files load on any supported
+Node version — the schema artifact carries a canonical checksum the platform
+verifies, and reimplementing that in another language would mean matching the
+canonicalisation byte for byte.
+
+Seeding is language-neutral: `biab-records/` is plain JSON, identical across
+every starter. Only the *schema* files are TypeScript.
+
+Unlike the other non-web starters, the SDK here is a **real runtime
+dependency** — the app imports it — so the CLI comes along for free rather
+than being a dev-only escape hatch.
+
+## The shape
+
+```
+app/                       expo-router
+  (tabs)/index.tsx         shop
+  (tabs)/cart.tsx          cart + Stripe hand-off
+  (tabs)/chat.tsx          Front Desk
+  (tabs)/account.tsx       sign-in + portal
+  product/[id].tsx
+src/biab/
+  client.ts    the two clients + the pk_ guard
+  session.ts   session token → SecureStore, visitor id → AsyncStorage
+  auth.ts      hosted sign-in via openAuthSessionAsync
+  useChat.ts   the polling chat loop
+  useBiab.ts   useLoad / useVisitorToken
+  money.ts     cents vs decimal
+```
+
+## Five things that will bite you
+
+**1. Every list response is keyed `items`.** Not `products`, not `posts`, not `reviews`. Reading the wrong key yields `undefined`, not an error — so a screen renders "no products" against a full catalog and nothing looks broken. This one cost me every other starter in this repo before a typed harness caught it.
+
+**2. A single blog post arrives wrapped.** `getPost(slug)` returns `{ post, access }`, where `access` is `granted` or `paywall`. A paywalled post comes back **truncated**, not absent, so ignoring the flag renders a teaser as the whole article.
+
+**3. Money has two shapes.** Product, subscription and invoice totals are **integer cents**; cart `unitPrice`/`subtotal` arrive **decimal**. `cents()` and `amount()` are separate functions so you pick deliberately.
+
+**4. Checkout returns `stripeUrl`, not `url`.** Open it with `expo-web-browser`; no card data touches this process, which keeps the app out of PCI scope.
+
+**5. Two clients, different surfaces.** `createBiabClient` is content + commerce. `createBiabDevClient` is where `chatbot`, `auth` and the site-scoped `dataModel` live. Both are exposed rather than papered over, because reaching for the wrong one fails as "property is undefined".
+
+## Sign-in is nicer here than on native
+
+`WebBrowser.openAuthSessionAsync` opens the hosted page, closes itself when the redirect fires, and **returns the callback URL to the calling function**. No deep-link listener, no state stashed across an app restart, no race between the browser dismissing and the app reading the URL — all of which the Swift and Kotlin starters have to handle.
+
+The redirect URI still has to be registered on the BIAB site, or `auth/start` refuses. `Linking.createURL('auth/callback')` builds it from the `scheme` in `app.json`.
+
+## Chat is polling, and that's the API
+
+There is no SSE or WebSocket anywhere in the Package API. `useChat` runs `createPersistedSession` → `postMessage` → `pollMessages` every 4s, and the effect's cleanup stops the loop: an interval left running in a mobile app burns battery and the org's rate limit for as long as the process lives. It de-duplicates on message id, because `since` only advances when the server returns a usable timestamp.
+
+## What this starter does not do
+
+- **The form renderer isn't built.** `<biab-form>` is a DOM custom element with no RN counterpart — the one surface an app genuinely reimplements. `biab.forms.schema()` gives you a typed schema.
+- **No portal detail screens.** Sign-in works and the scopes allow the whole portal; only the session check is wired.
+- **No tests.** The SDK's own suite covers the client; what's here is app glue.
+
+## ⚠️ Verification
+
+**This has not been run.** No Expo toolchain or `node_modules` install was available. What *was* verified: every SDK call in this starter typechecks against the real published types (`createBiabClient`, `createBiabDevClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. The screens themselves are reviewed, not built.

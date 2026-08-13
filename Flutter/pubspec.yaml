@@ -1,0 +1,25 @@
+name: biab_starter
+description: >-
+  BIAB SDK — Flutter starter. The client lives in `packages/biab` as a PURE
+  DART package so it can be analyzed and tested without a Flutter toolchain;
+  this package is the Flutter app built on top of it.
+publish_to: none
+version: 0.1.0
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  biab:
+    path: packages/biab
+
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^4.0.0
+
+flutter:
+  uses-material-design: true

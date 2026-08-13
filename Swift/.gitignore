@@ -1,0 +1,9 @@
+.DS_Store
+/.build
+/.swiftpm
+/Packages
+xcuserdata/
+DerivedData/
+.netrc
+/node_modules
+BiabStarter.local.xcconfig

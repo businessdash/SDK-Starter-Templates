@@ -1,0 +1,42 @@
+<h1>Cart</h1>
+
+<% items = (@cart && @cart["items"]) || [] %>
+
+<p :if={items == []} class="muted">
+  Your cart is empty. <a href={~p"/store"}>Browse the store</a>.
+</p>
+
+<div :if={items != []}>
+  <ul class="cart-lines">
+    <li :for={item <- items}>
+      <span>{item["name"]}</span>
+
+      <form method="post" action={~p"/cart/items/#{item["id"]}"}>
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <input type="hidden" name="_method" value="patch" />
+        <input type="number" name="quantity" value={item["quantity"] || 1} min="0" />
+        <button type="submit">Update</button>
+      </form>
+
+      <form method="post" action={~p"/cart/items/#{item["id"]}"}>
+        <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+        <input type="hidden" name="_method" value="delete" />
+        <button type="submit">Remove</button>
+      </form>
+    </li>
+  </ul>
+
+  <%!-- Cart totals arrive DECIMAL; product prices arrive in integer cents. --%>
+  <p class="total">Subtotal: {amount(@cart["subtotal"])}</p>
+
+  <form method="post" action={~p"/cart/coupon"} class="coupon">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <input type="text" name="code" placeholder="Coupon code" />
+    <button type="submit">Apply</button>
+  </form>
+
+  <form method="post" action={~p"/cart/checkout"}>
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <button type="submit" class="button">Checkout</button>
+  </form>
+</div>

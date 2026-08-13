@@ -1,7 +1,7 @@
 /**
  * Browser-side fetcher for the BIAB SDK proxy (vanilla).
  *
- * Mirrors the shape of `@biab-dev/sdk`'s `createBiabClient` exactly
+ * Mirrors the shape of `@businessdash/sdk`'s `createBiabClient` exactly
  * — same method names, same params — so the React-Bun example's
  * components translate one-to-one. The runtime is JS, but JSDoc
  * `@typedef`s give IDEs full IntelliSense without a build step.
@@ -189,7 +189,182 @@ export const biab = {
 			});
 		},
 	},
+	storefront: {
+		/** @param {{ limit?: number; categoryId?: string }} [params] */
+		async listProducts(params = {}) {
+			const query = new URLSearchParams();
+			if (params.limit) query.set("limit", String(params.limit));
+			if (params.categoryId) query.set("categoryId", params.categoryId);
+			return await getJson(
+				`/api/biab/storefront/products${query.toString() ? `?${query}` : ""}`,
+			);
+		},
+		/**
+		 * Filterable grid + facets — the data behind a full shop page. Each card
+		 * carries price/compareAt/rating/badges; the response also returns
+		 * `categoryCounts` + `priceRange` for the sidebar.
+		 * @param {{ search?: string; categoryId?: string; minPriceCents?: number;
+		 *   maxPriceCents?: number; minRating?: number;
+		 *   sort?: "featured"|"newest"|"price-asc"|"price-desc"|"rating-desc";
+		 *   limit?: number }} [params]
+		 */
+		async listProductsWithMeta(params = {}) {
+			const query = new URLSearchParams();
+			if (params.search) query.set("search", params.search);
+			if (params.categoryId) query.set("categoryId", params.categoryId);
+			if (params.minPriceCents != null) query.set("minPriceCents", String(params.minPriceCents));
+			if (params.maxPriceCents != null) query.set("maxPriceCents", String(params.maxPriceCents));
+			if (params.minRating != null) query.set("minRating", String(params.minRating));
+			if (params.sort) query.set("sort", params.sort);
+			if (params.limit != null) query.set("limit", String(params.limit));
+			return await getJson(
+				`/api/biab/storefront/products-meta${query.toString() ? `?${query}` : ""}`,
+			);
+		},
+		/** Org product categories for the storefront sidebar. */
+		async listCategories() {
+			return await getJson("/api/biab/storefront/categories");
+		},
+		/** @param {string} id */
+		async getProduct(id) {
+			return await getJson(`/api/biab/storefront/product/${encodeURIComponent(id)}`);
+		},
+		/** @param {string} id @param {{ limit?: number; cursor?: number }} [params] */
+		async getProductReviews(id, params = {}) {
+			const query = new URLSearchParams();
+			if (params.limit != null) query.set("limit", String(params.limit));
+			if (params.cursor != null) query.set("cursor", String(params.cursor));
+			return await getJson(
+				`/api/biab/storefront/product/${encodeURIComponent(id)}/reviews${query.toString() ? `?${query}` : ""}`,
+			);
+		},
+		/** @param {string} id @param {{ limit?: number }} [params] */
+		async getRelatedProducts(id, params = {}) {
+			const query = new URLSearchParams();
+			if (params.limit != null) query.set("limit", String(params.limit));
+			return await getJson(
+				`/api/biab/storefront/product/${encodeURIComponent(id)}/related${query.toString() ? `?${query}` : ""}`,
+			);
+		},
+		/** @param {string} id */
+		async getProductAddons(id) {
+			return await getJson(`/api/biab/storefront/product/${encodeURIComponent(id)}/addons`);
+		},
+	},
+	subscriptions: {
+		async list() {
+			return await getJson("/api/biab/subscriptions");
+		},
+	},
+	reviews: {
+		/** @param {{ limit?: number; offset?: number }} [params] */
+		async list(params = {}) {
+			const query = new URLSearchParams();
+			if (params.limit != null) query.set("limit", String(params.limit));
+			if (params.offset != null) query.set("offset", String(params.offset));
+			return await getJson(`/api/biab/reviews${query.toString() ? `?${query}` : ""}`);
+		},
+	},
+	cart: {
+		async get() {
+			return await getJson("/api/biab/cart");
+		},
+		/** @param {{ productId: string; variantId?: string | null; quantity?: number }} input */
+		async add(input) {
+			return await postJson("/api/biab/cart/add", input);
+		},
+		/** @param {string} itemId @param {number} quantity */
+		async update(itemId, quantity) {
+			return await postJson("/api/biab/cart/update", { itemId, quantity });
+		},
+		/** @param {string} itemId */
+		async remove(itemId) {
+			return await postJson("/api/biab/cart/remove", { itemId });
+		},
+		/** @param {string} code */
+		async applyCoupon(code) {
+			return await postJson("/api/biab/cart/coupon", { code });
+		},
+		async removeCoupon() {
+			return await postJson("/api/biab/cart/coupon/remove", {});
+		},
+		async clear() {
+			return await postJson("/api/biab/cart/clear", {});
+		},
+	},
+	checkout: {
+		/** @param {{ origin: string; customerEmail?: string }} input @returns {Promise<{ url: string }>} */
+		async start(input) {
+			return await postJson("/api/biab/checkout/start", input);
+		},
+		/** @param {string} sessionId */
+		async status(sessionId) {
+			return await getJson(
+				`/api/biab/checkout/status?session_id=${encodeURIComponent(sessionId)}`,
+			);
+		},
+	},
+	portal: {
+		/** @returns {Promise<{ signedIn: boolean; user?: object; work: object | null }>} */
+		async work() {
+			return await getJson("/api/biab/portal/work");
+		},
+		/** @param {{ rating: number; body: string; jobId?: string | null }} input */
+		async submitReview(input) {
+			return await postJson("/api/biab/portal/submit-review", input);
+		},
+	},
+	parallelPages: {
+		/** @param {string} [key] */
+		async listVariants(key = "service-area") {
+			return await getJson(`/api/biab/parallel/variants?key=${encodeURIComponent(key)}`);
+		},
+		/** @param {string} key @param {{ service: string; area: string }} slugs */
+		async render(key, slugs) {
+			const query = new URLSearchParams({ key, service: slugs.service, area: slugs.area });
+			return await getJson(`/api/biab/parallel/render?${query}`);
+		},
+	},
+	content: {
+		/** @returns {Promise<{ banner: object | null; updates: object | null }>} */
+		async extras() {
+			return await getJson("/api/biab/content/extras");
+		},
+	},
+	todos: {
+		/**
+		 * Custom-collections demo (`biab.data-model.config.ts`). The server
+		 * reads both collections through the SDK's documented custom-database
+		 * read path (`dataModel.listRecords({ object })`) and joins images to
+		 * todos via the `todo` RELATION field. Creates go through
+		 * `biab.forms.submit("todo-form", …)` — forms are the SDK's documented
+		 * create path for custom collections.
+		 *
+		 * @returns {Promise<{ available: boolean; reason: string | null; todos: Array<{ id: string; title: string; done: boolean; notes: string | null; createdAt: string; images: Array<{ url: string; alt: string | null; label: string | null }> }> }>}
+		 */
+		async list() {
+			return await getJson("/api/biab/todos");
+		},
+	},
 };
+
+export { getJson, postJson };
+
+/** Format a cents integer as currency (e.g. 1299 → "$12.99"). Use for
+ *  `amountCents`-style fields (subscriptions, checkout totals). */
+export function money(cents, currency = "USD") {
+	if (cents == null || Number.isNaN(Number(cents))) return "";
+	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
+		Number(cents) / 100,
+	);
+}
+
+/** Format an already-decimal amount as currency (e.g. 12.99 → "$12.99"). Use
+ *  for cart `unitPrice` / `subtotal`, which are decimals, not cents. */
+export function dollars(amount, currency = "USD") {
+	if (amount == null || Number.isNaN(Number(amount))) return "";
+	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(amount));
+}
 
 // ---------------------------------------------------------------------------
 // DOM helpers — used by every section module.

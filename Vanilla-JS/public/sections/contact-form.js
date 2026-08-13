@@ -1,153 +1,104 @@
-import { biab, el } from "../biab.js";
+import { el } from "../biab.js";
 
 /**
- * Forms surface end-to-end:
- *   1. Fetch the schema (cached on BIAB side).
- *   2. Render each field based on its `type`.
- *   3. Submit — the SDK's `validateFormSubmission` runs server-side
- *      before the row hits the DB so a bad payload returns a 400.
+ * Contact section — now a drop-in `<biab-form>` web component.
+ *
+ * Before, this file hand-rolled the whole form (field loop, submit, error
+ * handling). The SDK now ships that as a binding: `@businessdash/sdk/element`
+ * registers a `<biab-form slug="…">` custom element that fetches the schema,
+ * renders every field type, applies the form's settings (multi-step, progress,
+ * animation, org icon), validates, and submits — all in light DOM with the
+ * `biab-*` classes this template already styles. We write design + a slug; the
+ * SDK owns the rest.
+ *
+ * The element needs a `BiabClient` to load + submit. The browser must never see
+ * the bearer key, so we hand it a tiny PROXY client whose `forms` resource hits
+ * this template's same-origin `/api/biab/forms/*` endpoints (see server.ts).
+ * `setBiabFormClient(...)` registers it as the default for every <biab-form> on
+ * the page — the web-component analogue of a React <BiabFormProvider>.
  *
  * Replace `FORM_SLUG` with the form you authored in BIAB → Forms.
- *
- * @param {HTMLElement} target
  */
-const FORM_SLUG = "contact";
+const FORM_SLUG = "general-inquiry";
 
-const FALLBACK_SCHEMA = {
-	id: "fallback",
-	slug: FORM_SLUG,
-	title: "Get in touch",
-	description: "We'll get back within one business day.",
-	fields: [
-		{ id: "name", label: "Name", type: "text", required: true },
-		{ id: "email", label: "Email", type: "email", required: true },
-		{ id: "message", label: "Message", type: "textarea", required: true },
-	],
-};
+/**
+ * A minimal same-origin proxy that satisfies the `forms` slice of `BiabClient`
+ * the binding uses (`forms.schema` / `forms.submit` / `forms.uploadFile`).
+ * Every call is same-origin `/api/biab/*`; the Bun server holds the bearer key.
+ */
+function createProxyFormsClient() {
+	return {
+		forms: {
+			async schema(slug) {
+				const res = await fetch(
+					`/api/biab/forms/schema?slug=${encodeURIComponent(slug)}`,
+				);
+				if (!res.ok) {
+					const text = await res.text().catch(() => "");
+					throw new Error(`BIAB forms.schema ${res.status}: ${text.slice(0, 200)}`);
+				}
+				return await res.json();
+			},
+			async submit(slug, data, opts = {}) {
+				const res = await fetch("/api/biab/forms/submit", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						slug,
+						data,
+						submitterEmail: opts.submitterEmail,
+						submitterName: opts.submitterName,
+					}),
+				});
+				// The binding expects forms.submit to RESOLVE (never throw) with a
+				// FormSubmitResult discriminated by `ok`. The server already returns
+				// that exact shape (biab.forms.submit resolves a result, even on a
+				// validation failure), so pass it straight through when present.
+				const body = await res.json().catch(() => null);
+				if (body && typeof body.ok === "boolean") return body;
+				if (res.ok) return { ok: true, status: res.status, ...(body ?? {}) };
+				return {
+					ok: false,
+					status: res.status,
+					reason: "server_error",
+					message: body?.error ?? `Submission failed (${res.status}).`,
+				};
+			},
+			async uploadFile() {
+				// Wire a /api/biab/forms/upload-url proxy + R2 PUT to enable file
+				// fields. Not needed for the contact form, so left unimplemented.
+				throw new Error("File uploads are not wired in this starter's proxy.");
+			},
+		},
+	};
+}
 
+/** @param {HTMLElement} target */
 export async function renderContactForm(target) {
-	let schema = FALLBACK_SCHEMA;
-	const data = {};
-	let confirmation = null;
-	let error = null;
-	let submitting = false;
+	const lead = el("div", { class: "biab-section__lead" }, [
+		el("span", { class: "biab-section__eyebrow" }, ["Contact"]),
+		el("h2", { class: "biab-section__title" }, ["Get in touch"]),
+		el("p", { class: "biab-section__sub" }, [
+			"We'll get back within one business day.",
+		]),
+	]);
 
-	try {
-		schema = await biab.forms.schema(FORM_SLUG);
-	} catch {
-		// stay on FALLBACK_SCHEMA — keeps the page useful before the
-		// org has authored a real form in BIAB.
-	}
+	// Register the binding + its same-origin proxy client (idempotent — every
+	// section that drops a <biab-form> shares this one default client).
+	const { setBiabFormClient } = await import("@businessdash/sdk/element");
+	setBiabFormClient(createProxyFormsClient());
 
-	function renderField(field) {
-		const id = `field-${field.id}`;
-		const label = el("label", { class: "biab-label", for: id }, [
-			`${field.label}${field.required ? " *" : ""}`,
-		]);
-		const inputNode =
-			field.type === "textarea"
-				? el("textarea", {
-						class: "biab-textarea",
-						id,
-						placeholder: field.placeholder ?? "",
-						required: field.required,
-						value: data[field.id] ?? "",
-						onInput: (e) => {
-							data[field.id] = e.currentTarget.value;
-						},
-					})
-				: el("input", {
-						class: "biab-input",
-						id,
-						type: field.type === "email" ? "email" : "text",
-						placeholder: field.placeholder ?? "",
-						required: field.required,
-						value: data[field.id] ?? "",
-						onInput: (e) => {
-							data[field.id] = e.currentTarget.value;
-						},
-					});
-		const children = [label, inputNode];
-		if (field.helpText) {
-			children.push(
-				el("small", { style: "color: var(--text-muted);" }, [field.helpText]),
-			);
-		}
-		return el("div", {}, children);
-	}
+	// The drop-in. `slug` + `submit-label` are all the design we write. The SDK
+	// infers a sensible HTML `autocomplete` token per field (name/email/tel/
+	// address/…), so browsers offer autofill out of the box — autofill is ON by
+	// default; `auto-complete="false"` would disable it, and `field-auto-complete`
+	// (JSON) overrides per field.
+	const form = el("biab-form", {
+		class: "biab-card contact",
+		slug: FORM_SLUG,
+		"submit-label": "Send message",
+		"auto-complete": "true",
+	});
 
-	async function handleSubmit(ev) {
-		ev.preventDefault();
-		submitting = true;
-		error = null;
-		rerender();
-		try {
-			await biab.forms.submit(FORM_SLUG, data, {
-				submitterEmail: data.email,
-				submitterName: data.name,
-			});
-			confirmation = "Thanks — we'll be in touch within one business day.";
-			for (const k of Object.keys(data)) delete data[k];
-		} catch (err) {
-			error = err instanceof Error ? err.message : "Couldn't submit.";
-		} finally {
-			submitting = false;
-			rerender();
-		}
-	}
-
-	function rerender() {
-		if (confirmation) {
-			target.replaceChildren(
-				el("div", { class: "biab-card contact" }, [
-					el("span", { class: "biab-badge", style: "align-self: flex-start;" }, [
-						"Received",
-					]),
-					el("h2", { class: "biab-section__title" }, ["Got it."]),
-					el("p", {}, [confirmation]),
-				]),
-			);
-			return;
-		}
-
-		const lead = el("div", { class: "biab-section__lead" }, [
-			el("span", { class: "biab-section__eyebrow" }, ["Contact"]),
-			el("h2", { class: "biab-section__title" }, [schema.title ?? "Get in touch"]),
-			schema.description
-				? el("p", { class: "biab-section__sub" }, [schema.description])
-				: null,
-		]);
-
-		const form = el(
-			"form",
-			{ class: "biab-card contact", onSubmit: handleSubmit },
-			[
-				...schema.fields.map(renderField),
-				el(
-					"button",
-					{
-						class: "biab-btn",
-						type: "submit",
-						style: "align-self: flex-start;",
-						disabled: submitting,
-					},
-					[submitting ? "Sending…" : "Send message"],
-				),
-				error
-					? el(
-							"div",
-							{
-								style:
-									"color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;",
-							},
-							[error],
-						)
-					: null,
-			],
-		);
-
-		target.replaceChildren(lead, form);
-	}
-
-	rerender();
+	target.replaceChildren(lead, form);
 }

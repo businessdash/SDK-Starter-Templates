@@ -1,0 +1,14 @@
+<h1>Plans</h1>
+
+<ul :if={@plans != []} class="grid">
+  <li :for={plan <- @plans} class="card">
+    <h2>{plan["name"]}</h2>
+    <p class="price">{cents(plan["amountCents"])}</p>
+    <form method="post" action={~p"/subscriptions/#{plan["id"]}/checkout"}>
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <button type="submit">Subscribe</button>
+    </form>
+  </li>
+</ul>
+
+<p :if={@plans == []} class="muted">No plans published yet.</p>

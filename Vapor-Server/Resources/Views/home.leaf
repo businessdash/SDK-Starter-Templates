@@ -1,0 +1,37 @@
+#extend("base"):
+  #export("title"):#(headline)#endexport
+  #export("content"):
+    <section class="hero">
+      <h1>#(headline)</h1>
+      <p>#(subhead)</p>
+      <a class="button" href="/store">Browse the store</a>
+    </section>
+
+    <section class="about">
+      <h2>#(aboutTitle)</h2>
+      <p>#(aboutBody)</p>
+    </section>
+
+    #if(count(products) > 0):
+      <section class="services">
+        <h2>What we offer</h2>
+        <ul class="grid">
+          #for(product in products):
+            <li class="card">
+              <a href="/store/#(product.id)">
+                <h3>#(product.name)</h3>
+                <p class="muted">#(product.blurb)</p>
+                <p class="price">#(product.price)</p>
+              </a>
+            </li>
+          #endfor
+        </ul>
+      </section>
+    #endif
+
+    <section class="contact">
+      <h2>Get in touch</h2>
+      <biab-form slug="general-inquiry" submit-label="Send"></biab-form>
+    </section>
+  #endexport
+#endextend

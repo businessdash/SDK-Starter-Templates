@@ -30,7 +30,7 @@ export async function loadHero() {
 			"ok" in raw &&
 			(raw as { ok: boolean }).ok
 		) {
-			const data = (raw as { data: Record<string, unknown> }).data;
+			const data = (raw as unknown as { data: Record<string, unknown> }).data;
 			return {
 				title: (data?.["title"] as string) ?? heroDefaults.title,
 				tagline: (data?.["tagline"] as string) ?? heroDefaults.tagline,
@@ -68,7 +68,9 @@ export async function loadAbout() {
 			(raw as { ok: boolean }).ok
 		) {
 			const data = (
-				raw as { data: { blocks?: Array<{ heading: string; body: string }> } }
+				raw as unknown as {
+					data: { blocks?: Array<{ heading: string; body: string }> };
+				}
 			).data;
 			if (Array.isArray(data?.blocks) && data.blocks.length > 0) {
 				return data.blocks;
@@ -105,20 +107,30 @@ export async function loadServices() {
 	const biab = getBiab();
 	if (!biab) return servicesDefaults;
 	try {
-		const list = await biab.store.listProducts({
-			limit: 6,
-			category: "services",
-		});
+		// `storefront.listProducts` is the catalog read. The product ROW carries
+		// id/name/images/categoryId; price + description live on the variants /
+		// passthrough, so read those defensively (see DGP `biab-store.ts`).
+		const list = await biab.storefront.listProducts({ limit: 6 });
 		if (Array.isArray(list?.items) && list.items.length > 0) {
-			return list.items.map((p) => ({
-				id: p.id,
-				name: p.name,
-				description: p.description ?? "",
-				priceLabel:
-					p.priceCents != null
-						? `from $${(p.priceCents / 100).toFixed(0)}`
-						: "quote on site",
-			}));
+			return list.items.map((p) => {
+				const extra = p as Record<string, unknown>;
+				const priceCents =
+					typeof extra["priceCents"] === "number"
+						? (extra["priceCents"] as number)
+						: null;
+				return {
+					id: p.id,
+					name: p.name,
+					description:
+						typeof extra["description"] === "string"
+							? (extra["description"] as string)
+							: "",
+					priceLabel:
+						priceCents != null
+							? `from $${(priceCents / 100).toFixed(0)}`
+							: "quote on site",
+				};
+			});
 		}
 	} catch {
 		/* keep defaults */
@@ -145,6 +157,37 @@ export async function loadBlog() {
 	return [];
 }
 
+export type GalleryTile = {
+	id: string;
+	src: string;
+	alt: string;
+	title: string;
+};
+
+/**
+ * Public project-media gallery. Pulls newest-first from the BIAB media
+ * library via the `gallery` resource with typed field selection. Returns
+ * `[]` when unconfigured or empty, so the section renders a placeholder.
+ */
+export async function loadGallery(limit = 9): Promise<GalleryTile[]> {
+	const biab = getBiab();
+	if (!biab) return [];
+	try {
+		const items = await biab.gallery.list({
+			limit,
+			fields: ["id", "src", "alt", "title"] as const,
+		});
+		return items.map((it) => ({
+			id: it.id,
+			src: it.src,
+			alt: it.alt ?? it.title ?? "",
+			title: it.title ?? "",
+		}));
+	} catch {
+		return [];
+	}
+}
+
 export async function submitContact(input: {
 	name: string;
 	email: string;
@@ -156,9 +199,12 @@ export async function submitContact(input: {
 		return { ok: true };
 	}
 	try {
-		await biab.forms.submit({
-			slug: "contact",
-			fields: input,
+		// `forms.submit(slug, data, opts?)` — positional args. The data map is
+		// keyed by the form's field ids as configured in the BIAB Forms editor.
+		await biab.forms.submit("general-inquiry", {
+			name: input.name,
+			email: input.email,
+			message: input.message,
 		});
 		return { ok: true };
 	} catch (err) {

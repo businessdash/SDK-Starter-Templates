@@ -3,3 +3,8 @@
 @plugin '@tailwindcss/typography';
 
 @import './biab-tokens.css';
+
+/* SDK form styles (file-upload box, multi-step progress header, choice chips).
+   Forms are unstyled without this. The SDK leaves the container background
+   transparent on purpose — the template owns it (see .biab-card .contact). */
+@import '@businessdash/sdk/biab-forms.css';

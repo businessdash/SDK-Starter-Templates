@@ -1,0 +1,15 @@
+#extend("base"):
+  #export("title"):Service areas#endexport
+  #export("content"):
+    <h1>Where we work</h1>
+    #if(count(variants) > 0):
+      <ul>
+        #for(variant in variants):
+          <li><a href="/services/#(variant.service)/#(variant.area)">#(variant.label)</a></li>
+        #endfor
+      </ul>
+    #else:
+      <p class="muted">No service areas defined yet.</p>
+    #endif
+  #endexport
+#endextend

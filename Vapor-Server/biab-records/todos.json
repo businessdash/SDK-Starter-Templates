@@ -1,0 +1,20 @@
+[
+  {
+    "object": "todos",
+    "universalIdentifier": "todo-seed-welcome",
+    "values": {
+      "title": "Welcome to your custom database",
+      "done": false,
+      "notes": "Seeded by `npm run seed`. Re-run it — the row updates instead of duplicating."
+    }
+  },
+  {
+    "object": "todos",
+    "universalIdentifier": "todo-seed-ship",
+    "values": {
+      "title": "Ship something",
+      "done": true,
+      "notes": "Identity is what makes re-running converge."
+    }
+  }
+]

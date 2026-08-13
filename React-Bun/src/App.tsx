@@ -1,6 +1,7 @@
 import "./App.css";
-import { BIABAnalytics } from "@biab-dev/sdk/react-analytics";
+import { BIABAnalytics } from "@businessdash/sdk/react-analytics";
 import { About } from "./components/About";
+import { Banner } from "./components/Banner";
 import { Blog } from "./components/Blog";
 import { Booking } from "./components/Booking";
 import { ContactForm } from "./components/ContactForm";
@@ -8,48 +9,83 @@ import { Footer } from "./components/Footer";
 import { Gallery } from "./components/Gallery";
 import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
+import { SdkSetupBanner } from "./components/SdkSetupBanner";
 import { Services } from "./components/Services";
+import { RouterProvider, useRoute } from "./lib/router";
+import { Cart } from "./pages/Cart";
+import { MyAccount } from "./pages/MyAccount";
+import { Product } from "./pages/Product";
+import { Reviews } from "./pages/Reviews";
+import { ServiceArea } from "./pages/ServiceArea";
+import { ServiceAreas } from "./pages/ServiceAreas";
+import { Store } from "./pages/Store";
+import { Subscriptions } from "./pages/Subscriptions";
+import { Todos } from "./pages/Todos";
+import { Updates } from "./pages/Updates";
 
 /**
- * Generic business website wired against the BIAB SDK.
+ * Generic business website wired against the BIAB SDK, now at full feature
+ * parity with the production reference consumer. The home page composes the
+ * marketing sections; a tiny client router (src/lib/router) switches in the
+ * feature pages (store, cart, subscriptions, reviews, updates, my-account,
+ * programmatic-SEO service pages).
  *
- * Every section reads from the same SDK surface a production
- * consumer site would: marketing bundle for Hero/About/Services
- * (Class A — admin-published content), the typed gallery resource
- * with field selection, blog list, scheduling flow, and the forms
- * runtime validator.
- *
- * The pattern across all 6 framework starters is identical:
- *   browser → same-origin `/api/biab/*` proxy → BIAB Package API.
- * Only the **transport** changes per framework (Bun HTTP here,
- * Astro endpoint, Next route handler, etc.). The component layer
- * stays a pure data-shape concern.
+ * The pattern is unchanged: browser → same-origin `/api/biab/*` proxy → BIAB
+ * Package API. The Bun server (server.ts) holds the bearer key.
  */
-function App() {
-	const biabSiteId = import.meta.env.VITE_BIAB_SITE_ID;
-	const biabBaseUrl = import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL;
-	const biabPublicKey = import.meta.env.VITE_BIAB_PUBLIC_KEY;
+function Home() {
 	return (
-		<>
+		<main>
+			<Hero />
+			<About />
+			<Services />
+			<Gallery />
+			<Booking />
+			<Blog />
+			<ContactForm />
+		</main>
+	);
+}
+
+function Routed() {
+	const { path } = useRoute();
+	if (path === "/store") return <Store />;
+	if (/^\/store\/[^/]+$/.test(path)) return <Product />;
+	if (path === "/cart") return <Cart />;
+	if (path === "/subscriptions") return <Subscriptions />;
+	if (path === "/reviews") return <Reviews />;
+	if (path === "/updates") return <Updates />;
+	if (path === "/todos") return <Todos />;
+	if (path === "/services") return <ServiceAreas />;
+	if (/^\/services\/[^/]+\/[^/]+$/.test(path)) return <ServiceArea />;
+	if (path === "/my-account") return <MyAccount />;
+	return <Home />;
+}
+
+function App() {
+	// Canonical VITE_ names (exposed to the browser via envPrefix in
+	// vite.config.ts), falling back to the legacy VITE_ twins so existing
+	// setups keep working.
+	const biabSiteId =
+		import.meta.env.VITE_BIAB_SITE_ID ??
+		import.meta.env.VITE_BIAB_SITE_ID;
+	const biabBaseUrl =
+		import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL ??
+		import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL;
+	const biabPublicKey =
+		import.meta.env.VITE_BIAB_PK ??
+		import.meta.env.VITE_BIAB_PUBLIC_KEY;
+	return (
+		<RouterProvider>
+			<Banner />
 			<Header />
-			<main>
-				<Hero />
-				<About />
-				<Services />
-				<Gallery />
-				<Booking />
-				<Blog />
-				<ContactForm />
-			</main>
+			<Routed />
 			<Footer />
+			<SdkSetupBanner />
 			{biabSiteId && biabBaseUrl && biabPublicKey ? (
-				<BIABAnalytics
-					siteId={biabSiteId}
-					baseUrl={biabBaseUrl}
-					apiKey={biabPublicKey}
-				/>
+				<BIABAnalytics siteId={biabSiteId} baseUrl={biabBaseUrl} apiKey={biabPublicKey} />
 			) : null}
-		</>
+		</RouterProvider>
 	);
 }
 

@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "name": "BIAB Starter",
+    "slug": "biab-starter",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "biabstarter",
+    "ios": { "supportsTablet": true },
+    "android": { "package": "app.biabstarter" },
+    "plugins": ["expo-router", "expo-secure-store"],
+    "experiments": { "typedRoutes": true }
+  }
+}

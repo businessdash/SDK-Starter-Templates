@@ -1,0 +1,111 @@
+/* Deliberately plain. The starter's job is to show the DATA flow —
+   swap this for your own design system. */
+
+:root {
+    --fg: #16181d;
+    --muted: #6b7280;
+    --bg: #ffffff;
+    --line: #e5e7eb;
+    --accent: #1f5eff;
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --fg: #e8eaed;
+        --muted: #9aa1ad;
+        --bg: #101216;
+        --line: #262a31;
+        --accent: #6f9bff;
+    }
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+main { max-width: 68rem; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+
+.site-header {
+    display: flex; flex-wrap: wrap; gap: 1rem; align-items: baseline;
+    justify-content: space-between;
+    max-width: 68rem; margin: 0 auto; padding: 1.25rem;
+    border-bottom: 1px solid var(--line);
+}
+.site-header nav { display: flex; flex-wrap: wrap; gap: 1rem; }
+.brand { font-weight: 700; font-size: 1.1rem; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1 { font-size: 2rem; line-height: 1.2; }
+h2 { font-size: 1.35rem; }
+
+.muted { color: var(--muted); }
+
+.grid {
+    list-style: none; padding: 0;
+    display: grid; gap: 1rem;
+    grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+}
+
+.card { border: 1px solid var(--line); border-radius: 0.75rem; padding: 1rem; }
+.card h2, .card h3 { margin-top: 0; }
+
+.button, button {
+    display: inline-block; cursor: pointer;
+    border: 1px solid var(--accent); border-radius: 0.5rem;
+    background: var(--accent); color: #fff;
+    padding: 0.5rem 0.9rem; font: inherit;
+}
+.button:hover, button:hover { text-decoration: none; opacity: 0.92; }
+
+input, select, textarea {
+    font: inherit; color: inherit; background: transparent;
+    border: 1px solid var(--line); border-radius: 0.5rem;
+    padding: 0.45rem 0.6rem;
+}
+textarea { width: 100%; min-height: 6rem; }
+
+.banner {
+    padding: 0.85rem 1.25rem;
+    border-bottom: 1px solid var(--line);
+    background: color-mix(in srgb, var(--accent) 12%, var(--bg));
+    font-size: 0.92rem;
+}
+
+.notice { padding: 0.75rem 1rem; border-radius: 0.5rem; background: color-mix(in srgb, var(--accent) 10%, var(--bg)); }
+.notice-error { background: color-mix(in srgb, #d93025 12%, var(--bg)); }
+
+.cart-lines { list-style: none; padding: 0; }
+.cart-lines li { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid var(--line); }
+.cart-lines form { display: inline-flex; gap: 0.4rem; }
+
+.filters, .coupon, .subscribe { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin: 1rem 0; }
+
+.site-footer { max-width: 68rem; margin: 0 auto; padding: 2rem 1.25rem; border-top: 1px solid var(--line); }
+
+blockquote { margin: 0 0 1rem; padding: 0.75rem 1rem; border-left: 3px solid var(--line); }
+
+.todos { list-style: none; padding: 0; }
+.todos li { padding: 0.75rem 0; border-bottom: 1px solid var(--line); }
+.done { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+
+.post-body img, .product img { max-width: 100%; height: auto; }
+
+/* ── LiveView chat ───────────────────────────────────────────────────────── */
+
+.chat-messages { list-style: none; padding: 0; margin: 1rem 0; }
+.chat-msg { padding: 0.6rem 0.8rem; border-radius: 0.6rem; margin-bottom: 0.5rem; max-width: 42rem; }
+.chat-msg--visitor { background: color-mix(in srgb, var(--accent) 12%, var(--bg)); }
+.chat-msg--agent,
+.chat-msg--bot { background: color-mix(in srgb, var(--fg) 6%, var(--bg)); }
+.chat-msg__who { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.chat-msg p { margin: 0.2rem 0 0; }
+.chat-form { display: flex; gap: 0.5rem; }
+.chat-form input[type="text"] { flex: 1; }
+.chat-note { margin-top: 1.5rem; font-size: 0.85rem; }

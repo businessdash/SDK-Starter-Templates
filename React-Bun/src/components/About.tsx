@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { biab } from "../lib/biab";
+import { Subscribe } from "./Subscribe";
 
 export function About() {
 	const [body, setBody] = useState<string | null>(null);
@@ -35,6 +36,11 @@ export function About() {
 				{body ??
 					"We're a small team that takes pride in being available. Real schedule, real reviews, real follow-up — no automated runaround. Book a slot below or send us a note and we'll get right back to you."}
 			</p>
+			<Subscribe
+				className="about__subscribe"
+				label="Stay in the loop — get our updates by email."
+				source="about"
+			/>
 		</section>
 	);
 }

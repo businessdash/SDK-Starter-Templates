@@ -1,3 +1,5 @@
+import { Subscribe } from "./Subscribe";
+
 export function About({ body }: { body: string }) {
 	return (
 		<section className="biab-section biab-section--narrow" id="about">
@@ -7,9 +9,17 @@ export function About({ body }: { body: string }) {
 					Built around how you actually work.
 				</h2>
 			</div>
-			<p style={{ color: "var(--text)", fontSize: "1.05rem", textAlign: "center" }}>
+			<p
+				style={{ color: "var(--text)", fontSize: "1.05rem", textAlign: "center" }}
+			>
 				{body}
 			</p>
+			<Subscribe
+				className="about__subscribe"
+				idPrefix="about-subscribe"
+				label="Stay in the loop"
+				source="about"
+			/>
 		</section>
 	);
 }

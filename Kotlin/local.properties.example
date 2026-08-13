@@ -1,0 +1,25 @@
+# BIAB settings for the Android app.
+#
+# Gradle reads these into BuildConfig — there is no .env in an APK, and a
+# value baked into the binary is exactly what an app credential is.
+#
+# `local.properties` is gitignored by Android convention, which is why it's
+# the right home for this. Copy this file to local.properties and fill it in.
+
+biab.host=https://www.biab.app
+biab.siteId=
+
+# ⚠️ PUBLISHABLE TOKEN ONLY (`pk_…`).
+#
+# BuildConfig values land in the APK, where `strings` finds them in seconds.
+# BiabClient refuses an `sk_…` key at construction.
+#
+# This is less limiting than it sounds: the publishable scope set covers the
+# entire customer-facing surface — storefront, cart, checkout, blog, marketing
+# content, chat, forms, the whole customer portal, sign-in, and public
+# custom-object reads. Only operator/admin writes need a secret key, and a
+# customer app never makes those.
+biab.publishableKey=
+
+# The Android SDK location Gradle needs. Android Studio writes this for you.
+# sdk.dir=/Users/you/Library/Android/sdk

@@ -1,0 +1,29 @@
+<article class="product">
+  <h1>{@product["name"]}</h1>
+  <p class="price">{cents(@product["cheapestPriceCents"])}</p>
+  <div class="description">{@product["description"]}</div>
+
+  <form method="post" action={~p"/cart/items"}>
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <input type="hidden" name="productId" value={@product["id"]} />
+    <label>Qty <input type="number" name="quantity" value="1" min="1" /></label>
+    <button type="submit">Add to cart</button>
+  </form>
+</article>
+
+<section :if={@reviews != []}>
+  <h2>Reviews</h2>
+  <blockquote :for={review <- @reviews}>
+    <p>{review["text"]}</p>
+    <cite>{review["reviewerName"] || "Anonymous"} — {review["rating"]}/5</cite>
+  </blockquote>
+</section>
+
+<section :if={@related != []}>
+  <h2>Related</h2>
+  <ul>
+    <li :for={item <- @related}>
+      <a href={~p"/store/#{item["id"]}"}>{item["name"]}</a>
+    </li>
+  </ul>
+</section>

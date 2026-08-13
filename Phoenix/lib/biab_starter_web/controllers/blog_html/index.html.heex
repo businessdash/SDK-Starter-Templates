@@ -1,0 +1,10 @@
+<h1>Blog</h1>
+
+<ul :if={@posts != []} class="post-list">
+  <li :for={post <- @posts}>
+    <a href={~p"/blog/#{post["slug"]}"}>{post["title"]}</a>
+    <p class="muted">{post["excerpt"]}</p>
+  </li>
+</ul>
+
+<p :if={@posts == []} class="muted">No posts yet.</p>

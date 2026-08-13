@@ -1,0 +1,18 @@
+---
+/**
+ * Dedicated reviews wall. Reuses the same `Reviews` section the home page
+ * renders (aggregate + first page + load-more island). Lives at /reviews so
+ * the header "Reviews" link and review CTAs have a real landing surface.
+ */
+import Reviews from "../components/Reviews.astro";
+import Layout from "../layouts/Layout.astro";
+
+export const prerender = false;
+---
+
+<Layout
+	title="Reviews — Your Business"
+	description="What our customers say — aggregate rating and reviews pulled live from BIAB."
+>
+	<Reviews />
+</Layout>

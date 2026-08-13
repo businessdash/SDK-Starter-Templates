@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>#import("title")</title>
+  <link rel="stylesheet" href="/styles.css">
+  #(""" The <biab-form> element and its stylesheet come from esm.sh, not this
+       app's asset pipeline. That is why a Vapor consumer never reimplements
+       the form renderer: the component ships the conditional blocks,
+       availability picker and uploads, and talks only to this app's own
+       /api/biab/forms proxy, so the bearer key stays on the server.
+
+       Pinned to an exact version deliberately — a CDN import has no lockfile,
+       so @latest would roll this page forward on somebody else's release. """)
+  <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.60/biab-forms.css">
+  <script type="module">
+    import { setBiabFormClient } from "https://esm.sh/@businessdash/sdk@0.9.60/element";
+    setBiabFormClient({ baseUrl: "/api/biab/forms", apiKey: "browser-proxy" });
+  </script>
+</head>
+<body>
+  #if(!configured):
+    <div class="banner banner-setup">
+      <strong>Not connected to BIAB.</strong>
+      Copy <code>.env.example</code> to <code>.env</code> and set
+      <code>BIAB_SITE_ID</code> + <code>BIAB_API_KEY</code>. Every section
+      below is rendering its local fallback.
+    </div>
+  #endif
+
+  <header class="site-header">
+    <a class="brand" href="/">BIAB Vapor starter</a>
+    <nav>
+      <a href="/store">Store</a>
+      <a href="/services">Services</a>
+      <a href="/blog">Blog</a>
+      <a href="/reviews">Reviews</a>
+      <a href="/subscriptions">Plans</a>
+      <a href="/todos">Todos</a>
+      <a href="/cart">Cart</a>
+    </nav>
+  </header>
+
+  <main>#import("content")</main>
+
+  <footer class="site-footer">
+    <p class="muted">Powered by BusinessDash</p>
+  </footer>
+</body>
+</html>

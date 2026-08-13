@@ -1,0 +1,28 @@
+#extend("base"):
+  #export("title"):Todos#endexport
+  #export("content"):
+    <h1>Todos</h1>
+    <p class="muted">
+      The relational custom-database demo. Reads come from the data-model API;
+      creates go through the generated form — there is no direct row-insert
+      API for consumers, which keeps validation on the platform.
+    </p>
+
+    #if(count(todos) > 0):
+      <ul class="todos">
+        #for(todo in todos):
+          <li>
+            <strong>#(todo.title)</strong>
+            #if(todo.done):<span class="done">done</span>#endif
+            <p class="muted">#(todo.notes)</p>
+          </li>
+        #endfor
+      </ul>
+    #else:
+      <p class="muted">
+        No todos yet. Run <code>npm run sync-data-model</code>, promote the
+        model in the dashboard, then set the generated "Todo Form" Live.
+      </p>
+    #endif
+  #endexport
+#endextend

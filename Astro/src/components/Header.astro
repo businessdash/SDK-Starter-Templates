@@ -1,16 +1,54 @@
 ---
-// Server-rendered nav. No data fetching — just the shell.
+/**
+ * Server-rendered nav. Reads the customer session + cart count server-side so
+ * the header reflects signed-in state and cart contents without client JS.
+ *
+ * Auth uses plain `<a href="/api/biab-auth/*">` links (the handler is mounted
+ * at that catch-all). Sign-out points at the same handler, which clears the
+ * `biab_session` cookie and redirects home.
+ */
+import { getCartCount } from "../lib/biab-store";
+import { getCustomerSession } from "../lib/biab-portal";
+
+const cartCount = await getCartCount(Astro.cookies);
+const session = await getCustomerSession(Astro.cookies).catch(() => null);
+const firstName = session?.user.firstName ?? null;
 ---
 
 <header class="app-header">
 	<div class="app-header__inner">
-		<div class="app-header__brand">Your Business</div>
+		<a class="app-header__brand" href="/">Your Business</a>
 		<nav>
-			<a href="#services">Services</a>
-			<a href="#gallery">Gallery</a>
-			<a href="#booking">Book</a>
-			<a href="#blog">Blog</a>
-			<a href="#contact">Contact</a>
+			<a href="/#services">Services</a>
+			<a href="/store">Store</a>
+			<a href="/#gallery">Gallery</a>
+			<a href="/#booking">Book</a>
+			<a href="/reviews">Reviews</a>
+			<a href="/updates">Updates</a>
+			<a href="/#blog">Blog</a>
+			<a href="/#contact">Contact</a>
 		</nav>
+		<div class="app-header__actions">
+			<a class="app-header__cart" href="/store/cart" aria-label="Cart">
+				Cart{cartCount > 0 ? <span class="app-header__cart-count">{cartCount}</span> : null}
+			</a>
+			{
+				session ? (
+					<>
+						<a href="/my-account">{firstName ? `Hi, ${firstName}` : "My account"}</a>
+						<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-out">
+							Sign out
+						</a>
+					</>
+				) : (
+					<>
+						<a href="/api/biab-auth/sign-in">Sign in</a>
+						<a class="biab-btn" href="/api/biab-auth/sign-up">
+							Sign up
+						</a>
+					</>
+				)
+			}
+		</div>
 	</div>
 </header>

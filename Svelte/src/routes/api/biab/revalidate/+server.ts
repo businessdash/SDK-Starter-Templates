@@ -1,5 +1,5 @@
 import { env } from "$env/dynamic/private";
-import { createGenericRevalidateHandler } from "@biab-dev/sdk/adapters/revalidate";
+import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
 
 import type { RequestHandler } from "./$types";
 

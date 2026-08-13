@@ -1,0 +1,566 @@
+---
+/**
+ * Storefront — filterable product listing (platform-style shop page).
+ *
+ * Server-renders the catalog via `storefront.listProductsWithMeta()`, which
+ * returns enriched cards (price / compareAt / rating / badges) plus the facet
+ * data (`categoryCounts`, `priceRange`) behind the sidebar. Filters live in the
+ * URL (`?q`, `?category`, `?price`, `?rating`, `?sort`) and submit via a plain
+ * GET form, so the whole page works without JS and is shareable/bookmarkable.
+ *
+ * Suspension-aware: if the org's billing has lapsed / service is suspended,
+ * the SDK throws and we return a 503 "site unavailable" document. Unconfigured
+ * BIAB shows a friendly "store not connected" empty state instead.
+ */
+import { biab } from "../../lib/biab";
+import {
+	isStoreConfigured,
+	listStoreCategories,
+	listStoreProductsWithMeta,
+} from "../../lib/biab-store";
+import { isSuspensionError, suspendedResponse } from "../../lib/biab-suspension";
+import Layout from "../../layouts/Layout.astro";
+
+export const prerender = false;
+
+const SORTS = [
+	{ value: "featured", label: "Featured" },
+	{ value: "newest", label: "Newest" },
+	{ value: "price-asc", label: "Price: low to high" },
+	{ value: "price-desc", label: "Price: high to low" },
+	{ value: "rating-desc", label: "Top rated" },
+] as const;
+type SortValue = (typeof SORTS)[number]["value"];
+const SORT_VALUES = SORTS.map((s) => s.value);
+
+// ── Read filters from the URL ────────────────────────────────────────────────
+const params = Astro.url.searchParams;
+const search = params.get("q")?.trim() || undefined;
+const categoryId = params.get("category") || undefined;
+const sortRaw = params.get("sort") ?? "featured";
+const sort: SortValue = SORT_VALUES.includes(sortRaw as SortValue)
+	? (sortRaw as SortValue)
+	: "featured";
+const ratingRaw = Number.parseInt(params.get("rating") ?? "", 10);
+const minRating =
+	Number.isFinite(ratingRaw) && ratingRaw >= 1 && ratingRaw <= 5
+		? ratingRaw
+		: undefined;
+const [minDollarsRaw, maxDollarsRaw] = (params.get("price") ?? "")
+	.split("-")
+	.map((n) => Number.parseInt(n, 10));
+const minDollars = Number.isFinite(minDollarsRaw) ? minDollarsRaw : undefined;
+const maxDollars = Number.isFinite(maxDollarsRaw) ? maxDollarsRaw : undefined;
+
+type Card = {
+	id: string;
+	name: string;
+	description: string | null;
+	categoryId: string | null;
+	coverImage: string | null;
+	cheapestPriceCents: number | null;
+	comparePriceCents: number | null;
+	isOnSale: boolean;
+	isLowStock: boolean;
+	hasMultipleVariants: boolean;
+	avgRating: number;
+	reviewCount: number;
+	isBestSeller: boolean;
+	isNew: boolean;
+};
+
+let items: Card[] = [];
+let categoryCounts: Array<{ categoryId: string; count: number }> = [];
+let priceRange = { minDollars: 0, maxDollars: 0 };
+let categories: Array<{ id: string; name: string }> = [];
+let loadError = false;
+let suspended = false;
+
+if (biab) {
+	try {
+		const [meta, cats] = await Promise.all([
+			listStoreProductsWithMeta({
+				search,
+				categoryId,
+				minRating,
+				minPriceCents: minDollars != null ? minDollars * 100 : undefined,
+				maxPriceCents: maxDollars != null ? maxDollars * 100 : undefined,
+				sort,
+				limit: 50,
+			}),
+			listStoreCategories(),
+		]);
+		if (meta === null) {
+			loadError = true;
+		} else {
+			items = meta.items as Card[];
+			categoryCounts = meta.categoryCounts;
+			priceRange = meta.priceRange;
+			categories = (cats?.items ?? []).map((c) => ({ id: c.id, name: c.name }));
+		}
+	} catch (err) {
+		if (isSuspensionError(err)) suspended = true;
+		else loadError = true;
+	}
+}
+
+if (suspended) return suspendedResponse();
+
+function money(cents: number): string {
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: "USD",
+	}).format(cents / 100);
+}
+
+/** Whole + half stars (0–5) rendered as filled/empty glyphs. */
+function starGlyphs(rating: number): string {
+	const rounded = Math.round(rating * 2) / 2;
+	let out = "";
+	for (let i = 1; i <= 5; i++) {
+		if (rounded >= i) out += "★";
+		else if (rounded >= i - 0.5) out += "⯪";
+		else out += "☆";
+	}
+	return out;
+}
+
+const categoryName = new Map(categories.map((c) => [c.id, c.name]));
+const facetCategories = categoryCounts
+	.map((c) => ({
+		id: c.categoryId,
+		name: categoryName.get(c.categoryId) ?? "Uncategorized",
+		count: c.count,
+	}))
+	.sort((a, b) => b.count - a.count);
+
+const priceValue =
+	minDollars != null || maxDollars != null
+		? `${minDollars ?? ""}-${maxDollars ?? ""}`
+		: "";
+const hasFilters = Boolean(
+	search || categoryId || minRating || priceValue || sort !== "featured",
+);
+---
+
+<Layout
+	title="Store — Your Business"
+	description="Browse products and check out securely. Catalog + cart powered by the BIAB SDK."
+>
+	<section class="biab-section" id="store">
+		<div class="biab-section__lead">
+			<span class="biab-section__eyebrow">Shop</span>
+			<h2 class="biab-section__title">Store</h2>
+			<p class="biab-section__sub">
+				Live catalog from BIAB. Filter, add to cart, and check out with Stripe.
+			</p>
+		</div>
+
+		{
+			!isStoreConfigured() ? (
+				<div class="biab-empty">
+					Store isn't connected. Add your BIAB keys (see <code>.env.example</code>)
+					and products from the dashboard will appear here.
+				</div>
+			) : loadError ? (
+				<div class="biab-empty">Couldn't load the catalog right now.</div>
+			) : (
+				<div class="store-layout">
+					{/* ── Sidebar facets (plain GET form, JS-free) ── */}
+					<aside class="store-facets">
+						<form class="store-facets__form" method="get" action="/store">
+							<div class="store-facet">
+								<label class="biab-label" for="facet-q">
+									Search
+								</label>
+								<input
+									class="biab-input"
+									id="facet-q"
+									type="search"
+									name="q"
+									placeholder="Search products…"
+									value={search ?? ""}
+								/>
+							</div>
+
+							{facetCategories.length > 0 ? (
+								<div class="store-facet">
+									<span class="biab-label">Category</span>
+									<ul class="store-facet__list">
+										<li>
+											<a
+												class={`store-facet__cat${!categoryId ? " is-active" : ""}`}
+												href="/store"
+											>
+												All products
+											</a>
+										</li>
+										{facetCategories.map((c) => {
+											const qp = new URLSearchParams();
+											qp.set("category", c.id);
+											if (search) qp.set("q", search);
+											if (priceValue) qp.set("price", priceValue);
+											if (minRating) qp.set("rating", String(minRating));
+											if (sort !== "featured") qp.set("sort", sort);
+											return (
+												<li>
+													<a
+														class={`store-facet__cat${categoryId === c.id ? " is-active" : ""}`}
+														href={`/store?${qp.toString()}`}
+													>
+														<span>{c.name}</span>
+														<span class="store-facet__count">{c.count}</span>
+													</a>
+												</li>
+											);
+										})}
+									</ul>
+								</div>
+							) : null}
+
+							<div class="store-facet">
+								<span class="biab-label">
+									Price ({money(priceRange.minDollars * 100)} –{" "}
+									{money(priceRange.maxDollars * 100)})
+								</span>
+								<div class="store-facet__price">
+									<input
+										class="biab-input"
+										type="number"
+										name="price-min"
+										min={priceRange.minDollars}
+										max={priceRange.maxDollars}
+										placeholder="Min"
+										value={minDollars ?? ""}
+										aria-label="Minimum price"
+									/>
+									<span>–</span>
+									<input
+										class="biab-input"
+										type="number"
+										name="price-max"
+										min={priceRange.minDollars}
+										max={priceRange.maxDollars}
+										placeholder="Max"
+										value={maxDollars ?? ""}
+										aria-label="Maximum price"
+									/>
+								</div>
+								{/* Combine the two number inputs into the single `price=min-max`
+								    param the listing reads, before the GET form submits. */}
+							</div>
+
+							<div class="store-facet">
+								<label class="biab-label" for="facet-rating">
+									Minimum rating
+								</label>
+								<select
+									class="biab-select"
+									id="facet-rating"
+									name="rating"
+								>
+									<option value="" selected={!minRating}>
+										Any rating
+									</option>
+									{[4, 3, 2, 1].map((r) => (
+										<option value={String(r)} selected={minRating === r}>
+											{r}★ &amp; up
+										</option>
+									))}
+								</select>
+							</div>
+
+							<div class="store-facet">
+								<label class="biab-label" for="facet-sort">
+									Sort by
+								</label>
+								<select class="biab-select" id="facet-sort" name="sort">
+									{SORTS.map((s) => (
+										<option value={s.value} selected={sort === s.value}>
+											{s.label}
+										</option>
+									))}
+								</select>
+							</div>
+
+							{categoryId ? (
+								<input type="hidden" name="category" value={categoryId} />
+							) : null}
+
+							<button class="biab-btn store-facet__apply" type="submit">
+								Apply filters
+							</button>
+							{hasFilters ? (
+								<a class="store-facet__clear" href="/store">
+									Clear all
+								</a>
+							) : null}
+						</form>
+					</aside>
+
+					{/* ── Product grid ── */}
+					<div class="store-results">
+						{items.length === 0 ? (
+							<div class="biab-empty">
+								{hasFilters
+									? "No products match these filters."
+									: "No products yet. Add some in BIAB at Dashboard → Products."}
+							</div>
+						) : (
+							<div class="biab-grid-3">
+								{items.map((p) => (
+									<a class="biab-card product-card" href={`/store/${p.id}`}>
+										<div class="product-card__media">
+											{p.coverImage ? (
+												<img
+													class="product-card__img"
+													src={p.coverImage}
+													alt={p.name}
+													loading="lazy"
+												/>
+											) : (
+												<div class="product-card__img product-card__img--empty" />
+											)}
+											<div class="product-card__badges">
+												{p.isNew ? (
+													<span class="biab-badge">New</span>
+												) : null}
+												{p.isBestSeller ? (
+													<span class="biab-badge">Best seller</span>
+												) : null}
+												{p.isOnSale ? (
+													<span class="biab-badge product-card__badge--sale">
+														Sale
+													</span>
+												) : null}
+											</div>
+										</div>
+										<div class="product-card__body">
+											<h3>{p.name}</h3>
+											{p.reviewCount > 0 ? (
+												<div class="product-card__rating">
+													<span
+														class="product-card__stars"
+														aria-label={`${p.avgRating.toFixed(1)} out of 5`}
+													>
+														{starGlyphs(p.avgRating)}
+													</span>
+													<span class="product-card__reviews">
+														({p.reviewCount})
+													</span>
+												</div>
+											) : null}
+											<div class="product-card__pricing">
+												{p.cheapestPriceCents != null ? (
+													<span class="product-card__price">
+														{p.hasMultipleVariants ? "From " : ""}
+														{money(p.cheapestPriceCents)}
+													</span>
+												) : null}
+												{p.isOnSale && p.comparePriceCents != null ? (
+													<span class="product-card__compare">
+														{money(p.comparePriceCents)}
+													</span>
+												) : null}
+											</div>
+											{p.isLowStock ? (
+												<span class="product-card__stock">Low stock</span>
+											) : null}
+										</div>
+									</a>
+								))}
+							</div>
+						)}
+					</div>
+				</div>
+			)
+		}
+	</section>
+</Layout>
+
+<style>
+	.store-layout {
+		display: grid;
+		grid-template-columns: 16rem 1fr;
+		gap: 2rem;
+		align-items: start;
+	}
+	.store-facets {
+		position: sticky;
+		top: 5rem;
+	}
+	.store-facets__form {
+		display: flex;
+		flex-direction: column;
+		gap: 1.5rem;
+	}
+	.store-facet {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.store-facet__list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.15rem;
+	}
+	.store-facet__cat {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+		gap: 0.5rem;
+		padding: 0.4rem 0.6rem;
+		border-radius: 0.5rem;
+		color: var(--text);
+		border-bottom: none;
+		font-size: 0.9rem;
+	}
+	.store-facet__cat:hover {
+		background: var(--accent-bg);
+		color: var(--accent);
+	}
+	.store-facet__cat.is-active {
+		background: var(--accent-bg);
+		color: var(--accent);
+		font-weight: 600;
+	}
+	.store-facet__count {
+		color: var(--text-muted);
+		font-size: 0.78rem;
+	}
+	.store-facet__price {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--text-muted);
+	}
+	.store-facet__apply {
+		width: 100%;
+	}
+	.store-facet__clear {
+		text-align: center;
+		font-size: 0.85rem;
+		color: var(--text-muted);
+	}
+
+	.product-card {
+		padding: 0;
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
+	}
+	.product-card__media {
+		position: relative;
+	}
+	.product-card__img {
+		width: 100%;
+		aspect-ratio: 4 / 3;
+		object-fit: cover;
+	}
+	.product-card__img--empty {
+		background: var(--bg-soft);
+	}
+	.product-card__badges {
+		position: absolute;
+		top: 0.6rem;
+		left: 0.6rem;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.35rem;
+	}
+	.product-card__badge--sale {
+		background: var(--danger-bg);
+		color: var(--danger);
+		border-color: var(--danger);
+	}
+	.product-card__body {
+		padding: 1.1rem 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.product-card__body h3 {
+		font-size: 1.05rem;
+	}
+	.product-card__rating {
+		display: flex;
+		align-items: center;
+		gap: 0.4rem;
+		font-size: 0.85rem;
+	}
+	.product-card__stars {
+		color: var(--accent);
+		letter-spacing: 0.05em;
+	}
+	.product-card__reviews {
+		color: var(--text-muted);
+	}
+	.product-card__pricing {
+		display: flex;
+		align-items: baseline;
+		gap: 0.5rem;
+	}
+	.product-card__price {
+		color: var(--accent);
+		font-weight: 700;
+	}
+	.product-card__compare {
+		color: var(--text-muted);
+		font-size: 0.85rem;
+		text-decoration: line-through;
+	}
+	.product-card__stock {
+		font-size: 0.78rem;
+		color: var(--danger);
+		font-weight: 600;
+	}
+	code {
+		font-family: var(--mono);
+		font-size: 0.85em;
+		background: var(--accent-bg);
+		color: var(--accent);
+		padding: 0.1em 0.35em;
+		border-radius: 0.35rem;
+	}
+
+	@media (max-width: 860px) {
+		.store-layout {
+			grid-template-columns: 1fr;
+		}
+		.store-facets {
+			position: static;
+		}
+	}
+</style>
+
+<script>
+	// The price facet exposes two friendly number inputs (`price-min` /
+	// `price-max`); the listing reads a single `price=min-max` param. Combine
+	// them just before the GET form submits, and drop empty params so the URL
+	// stays clean + shareable.
+	const form = document.querySelector<HTMLFormElement>(".store-facets__form");
+	form?.addEventListener("submit", (event) => {
+		event.preventDefault();
+		const min = (
+			form.querySelector<HTMLInputElement>('[name="price-min"]')?.value ?? ""
+		).trim();
+		const max = (
+			form.querySelector<HTMLInputElement>('[name="price-max"]')?.value ?? ""
+		).trim();
+
+		const data = new FormData(form);
+		const params = new URLSearchParams();
+		for (const [key, value] of data.entries()) {
+			if (key === "price-min" || key === "price-max") continue;
+			const v = String(value).trim();
+			if (v) params.set(key, v);
+		}
+		if (min || max) params.set("price", `${min}-${max}`);
+
+		const qs = params.toString();
+		window.location.href = qs ? `/store?${qs}` : "/store";
+	});
+</script>

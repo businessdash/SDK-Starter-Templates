@@ -9,10 +9,16 @@
 	"scripts": {
 		"dev": "bun --hot run server.ts",
 		"start": "bun run server.ts",
-		"check": "tsc --noEmit"
+		"check": "tsc --noEmit",
+		"sync-schema": "bun node_modules/@businessdash/sdk/dist/cli.js sync-schema --config biab.config.ts",
+		"sync-content": "bun node_modules/@businessdash/sdk/dist/cli.js sync-content --config biab.config.ts",
+		"print-schema": "bun node_modules/@businessdash/sdk/dist/cli.js print-schema --config biab.config.ts",
+		"sync-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config biab.data-model.config.ts",
+		"print-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts"
 	},
 	"dependencies": {
-		"@biab-dev/sdk": "^0.9.2"
+		"@businessdash/sdk": "^0.9.60",
+		"zod": "^3.25.76"
 	},
 	"devDependencies": {
 		"@types/bun": "^1.1.0",

@@ -8,7 +8,7 @@
  * local fallbacks without crashing the page.
  */
 
-import { createBiabClient, type BiabClient } from "@biab-dev/sdk";
+import { createBiabClient, type BiabClient } from "@businessdash/sdk";
 
 function normalizeBaseUrl(input: string): string {
 	const next = input.trim().replace(/\/$/, "");
@@ -21,8 +21,14 @@ let cached: BiabClient | null | undefined;
 export function getBiab(): BiabClient | null {
 	if (cached !== undefined) return cached;
 	const apiKey = process.env.BIAB_API_KEY;
-	const siteId = process.env.BIAB_SITE_ID;
-	const baseUrl = process.env.BIAB_PACKAGE_API_BASE_URL;
+	// SITE_ID + base URL aren't secret; the canonical names are the
+	// PUBLIC_ twins (the browser needs them too). Fall back to the legacy
+	// plain names so already-configured .env files keep working.
+	const siteId =
+		process.env.PUBLIC_BIAB_SITE_ID ?? process.env.BIAB_SITE_ID;
+	const baseUrl =
+		process.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
+		process.env.BIAB_PACKAGE_API_BASE_URL;
 	if (!apiKey || !siteId || !baseUrl) {
 		cached = null;
 		return cached;

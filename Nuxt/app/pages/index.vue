@@ -7,6 +7,7 @@ import Booking from "~/components/biab/Booking.vue";
 import ContactForm from "~/components/biab/ContactForm.vue";
 import Gallery from "~/components/biab/Gallery.vue";
 import Hero from "~/components/biab/Hero.vue";
+import NewsBanner from "~/components/biab/NewsBanner.vue";
 import Services from "~/components/biab/Services.vue";
 
 import type { HomeData } from "../../server/api/biab/home.get";
@@ -20,6 +21,10 @@ import type { HomeData } from "../../server/api/biab/home.get";
  */
 const { data } = await useFetch<HomeData>("/api/biab/home");
 
+// JSON-LD (LocalBusiness + WebSite) built server-side from the SDK's SEO
+// builders and injected into the head, so crawlers see structured data.
+const { data: jsonld } = await useFetch<{ html: string }>("/api/biab/jsonld");
+
 useHead({
 	title: "Your Business — built on BIAB",
 	meta: [
@@ -29,11 +34,15 @@ useHead({
 				"Nuxt 4 starter showing how to consume the BIAB SDK from a server-only utility, with Nitro endpoints for interactive surfaces.",
 		},
 	],
+	script: jsonld.value?.html
+		? [{ type: "application/ld+json", innerHTML: jsonld.value.html }]
+		: [],
 });
 </script>
 
 <template>
 	<div v-if="data">
+		<NewsBanner :messages="data.banner" />
 		<BiabHeader />
 		<main>
 			<Hero :hero="data.hero" />

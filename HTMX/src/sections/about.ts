@@ -1,5 +1,6 @@
 import { getBiab } from "../biab";
 import { html, render } from "../html";
+import { renderSubscribe } from "./subscribe";
 
 const defaults: Array<{ heading: string; body: string }> = [
 	{
@@ -8,7 +9,7 @@ const defaults: Array<{ heading: string; body: string }> = [
 	},
 ];
 
-export async function renderAbout(): Promise<string> {
+export async function renderAbout(req?: Request): Promise<string> {
 	let blocks = defaults;
 	const biab = getBiab();
 	if (biab) {
@@ -26,7 +27,7 @@ export async function renderAbout(): Promise<string> {
 				(raw as { ok: boolean }).ok
 			) {
 				const data = (
-					raw as { data: { blocks?: Array<{ heading: string; body: string }> } }
+					raw as unknown as { data: { blocks?: Array<{ heading: string; body: string }> } }
 				).data;
 				if (Array.isArray(data?.blocks) && data.blocks.length > 0) {
 					blocks = data.blocks;
@@ -47,6 +48,16 @@ export async function renderAbout(): Promise<string> {
 					</article>
 				`,
 			)}
+			<div class="subscribe-block">
+				${renderSubscribe(
+					{
+						label: "Get news and offers in your inbox",
+						source: "about",
+						buttonLabel: "Subscribe",
+					},
+					req,
+				)}
+			</div>
 		</section>
 	`);
 }

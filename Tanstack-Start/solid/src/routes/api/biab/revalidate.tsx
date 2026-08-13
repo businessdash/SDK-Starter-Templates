@@ -1,6 +1,5 @@
-import { createServerFileRoute } from "@tanstack/solid-start/server";
-
-import { createGenericRevalidateHandler } from "@biab-dev/sdk/adapters/revalidate";
+import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
+import { createFileRoute } from "@tanstack/solid-router";
 
 /**
  * BIAB → TanStack Start revalidation webhook receiver.
@@ -10,6 +9,11 @@ import { createGenericRevalidateHandler } from "@biab-dev/sdk/adapters/revalidat
  * The SDK adapter verifies the HMAC + replay window; the callback
  * is where you wire any response-level cache purge (CDN tag, KV
  * delete, etc.).
+ *
+ * Server routes attach to a `createFileRoute` via `server.handlers`.
+ * Each handler is `({ request }) => Response`, so we hand the SDK's
+ * framework-agnostic `(req: Request) => Response` handler straight
+ * through.
  */
 const secret = process.env.BIAB_REVALIDATION_SECRET;
 
@@ -24,17 +28,21 @@ const handler = secret
 		})
 	: null;
 
-export const ServerRoute = createServerFileRoute("/api/biab/revalidate").methods({
-	POST: async ({ request }) => {
-		if (!handler) {
-			return new Response(
-				JSON.stringify({
-					ok: false,
-					reason: "BIAB_REVALIDATION_SECRET not configured",
-				}),
-				{ status: 500, headers: { "Content-Type": "application/json" } },
-			);
-		}
-		return await handler(request);
+export const Route = createFileRoute("/api/biab/revalidate")({
+	server: {
+		handlers: {
+			POST: ({ request }) => {
+				if (!handler) {
+					return new Response(
+						JSON.stringify({
+							ok: false,
+							reason: "BIAB_REVALIDATION_SECRET not configured",
+						}),
+						{ status: 500, headers: { "Content-Type": "application/json" } },
+					);
+				}
+				return handler(request);
+			},
+		},
 	},
 });

@@ -1,0 +1,4 @@
+<article>
+  <h1>{@page["heading"] || "#{String.capitalize(@service)} in #{String.capitalize(@area)}"}</h1>
+  <div>{raw(@page["html"] || @page["body"] || "")}</div>
+</article>

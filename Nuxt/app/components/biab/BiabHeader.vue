@@ -1,13 +1,15 @@
 <template>
 	<header class="app-header">
 		<div class="app-header__inner">
-			<div class="app-header__brand">Your Business</div>
+			<NuxtLink class="app-header__brand" to="/">Your Business</NuxtLink>
 			<nav>
-				<a href="#services">Services</a>
-				<a href="#gallery">Gallery</a>
-				<a href="#booking">Book</a>
-				<a href="#blog">Blog</a>
-				<a href="#contact">Contact</a>
+				<NuxtLink to="/store">Store</NuxtLink>
+				<NuxtLink to="/services">Service areas</NuxtLink>
+				<NuxtLink to="/reviews">Reviews</NuxtLink>
+				<NuxtLink to="/updates">Updates</NuxtLink>
+				<NuxtLink to="/todos">Todos</NuxtLink>
+				<NuxtLink to="/cart">Cart</NuxtLink>
+				<NuxtLink to="/my-account">Account</NuxtLink>
 			</nav>
 		</div>
 	</header>

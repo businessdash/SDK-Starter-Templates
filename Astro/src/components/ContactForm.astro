@@ -1,148 +1,87 @@
 ---
 /**
- * Contact form — schema-driven.
+ * Contact form — the SDK's `<biab-form>` web component (framework-agnostic, no
+ * React, so it fits this React-free Astro starter).
  *
- * Server-render the field definitions (cached on BIAB; admin edits
- * in the dashboard update them via webhook). Client `<script>`
- * posts the data through the Astro endpoint, which calls
- * `biab.forms.submit(...)` — the SDK runs `validateFormSubmission`
- * against the same schema server-side before persisting.
+ * It fetches the schema and renders EVERY field type — including the rich
+ * `general-inquiry` default form's flex-row layout, the conditional
+ * preferred-method block, the checkbox group, and the availability picker —
+ * then validates and submits. The hand-rolled flat renderer this replaced could
+ * only show top-level text inputs.
+ *
+ * All network calls go through this template's same-origin `/api/biab/forms/[slug]`
+ * proxy (see `src/pages/api/biab/forms/[slug].ts`), so the BIAB bearer key never
+ * reaches the browser. To use your own form, change `FORM_SLUG` to a slug you
+ * authored in BIAB → Forms (or just create a `general-inquiry` form to override
+ * the platform default).
+ *
+ * The `<biab-form>` element is created in the client `<script>` AFTER the proxy
+ * client is registered — the element renders an error hint if it upgrades before
+ * a client exists, and doesn't re-mount when one arrives later.
  */
-import { biab } from "../lib/biab";
-import type { FormSchema, FormFieldDef } from "@biab-dev/sdk";
-
-const FORM_SLUG = "contact";
-
-const FALLBACK_SCHEMA: FormSchema = {
-	id: "fallback",
-	slug: FORM_SLUG,
-	title: "Get in touch",
-	description: "We'll get back within one business day.",
-	fields: [
-		{ id: "name", label: "Name", type: "text", required: true },
-		{ id: "email", label: "Email", type: "email", required: true },
-		{ id: "message", label: "Message", type: "textarea", required: true },
-	],
-};
-
-let schema: FormSchema = FALLBACK_SCHEMA;
-
-if (biab) {
-	try {
-		schema = await biab.forms.schema(FORM_SLUG);
-	} catch {
-		// stay on fallback
-	}
-}
-
-function inputType(field: FormFieldDef): "email" | "text" {
-	return field.type === "email" ? "email" : "text";
-}
+const FORM_SLUG = "general-inquiry";
 ---
 
 <section class="biab-section biab-section--narrow" id="contact">
 	<div class="biab-section__lead">
 		<span class="biab-section__eyebrow">Contact</span>
-		<h2 class="biab-section__title">{schema.title ?? "Get in touch"}</h2>
-		{
-			schema.description ? (
-				<p class="biab-section__sub">{schema.description}</p>
-			) : null
-		}
+		<h2 class="biab-section__title">Get in touch</h2>
+		<p class="biab-section__sub">We'll get back within one business day.</p>
 	</div>
-
-	<form
-		class="biab-card contact"
-		data-contact-form
-		data-form-slug={FORM_SLUG}
-	>
-		{
-			schema.fields.map((field) => (
-				<div>
-					<label class="biab-label" for={`field-${field.id}`}>
-						{field.label}
-						{field.required ? " *" : ""}
-					</label>
-					{field.type === "textarea" ? (
-						<textarea
-							class="biab-textarea"
-							id={`field-${field.id}`}
-							name={field.id}
-							placeholder={field.placeholder ?? ""}
-							required={field.required}
-						/>
-					) : (
-						<input
-							class="biab-input"
-							id={`field-${field.id}`}
-							name={field.id}
-							placeholder={field.placeholder ?? ""}
-							required={field.required}
-							type={inputType(field)}
-						/>
-					)}
-				</div>
-			))
-		}
-		<button class="biab-btn" style="align-self: flex-start;" type="submit">
-			Send message
-		</button>
-		<div data-form-error hidden></div>
-	</form>
+	<div class="biab-card contact" data-biab-contact data-slug={FORM_SLUG}></div>
 </section>
 
 <script>
-	const form = document.querySelector<HTMLFormElement>("[data-contact-form]");
-	const errorBox = form?.querySelector<HTMLDivElement>("[data-form-error]");
+	import { setBiabFormClient } from "@businessdash/sdk/element";
+	import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
-	form?.addEventListener("submit", async (event) => {
-		event.preventDefault();
-		if (!form || !errorBox) return;
-		errorBox.hidden = true;
-		const slug = form.dataset.formSlug;
-		if (!slug) return;
-		const submitBtn = form.querySelector<HTMLButtonElement>(
-			"button[type=submit]",
-		);
-		if (submitBtn) {
-			submitBtn.disabled = true;
-			submitBtn.textContent = "Sending…";
-		}
-		const data: Record<string, string> = {};
-		new FormData(form).forEach((value, key) => {
-			data[key] = String(value);
-		});
-		try {
-			const res = await fetch(
-				`/api/biab/forms/${encodeURIComponent(slug)}`,
-				{
+	// Same-origin proxy → /api/biab/forms/[slug]; the bearer key stays server-side.
+	setBiabFormClient({
+		forms: {
+			async schema(slug: string): Promise<FormSchema> {
+				const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`);
+				if (!res.ok) throw new Error(`Failed to load form (${res.status}).`);
+				return (await res.json()) as FormSchema;
+			},
+			async submit(
+				slug: string,
+				data: Record<string, unknown>,
+				opts?: { submitterEmail?: string; submitterName?: string },
+			): Promise<FormSubmitResult> {
+				const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
 						data,
-						submitterEmail: data.email,
-						submitterName: data.name,
+						submitterEmail: opts?.submitterEmail,
+						submitterName: opts?.submitterName,
 					}),
-				},
-			);
-			if (!res.ok) throw new Error(await res.text());
-			form.outerHTML = `
-				<div class="biab-card contact">
-					<span class="biab-badge" style="align-self: flex-start;">Received</span>
-					<h2 class="biab-section__title">Got it.</h2>
-					<p>Thanks — we'll be in touch within one business day.</p>
-				</div>
-			`;
-		} catch (err) {
-			const message = err instanceof Error ? err.message : "Couldn't submit.";
-			errorBox.hidden = false;
-			errorBox.textContent = message;
-			errorBox.style.cssText =
-				"color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;";
-			if (submitBtn) {
-				submitBtn.disabled = false;
-				submitBtn.textContent = "Send message";
-			}
-		}
+				});
+				const body = (await res.json().catch(() => null)) as
+					| (FormSubmitResult & { error?: string })
+					| null;
+				if (body && typeof body.ok === "boolean") return body;
+				if (res.ok) {
+					return { ok: true, status: res.status } as FormSubmitResult;
+				}
+				return {
+					ok: false,
+					status: res.status,
+					reason: "server_error",
+					message: body?.error ?? `Submission failed (${res.status}).`,
+				} as FormSubmitResult;
+			},
+		},
 	});
+
+	// Create the element only after the client is set (avoids the no-client hint).
+	const mount = document.querySelector<HTMLDivElement>("[data-biab-contact]");
+	if (mount) {
+		const form = document.createElement("biab-form");
+		form.setAttribute("slug", mount.dataset.slug ?? "general-inquiry");
+		form.setAttribute("submit-label", "Send message");
+		form.setAttribute("auto-complete", "true");
+		form.className = mount.className;
+		mount.replaceWith(form);
+	}
 </script>

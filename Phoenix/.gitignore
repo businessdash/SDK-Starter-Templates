@@ -1,0 +1,16 @@
+/_build/
+/cover/
+/deps/
+/doc/
+/.fetch
+erl_crash.dump
+*.ez
+*.beam
+/config/*.secret.exs
+.elixir_ls/
+/priv/static/assets/app.js
+/priv/static/assets/app.js.map
+/priv/static/cache_manifest.json
+/node_modules/
+.env
+.env.local

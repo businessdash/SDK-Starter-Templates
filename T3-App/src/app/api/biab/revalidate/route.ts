@@ -10,7 +10,7 @@
  * One-line export — the handler reads `BIAB_REVALIDATION_SECRET`
  * from env automatically.
  */
-export { POST } from "@biab-dev/sdk/next/revalidate";
+export { POST } from "@businessdash/sdk/next/revalidate";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";

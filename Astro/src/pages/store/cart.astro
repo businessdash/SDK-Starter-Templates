@@ -1,0 +1,457 @@
+---
+/**
+ * Cart view. Server-renders the current `CartSnapshot` (read-only, no token
+ * minting), then small inline islands drive the mutations against the Astro
+ * cart endpoints under `/api/biab/cart/*`:
+ *   - quantity stepper       → /api/biab/cart/update
+ *   - remove line item       → /api/biab/cart/remove
+ *   - apply / remove coupon  → /api/biab/cart/coupon
+ *   - clear cart             → /api/biab/cart/clear
+ *   - checkout               → /api/biab/checkout/start  (→ Stripe redirect)
+ *
+ * Each mutation returns the fresh snapshot; the island re-renders the totals
+ * + line items from it without a full reload. `?status=success|cancelled`
+ * (set by the Stripe return URLs) shows a small banner.
+ */
+import { getCartSnapshot, isStoreConfigured } from "../../lib/biab-store";
+import Layout from "../../layouts/Layout.astro";
+
+export const prerender = false;
+
+const cart = await getCartSnapshot(Astro.cookies);
+const status = Astro.url.searchParams.get("status");
+
+function money(cents: number, currency = "USD"): string {
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: currency.toUpperCase(),
+	}).format(cents / 100);
+}
+
+const items = cart?.items ?? [];
+const currency = cart?.currency ?? "USD";
+---
+
+<Layout
+	title="Cart — Your Business"
+	description="Review your cart and check out."
+	hideBanner
+>
+	<section class="biab-section biab-section--narrow" id="cart">
+		<div class="biab-section__lead" style="text-align: left;">
+			<span class="biab-section__eyebrow">Checkout</span>
+			<h2 class="biab-section__title">Your cart</h2>
+		</div>
+
+		{
+			status === "success" ? (
+				<div class="cart-flash cart-flash--ok">
+					Payment received — thank you! Your order is being processed.
+				</div>
+			) : status === "cancelled" ? (
+				<div class="cart-flash">Checkout cancelled. Your cart is intact.</div>
+			) : null
+		}
+
+		{
+			!isStoreConfigured() ? (
+				<div class="biab-empty">Store isn't connected.</div>
+			) : (
+				<div
+					class="cart"
+					data-cart
+					data-empty={items.length === 0 ? "true" : "false"}
+					data-currency={currency}
+				>
+					<div class="biab-empty" data-cart-empty hidden={items.length > 0}>
+						Your cart is empty. <a href="/store">Browse the store →</a>
+					</div>
+
+					<div data-cart-body hidden={items.length === 0}>
+						<ul class="cart-items" data-cart-items>
+							{items.map((it) => (
+								<li class="biab-card cart-item" data-item-id={it.id}>
+									{it.productImage ? (
+										<img
+											class="cart-item__img"
+											src={it.productImage}
+											alt={it.productName ?? "Item"}
+										/>
+									) : (
+										<div class="cart-item__img cart-item__img--empty" />
+									)}
+									<div class="cart-item__info">
+										<div class="cart-item__name">
+											{it.productName ?? "Item"}
+										</div>
+										{it.variantTitle ? (
+											<div class="cart-item__variant">{it.variantTitle}</div>
+										) : null}
+										<div class="cart-item__unit">
+											{money(it.unitPrice, it.currency)} each
+										</div>
+									</div>
+									<div class="cart-item__controls">
+										<input
+											class="biab-input cart-item__qty"
+											type="number"
+											min="0"
+											value={String(it.quantity)}
+											data-qty
+											aria-label="Quantity"
+										/>
+										<button
+											class="cart-item__remove"
+											data-remove
+											type="button"
+											aria-label="Remove"
+										>
+											Remove
+										</button>
+									</div>
+									<div class="cart-item__subtotal" data-line-subtotal>
+										{money(it.subtotal, it.currency)}
+									</div>
+								</li>
+							))}
+						</ul>
+
+						<div class="cart-summary biab-card">
+							<div class="cart-coupon">
+								<input
+									class="biab-input"
+									data-coupon-input
+									placeholder="Coupon code"
+									value={cart?.couponCode ?? ""}
+								/>
+								<button
+									class="biab-btn biab-btn--ghost"
+									data-coupon-apply
+									type="button"
+								>
+									{cart?.couponCode ? "Update" : "Apply"}
+								</button>
+								{cart?.couponCode ? (
+									<button
+										class="cart-item__remove"
+										data-coupon-remove
+										type="button"
+									>
+										Remove coupon
+									</button>
+								) : null}
+							</div>
+
+							<div class="cart-total">
+								<span>Subtotal</span>
+								<strong data-cart-subtotal>
+									{money(cart?.subtotal ?? 0, currency)}
+								</strong>
+							</div>
+
+							<div class="cart-actions">
+								<button
+									class="cart-item__remove"
+									data-clear
+									type="button"
+								>
+									Clear cart
+								</button>
+								<button class="biab-btn" data-checkout type="button">
+									Checkout
+								</button>
+							</div>
+							<div data-cart-error hidden></div>
+						</div>
+					</div>
+				</div>
+			)
+		}
+	</section>
+</Layout>
+
+<style>
+	.cart-flash {
+		padding: 0.85rem 1.25rem;
+		border-radius: 0.75rem;
+		margin-bottom: 1.5rem;
+		font-size: 0.92rem;
+		background: var(--accent-bg);
+		color: var(--accent);
+		border: 1px solid var(--accent-border);
+	}
+	.cart-flash--ok {
+		background: var(--success-bg);
+		color: var(--success);
+		border-color: var(--success);
+	}
+	.cart-items {
+		list-style: none;
+		margin: 0 0 1.5rem;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+	.cart-item {
+		display: grid;
+		grid-template-columns: 4rem 1fr auto auto;
+		gap: 1rem;
+		align-items: center;
+		padding: 0.85rem 1.25rem;
+	}
+	.cart-item__img {
+		width: 4rem;
+		height: 4rem;
+		object-fit: cover;
+		border-radius: 0.6rem;
+	}
+	.cart-item__img--empty {
+		background: var(--bg-soft);
+	}
+	.cart-item__name {
+		font-weight: 600;
+		color: var(--title);
+	}
+	.cart-item__variant,
+	.cart-item__unit {
+		font-size: 0.82rem;
+		color: var(--text-muted);
+	}
+	.cart-item__controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		align-items: flex-end;
+	}
+	.cart-item__qty {
+		width: 4.5rem;
+		text-align: center;
+	}
+	.cart-item__remove {
+		background: none;
+		border: none;
+		color: var(--danger);
+		font-size: 0.8rem;
+		padding: 0;
+		text-decoration: underline;
+	}
+	.cart-item__subtotal {
+		font-weight: 700;
+		color: var(--title);
+		min-width: 5rem;
+		text-align: right;
+	}
+	.cart-summary {
+		padding: 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.cart-coupon {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	.cart-total {
+		display: flex;
+		justify-content: space-between;
+		font-size: 1.1rem;
+		border-top: 1px solid var(--border);
+		padding-top: 1rem;
+	}
+	.cart-actions {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	@media (max-width: 560px) {
+		.cart-item {
+			grid-template-columns: 3rem 1fr;
+		}
+		.cart-item__controls,
+		.cart-item__subtotal {
+			grid-column: 1 / -1;
+			align-items: flex-start;
+			text-align: left;
+		}
+	}
+</style>
+
+<script>
+	type CartItem = {
+		id: string;
+		productName: string | null;
+		productImage: string | null;
+		variantTitle: string | null;
+		quantity: number;
+		unitPrice: number;
+		subtotal: number;
+		currency: string;
+	};
+	type Cart = {
+		items: CartItem[];
+		subtotal: number;
+		currency: string;
+		couponCode: string | null;
+		itemCount: number;
+	};
+
+	const root = document.querySelector<HTMLDivElement>("[data-cart]");
+	if (root) {
+		const currency = root.dataset.currency ?? "USD";
+		const errorBox = root.querySelector<HTMLDivElement>("[data-cart-error]");
+
+		function money(cents: number, c = currency): string {
+			return new Intl.NumberFormat(undefined, {
+				style: "currency",
+				currency: c.toUpperCase(),
+			}).format(cents / 100);
+		}
+
+		function showError(msg: string) {
+			if (!errorBox) return;
+			errorBox.hidden = false;
+			errorBox.textContent = msg;
+			errorBox.style.cssText =
+				"color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem; margin-top: 0.75rem;";
+		}
+
+		async function post(path: string, body?: unknown): Promise<Cart> {
+			if (errorBox) errorBox.hidden = true;
+			const res = await fetch(path, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: body ? JSON.stringify(body) : undefined,
+			});
+			const data = (await res.json()) as { cart?: Cart; error?: string };
+			if (!res.ok || !data.cart) {
+				throw new Error(data.error ?? "Request failed.");
+			}
+			return data.cart;
+		}
+
+		function render(cart: Cart) {
+			// Cart emptied → flip to the empty state and reload to clear coupons etc.
+			if (cart.items.length === 0) {
+				window.location.reload();
+				return;
+			}
+			const subtotalEl =
+				root!.querySelector<HTMLElement>("[data-cart-subtotal]");
+			if (subtotalEl) subtotalEl.textContent = money(cart.subtotal);
+			for (const item of cart.items) {
+				const row = root!.querySelector<HTMLLIElement>(
+					`[data-item-id="${item.id}"]`,
+				);
+				if (!row) continue;
+				const qty = row.querySelector<HTMLInputElement>("[data-qty]");
+				if (qty) qty.value = String(item.quantity);
+				const sub = row.querySelector<HTMLElement>("[data-line-subtotal]");
+				if (sub) sub.textContent = money(item.subtotal, item.currency);
+			}
+			// Remove rows no longer in the snapshot.
+			const ids = new Set(cart.items.map((i) => i.id));
+			root!
+				.querySelectorAll<HTMLLIElement>("[data-item-id]")
+				.forEach((li) => {
+					if (!ids.has(li.dataset.itemId ?? "")) li.remove();
+				});
+		}
+
+		// Quantity steppers
+		root
+			.querySelectorAll<HTMLInputElement>("[data-qty]")
+			.forEach((input) => {
+				input.addEventListener("change", async () => {
+					const li = input.closest<HTMLLIElement>("[data-item-id]");
+					const itemId = li?.dataset.itemId;
+					if (!itemId) return;
+					const quantity = Math.max(0, Number(input.value) || 0);
+					try {
+						render(await post("/api/biab/cart/update", { itemId, quantity }));
+					} catch (err) {
+						showError(err instanceof Error ? err.message : "Update failed.");
+					}
+				});
+			});
+
+		// Remove buttons
+		root
+			.querySelectorAll<HTMLButtonElement>("[data-remove]")
+			.forEach((btn) => {
+				btn.addEventListener("click", async () => {
+					const li = btn.closest<HTMLLIElement>("[data-item-id]");
+					const itemId = li?.dataset.itemId;
+					if (!itemId) return;
+					try {
+						render(await post("/api/biab/cart/remove", { itemId }));
+					} catch (err) {
+						showError(err instanceof Error ? err.message : "Remove failed.");
+					}
+				});
+			});
+
+		// Coupon
+		root
+			.querySelector<HTMLButtonElement>("[data-coupon-apply]")
+			?.addEventListener("click", async () => {
+				const code = root
+					.querySelector<HTMLInputElement>("[data-coupon-input]")
+					?.value.trim();
+				try {
+					render(await post("/api/biab/cart/coupon", { code }));
+					window.location.reload();
+				} catch (err) {
+					showError(err instanceof Error ? err.message : "Coupon failed.");
+				}
+			});
+		root
+			.querySelector<HTMLButtonElement>("[data-coupon-remove]")
+			?.addEventListener("click", async () => {
+				try {
+					await post("/api/biab/cart/coupon", {});
+					window.location.reload();
+				} catch (err) {
+					showError(err instanceof Error ? err.message : "Couldn't remove.");
+				}
+			});
+
+		// Clear
+		root
+			.querySelector<HTMLButtonElement>("[data-clear]")
+			?.addEventListener("click", async () => {
+				try {
+					await post("/api/biab/cart/clear");
+					window.location.reload();
+				} catch (err) {
+					showError(err instanceof Error ? err.message : "Clear failed.");
+				}
+			});
+
+		// Checkout
+		root
+			.querySelector<HTMLButtonElement>("[data-checkout]")
+			?.addEventListener("click", async (event) => {
+				const btn = event.currentTarget as HTMLButtonElement;
+				btn.disabled = true;
+				btn.textContent = "Redirecting…";
+				if (errorBox) errorBox.hidden = true;
+				try {
+					const res = await fetch("/api/biab/checkout/start", {
+						method: "POST",
+					});
+					const data = (await res.json()) as { url?: string; error?: string };
+					if (!res.ok || !data.url) {
+						throw new Error(data.error ?? "Couldn't start checkout.");
+					}
+					window.location.href = data.url;
+				} catch (err) {
+					showError(err instanceof Error ? err.message : "Checkout failed.");
+					btn.disabled = false;
+					btn.textContent = "Checkout";
+				}
+			});
+	}
+</script>

@@ -15,8 +15,16 @@ The `$` suffix on both is Qwik's marker that everything *inside* is server-only 
 browser → page load → routeLoader$()        → biab.gallery.list(...) → BIAB
         ↘ client click → server$()          → biab.scheduling.confirm(...) → BIAB
                                             ↑
-                                            └ @biab-dev/sdk lives only in server$ scope
+                                            └ @businessdash/sdk lives only in server$ scope
 ```
+
+## What's new (SDK 0.9.53)
+
+Three additions, mirrored across every starter — all `RequestHandler`s or `routeLoader$`/`server$` bodies, so the split above doesn't change:
+
+- **AEO / llms.txt** — `src/routes/llms.txt/index.ts` serves the answer-engine index the org curates at BIAB → Marketing → AI Distribution from this site's own root (`llmsTxtHandler` from `@businessdash/sdk/distribution`). The product feed needs no proxy — submit its BIAB URL (built by `productFeedUrl`) to merchant programs directly; `src/routes/ai/product-feed/index.ts` is a convenience redirect to it.
+- **MCP connector proxy** — `src/routes/api/mcp/index.ts` (JSON-RPC) + `src/routes/.well-known/mcp.json/index.ts` (discovery manifest) give this self-hosted domain the same per-site MCP connector the platform serves natively, via `mcpHandler` + `mcpManifestHandler` from `@businessdash/sdk/mcp`. The URL an org hands to Claude / ChatGPT / Gemini is their own site; BIAB still enforces the org's MCP opt-in and per-tool write gates.
+- **Relational custom collections (`/todos`)** — `biab.data-model.config.ts` declares two related collections (`todos`, and `todoImages` with a required RELATION to `todos`) with the 0.9.50+ `collection()` + `bd` builders. Push with `pnpm sync-data-model`, promote in the dashboard, set the generated "Todo Form" live, then open `/todos` — `routeLoader$` lists todos (images joined on, in `src/lib/biab-todos.ts`) via `dataModel.listRecords`, and creates go through the generated `todo-form` rendered by `<BiabForm>` with a `server$` submit. Reads go through the data-model client, writes go through forms; there is no direct row-write API for consumers.
 
 ## Setup
 
@@ -56,6 +64,94 @@ Two patterns, both clean:
 
 No API endpoint files needed for the second case — Qwik generates the transport.
 
+## Full SDK surface (parity with the reference consumer)
+
+Beyond the home page, this starter demonstrates every BIAB SDK surface the
+canonical consumer (DGP-2026) uses — each in a Qwik idiom. The SDK key stays
+server-side: everything below runs inside `routeLoader$`, `server$`,
+`routeAction$`, or a request handler, all of which Qwik strips from the client
+bundle.
+
+### Server-only helper libraries
+
+| File | What it wraps |
+| --- | --- |
+| `src/lib/biab.ts` | The `createBiabClient` factory (returns `null` when unconfigured). |
+| `src/lib/biab-store.ts` | Storefront / cart / checkout / subscriptions. Owns the `biab_cart_visitor` httpOnly cookie (read with `getVisitorToken`, mint with `ensureVisitorToken`). |
+| `src/lib/biab-portal.ts` | `getTenantSession` on the `biab_session` cookie + `customerPortal(org).withSession(token)` (work bundle, review submit). |
+| `src/lib/biab-content.ts` | `bundle.banner` / `bundle.updates` extraction, reviews-wall pagination (`reviews.list`), and `localBusiness` + `website` JSON-LD via `@businessdash/sdk/seo`. |
+
+### Storefront + commerce
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **Product list** | `src/routes/store/index.tsx` | `storefront.listProducts()` |
+| **Product detail + add to cart** | `src/routes/store/[id]/index.tsx` | `storefront.getProduct(id)`, `cart.forVisitor(token).addItem(...)` via `server$` |
+| **Cart** (update / remove / coupon / clear / checkout) | `src/routes/cart/index.tsx` | `cart.forVisitor(token).*`, `checkout.forVisitor(token).start(...)` via `server$` |
+| **Order confirmation** | `src/routes/store/order/index.tsx` | `checkout.getStatus(sessionId)` |
+| **Subscriptions** | `src/routes/subscriptions/index.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` |
+
+The cart is keyed on a visitor token we own — an httpOnly `biab_cart_visitor`
+cookie minted on the first mutation through Qwik's RequestEvent `cookie` API. No
+separate API endpoint files: cart/checkout mutations are `server$` RPCs that
+read/write the cookie via `this.cookie` and return a fresh `CartSnapshot`.
+
+### Auth + customer portal
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **Auth handler** (catch-all) | `src/routes/api/biab-auth/[...slug]/index.ts` | `createAuthHandler({...})` — bridged through `onGet`/`onPost`, mirroring the revalidate endpoint |
+| **My account** (session + work bundle + review form) | `src/routes/my-account/index.tsx` | `getTenantSession({ cookieValue })`, `customerPortal(org).withSession(token).getWork()` / `.submitReview(...)` |
+
+Auth uses plain links — `/api/biab-auth/sign-in`, `/api/biab-auth/sign-up`,
+`/api/biab-auth/sign-out` — no React `SignIn`/`useUser` needed. The header's
+sign-in vs. account state is resolved server-side per route from the validated
+`biab_session` cookie. Review submission is a `routeAction$` validated with
+`zod$`.
+
+### Reviews, banner, updates
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **Reviews wall** (aggregate + load-more) | `src/routes/reviews/index.tsx` | `reviews.list({ limit, offset })` paginated via `server$` |
+| **News banner** (dismissible) | `src/components/biab/Banner.tsx` (fed by the home loader) | `bundle.banner` |
+| **Updates feed** | `src/routes/updates/index.tsx` | `bundle.updates` |
+
+### SEO
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **JSON-LD** (`localBusiness` + `website`) | built in `src/lib/biab-content.ts`, injected via the home page `head.scripts` | `@businessdash/sdk/seo` |
+| **sitemap.xml** (proxy) | `src/routes/sitemap.xml/index.ts` | `parallelPages.sitemapUrl()` |
+| **robots.txt** (proxy) | `src/routes/robots.txt/index.ts` | `parallelPages.robotsUrl()` |
+
+### Parallel pages (programmatic SEO)
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **Variant index** | `src/routes/services/index.tsx` | `parallelPages.listVariants("service-area")` |
+| **Per-variant render** | `src/routes/services/[service]/[area]/index.tsx` | `parallelPages.render("service-area", { service, area })` |
+
+Token resolution (`{service.type}`, `{area.name}`, …) happens server-side inside
+BIAB, so crawlers see fully-resolved HTML. `meta.title` / `meta.description` /
+`meta.canonical` feed the page `head`.
+
+### Suspension handling + graceful degradation
+
+Store, subscriptions, and parallel-page loaders catch
+`BiabPaymentLapsedError` / `BiabServiceSuspendedError` and render a minimal
+"temporarily unavailable" state (the parallel-page route also sets HTTP 503).
+Every new surface no-ops gracefully when the BIAB env vars are unset — the page
+renders an "isn't connected yet" hint instead of crashing.
+
+## CLI scripts
+
+```sh
+bun run sync-schema    # publish biab.config.ts schema to BIAB's draft slot
+bun run sync-content   # (optional) push local JSON content up
+bun run print-schema   # print the resolved schema for debugging
+```
+
 ## Webhook revalidation (built in)
 
 `src/routes/api/biab/revalidate/index.ts` mounts the SDK's framework-agnostic handler via `onPost`. Register the URL in BIAB at `/dashboard/settings/integrations`, paste the `whsec_…` into `BIAB_REVALIDATION_SECRET`, and BIAB will POST a signed `content.published` event on every publish.
@@ -65,21 +161,37 @@ Qwik re-runs `routeLoader$` per request so the callback is a logger today — wh
 ## Project layout (BIAB-relevant only)
 
 ```
+biab.config.ts                                 # marketing schema + parallel-page def
 src/
-├── lib/biab.ts                                # SDK client (server-only)
+├── lib/
+│   ├── biab.ts                                # SDK client (server-only)
+│   ├── biab-store.ts                          # storefront / cart / checkout / subs + visitor cookie
+│   ├── biab-portal.ts                         # session + customer portal
+│   └── biab-content.ts                        # banner / updates / reviews / JSON-LD
 ├── global.css                                 # BIAB CSS vars + section styles
 ├── components/biab/
-│   ├── Header.tsx
+│   ├── Header.tsx                             # home anchor nav
+│   ├── SiteHeader.tsx                         # cross-page nav (store/cart/auth)
+│   ├── Banner.tsx                             # dismissible bundle.banner bar
 │   ├── Footer.tsx
-│   ├── Hero.tsx
-│   ├── About.tsx
-│   ├── Services.tsx
-│   ├── Gallery.tsx
-│   ├── Blog.tsx
+│   ├── Hero.tsx · About.tsx · Services.tsx · Gallery.tsx · Blog.tsx
 │   ├── Booking.tsx                            # useSignal + server$ RPCs
 │   └── ContactForm.tsx                        # useSignal + server$ RPC
 └── routes/
-    ├── index.tsx                              # routeLoader$ + composes sections
+    ├── index.tsx                              # routeLoader$ + banner + JSON-LD
+    ├── store/index.tsx                        # product list
+    ├── store/[id]/index.tsx                   # product detail + add to cart
+    ├── store/order/index.tsx                  # Stripe checkout return
+    ├── cart/index.tsx                         # cart mutations + checkout
+    ├── subscriptions/index.tsx               # subscription plans
+    ├── reviews/index.tsx                      # reviews wall + load more
+    ├── updates/index.tsx                      # bundle.updates feed
+    ├── my-account/index.tsx                   # portal: work bundle + review form
+    ├── services/index.tsx                     # parallel-page variant index
+    ├── services/[service]/[area]/index.tsx    # parallel-page render
+    ├── sitemap.xml/index.ts                   # SEO proxy
+    ├── robots.txt/index.ts                    # SEO proxy
+    ├── api/biab-auth/[...slug]/index.ts       # auth handler (onGet/onPost)
     └── api/biab/revalidate/index.ts           # Webhook receiver
 ```
 
@@ -95,3 +207,43 @@ npm run qwik add netlify-edge
 ```
 
 The BIAB layer doesn't change — only the runtime where `routeLoader$` and `server$` execute.
+
+
+## Where your content comes from
+
+Nothing business-specific is hardcoded in this template — it all comes from BIAB,
+through **two distinct sources**. Keep them straight:
+
+### 1. Company Profile — managed in the dashboard
+
+Your **service hours, service areas, payment options, warranties, social links,
+and phone number** are edited in your BIAB dashboard under
+**Settings → Company Profile**, and arrive on the marketing bundle. Read them off
+the bundle — never hardcode them in this template:
+
+```ts
+const bundle = await client.marketing.getPageBundle({ pageKey, locale });
+bundle.company.profile.operationHours; // service hours
+bundle.company.profile.serviceAreas;   // areas served
+bundle.company.profile.paymentOptions; // accepted payments
+bundle.company.profile.warranties;     // warranty terms
+bundle.company.profile.socials;        // footer social links
+bundle.company.profile.phone;          // footer phone
+```
+
+Change them in the dashboard and the site follows. They are **not** part of the
+content sync below.
+
+### 2. Marketing content — schema + content sync
+
+Your page copy (hero, about, services, …) is declared as a schema in
+`biab.config.ts` and seeded from `src/content/<locale>/…`. Push both with the
+package scripts:
+
+```sh
+sync-schema    # push the content SCHEMA to BIAB's draft slot, then promote it in the dashboard
+sync-content   # seed the section VALUES from src/content/**
+```
+
+Put one JSON file per section under `src/content/<locale>/<page>/<section>.json`
+(matching `biab.config.ts`), then run `sync-content`. Edit and re-run any time.

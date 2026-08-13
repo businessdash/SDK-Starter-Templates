@@ -25,7 +25,7 @@ export async function renderHero(): Promise<string> {
 				"ok" in raw &&
 				(raw as { ok: boolean }).ok
 			) {
-				const data = (raw as { data: Record<string, unknown> }).data;
+				const data = (raw as unknown as { data: Record<string, unknown> }).data;
 				hero = {
 					title: (data?.["title"] as string) ?? defaults.title,
 					tagline: (data?.["tagline"] as string) ?? defaults.tagline,

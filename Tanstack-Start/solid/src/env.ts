@@ -1,39 +1,48 @@
-import { createEnv } from '@t3-oss/env-core'
-import { z } from 'zod'
+import { createEnv } from "@t3-oss/env-core";
+import { z } from "zod";
 
 export const env = createEnv({
-  server: {
-    SERVER_URL: z.url().optional(),
-  },
+	server: {
+		SERVER_URL: z.url().optional(),
+	},
 
-  /**
-   * The prefix that client-side variables must have. This is enforced both at
-   * a type-level and at runtime.
-   */
-  clientPrefix: 'VITE_',
+	/**
+	 * The prefix that client-side variables must have. This is enforced both at
+	 * a type-level and at runtime.
+	 */
+	clientPrefix: "VITE_",
 
-  client: {
-    VITE_APP_TITLE: z.string().min(1).optional(),
-  },
+	client: {
+		VITE_APP_TITLE: z.string().min(1).optional(),
+		// Browser-safe BIAB config. All optional so the template still boots
+		// unconfigured. NOTE: this schema's `clientPrefix` is "VITE_", so the
+		// canonical `VITE_BIAB_*` names the BIAB wizard emits can't be
+		// declared here — they're read directly via `import.meta.env` (exposed
+		// to the browser by `envPrefix` in vite.config.ts), with these VITE_
+		// twins kept as fallbacks for existing setups.
+		VITE_BIAB_SITE_ID: z.string().optional(),
+		VITE_BIAB_PACKAGE_API_BASE_URL: z.string().optional(),
+		VITE_BIAB_PUBLIC_KEY: z.string().optional(),
+	},
 
-  /**
-   * What object holds the environment variables at runtime. This is usually
-   * `process.env` or `import.meta.env`.
-   */
-  runtimeEnv: import.meta.env,
+	/**
+	 * What object holds the environment variables at runtime. This is usually
+	 * `process.env` or `import.meta.env`.
+	 */
+	runtimeEnv: import.meta.env,
 
-  /**
-   * By default, this library will feed the environment variables directly to
-   * the Zod validator.
-   *
-   * This means that if you have an empty string for a value that is supposed
-   * to be a number (e.g. `PORT=` in a ".env" file), Zod will incorrectly flag
-   * it as a type mismatch violation. Additionally, if you have an empty string
-   * for a value that is supposed to be a string with a default value (e.g.
-   * `DOMAIN=` in an ".env" file), the default value will never be applied.
-   *
-   * In order to solve these issues, we recommend that all new projects
-   * explicitly specify this option as true.
-   */
-  emptyStringAsUndefined: true,
-})
+	/**
+	 * By default, this library will feed the environment variables directly to
+	 * the Zod validator.
+	 *
+	 * This means that if you have an empty string for a value that is supposed
+	 * to be a number (e.g. `PORT=` in a ".env" file), Zod will incorrectly flag
+	 * it as a type mismatch violation. Additionally, if you have an empty string
+	 * for a value that is supposed to be a string with a default value (e.g.
+	 * `DOMAIN=` in an ".env" file), the default value will never be applied.
+	 *
+	 * In order to solve these issues, we recommend that all new projects
+	 * explicitly specify this option as true.
+	 */
+	emptyStringAsUndefined: true,
+});

@@ -1,14 +1,19 @@
+import { Link } from "../lib/router";
+
 export function Header() {
 	return (
 		<header className="app-header">
 			<div className="app-header__inner">
-				<div className="app-header__brand">Your Business</div>
+				<Link className="app-header__brand" to="/">
+					Your Business
+				</Link>
 				<nav>
-					<a href="#services">Services</a>
-					<a href="#gallery">Gallery</a>
-					<a href="#booking">Book</a>
-					<a href="#blog">Blog</a>
-					<a href="#contact">Contact</a>
+					<Link to="/store">Store</Link>
+					<Link to="/subscriptions">Plans</Link>
+					<Link to="/reviews">Reviews</Link>
+					<Link to="/updates">Updates</Link>
+					<Link to="/cart">Cart</Link>
+					<Link to="/my-account">Account</Link>
 				</nav>
 			</div>
 		</header>

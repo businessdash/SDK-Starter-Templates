@@ -1,0 +1,18 @@
+#extend("base"):
+  #export("title"):Plans#endexport
+  #export("content"):
+    <h1>Plans</h1>
+    #if(count(plans) > 0):
+      <ul class="grid">
+        #for(plan in plans):
+          <li class="card">
+            <h2>#(plan.name)</h2>
+            <p class="price">#(plan.price)</p>
+          </li>
+        #endfor
+      </ul>
+    #else:
+      <p class="muted">No plans published yet.</p>
+    #endif
+  #endexport
+#endextend

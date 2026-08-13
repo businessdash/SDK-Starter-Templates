@@ -1,0 +1,103 @@
+---
+/**
+ * Programmatic service-area page — one URL per (service × area) combination
+ * declared by the `service-area` parallel page in `biab.config.ts`.
+ *
+ * Under `output: "server"`, `getStaticPaths` is unidiomatic, so we SSR-render
+ * per request: `parallelPages.render("service-area", { service, area })`
+ * resolves the template's `{service.*}` / `{area.*}` / `{company.*}` tokens on
+ * the BIAB side and returns `{ meta, body }`. We pass `meta.title` /
+ * `description` / `canonical` / `ogImage` to the shared Layout and render the
+ * body below.
+ *
+ * `listVariants("service-area")` powers the link index at `/services` (see
+ * `services/index.astro`). Suspension-aware (503) + unconfigured-safe (404).
+ */
+import { biab } from "../../../lib/biab";
+import {
+	isSuspensionError,
+	suspendedResponse,
+} from "../../../lib/biab-suspension";
+import Layout from "../../../layouts/Layout.astro";
+
+export const prerender = false;
+
+const { service, area } = Astro.params;
+
+type RenderedVariant = {
+	meta: {
+		title?: string | null;
+		description?: string | null;
+		canonical?: string | null;
+		ogImage?: string | null;
+	};
+	body: unknown;
+};
+
+let variant: RenderedVariant | null = null;
+let suspended = false;
+
+if (biab && service && area) {
+	try {
+		variant = (await biab.parallelPages.render("service-area", {
+			service,
+			area,
+		})) as RenderedVariant;
+	} catch (err) {
+		if (isSuspensionError(err)) suspended = true;
+		else variant = null;
+	}
+}
+
+if (suspended) return suspendedResponse();
+if (!variant) {
+	return new Response(null, { status: 404 });
+}
+
+const meta = variant.meta;
+const title = meta.title ?? "Service area";
+const description = meta.description ?? "";
+const body = variant.body as
+	| {
+			PageTitle?: string;
+			PageHeadline?: string;
+			headline?: string;
+			intro?: string;
+	  }
+	| null;
+---
+
+<Layout
+	title={title}
+	description={description}
+	canonical={meta.canonical ?? null}
+	ogImage={meta.ogImage ?? null}
+>
+	<section class="biab-section biab-section--narrow" id="service-area">
+		<a href="/services" style="font-size: 0.9rem; color: var(--text-muted);">
+			← All service areas
+		</a>
+		<header style="margin: 1.5rem 0 2rem;">
+			<h1 class="biab-section__title">{title.split(" | ")[0]}</h1>
+			{
+				description ? (
+					<p class="biab-section__sub" style="margin: 0.75rem 0 0;">
+						{description}
+					</p>
+				) : null
+			}
+		</header>
+		{
+			body?.PageTitle || body?.headline ? (
+				<section class="biab-card" style="padding: 2rem;">
+					<h2>{body.PageTitle ?? body.headline}</h2>
+					{body.PageHeadline || body.intro ? (
+						<p style="margin-top: 0.75rem; color: var(--text-muted);">
+							{body.PageHeadline ?? body.intro}
+						</p>
+					) : null}
+				</section>
+			) : null
+		}
+	</section>
+</Layout>

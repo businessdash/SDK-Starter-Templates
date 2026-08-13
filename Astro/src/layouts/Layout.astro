@@ -1,0 +1,89 @@
+---
+/**
+ * Shared page shell for the secondary surfaces (store, account, reviews,
+ * updates, service-area pages). The home page (`index.astro`) keeps its own
+ * inline shell so the canonical section set stays portable across the other
+ * framework starters; this layout wraps everything else.
+ *
+ * Responsibilities:
+ *  - server-render JSON-LD (`localBusiness` + `website`) into `<head>`
+ *  - render the news banner from `bundle.banner`
+ *  - mount header + footer
+ *  - boot the analytics island (same as the home page)
+ *
+ * Pages may pass a `bundle` they already fetched (avoids a second round-trip);
+ * otherwise the layout fetches the home bundle for SEO + banner. Everything
+ * degrades to starter defaults when BIAB is unconfigured.
+ */
+import "../styles/global.css";
+// SDK form styles — the file-upload box, the multi-step progress header
+// (steps + bar), and the availability/choice chips ship unstyled without
+// this stylesheet. Imported once here so every route that renders a BIAB
+// form (contact, booking, …) picks it up. The container background is
+// intentionally transparent — the template owns it via `.biab-card`.
+import "@businessdash/sdk/biab-forms.css";
+
+import Banner from "../components/Banner.astro";
+import Footer from "../components/Footer.astro";
+import Header from "../components/Header.astro";
+import SdkSetupBanner from "../components/SdkSetupBanner.astro";
+import { getBundle, type MarketingBundle } from "../lib/biab-bundle";
+import { renderSiteJsonLd, seoFromBundle } from "../lib/biab-seo";
+
+interface Props {
+	title?: string;
+	description?: string;
+	/** Pre-fetched bundle (optional) — reused for SEO + banner if provided. */
+	bundle?: MarketingBundle | null;
+	/** Skip the news banner (e.g. on the cart/checkout flow). */
+	hideBanner?: boolean;
+	/** Optional canonical URL (e.g. programmatic pages). */
+	canonical?: string | null;
+	/** Optional Open Graph image URL. */
+	ogImage?: string | null;
+}
+
+const {
+	title = "Your Business — built on BIAB",
+	description = "Astro SSR starter showing how to consume the BIAB SDK directly during server render.",
+	bundle: providedBundle,
+	hideBanner = false,
+	canonical = null,
+	ogImage = null,
+} = Astro.props;
+
+const bundle =
+	providedBundle !== undefined ? providedBundle : await getBundle();
+const jsonLd = renderSiteJsonLd(seoFromBundle(bundle));
+---
+
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>{title}</title>
+		<meta name="description" content={description} />
+		{canonical ? <link rel="canonical" href={canonical} /> : null}
+		{ogImage ? <meta property="og:image" content={ogImage} /> : null}
+		<Fragment set:html={jsonLd} />
+	</head>
+	<body>
+		{hideBanner ? null : <Banner bundle={bundle} />}
+		<Header />
+		<main>
+			<slot />
+		</main>
+		<Footer />
+		<SdkSetupBanner />
+		<script>
+			import { initBiabAnalytics } from "@businessdash/sdk/analytics-core";
+			const siteId = import.meta.env.PUBLIC_BIAB_SITE_ID;
+			const baseUrl = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL;
+			const apiKey = import.meta.env.PUBLIC_BIAB_PUBLIC_KEY;
+			if (siteId && baseUrl && apiKey) {
+				initBiabAnalytics({ siteId, baseUrl, apiKey });
+			}
+		</script>
+	</body>
+</html>

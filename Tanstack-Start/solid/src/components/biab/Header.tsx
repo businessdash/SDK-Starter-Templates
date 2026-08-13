@@ -2,13 +2,17 @@ export function BiabHeader() {
 	return (
 		<header class="app-header">
 			<div class="app-header__inner">
-				<div class="app-header__brand">Your Business</div>
+				<a class="app-header__brand" href="/" style="border-bottom: none;">
+					Your Business
+				</a>
 				<nav>
-					<a href="#services">Services</a>
-					<a href="#gallery">Gallery</a>
-					<a href="#booking">Book</a>
-					<a href="#blog">Blog</a>
-					<a href="#contact">Contact</a>
+					<a href="/#services">Services</a>
+					<a href="/#gallery">Gallery</a>
+					<a href="/#booking">Book</a>
+					<a href="/store">Store</a>
+					<a href="/reviews">Reviews</a>
+					<a href="/updates">Updates</a>
+					<a href="/my-account">Account</a>
 				</nav>
 			</div>
 		</header>

@@ -1,4 +1,5 @@
 import { html, render } from "../html";
+import { renderSubscribe } from "./subscribe";
 
 export function renderHeader(): string {
 	return render(html`
@@ -7,17 +8,33 @@ export function renderHeader(): string {
 			<nav>
 				<a href="#about">About</a>
 				<a href="#services">Services</a>
-				<a href="#blog">Blog</a>
-				<a href="#contact">Contact</a>
+				<a href="/store">Store</a>
+				<a href="/subscriptions">Plans</a>
+				<a href="/reviews">Reviews</a>
+				<a href="/updates">Updates</a>
+				<a href="/todos">Todos</a>
+				<a href="/cart">Cart</a>
+				<a href="/my-account">Account</a>
 			</nav>
 		</header>
 	`);
 }
 
-export function renderFooter(): string {
+export function renderFooter(req?: Request): string {
 	const year = new Date().getFullYear();
 	return render(html`
 		<footer class="footer">
+			<div class="footer__subscribe">
+				${renderSubscribe(
+					{
+						label: "Subscribe to our newsletter",
+						source: "footer",
+						buttonLabel: "Subscribe",
+						className: "subscribe--footer",
+					},
+					req,
+				)}
+			</div>
 			<p>© ${year} Your Business — built on BIAB.</p>
 		</footer>
 	`);

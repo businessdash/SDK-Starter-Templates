@@ -1,0 +1,8 @@
+<h1>Updates</h1>
+
+<article :for={update <- @updates} class="update">
+  <h2>{update["title"]}</h2>
+  <p>{update["body"]}</p>
+</article>
+
+<p :if={@updates == []} class="muted">Nothing posted yet.</p>

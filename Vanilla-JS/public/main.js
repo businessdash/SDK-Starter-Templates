@@ -15,6 +15,7 @@ import { renderContactForm } from "./sections/contact-form.js";
 import { renderGallery } from "./sections/gallery.js";
 import { renderHero } from "./sections/hero.js";
 import { renderServices } from "./sections/services.js";
+import { renderSubscribe } from "./sections/subscribe.js";
 
 document.getElementById("year").textContent = String(new Date().getFullYear());
 
@@ -31,6 +32,15 @@ mount("booking", renderBooking);
 mount("blog", renderBlog);
 mount("contact", renderContactForm);
 
+// Footer newsletter signup — the same shared subscribe section as About.
+mount("footer-subscribe", (target) =>
+	renderSubscribe(target, {
+		label: "Subscribe to our newsletter",
+		source: "footer",
+		idPrefix: "footer-subscribe",
+	}),
+);
+
 // Privacy-conscious site analytics. Config is injected by the
 // Bun server (see server.ts) as `window.__BIAB_PUBLIC__` so the
 // public key never lives in the static bundle.
@@ -39,7 +49,7 @@ const cfg =
 		(window).__BIAB_PUBLIC__) ||
 	null;
 if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
-	import("@biab-dev/sdk/analytics-core").then(({ initBiabAnalytics }) => {
+	import("@businessdash/sdk/analytics-core").then(({ initBiabAnalytics }) => {
 		initBiabAnalytics({
 			siteId: cfg.siteId,
 			baseUrl: cfg.baseUrl,

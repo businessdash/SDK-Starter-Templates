@@ -1,0 +1,11 @@
+{
+	"name": "Acme Home Services",
+	"shortName": "Acme",
+	"city": "Springfield",
+	"address": "123 Main St, Springfield, IL 62704",
+	"phone": "(555) 010-2840",
+	"phoneHref": "tel:+15550102840",
+	"email": "hello@acme.com",
+	"emailHref": "mailto:hello@acme.com",
+	"domain": "acme.com"
+}

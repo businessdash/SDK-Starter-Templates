@@ -516,3 +516,114 @@ main {
 	flex-wrap: wrap;
 	gap: 1rem;
 }
+
+/* Header actions (cart + auth) */
+.app-header__actions {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	font-size: 0.9rem;
+}
+
+.app-header__cart {
+	color: var(--text);
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.app-header__cart:hover {
+	color: var(--accent);
+}
+
+.app-header__cart-count {
+	display: inline-grid;
+	place-items: center;
+	min-width: 1.25rem;
+	height: 1.25rem;
+	padding: 0 0.35rem;
+	background: var(--accent);
+	color: white;
+	border-radius: 9999px;
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+
+@media (max-width: 860px) {
+	.app-header nav {
+		display: none;
+	}
+}
+
+/* News banner */
+.biab-banner {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+	padding: 0.65rem 1.25rem;
+	background: var(--accent);
+	color: white;
+	font-size: 0.9rem;
+	font-weight: 500;
+	position: relative;
+}
+
+.biab-banner--urgent {
+	background: var(--danger);
+}
+
+.biab-banner__cta {
+	color: white;
+	font-weight: 700;
+	border-bottom-color: currentColor;
+}
+
+.biab-banner__cta:hover {
+	color: white;
+}
+
+.biab-banner__close {
+	position: absolute;
+	right: 0.75rem;
+	top: 50%;
+	transform: translateY(-50%);
+	background: none;
+	border: none;
+	color: white;
+	font-size: 1.25rem;
+	line-height: 1;
+	opacity: 0.8;
+}
+
+.biab-banner__close:hover {
+	opacity: 1;
+}
+
+/* Review cards (Reviews section + /reviews page) */
+.review-card {
+	padding: 1.5rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+
+.review-card__stars {
+	color: var(--accent);
+	letter-spacing: 0.1em;
+	font-size: 1rem;
+}
+
+.review-card__text {
+	color: var(--text);
+	font-size: 0.95rem;
+}
+
+.review-card__meta {
+	display: flex;
+	justify-content: space-between;
+	color: var(--text-muted);
+	font-size: 0.82rem;
+	margin-top: auto;
+}

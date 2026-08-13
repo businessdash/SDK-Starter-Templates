@@ -1,5 +1,9 @@
 ---
 import { biab } from "../lib/biab";
+// Newsletter signup wired to BIAB followers — the same shared component used in
+// the footer. Vanilla `.astro` island by default; after `npx astro add react`,
+// swap to the React drop-in: `import Subscribe from "./Subscribe.tsx"` + `client:load`.
+import Subscribe from "./Subscribe.astro";
 
 const fallback =
 	"We're a small team that takes pride in being available. Real schedule, real reviews, real follow-up — no automated runaround. Book a slot below or send us a note and we'll get right back to you.";
@@ -37,4 +41,19 @@ if (biab) {
 	<p style="color: var(--text); font-size: 1.05rem; text-align: center;">
 		{body}
 	</p>
+	<div class="about-subscribe">
+		<Subscribe
+			idPrefix="about"
+			label="Get our newsletter"
+			placeholder="you@example.com"
+		/>
+		{/* React drop-in (after `npx astro add react`): <Subscribe client:load idPrefix="about" label="Get our newsletter" /> */}
+	</div>
 </section>
+
+<style>
+	.about-subscribe {
+		max-width: 28rem;
+		margin: 2.25rem auto 0;
+	}
+</style>

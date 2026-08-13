@@ -34,19 +34,18 @@ export async function renderServices(): Promise<string> {
 	const biab = getBiab();
 	if (biab) {
 		try {
-			const list = await biab.store.listProducts({
-				limit: 6,
-				category: "services",
-			});
+			const list = await biab.storefront.listProducts({ limit: 6 });
 			if (Array.isArray(list?.items) && list.items.length > 0) {
-				items = list.items.map((p) => ({
+				items = list.items.map((p: any) => ({
 					id: p.id,
 					name: p.name,
 					description: p.description ?? "",
 					priceLabel:
 						p.priceCents != null
 							? `from $${(p.priceCents / 100).toFixed(0)}`
-							: "quote on site",
+							: p.price != null
+								? `from $${Number(p.price).toFixed(0)}`
+								: "quote on site",
 				}));
 			}
 		} catch {

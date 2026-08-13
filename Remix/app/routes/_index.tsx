@@ -1,16 +1,21 @@
-import { Form, useActionData, useLoaderData, useNavigation } from "@remix-run/react";
-import type {
-	ActionFunctionArgs,
-	LoaderFunctionArgs,
-	MetaFunction,
-} from "@remix-run/node";
+import { Link, useLoaderData } from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
+import { ContactForm } from "~/components/ContactForm";
+import { NewsBanner, type BannerMessage } from "~/components/NewsBanner";
+import { Subscribe } from "~/components/Subscribe";
+import {
+	getBannerFromBundle,
+	getMarketingBundle,
+} from "~/lib/biab-bundle.server";
+import { buildHomeJsonLd } from "~/lib/biab-seo.server";
+import { isServiceSuspended } from "~/lib/biab.server";
 import {
 	loadAbout,
 	loadBlog,
+	loadGallery,
 	loadHero,
 	loadServices,
-	submitContact,
 } from "~/lib/sdk-sections.server";
 
 export const meta: MetaFunction = () => [
@@ -23,34 +28,78 @@ export const meta: MetaFunction = () => [
 ];
 
 export async function loader(_: LoaderFunctionArgs) {
-	const [hero, about, services, blog] = await Promise.all([
+	// The bundle carries the banner + the company data for JSON-LD. Catch a
+	// suspension here so the home page can render a minimal unavailable state.
+	let suspended = false;
+	let bundle = null;
+	try {
+		bundle = await getMarketingBundle();
+	} catch (err) {
+		if (isServiceSuspended(err)) suspended = true;
+		else throw err;
+	}
+
+	const [hero, about, services, blog, gallery] = await Promise.all([
 		loadHero(),
 		loadAbout(),
 		loadServices(),
 		loadBlog(),
+		loadGallery(),
 	]);
-	return { hero, about, services, blog };
-}
 
-export async function action({ request }: ActionFunctionArgs) {
-	const fd = await request.formData();
-	const name = String(fd.get("name") ?? "");
-	const email = String(fd.get("email") ?? "");
-	const message = String(fd.get("message") ?? "");
-	if (!name || !email) {
-		return { ok: false as const, reason: "Name and email are required." };
-	}
-	return submitContact({ name, email, message });
+	const banner = getBannerFromBundle(bundle);
+	const activeMessage =
+		banner?.enabled && banner.messages.length > 0
+			? (banner.messages.find((x) => x.enabled) ?? banner.messages[0])
+			: undefined;
+	const bannerMessage: BannerMessage | null = activeMessage
+		? {
+				id: activeMessage.id,
+				text: activeMessage.text,
+				linkUrl: activeMessage.linkUrl,
+				buttonText: activeMessage.buttonText,
+				openInNewTab: activeMessage.openInNewTab,
+				urgent: activeMessage.urgent,
+			}
+		: null;
+
+	return {
+		suspended,
+		hero,
+		about,
+		services,
+		blog,
+		gallery,
+		bannerMessage,
+		jsonLd: buildHomeJsonLd(bundle),
+	};
 }
 
 export default function Index() {
-	const { hero, about, services, blog } = useLoaderData<typeof loader>();
-	const actionData = useActionData<typeof action>();
-	const nav = useNavigation();
-	const submitting = nav.state === "submitting";
-	const contactSent = actionData?.ok === true;
+	const { suspended, hero, about, services, blog, gallery, bannerMessage, jsonLd } =
+		useLoaderData<typeof loader>();
+
+	if (suspended) {
+		return (
+			<main>
+				<section className="section" style={{ textAlign: "center" }}>
+					<h1 className="hero__title">We'll be right back</h1>
+					<p className="muted">
+						This site is temporarily unavailable. Please check back soon.
+					</p>
+				</section>
+			</main>
+		);
+	}
+
 	return (
 		<>
+			{/* Server-rendered JSON-LD (localBusiness + website) for crawlers. */}
+			<script
+				type="application/ld+json"
+				dangerouslySetInnerHTML={{ __html: jsonLd }}
+			/>
+			<NewsBanner message={bannerMessage} />
 			<header className="header">
 				<a className="brand" href="#hero">
 					Your Business
@@ -58,8 +107,12 @@ export default function Index() {
 				<nav>
 					<a href="#about">About</a>
 					<a href="#services">Services</a>
+					<a href="#gallery">Gallery</a>
 					<a href="#blog">Blog</a>
-					<a href="#contact">Contact</a>
+					<Link to="/store">Store</Link>
+					<Link to="/reviews">Reviews</Link>
+					<Link to="/book">Book</Link>
+					<Link to="/my-account">Account</Link>
 				</nav>
 			</header>
 			<main>
@@ -79,6 +132,12 @@ export default function Index() {
 							<p>{block.body}</p>
 						</article>
 					))}
+					{/* Followers-backed signup — same component as the footer. */}
+					<Subscribe
+						source="about"
+						label="Get news and offers"
+						buttonLabel="Subscribe"
+					/>
 				</section>
 				<section className="section" id="services">
 					<h2 className="section__title">Services</h2>
@@ -91,6 +150,24 @@ export default function Index() {
 							</article>
 						))}
 					</div>
+				</section>
+				<section className="section" id="gallery">
+					<h2 className="section__title">Recent work</h2>
+					{gallery.length === 0 ? (
+						<p className="muted">
+							Tag media items "Show in public gallery" in BIAB and they appear
+							here.
+						</p>
+					) : (
+						<div className="gallery-grid">
+							{gallery.map((g) => (
+								<figure className="gallery-tile" key={g.id}>
+									<img src={g.src} alt={g.alt} loading="lazy" />
+									{g.title ? <figcaption>{g.title}</figcaption> : null}
+								</figure>
+							))}
+						</div>
+					)}
 				</section>
 				<section className="section" id="blog">
 					<h2 className="section__title">From the blog</h2>
@@ -112,44 +189,13 @@ export default function Index() {
 						</ul>
 					)}
 				</section>
-				<section className="section" id="contact">
-					<h2 className="section__title">Get in touch</h2>
-					{contactSent ? (
-						<p className="muted">Thanks — we'll be in touch.</p>
-					) : (
-						<Form method="post">
-							<label>
-								Name
-								<input name="name" required autoComplete="name" />
-							</label>
-							<label>
-								Email
-								<input
-									name="email"
-									type="email"
-									required
-									autoComplete="email"
-								/>
-							</label>
-							<label>
-								How can we help?
-								<textarea name="message" rows={3} />
-							</label>
-							<button
-								className="biab-btn"
-								type="submit"
-								disabled={submitting}
-							>
-								{submitting ? "Sending…" : "Send"}
-							</button>
-							{actionData && actionData.ok === false ? (
-								<p className="error">{actionData.reason ?? "Couldn't send."}</p>
-							) : null}
-						</Form>
-					)}
-				</section>
+				{/* Schema-driven drop-in. `<BiabForm>` (the contact island) fetches
+				    the schema and submits through the same-origin /api/biab/forms
+				    resource route, so the bearer key stays server-side. */}
+				<ContactForm />
 			</main>
 			<footer className="footer">
+				<Subscribe source="footer" label="Subscribe to our newsletter" />
 				<p>© {new Date().getFullYear()} Your Business — built on BIAB.</p>
 			</footer>
 		</>

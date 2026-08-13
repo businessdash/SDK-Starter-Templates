@@ -12,7 +12,7 @@
  */
 
 const RAW = Symbol("RAW");
-type Raw = { [RAW]: string };
+export type Raw = { [RAW]: string };
 
 export function raw(s: string): Raw {
 	return { [RAW]: s };

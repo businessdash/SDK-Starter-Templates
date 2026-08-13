@@ -1,99 +1,111 @@
 <script setup lang="ts">
-import { reactive, ref } from "vue";
+/**
+ * Contact section — now a thin wrapper around the SDK's <BiabForm> drop-in.
+ *
+ * Before, this component hand-rolled the field loop, the submit fetch, and the
+ * confirmation state. Now `@businessdash/sdk/vue`'s <BiabForm> owns ALL of that:
+ * it renders the full field tree (every field type, condition_block /
+ * or_condition, multi-step + progress, concurrent reveal, org icon, animation)
+ * straight from the published schema, validates against the same rules the BIAB
+ * server enforces, and manages the submit lifecycle. We just hand it the
+ * SSR-prefetched `schema` and a custom `:on-submit`.
+ *
+ * Why `:on-submit` (and not `:client`)? This starter keeps the BIAB bearer key
+ * SERVER-ONLY (`server/utils/biab.ts`). So instead of giving the browser an SDK
+ * client, we let <BiabForm> validate locally and hand us the re-keyed wire
+ * payload, which we POST through the existing proxy route
+ * (`server/api/biab/forms/[slug].post.ts`). The key never reaches the client.
+ *
+ * The `biab-*` classes <BiabForm> emits are already themed by
+ * `app/assets/css/biab-tokens.css` (`.biab-input`, `.biab-label`, `.biab-btn`,
+ * `.biab-textarea`), so the drop-in inherits the site's look with no extra CSS.
+ */
+import { BiabForm } from "@businessdash/sdk/vue";
+import type {
+	FormData,
+	FormSchema,
+	FormSubmitOptions,
+	FormSubmitResult,
+} from "@businessdash/sdk/vue";
 
-import type { FormSchema } from "../../../server/api/biab/home.get";
-
+// The SSR endpoint (`server/api/biab/home.get.ts`) prefetches this via
+// `biab.forms.schema(FORM_SLUG)`; the SDK's `FormSchema` is the full nested
+// tree the renderer needs (a superset of the starter's local minimal type).
 const props = defineProps<{ schema: FormSchema; slug: string }>();
 
-const values = reactive<Record<string, string>>({});
-const submitting = ref(false);
-const confirmation = ref<string | null>(null);
-const error = ref<string | null>(null);
-
-async function handleSubmit() {
-	submitting.value = true;
-	error.value = null;
+/**
+ * Custom submit: POST the re-keyed payload to our own Nitro proxy. We surface
+ * the proxy's response as a `FormSubmitResult` so <BiabForm> can render the
+ * exact success / error state inline.
+ */
+async function handleSubmit(
+	payload: FormData,
+	opts: FormSubmitOptions,
+): Promise<FormSubmitResult> {
 	try {
 		await $fetch(`/api/biab/forms/${encodeURIComponent(props.slug)}`, {
 			method: "POST",
 			body: {
-				data: { ...values },
-				submitterEmail: values.email,
-				submitterName: values.name,
+				data: payload,
+				submitterEmail: opts.submitterEmail,
+				submitterName: opts.submitterName,
 			},
 		});
-		confirmation.value = "Thanks — we'll be in touch within one business day.";
-		for (const k of Object.keys(values)) delete values[k];
+		return { ok: true, status: 200 };
 	} catch (err) {
-		error.value = err instanceof Error ? err.message : "Couldn't submit.";
-	} finally {
-		submitting.value = false;
+		const message =
+			err && typeof err === "object" && "statusMessage" in err
+				? String((err as { statusMessage?: unknown }).statusMessage)
+				: err instanceof Error
+					? err.message
+					: "Couldn't submit. Please try again.";
+		return { ok: false, status: 0, reason: "server_error", message };
 	}
 }
 </script>
 
 <template>
-	<section class="biab-section biab-section--narrow" id="contact">
-		<template v-if="confirmation">
-			<div class="biab-card contact">
-				<span class="biab-badge" style="align-self: flex-start;">Received</span>
-				<h2 class="biab-section__title">Got it.</h2>
-				<p>{{ confirmation }}</p>
-			</div>
-		</template>
+	<section id="contact" class="biab-section biab-section--narrow">
+		<div class="biab-section__lead">
+			<span class="biab-section__eyebrow">Contact</span>
+			<h2 class="biab-section__title">
+				{{ schema.title ?? "Get in touch" }}
+			</h2>
+			<p v-if="schema.description" class="biab-section__sub">
+				{{ schema.description }}
+			</p>
+		</div>
 
-		<template v-else>
-			<div class="biab-section__lead">
-				<span class="biab-section__eyebrow">Contact</span>
-				<h2 class="biab-section__title">
-					{{ schema.title ?? "Get in touch" }}
-				</h2>
-				<p v-if="schema.description" class="biab-section__sub">
-					{{ schema.description }}
-				</p>
-			</div>
-
-			<form class="biab-card contact" @submit.prevent="handleSubmit">
-				<div v-for="field in schema.fields" :key="field.id">
-					<label class="biab-label" :for="`field-${field.id}`">
-						{{ field.label }}{{ field.required ? " *" : "" }}
-					</label>
-					<textarea
-						v-if="field.type === 'textarea'"
-						v-model="values[field.id]"
-						class="biab-textarea"
-						:id="`field-${field.id}`"
-						:placeholder="field.placeholder ?? ''"
-						:required="field.required"
-					></textarea>
-					<input
-						v-else
-						v-model="values[field.id]"
-						class="biab-input"
-						:id="`field-${field.id}`"
-						:placeholder="field.placeholder ?? ''"
-						:required="field.required"
-						:type="field.type === 'email' ? 'email' : 'text'"
-					/>
-					<small v-if="field.helpText" style="color: var(--text-muted);">
-						{{ field.helpText }}
-					</small>
-				</div>
-				<button
-					:disabled="submitting"
-					class="biab-btn"
-					style="align-self: flex-start;"
-					type="submit"
-				>
-					{{ submitting ? "Sending…" : "Send message" }}
-				</button>
-				<div
-					v-if="error"
-					style="color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;"
-				>
-					{{ error }}
-				</div>
-			</form>
-		</template>
+		<div class="biab-card contact">
+			<!--
+				The whole form is now this one tag. Swap `:schema`/`:slug` for any
+				published form slug — e.g. drop <BiabForm slug="job-application" />
+				with a `:client` instead of `:schema` if you expose a browser-safe
+				SDK client. Here we stay server-only and submit via `:on-submit`.
+			-->
+			<!--
+				`auto-complete` is ON by default in 0.9.12 — <BiabForm> infers a
+				sensible HTML autocomplete token per field (name/email/tel/address/…)
+				so browsers offer autofill with no config. Passed explicitly here to
+				make the intent visible; set `:auto-complete="false"` to disable, or
+				`:field-auto-complete="{ phone: 'tel', note: 'off' }"` to override
+				individual fields.
+			-->
+			<BiabForm
+				:schema="schema"
+				:slug="slug"
+				:on-submit="handleSubmit"
+				:auto-complete="true"
+				submit-label="Send message"
+			>
+				<template #success>
+					<span class="biab-badge" style="align-self: flex-start"
+						>Received</span
+					>
+					<h3 class="biab-section__title">Got it.</h3>
+					<p>We'll be in touch within one business day.</p>
+				</template>
+			</BiabForm>
+		</div>
 	</section>
 </template>

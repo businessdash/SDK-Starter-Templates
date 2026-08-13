@@ -15,28 +15,27 @@ import {
 import { routes } from "./app.routes";
 
 /**
- * Browser-only initialiser that boots BIAB analytics once the
- * client takes over. Server render skips it — `initBiabAnalytics`
- * has no side effects on the server but importing the module
- * conditionally keeps the SSR bundle smaller.
- *
- * Reads the same env keys as the data-fetch SDK helper
- * (`src/app/lib/biab.ts`). When env isn't configured (local dev
- * without `.env.local`), analytics quietly stays off.
+ * Browser-only initialiser that boots BIAB analytics once the client takes
+ * over. Server render skips it. The server API key never lives in the
+ * browser, so we fetch a browser-safe config from `/api/biab/public-config`
+ * — which only returns an analytics key when the operator opts in via
+ * `BIAB_PUBLIC_ANALYTICS_KEY`. Unset → analytics quietly stays off.
  */
 function initAnalytics(): void {
 	const platformId = inject(PLATFORM_ID);
 	if (!isPlatformBrowser(platformId)) return;
-	const env = (import.meta as unknown as {
-		env?: Record<string, string | undefined>;
-	}).env;
-	const siteId = env?.["BIAB_SITE_ID"];
-	const baseUrl = env?.["BIAB_PACKAGE_API_BASE_URL"];
-	const apiKey = env?.["BIAB_API_KEY"];
-	if (!siteId || !baseUrl || !apiKey) return;
-	void import("@biab-dev/sdk/analytics-core").then(({ initBiabAnalytics }) => {
-		initBiabAnalytics({ siteId, baseUrl, apiKey });
-	});
+	void fetch("/api/biab/public-config")
+		.then((r) => (r.ok ? r.json() : null))
+		.then((cfg: { analytics?: { siteId: string; baseUrl: string; apiKey: string } } | null) => {
+			const a = cfg?.analytics;
+			if (!a?.siteId || !a.baseUrl || !a.apiKey) return;
+			void import("@businessdash/sdk/analytics-core").then(({ initBiabAnalytics }) => {
+				initBiabAnalytics({ siteId: a.siteId, baseUrl: a.baseUrl, apiKey: a.apiKey });
+			});
+		})
+		.catch(() => {
+			/* analytics off */
+		});
 }
 
 export const appConfig: ApplicationConfig = {

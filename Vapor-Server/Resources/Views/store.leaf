@@ -1,0 +1,37 @@
+#extend("base"):
+  #export("title"):Store#endexport
+  #export("content"):
+    <h1>Store</h1>
+
+    <form method="get" class="filters">
+      <input type="search" name="search" value="#(search)" placeholder="Search products">
+      <select name="sort">
+        <option value="">Featured</option>
+        <option value="newest">Newest</option>
+        <option value="price-asc">Price, low to high</option>
+        <option value="price-desc">Price, high to low</option>
+        <option value="rating-desc">Best rated</option>
+      </select>
+      <button type="submit">Filter</button>
+    </form>
+
+    #if(count(products) > 0):
+      <ul class="grid">
+        #for(product in products):
+          <li class="card">
+            <a href="/store/#(product.id)">
+              <h2>#(product.name)</h2>
+              <p class="price">#(product.price)</p>
+            </a>
+            <form method="post" action="/cart/items">
+              <input type="hidden" name="productId" value="#(product.id)">
+              <button type="submit">Add to cart</button>
+            </form>
+          </li>
+        #endfor
+      </ul>
+    #else:
+      <p class="muted">No products yet. Add some in the BIAB dashboard, or connect this app to a site.</p>
+    #endif
+  #endexport
+#endextend

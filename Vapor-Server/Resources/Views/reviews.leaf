@@ -1,0 +1,16 @@
+#extend("base"):
+  #export("title"):Reviews#endexport
+  #export("content"):
+    <h1>Reviews</h1>
+    #if(count(reviews) > 0):
+      #for(review in reviews):
+        <blockquote>
+          <p>#(review.text)</p>
+          <cite>#(review.reviewerName) — #(review.rating)/5</cite>
+        </blockquote>
+      #endfor
+    #else:
+      <p class="muted">No reviews yet.</p>
+    #endif
+  #endexport
+#endextend

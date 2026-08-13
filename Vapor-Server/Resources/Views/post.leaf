@@ -1,0 +1,15 @@
+#extend("base"):
+  #export("title"):#(post.title)#endexport
+  #export("content"):
+    <article>
+      <h1>#(post.title)</h1>
+      #(""" Authored HTML from the dashboard, so it is rendered unescaped.
+           Leaf escapes by default — #unsafeHTML is the deliberate opt-out,
+           safe here only because the source is the org's own editor. """)
+      <div class="post-body">#unsafeHTML(post.content)</div>
+      #if(isPaywalled):
+        <p class="muted">This is a preview — the full article is behind the paywall.</p>
+      #endif
+    </article>
+  #endexport
+#endextend

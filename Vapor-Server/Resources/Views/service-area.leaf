@@ -1,0 +1,9 @@
+#extend("base"):
+  #export("title"):#(heading)#endexport
+  #export("content"):
+    <article>
+      <h1>#(heading)</h1>
+      <div>#unsafeHTML(html)</div>
+    </article>
+  #endexport
+#endextend

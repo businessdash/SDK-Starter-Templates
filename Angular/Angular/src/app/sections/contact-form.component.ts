@@ -1,92 +1,51 @@
-import { ChangeDetectionStrategy, Component, signal } from "@angular/core";
-import {
-	FormControl,
-	FormGroup,
-	ReactiveFormsModule,
-	Validators,
-} from "@angular/forms";
-import { getBiab } from "../lib/biab";
+import { ChangeDetectionStrategy, Component } from "@angular/core";
+import { BiabFormComponent } from "@businessdash/sdk/angular";
+import type { FormSubmitResult } from "@businessdash/sdk/forms";
+
+import { biabFormsClient } from "../lib/biab-forms.client";
 
 /**
- * Tiny contact form. Reactive forms (per project conventions),
- * posts to the BIAB SDK's forms endpoint. The form slug is
- * configurable via env (PUBLIC_BIAB_CONTACT_FORM_SLUG) — the
- * default 'contact' matches the slug the marketing bundle seeds
- * for a new tenant.
+ * Contact section — now powered by the `<biab-form>` drop-in component from
+ * `@businessdash/sdk/angular` instead of a hand-rolled reactive form.
+ *
+ * `<biab-form>` loads the dashboard-built form by slug, renders its full field
+ * tree (including any layout / multi-step / conditional fields the operator
+ * adds later) with the `biab-*` CSS classes, validates with the exact same
+ * rules the server enforces, and submits — all from the headless core. Adding a
+ * field in the dashboard now shows up here automatically; no code change.
+ *
+ * SECURITY: the API key never reaches the browser. `biabFormsClient` is a thin
+ * adapter whose `forms` resource hits the local `/api/biab/forms/:slug/*`
+ * proxies (see `src/server/biab-api.ts`), where the key lives. For a public
+ * org key you could instead `createBiabClient({ apiKey })` in the browser and
+ * pass that, or provide one app-wide via `provideBiabClient(...)`.
+ *
+ * The 'contact' slug matches the form the marketing bundle seeds for a new
+ * tenant. Swap it for any slug from your dashboard (Forms → the form's slug).
  */
 @Component({
 	selector: "biab-contact-form",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ReactiveFormsModule],
+	imports: [BiabFormComponent],
 	template: `
 		<section class="section" id="contact">
 			<h2 class="section__title">Get in touch</h2>
-			@if (status() === "sent") {
-				<p class="muted">Thanks — we'll be in touch.</p>
-			} @else {
-				<form [formGroup]="form" (ngSubmit)="submit()">
-					<label>
-						Name
-						<input formControlName="name" autocomplete="name" />
-					</label>
-					<label>
-						Email
-						<input formControlName="email" type="email" autocomplete="email" />
-					</label>
-					<label>
-						How can we help?
-						<textarea formControlName="message" rows="3"></textarea>
-					</label>
-					<button
-						class="biab-btn"
-						type="submit"
-						[disabled]="status() === 'sending' || form.invalid"
-					>
-						{{ status() === "sending" ? "Sending…" : "Send" }}
-					</button>
-					@if (status() === "error") {
-						<p class="error">Couldn't send. Try again or call us directly.</p>
-					}
-				</form>
-			}
+			<biab-form
+				slug="general-inquiry"
+				[client]="formsClient"
+				submitLabel="Send"
+				(success)="onSuccess($event)"
+			/>
 		</section>
 	`,
 })
 export class ContactFormComponent {
-	readonly status = signal<"idle" | "sending" | "sent" | "error">("idle");
+	/** Browser-safe client: the `forms` resource proxies through the SSR server
+	 *  so the API key stays out of the bundle. */
+	readonly formsClient = biabFormsClient;
 
-	readonly form = new FormGroup({
-		name: new FormControl("", { nonNullable: true, validators: [Validators.required] }),
-		email: new FormControl("", {
-			nonNullable: true,
-			validators: [Validators.required, Validators.email],
-		}),
-		message: new FormControl("", { nonNullable: true }),
-	});
-
-	async submit() {
-		if (this.form.invalid) return;
-		this.status.set("sending");
-		const biab = getBiab();
-		if (!biab) {
-			window.location.href = `mailto:hello@example.com?subject=Contact&body=${encodeURIComponent(
-				this.form.controls.message.value,
-			)}`;
-			this.status.set("sent");
-			return;
-		}
-		try {
-			await biab.forms.submit({
-				slug: "contact",
-				fields: {
-					name: this.form.controls.name.value,
-					email: this.form.controls.email.value,
-					message: this.form.controls.message.value,
-				},
-			});
-			this.status.set("sent");
-		} catch {
-			this.status.set("error");
-		}
+	onSuccess(_result: Extract<FormSubmitResult, { ok: true }>): void {
+		// Hook for analytics / a toast. The component renders its own success
+		// state, so nothing is required here.
 	}
 }

@@ -1,37 +1,36 @@
 import { Injectable, signal } from "@angular/core";
-import { getBiab } from "./biab";
+import {
+	biabApi,
+	type BannerPayload,
+	type BlogPost,
+	type CartSnapshot,
+	type HomePayload,
+	type Product,
+	type ReviewsAggregate,
+	type Subscription,
+	type UpdateItem,
+} from "./biab-api.client";
 
-type Hero = {
-	title: string;
-	tagline: string;
-	ctaLabel: string;
-	ctaHref: string;
-};
+/**
+ * Marketing/state facade over the local BIAB endpoints.
+ *
+ * The browser bundle holds NO API key — every method here fetches from the
+ * server endpoints in `src/server/biab-api.ts`. Defaults render immediately
+ * (so the page is never blank) and each load enriches its signal when the
+ * server responds. When BIAB env is unset the server returns empty shapes
+ * and the defaults stay.
+ */
 
-type AboutBlock = {
-	heading: string;
-	body: string;
-};
-
-type Service = {
-	id: string;
-	name: string;
-	description: string;
-	priceLabel: string;
-};
-
-type BlogPost = {
-	slug: string;
-	title: string;
-	excerpt: string;
-	publishedAt: string;
-};
+type Hero = { title: string; tagline: string; ctaLabel: string; ctaHref: string };
+type AboutBlock = { heading: string; body: string };
+type Service = { id: string; name: string; description: string; priceLabel: string };
+type BlogEntry = { slug: string; title: string; excerpt: string; publishedAt: string };
 
 const heroDefaults: Hero = {
 	title: "Service that shows up — on time.",
 	tagline: "Book in 60 seconds. We'll handle the rest.",
 	ctaLabel: "Book a consult",
-	ctaHref: "#booking",
+	ctaHref: "#contact",
 };
 
 const aboutDefaults: AboutBlock[] = [
@@ -42,138 +41,96 @@ const aboutDefaults: AboutBlock[] = [
 ];
 
 const servicesDefaults: Service[] = [
-	{
-		id: "tuneup",
-		name: "Annual tune-up",
-		description: "Pre-season inspection + tune-up.",
-		priceLabel: "from $149",
-	},
-	{
-		id: "install",
-		name: "Install",
-		description: "New equipment install with a 10-year warranty.",
-		priceLabel: "quote on site",
-	},
-	{
-		id: "repair",
-		name: "Repair",
-		description: "Same-day repair for most makes + models.",
-		priceLabel: "$95 diagnostic",
-	},
+	{ id: "tuneup", name: "Annual tune-up", description: "Pre-season inspection + tune-up.", priceLabel: "from $149" },
+	{ id: "install", name: "Install", description: "New equipment install with a 10-year warranty.", priceLabel: "quote on site" },
+	{ id: "repair", name: "Repair", description: "Same-day repair for most makes + models.", priceLabel: "$95 diagnostic" },
 ];
 
-/**
- * Wraps the BIAB SDK with Angular signals. Each load method fetches
- * once + populates the signal; the section component reads the
- * signal in its template. Defaults render immediately so the page
- * is never blank — the SDK call enriches when it returns.
- */
 @Injectable({ providedIn: "root" })
 export class BiabService {
+	// Home/marketing signals
 	readonly hero = signal<Hero>(heroDefaults);
 	readonly about = signal<AboutBlock[]>(aboutDefaults);
 	readonly services = signal<Service[]>(servicesDefaults);
-	readonly blog = signal<BlogPost[]>([]);
+	readonly blog = signal<BlogEntry[]>([]);
+	readonly banner = signal<BannerPayload | null>(null);
+	readonly updates = signal<UpdateItem[]>([]);
+	readonly reviewsAggregate = signal<ReviewsAggregate | null>(null);
+	readonly unavailable = signal<boolean>(false);
 
-	async loadHero(): Promise<void> {
-		const biab = getBiab();
-		if (!biab) return;
-		try {
-			const bundle = await biab.marketing.getPageBundle({
-				pageKey: "home",
-				locale: "en",
-			});
-			const raw = (bundle as { sections?: Record<string, unknown> })?.sections
-				?.hero;
-			if (
-				raw &&
-				typeof raw === "object" &&
-				"ok" in raw &&
-				(raw as { ok: boolean }).ok
-			) {
-				const data = (raw as { data: Record<string, unknown> }).data;
-				this.hero.set({
-					title: (data?.["title"] as string) ?? heroDefaults.title,
-					tagline: (data?.["tagline"] as string) ?? heroDefaults.tagline,
-					ctaLabel:
-						(data?.["ctaLabel"] as string) ?? heroDefaults.ctaLabel,
-					ctaHref: (data?.["ctaHref"] as string) ?? heroDefaults.ctaHref,
-				});
-			}
-		} catch {
-			/* keep defaults */
-		}
+	private homeLoaded = false;
+
+	/** One round-trip fills hero/about/services/banner/updates/reviews. */
+	async loadHome(): Promise<void> {
+		if (this.homeLoaded) return;
+		this.homeLoaded = true;
+		const home = await biabApi.home();
+		if (!home || !home.configured) return;
+		this.applyHome(home);
 	}
 
-	async loadAbout(): Promise<void> {
-		const biab = getBiab();
-		if (!biab) return;
-		try {
-			const bundle = await biab.marketing.getPageBundle({
-				pageKey: "home",
-				locale: "en",
+	private applyHome(home: HomePayload): void {
+		if (home.hero?.headline) {
+			this.hero.set({
+				title: home.hero.headline,
+				tagline: home.hero.subheadline ?? heroDefaults.tagline,
+				ctaLabel: home.hero.ctaText ?? heroDefaults.ctaLabel,
+				ctaHref: home.hero.ctaLink ?? heroDefaults.ctaHref,
 			});
-			const raw = (bundle as { sections?: Record<string, unknown> })?.sections
-				?.about;
-			if (
-				raw &&
-				typeof raw === "object" &&
-				"ok" in raw &&
-				(raw as { ok: boolean }).ok
-			) {
-				const data = (raw as { data: { blocks?: AboutBlock[] } }).data;
-				if (Array.isArray(data?.blocks) && data.blocks.length > 0) {
-					this.about.set(data.blocks);
-				}
-			}
-		} catch {
-			/* keep defaults */
 		}
-	}
-
-	async loadServices(): Promise<void> {
-		const biab = getBiab();
-		if (!biab) return;
-		try {
-			const list = await biab.store.listProducts({
-				limit: 6,
-				category: "services",
-			});
-			if (Array.isArray(list?.items) && list.items.length > 0) {
-				this.services.set(
-					list.items.map((p) => ({
-						id: p.id,
-						name: p.name,
-						description: p.description ?? "",
-						priceLabel:
-							p.priceCents != null
-								? `from $${(p.priceCents / 100).toFixed(0)}`
-								: "quote on site",
-					})),
-				);
-			}
-		} catch {
-			/* keep defaults */
+		if (home.about?.heading) {
+			this.about.set([{ heading: home.about.heading, body: home.about.body ?? "" }]);
 		}
+		const items = home.services?.items;
+		if (Array.isArray(items) && items.length > 0) {
+			this.services.set(
+				items.map((s, i) => ({
+					id: s.type || `service-${i}`,
+					name: s.type,
+					description: s.description,
+					priceLabel: "Learn more",
+				})),
+			);
+		}
+		if (home.banner?.enabled && home.banner.messages?.length) {
+			this.banner.set(home.banner);
+		}
+		if (Array.isArray(home.updates)) this.updates.set(home.updates);
+		if (home.reviews) this.reviewsAggregate.set(home.reviews);
 	}
 
 	async loadBlog(): Promise<void> {
-		const biab = getBiab();
-		if (!biab) return;
-		try {
-			const list = await biab.blog.listPosts({ limit: 4 });
-			if (Array.isArray(list?.items)) {
-				this.blog.set(
-					list.items.map((p) => ({
-						slug: p.slug,
-						title: p.title,
-						excerpt: p.excerpt ?? "",
-						publishedAt: String(p.publishedAt ?? ""),
-					})),
-				);
-			}
-		} catch {
-			/* keep empty */
+		const res = await biabApi.blog();
+		const items: BlogPost[] = res?.items ?? [];
+		if (items.length > 0) {
+			this.blog.set(
+				items.map((p) => ({
+					slug: p.slug,
+					title: p.title,
+					excerpt: p.excerpt ?? "",
+					publishedAt: p.publishedAt ?? "",
+				})),
+			);
 		}
+	}
+
+	// Thin pass-throughs the route components use directly.
+	products(cursor?: number | null, categoryId?: string) {
+		return biabApi.products(cursor, categoryId);
+	}
+	product(id: string): Promise<Product | null> {
+		return biabApi.product(id);
+	}
+	subscriptions(): Promise<{ items: Subscription[] } | null> {
+		return biabApi.subscriptions();
+	}
+	cart(): Promise<CartSnapshot> {
+		return biabApi.cart();
+	}
+	reviews(offset?: number, limit?: number) {
+		return biabApi.reviews(offset, limit);
+	}
+	portalMe() {
+		return biabApi.portalMe();
 	}
 }

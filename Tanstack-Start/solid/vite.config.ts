@@ -1,19 +1,22 @@
-import { defineConfig } from 'vite'
-import { devtools } from '@tanstack/devtools-vite'
-import tailwindcss from '@tailwindcss/vite'
-
-import { tanstackStart } from '@tanstack/solid-start/plugin/vite'
-
-import solidPlugin from 'vite-plugin-solid'
-import { nitro } from 'nitro/vite'
+import tailwindcss from "@tailwindcss/vite";
+import { devtools } from "@tanstack/devtools-vite";
+import { tanstackStart } from "@tanstack/solid-start/plugin/vite";
+import { nitro } from "nitro/vite";
+import { defineConfig } from "vite";
+import solidPlugin from "vite-plugin-solid";
 
 export default defineConfig({
-  resolve: { tsconfigPaths: true },
-  plugins: [
-    devtools(),
-    nitro(),
-    tailwindcss(),
-    tanstackStart(),
-    solidPlugin({ ssr: true }),
-  ],
-})
+	resolve: { tsconfigPaths: true },
+	// Expose both prefixes to the browser bundle: VITE_ (the Vite default) and
+	// VITE_ (the canonical names the BIAB wizard emits). Only non-secret
+	// browser-safe vars ever carry these prefixes — the secret BIAB_API_KEY never
+	// does, so it stays server-only.
+	envPrefix: ["VITE_"],
+	plugins: [
+		devtools(),
+		nitro(),
+		tailwindcss(),
+		tanstackStart(),
+		solidPlugin({ ssr: true }),
+	],
+});

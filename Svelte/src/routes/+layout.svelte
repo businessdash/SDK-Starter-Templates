@@ -1,11 +1,10 @@
 <script lang="ts">
-	import type { Pathname } from '$app/types';
-	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { initBiabAnalytics } from '@biab-dev/sdk/analytics-core';
+	import { initBiabAnalytics } from '@businessdash/sdk/analytics-core';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
+	import SdkSetupBanner from '$lib/components/biab/SdkSetupBanner.svelte';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
@@ -25,10 +24,10 @@
 <svelte:head><link rel="icon" href={favicon} /></svelte:head>
 {@render children()}
 
+<SdkSetupBanner />
+
 <div style="display:none">
 	{#each locales as locale (locale)}
-		<a
-			href={resolve(localizeHref(page.url.pathname, { locale }) as Pathname)}
-		>{locale}</a>
+		<a href={localizeHref(page.url.pathname, { locale })}>{locale}</a>
 	{/each}
 </div>

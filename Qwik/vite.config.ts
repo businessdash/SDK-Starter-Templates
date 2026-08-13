@@ -22,6 +22,15 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
 export default defineConfig(({ command, mode }): UserConfig => {
   return {
     plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." })],
+    /**
+     * Expose the canonical `PUBLIC_BIAB_*` names to the browser bundle
+     * via `import.meta.env` (matching the T3 starter + the SDK), alongside
+     * Qwik City's default `VITE_` / `PUBLIC_` prefixes — so the original
+     * `PUBLIC_BIAB_*` names keep working as a fallback. Secrets (BIAB_API_KEY,
+     * BIAB_REVALIDATION_SECRET) carry none of these prefixes, so they stay
+     * server-only and are never inlined into the client.
+     */
+    envPrefix: ["VITE_", "PUBLIC_"],
     // This tells Vite which dependencies to pre-build in dev mode.
     optimizeDeps: {
       // Put problematic deps that break bundling here, mostly those with binaries.

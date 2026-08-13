@@ -1,16 +1,27 @@
 import "@/styles/globals.css";
+// SDK form styles — file-upload box, multi-step progress header, and
+// availability/choice chips are unstyled without this. The container
+// background is intentionally transparent; the template owns it.
+import "@businessdash/sdk/biab-forms.css";
 
-import { BIABAnalytics } from "@biab-dev/sdk/react-analytics";
+import { BIABAnalytics } from "@businessdash/sdk/react-analytics";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
+import { SdkSetupBanner } from "@/app/_components/biab/SdkSetupBanner";
 import { TRPCReactProvider } from "@/trpc/react";
 
-const BIAB_SITE_ID = process.env.BIAB_SITE_ID;
+// SITE_ID + base URL aren't secret — prefer the canonical NEXT_PUBLIC_ vars,
+// falling back to the legacy names so older setups keep working.
+const BIAB_SITE_ID =
+  process.env.NEXT_PUBLIC_BIAB_SITE_ID ?? process.env.BIAB_SITE_ID;
 const BIAB_BASE_URL =
   process.env.NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
   process.env.BIAB_PACKAGE_API_BASE_URL;
-const BIAB_PUBLIC_KEY = process.env.NEXT_PUBLIC_BIAB_PUBLIC_KEY;
+// Analytics runs in the browser, so it uses the publishable token
+// (NEXT_PUBLIC_BIAB_PK). Fall back to the old NEXT_PUBLIC_BIAB_PUBLIC_KEY name.
+const BIAB_PUBLIC_KEY =
+  process.env.NEXT_PUBLIC_BIAB_PK ?? process.env.NEXT_PUBLIC_BIAB_PUBLIC_KEY;
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -30,6 +41,7 @@ export default function RootLayout({
     <html lang="en" className={`${geist.variable}`}>
       <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
+        <SdkSetupBanner />
         {BIAB_SITE_ID && BIAB_BASE_URL && BIAB_PUBLIC_KEY ? (
           <BIABAnalytics
             siteId={BIAB_SITE_ID}

@@ -5,14 +5,20 @@ import {
 	Scripts,
 	ScrollRestoration,
 	useLoaderData,
-} from "@remix-run/react";
-import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+} from "react-router";
+import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 
+import { SdkSetupBanner } from "./components/SdkSetupBanner";
 import { getAnalyticsConfig } from "./lib/biab.server";
 import stylesUrl from "./styles.css?url";
+// SDK form styles: file-upload box, multi-step progress header, choice/
+// availability chips. Required wherever `<BiabForm>` renders (contact, book).
+// The container background is intentionally transparent — the template owns it.
+import biabFormsUrl from "@businessdash/sdk/biab-forms.css?url";
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: stylesUrl },
+	{ rel: "stylesheet", href: biabFormsUrl },
 ];
 
 export async function loader(_: LoaderFunctionArgs) {
@@ -31,6 +37,7 @@ export default function App() {
 			</head>
 			<body>
 				<Outlet />
+				<SdkSetupBanner />
 				<ScrollRestoration />
 				<Scripts />
 				{analytics ? (
@@ -49,7 +56,7 @@ export default function App() {
 						__html: `
 							const cfg = window.__BIAB_ANALYTICS__;
 							if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
-								import("@biab-dev/sdk/analytics-core").then(({ initBiabAnalytics }) => {
+								import("@businessdash/sdk/analytics-core").then(({ initBiabAnalytics }) => {
 									initBiabAnalytics({
 										siteId: cfg.siteId,
 										baseUrl: cfg.baseUrl,

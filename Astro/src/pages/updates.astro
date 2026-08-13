@@ -1,0 +1,135 @@
+---
+/**
+ * Updates feed — a Google-Business-style "Posts" list fed by `bundle.updates`
+ * (a runtime passthrough on the marketing bundle). Pure server-render; no JS.
+ *
+ * The bundle is fetched once here and handed to the Layout so SEO + banner
+ * reuse it rather than fetching it again.
+ */
+import {
+	getBundle,
+	getUpdatesFromBundle,
+	type BundleUpdateItem,
+} from "../lib/biab-bundle";
+import Layout from "../layouts/Layout.astro";
+
+export const prerender = false;
+
+const bundle = await getBundle();
+const updates: BundleUpdateItem[] = getUpdatesFromBundle(bundle);
+
+function formatDate(iso: string | null): string {
+	if (!iso) return "";
+	const d = new Date(iso);
+	return Number.isNaN(d.getTime())
+		? ""
+		: d.toLocaleDateString(undefined, {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			});
+}
+---
+
+<Layout
+	title="Updates — Your Business"
+	description="Latest news, offers, and posts — synced from our Google Business Profile via BIAB."
+	bundle={bundle}
+>
+	<section class="biab-section biab-section--narrow" id="updates">
+		<div class="biab-section__lead">
+			<span class="biab-section__eyebrow">News & updates</span>
+			<h2 class="biab-section__title">What's new</h2>
+			<p class="biab-section__sub">
+				Posts and offers, synced from our Google Business Profile.
+			</p>
+		</div>
+
+		{
+			updates.length === 0 ? (
+				<div class="biab-empty">
+					No updates yet. Posts published to the connected Google Business
+					Profile show up here.
+				</div>
+			) : (
+				<div class="updates-list">
+					{updates.map((u) => (
+						<article class="biab-card update-card">
+							{u.imageUrl ? (
+								<img
+									class="update-card__img"
+									src={u.imageUrl}
+									alt={u.title ?? "Update"}
+									loading="lazy"
+								/>
+							) : null}
+							<div class="update-card__body">
+								<div class="update-card__meta">
+									{u.kind ? <span class="biab-badge">{u.kind}</span> : null}
+									<span>{formatDate(u.postedAt)}</span>
+								</div>
+								{u.title ? <h3>{u.title}</h3> : null}
+								<p>{u.body}</p>
+								{u.link ? (
+									<a class="biab-btn biab-btn--ghost" href={u.link}>
+										Learn more
+									</a>
+								) : null}
+							</div>
+						</article>
+					))}
+				</div>
+			)
+		}
+	</section>
+</Layout>
+
+<style>
+	.updates-list {
+		display: flex;
+		flex-direction: column;
+		gap: 1.25rem;
+	}
+	.update-card {
+		display: flex;
+		gap: 1.25rem;
+		padding: 1.25rem;
+		align-items: flex-start;
+	}
+	.update-card__img {
+		width: 8rem;
+		height: 8rem;
+		object-fit: cover;
+		border-radius: 0.75rem;
+		flex-shrink: 0;
+	}
+	.update-card__body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+		align-items: flex-start;
+	}
+	.update-card__meta {
+		display: flex;
+		gap: 0.75rem;
+		align-items: center;
+		color: var(--text-muted);
+		font-size: 0.8rem;
+	}
+	.update-card h3 {
+		font-size: 1.1rem;
+	}
+	.update-card p {
+		color: var(--text-muted);
+		font-size: 0.95rem;
+	}
+	@media (max-width: 540px) {
+		.update-card {
+			flex-direction: column;
+		}
+		.update-card__img {
+			width: 100%;
+			height: 12rem;
+		}
+	}
+</style>

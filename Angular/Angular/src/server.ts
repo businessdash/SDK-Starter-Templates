@@ -7,22 +7,24 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
+import { mountBiabApi } from './server/biab-api';
+import { buildHomeJsonLd } from './server/biab-seo';
+
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
 const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * Example Express Rest API endpoints can be defined here.
- * Uncomment and define endpoints as necessary.
+ * BIAB server endpoints. ALL calls that hold the API key live behind these
+ * routes (auth handler, revalidate webhook, sitemap/robots proxies, and the
+ * JSON endpoints the Angular browser app fetches for home/store/cart/reviews/
+ * portal/parallel-pages). The key never reaches the browser bundle.
  *
- * Example:
- * ```ts
- * app.get('/api/{*splat}', (req, res) => {
- *   // Handle API request
- * });
- * ```
+ * Mounted before the Angular catch-all so /api/* and /sitemap.xml /robots.txt
+ * win over SSR.
  */
+mountBiabApi(app);
 
 /**
  * Serve static files from /browser
@@ -36,12 +38,38 @@ app.use(
 );
 
 /**
- * Handle all other requests by rendering the Angular application.
+ * Handle all other requests by rendering the Angular application, then inject
+ * server-built JSON-LD (localBusiness + website) into the home document's
+ * <head> so crawlers see structured data. No-ops when BIAB env is unset.
  */
 app.use((req, res, next) => {
   angularApp
     .handle(req)
-    .then((response) => (response ? writeResponseToNodeResponse(response, res) : next()))
+    .then(async (response) => {
+      if (!response) {
+        next();
+        return;
+      }
+      const isHomeDocument =
+        req.path === '/' &&
+        (response.headers.get('content-type') ?? '').includes('text/html');
+      if (!isHomeDocument) {
+        return writeResponseToNodeResponse(response, res);
+      }
+      // Read the streamed HTML, splice JSON-LD into </head>, re-emit.
+      const html = await response.text();
+      const jsonLd = await buildHomeJsonLd().catch(() => '');
+      const injected = jsonLd
+        ? html.replace('</head>', `${jsonLd}\n</head>`)
+        : html;
+      res.status(response.status);
+      response.headers.forEach((value, key) => {
+        if (key.toLowerCase() === 'content-length') return; // length changed
+        res.setHeader(key, value);
+      });
+      res.send(injected);
+      return;
+    })
     .catch(next);
 });
 

@@ -1,0 +1,20 @@
+<article>
+  <h1>{@post["title"]}</h1>
+  <%!--
+    Post bodies are authored HTML from the dashboard, so they are rendered raw.
+    HEEx escapes by default — `raw/1` is the deliberate opt-out, and it is safe
+    here only because the source is the org's own editor, not visitor input.
+  --%>
+  <div class="post-body">{raw(@post["content"] || "")}</div>
+  <p :if={@access == "paywall"} class="muted">
+    This is a preview — the full article is behind the paywall.
+  </p>
+</article>
+
+<section :if={@comments != []}>
+  <h2>Comments</h2>
+  <div :for={comment <- @comments} class="comment">
+    <strong>{comment["authorName"] || "Anonymous"}</strong>
+    <p>{comment["content"]}</p>
+  </div>
+</section>

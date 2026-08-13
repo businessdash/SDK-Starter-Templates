@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <.live_title default="BIAB Phoenix starter">{assigns[:page_title]}</.live_title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <%!--
+      The <biab-form> stylesheet and the element itself come from esm.sh, not
+      from this app's asset pipeline. That is the whole reason a Phoenix
+      consumer never reimplements the form renderer: the component ships the
+      conditional blocks, availability picker and upload handling, and talks
+      only to this app's own /api/biab/forms proxy — so the bearer key stays
+      on the server.
+
+      Pinned to an exact version deliberately. A CDN import has no lockfile,
+      so @latest would roll this page forward on somebody else's release.
+    --%>
+    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.60/biab-forms.css" />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+    <script type="module">
+      import { setBiabFormClient } from "https://esm.sh/@businessdash/sdk@0.9.60/element";
+      setBiabFormClient({ baseUrl: "/api/biab/forms", apiKey: "browser-proxy" });
+    </script>
+  </head>
+  <body>
+    {@inner_content}
+  </body>
+</html>

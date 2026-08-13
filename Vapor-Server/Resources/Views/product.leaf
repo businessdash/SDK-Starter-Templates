@@ -1,0 +1,28 @@
+#extend("base"):
+  #export("title"):#(name)#endexport
+  #export("content"):
+    <article class="product">
+      <h1>#(name)</h1>
+      <p class="price">#(price)</p>
+      <div class="description">#(description)</div>
+
+      <form method="post" action="/cart/items">
+        <input type="hidden" name="productId" value="#(id)">
+        <label>Qty <input type="number" name="quantity" value="1" min="1"></label>
+        <button type="submit">Add to cart</button>
+      </form>
+    </article>
+
+    #if(count(reviews) > 0):
+      <section>
+        <h2>Reviews</h2>
+        #for(review in reviews):
+          <blockquote>
+            <p>#(review.text)</p>
+            <cite>#(review.reviewerName) — #(review.rating)/5</cite>
+          </blockquote>
+        #endfor
+      </section>
+    #endif
+  #endexport
+#endextend

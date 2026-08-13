@@ -1,8 +1,13 @@
 import { component$, isDev } from "@builder.io/qwik";
 import { QwikCityProvider, RouterOutlet } from "@builder.io/qwik-city";
+import { SdkSetupBanner } from "./components/biab/SdkSetupBanner";
 import { RouterHead } from "./components/router-head/router-head";
 
 import "./global.css";
+// SDK form styles — file-upload box, multi-step progress header (steps + bar),
+// and the availability/choice chips. Unstyled without this. The container
+// background is intentionally transparent; the template owns it (`.biab-card`).
+import "@businessdash/sdk/biab-forms.css";
 
 export default component$(() => {
   /**
@@ -26,6 +31,7 @@ export default component$(() => {
       </head>
       <body lang="en">
         <RouterOutlet />
+        <SdkSetupBanner />
       </body>
     </QwikCityProvider>
   );

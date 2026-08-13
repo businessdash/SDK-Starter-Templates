@@ -1,0 +1,290 @@
+---
+/**
+ * Customer portal — "My account".
+ *
+ * Reads the `biab_session` cookie server-side (via `getCustomerSession`) and,
+ * when signed in, shows the user + their work bundle (`getWork()` → jobs /
+ * quotes / invoices) + a review-submission form. The form posts to
+ * `/api/biab/portal/submit-review`, which calls the portal submit as the
+ * signed-in customer.
+ *
+ * When signed out, prompts a sign-in. When BIAB auth is unconfigured, says so.
+ */
+import {
+	getCustomerSession,
+	getCustomerWork,
+	isCustomerPortalConfigured,
+} from "../lib/biab-portal";
+import Layout from "../layouts/Layout.astro";
+
+export const prerender = false;
+
+const configured = isCustomerPortalConfigured();
+const session = configured ? await getCustomerSession(Astro.cookies) : null;
+const work = session ? await getCustomerWork(Astro.cookies) : null;
+
+const fullName = session
+	? [session.user.firstName, session.user.lastName].filter(Boolean).join(" ") ||
+		session.user.email ||
+		"there"
+	: null;
+
+function money(n: number): string {
+	return new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: "USD",
+	}).format(n);
+}
+---
+
+<Layout
+	title="My account — Your Business"
+	description="Your jobs, quotes, invoices, and a place to leave a review."
+	hideBanner
+>
+	<section class="biab-section biab-section--narrow" id="account">
+		{
+			!configured ? (
+				<div class="biab-card account-card">
+					<h2 class="biab-section__title">Accounts aren't connected yet</h2>
+					<p>
+						Set <code>BIAB_AUTH_CALLBACK_URL</code> (plus the BIAB keys) and
+						register the callback as a WorkOS redirect URI. See{" "}
+						<code>.env.example</code>.
+					</p>
+				</div>
+			) : !session ? (
+				<div class="biab-card account-card">
+					<span class="biab-badge">Customer portal</span>
+					<h2 class="biab-section__title">Sign in to your account</h2>
+					<p>
+						See your jobs, quotes, and invoices — and leave a review for work
+						we've done.
+					</p>
+					<div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
+						<a class="biab-btn" href="/api/biab-auth/sign-in">
+							Sign in
+						</a>
+						<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-up">
+							Create account
+						</a>
+					</div>
+				</div>
+			) : (
+				<>
+					<div class="biab-section__lead" style="text-align: left;">
+						<span class="biab-section__eyebrow">My account</span>
+						<h2 class="biab-section__title">Welcome back, {fullName}.</h2>
+						{session.user.email ? (
+							<p class="biab-section__sub" style="margin: 0;">
+								{session.user.email}
+							</p>
+						) : null}
+					</div>
+
+					{work?.unlinked ? (
+						<div class="biab-empty">
+							Your account isn't linked to a customer record yet. Once we add
+							you, your jobs and invoices will appear here.
+						</div>
+					) : work ? (
+						<div class="account-grid">
+							<div class="biab-card account-stat">
+								<span class="account-stat__n">{work.summary.openJobCount}</span>
+								<span class="account-stat__l">Open jobs</span>
+							</div>
+							<div class="biab-card account-stat">
+								<span class="account-stat__n">
+									{work.summary.pendingQuoteCount}
+								</span>
+								<span class="account-stat__l">Pending quotes</span>
+							</div>
+							<div class="biab-card account-stat">
+								<span class="account-stat__n">
+									{work.summary.unpaidInvoiceCount}
+								</span>
+								<span class="account-stat__l">Unpaid invoices</span>
+							</div>
+							<div class="biab-card account-stat">
+								<span class="account-stat__n">
+									{money(work.summary.unpaidBalance)}
+								</span>
+								<span class="account-stat__l">Balance due</span>
+							</div>
+						</div>
+					) : null}
+
+					{work && work.jobs.length > 0 ? (
+						<div class="account-section">
+							<h3>Recent jobs</h3>
+							<ul class="account-list">
+								{work.jobs.slice(0, 5).map((j) => (
+									<li class="biab-card account-row">
+										<span>{j.name ?? "Job"}</span>
+										<span class="biab-badge">{j.status}</span>
+									</li>
+								))}
+							</ul>
+						</div>
+					) : null}
+
+					<div class="account-section">
+						<h3>Leave a review</h3>
+						<form class="biab-card account-card" data-review-form>
+							<div>
+								<label class="biab-label" for="review-rating">
+									Rating
+								</label>
+								<select class="biab-select" id="review-rating" name="rating">
+									<option value="5">★★★★★ — 5</option>
+									<option value="4">★★★★ — 4</option>
+									<option value="3">★★★ — 3</option>
+									<option value="2">★★ — 2</option>
+									<option value="1">★ — 1</option>
+								</select>
+							</div>
+							<div>
+								<label class="biab-label" for="review-title">
+									Title (optional)
+								</label>
+								<input
+									class="biab-input"
+									id="review-title"
+									name="title"
+									placeholder="Great service"
+								/>
+							</div>
+							<div>
+								<label class="biab-label" for="review-body">
+									Your review
+								</label>
+								<textarea
+									class="biab-textarea"
+									id="review-body"
+									name="body"
+									placeholder="Tell us how it went…"
+									required
+								/>
+							</div>
+							<button
+								class="biab-btn"
+								style="align-self: flex-start;"
+								type="submit"
+							>
+								Submit review
+							</button>
+							<div data-review-error hidden></div>
+						</form>
+					</div>
+				</>
+			)
+		}
+	</section>
+</Layout>
+
+<style>
+	.account-card {
+		padding: 2rem;
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+		align-items: flex-start;
+	}
+	.account-grid {
+		display: grid;
+		grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr));
+		gap: 1rem;
+		margin-bottom: 2rem;
+	}
+	.account-stat {
+		padding: 1.25rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+	}
+	.account-stat__n {
+		font-size: 1.6rem;
+		font-weight: 800;
+		color: var(--title);
+	}
+	.account-stat__l {
+		font-size: 0.8rem;
+		color: var(--text-muted);
+	}
+	.account-section {
+		margin-top: 2rem;
+	}
+	.account-section h3 {
+		margin-bottom: 1rem;
+		font-size: 1.15rem;
+	}
+	.account-list {
+		list-style: none;
+		margin: 0;
+		padding: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 0.6rem;
+	}
+	.account-row {
+		padding: 0.85rem 1.25rem;
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	code {
+		font-family: var(--mono);
+		font-size: 0.85em;
+		background: var(--accent-bg);
+		color: var(--accent);
+		padding: 0.1em 0.35em;
+		border-radius: 0.35rem;
+	}
+</style>
+
+<script>
+	const form = document.querySelector<HTMLFormElement>("[data-review-form]");
+	const errorBox = form?.querySelector<HTMLDivElement>("[data-review-error]");
+
+	form?.addEventListener("submit", async (event) => {
+		event.preventDefault();
+		if (!form || !errorBox) return;
+		errorBox.hidden = true;
+		const submitBtn = form.querySelector<HTMLButtonElement>(
+			"button[type=submit]",
+		);
+		if (submitBtn) {
+			submitBtn.disabled = true;
+			submitBtn.textContent = "Submitting…";
+		}
+		const fd = new FormData(form);
+		try {
+			const res = await fetch("/api/biab/portal/submit-review", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					rating: Number(fd.get("rating")),
+					title: String(fd.get("title") ?? "") || undefined,
+					body: String(fd.get("body") ?? ""),
+				}),
+			});
+			if (!res.ok) throw new Error(await res.text());
+			form.outerHTML = `
+				<div class="biab-card account-card">
+					<span class="biab-badge">Received</span>
+					<h2 class="biab-section__title">Thanks for the review!</h2>
+					<p>It'll appear once it's approved.</p>
+				</div>`;
+		} catch (err) {
+			errorBox.hidden = false;
+			errorBox.textContent =
+				err instanceof Error ? err.message : "Couldn't submit your review.";
+			errorBox.style.cssText =
+				"color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;";
+			if (submitBtn) {
+				submitBtn.disabled = false;
+				submitBtn.textContent = "Submit review";
+			}
+		}
+	});
+</script>

@@ -1,0 +1,104 @@
+---
+/**
+ * Service-area index. Enumerates every (service × area) variant of the
+ * `service-area` parallel page via `parallelPages.listVariants("service-area")`
+ * and links to each materialised URL `/services/[service]/[area]`.
+ *
+ * This is the SSR-friendly substitute for `getStaticPaths` under
+ * `output: "server"` — the platform owns the cartesian fan-out; we just list
+ * what it returns. Degrades to an empty state when BIAB is unconfigured.
+ */
+import { biab } from "../../lib/biab";
+import {
+	isSuspensionError,
+	suspendedResponse,
+} from "../../lib/biab-suspension";
+import Layout from "../../layouts/Layout.astro";
+
+export const prerender = false;
+
+type Variant = Record<string, string>;
+
+let variants: Variant[] = [];
+let suspended = false;
+
+if (biab) {
+	try {
+		const res = await biab.parallelPages.listVariants("service-area");
+		variants = res?.variants ?? [];
+	} catch (err) {
+		if (isSuspensionError(err)) suspended = true;
+		else variants = [];
+	}
+}
+
+if (suspended) return suspendedResponse();
+
+function label(slug: string): string {
+	return slug
+		.split("-")
+		.map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+		.join(" ");
+}
+---
+
+<Layout
+	title="Service areas — Your Business"
+	description="Every service we offer, in every area we serve. Programmatic pages generated from BIAB."
+>
+	<section class="biab-section" id="service-areas">
+		<div class="biab-section__lead">
+			<span class="biab-section__eyebrow">Where we work</span>
+			<h2 class="biab-section__title">Service areas</h2>
+			<p class="biab-section__sub">
+				Each link is a programmatic page generated from the
+				<code>service-area</code> parallel page in <code>biab.config.ts</code>.
+			</p>
+		</div>
+
+		{
+			variants.length === 0 ? (
+				<div class="biab-empty">
+					No service-area pages yet. Add services + service areas in BIAB, then
+					run <code>npm run sync-schema</code> so the platform fans them out.
+				</div>
+			) : (
+				<div class="biab-grid-3">
+					{variants.map((v) => (
+						<a
+							class="biab-card service-area-link"
+							href={`/services/${v.service}/${v.area}`}
+						>
+							<h3>{label(v.service ?? "")}</h3>
+							<span>in {label(v.area ?? "")}</span>
+						</a>
+					))}
+				</div>
+			)
+		}
+	</section>
+</Layout>
+
+<style>
+	.service-area-link {
+		padding: 1.25rem 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.3rem;
+	}
+	.service-area-link h3 {
+		font-size: 1.05rem;
+	}
+	.service-area-link span {
+		color: var(--text-muted);
+		font-size: 0.9rem;
+	}
+	code {
+		font-family: var(--mono);
+		font-size: 0.85em;
+		background: var(--accent-bg);
+		color: var(--accent);
+		padding: 0.1em 0.35em;
+		border-radius: 0.35rem;
+	}
+</style>

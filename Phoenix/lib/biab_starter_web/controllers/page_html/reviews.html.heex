@@ -1,0 +1,10 @@
+<h1>Reviews</h1>
+
+<blockquote :for={review <- @reviews}>
+  <p>{review["text"]}</p>
+  <cite>{review["reviewerName"] || "Anonymous"} — {review["rating"]}/5</cite>
+</blockquote>
+
+<p :if={@reviews == []} class="muted">No reviews yet.</p>
+
+<a :if={@reviews != []} href={~p"/reviews?offset=#{@offset + 10}"}>Load more →</a>

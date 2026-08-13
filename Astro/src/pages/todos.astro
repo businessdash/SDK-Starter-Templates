@@ -1,0 +1,197 @@
+---
+/**
+ * `/todos` — the relational custom-collections demo. Two collections declared
+ * in `biab.data-model.config.ts` — `todos`, and `todoImages` pointing at a
+ * todo via a required RELATION field. This page:
+ *
+ *   - LISTS todos (with any images joined on) server-side via
+ *     `dataModel.listRecords` (see `src/lib/biab-todos.ts`) — the documented
+ *     read path.
+ *   - CREATES a todo by submitting the generated `todo-form` through the
+ *     SDK's `<biab-form>` element + the existing `/api/biab/forms/[slug]`
+ *     proxy — the documented write path (there is no direct row-write API
+ *     for consumers).
+ *
+ * Until the model is synced + promoted (and the form set Live) the page shows
+ * setup notices instead of failing.
+ */
+import Layout from "../layouts/Layout.astro";
+import { listTodosWithImages } from "../lib/biab-todos";
+import { TODO_FORM_SLUG } from "../../biab.data-model.config";
+
+export const prerender = false;
+
+const result = await listTodosWithImages();
+---
+
+<Layout
+	title="Todos — Your Business"
+	description="Relational custom-collections demo (todos + todoImages)."
+>
+	<section class="biab-section biab-section--narrow" id="todos">
+		<div class="biab-section__lead">
+			<span class="biab-section__eyebrow">Custom collections</span>
+			<h2 class="biab-section__title">Todos</h2>
+			<p class="biab-section__sub">
+				Rows live in your org's custom database — two related collections
+				(<code>todos</code> + <code>todoImages</code>) declared in
+				<code>biab.data-model.config.ts</code>, read via
+				<code>dataModel.listRecords</code>, created through the generated
+				<code>todo-form</code>.
+			</p>
+		</div>
+
+		{
+			result.status === "unconfigured" ? (
+				<div class="biab-empty">
+					BIAB isn't configured — set the env vars in <code>.env</code> (see{" "}
+					<code>.env.example</code>) to run this demo.
+				</div>
+			) : result.status === "unavailable" ? (
+				<div class="biab-empty">
+					The todos model isn't readable yet. Run{" "}
+					<code>pnpm sync-data-model</code>, promote it in the BIAB dashboard,
+					and make sure your secret key carries the{" "}
+					<code>metadata:read_records</code> scope (custom objects are a
+					plan-gated surface).
+				</div>
+			) : result.todos.length === 0 ? (
+				<div class="biab-empty">No todos yet — add the first one below.</div>
+			) : (
+				<ul class="todos-list">
+					{result.todos.map((todo) => (
+						<li class="biab-card">
+							<div class="todos-item__head">
+								<span class="biab-badge">{todo.done ? "Done" : "Open"}</span>
+								<h3>{todo.title}</h3>
+							</div>
+							{todo.notes ? <p>{todo.notes}</p> : null}
+							{todo.images.length > 0 ? (
+								<ul class="todos-item__images">
+									{todo.images.map((image) => (
+										<li>
+											<img
+												alt={image.alt ?? image.label ?? todo.title}
+												height="96"
+												loading="lazy"
+												src={image.url}
+												width="96"
+											/>
+											{image.label ? <span>{image.label}</span> : null}
+										</li>
+									))}
+								</ul>
+							) : null}
+						</li>
+					))}
+				</ul>
+			)
+		}
+	</section>
+
+	{
+		result.status !== "unconfigured" ? (
+			<section class="biab-section biab-section--narrow" id="add-todo">
+				<div class="biab-section__lead">
+					<h2 class="biab-section__title">Add a todo</h2>
+				</div>
+				<div class="biab-card" data-biab-todo-form data-slug={TODO_FORM_SLUG} />
+			</section>
+		) : null
+	}
+</Layout>
+
+<style>
+	.todos-list {
+		display: grid;
+		gap: 1rem;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+	}
+	.todos-item__head {
+		align-items: center;
+		display: flex;
+		gap: 0.5rem;
+	}
+	.todos-item__head h3 {
+		margin: 0;
+	}
+	.todos-item__images {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
+		list-style: none;
+		margin: 0.75rem 0 0;
+		padding: 0;
+	}
+	.todos-item__images img {
+		border-radius: 0.5rem;
+		object-fit: cover;
+	}
+	.todos-item__images span {
+		display: block;
+		font-size: 0.8rem;
+		opacity: 0.7;
+	}
+</style>
+
+<script>
+	import { setBiabFormClient } from "@businessdash/sdk/element";
+	import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
+
+	// Same-origin proxy → /api/biab/forms/[slug]; the bearer key stays
+	// server-side. Identical client to the contact form's — the generated
+	// `todo-form` is a normal published form once it's set Live.
+	setBiabFormClient({
+		forms: {
+			async schema(slug: string): Promise<FormSchema> {
+				const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`);
+				if (!res.ok) throw new Error(`Failed to load form (${res.status}).`);
+				return (await res.json()) as FormSchema;
+			},
+			async submit(
+				slug: string,
+				data: Record<string, unknown>,
+			): Promise<FormSubmitResult> {
+				const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ data }),
+				});
+				const body = (await res.json().catch(() => null)) as
+					| (FormSubmitResult & { error?: string })
+					| null;
+				if (body && typeof body.ok === "boolean") return body;
+				if (res.ok) {
+					return { ok: true, status: res.status } as FormSubmitResult;
+				}
+				return {
+					ok: false,
+					status: res.status,
+					reason: "server_error",
+					message: body?.error ?? `Submission failed (${res.status}).`,
+				} as FormSubmitResult;
+			},
+		},
+	});
+
+	// Mount the element only after the client is set (avoids the no-client
+	// hint). If the schema can't load, the element renders its own error —
+	// which here means "promote the model + set Todo Form live".
+	const mount = document.querySelector<HTMLDivElement>("[data-biab-todo-form]");
+	if (mount) {
+		const form = document.createElement("biab-form");
+		form.setAttribute("slug", mount.dataset.slug ?? "todo-form");
+		form.setAttribute("submit-label", "Add todo");
+		form.setAttribute("auto-complete", "false");
+		form.className = mount.className;
+		mount.replaceWith(form);
+
+		// The row exists server-side on success — reload so the list re-reads
+		// (leaving the confirmation visible for a beat first).
+		form.addEventListener("biab-form-success", () => {
+			setTimeout(() => window.location.reload(), 900);
+		});
+	}
+</script>

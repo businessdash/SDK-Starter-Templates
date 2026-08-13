@@ -1,0 +1,120 @@
+---
+/**
+ * Subscriptions list. Server-renders recurring offerings via
+ * `subscriptions.list()`. Each card shows the price + billing interval. The
+ * "Subscribe" link points at the product/sign-in flow — recurring checkout in
+ * BIAB runs through the same Stripe-hosted handoff as the cart.
+ *
+ * Suspension-aware (503) and unconfigured-safe.
+ */
+import { biab } from "../../lib/biab";
+import { isStoreConfigured } from "../../lib/biab-store";
+import { isSuspensionError, suspendedResponse } from "../../lib/biab-suspension";
+import Layout from "../../layouts/Layout.astro";
+
+export const prerender = false;
+
+type Offering = {
+	id: string;
+	name: string;
+	description: string | null;
+	imageUrl: string | null;
+	amountCents: number;
+	interval: "day" | "week" | "month" | "year";
+};
+
+let offerings: Offering[] = [];
+let loadError = false;
+let suspended = false;
+
+if (biab) {
+	try {
+		const res = await biab.subscriptions.list();
+		offerings = (res?.items ?? []) as Offering[];
+	} catch (err) {
+		if (isSuspensionError(err)) suspended = true;
+		else loadError = true;
+	}
+}
+
+if (suspended) return suspendedResponse();
+
+function price(o: Offering): string {
+	const amount = new Intl.NumberFormat(undefined, {
+		style: "currency",
+		currency: "USD",
+	}).format(o.amountCents / 100);
+	return `${amount} / ${o.interval}`;
+}
+---
+
+<Layout
+	title="Plans & subscriptions — Your Business"
+	description="Recurring plans and memberships, billed securely through Stripe."
+>
+	<section class="biab-section" id="subscriptions">
+		<div class="biab-section__lead">
+			<span class="biab-section__eyebrow">Memberships</span>
+			<h2 class="biab-section__title">Plans & subscriptions</h2>
+			<p class="biab-section__sub">
+				Recurring offerings from BIAB. Pick a plan and we'll set up billing.
+			</p>
+		</div>
+
+		{
+			!isStoreConfigured() ? (
+				<div class="biab-empty">Store isn't connected.</div>
+			) : loadError ? (
+				<div class="biab-empty">Couldn't load plans right now.</div>
+			) : offerings.length === 0 ? (
+				<div class="biab-empty">
+					No subscription plans yet. Create one in BIAB at Dashboard → Products →
+					Subscriptions.
+				</div>
+			) : (
+				<div class="biab-grid-3">
+					{offerings.map((o) => (
+						<article class="biab-card sub-card">
+							{o.imageUrl ? (
+								<img class="sub-card__img" src={o.imageUrl} alt={o.name} />
+							) : null}
+							<h3>{o.name}</h3>
+							<div class="sub-card__price">{price(o)}</div>
+							{o.description ? (
+								<p class="sub-card__desc">{o.description}</p>
+							) : null}
+							<a class="biab-btn" href="/api/biab-auth/sign-in?returnTo=/my-account">
+								Subscribe
+							</a>
+						</article>
+					))}
+				</div>
+			)
+		}
+	</section>
+</Layout>
+
+<style>
+	.sub-card {
+		padding: 1.5rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+		align-items: flex-start;
+	}
+	.sub-card__img {
+		width: 100%;
+		aspect-ratio: 16 / 9;
+		object-fit: cover;
+		border-radius: 0.6rem;
+	}
+	.sub-card__price {
+		color: var(--accent);
+		font-weight: 700;
+		font-size: 1.1rem;
+	}
+	.sub-card__desc {
+		color: var(--text-muted);
+		font-size: 0.92rem;
+	}
+</style>

@@ -7,14 +7,23 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    DATABASE_URL: z.string().url(),
+    // Optional: the BIAB Web Content SDK needs NO database. Set this only if you
+    // use this starter's example tRPC/DB features. Accessing `db` without it
+    // throws a helpful error (see src/server/db/index.ts) rather than crashing
+    // the app at boot.
+    DATABASE_URL: z.string().url().optional(),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
     BIAB_API_KEY: z.string().optional(),
+    // Legacy fallbacks — prefer the NEXT_PUBLIC_ twins below (non-secret, and the
+    // browser needs them). Kept optional so existing deployments don't break.
     BIAB_SITE_ID: z.string().uuid().optional(),
     BIAB_PACKAGE_API_BASE_URL: z.string().url().optional(),
     BIAB_REVALIDATION_SECRET: z.string().optional(),
+    // Public URL of your auth handler's /callback route. Required for
+    // sign-in / sign-up / customer portal. Register it as a WorkOS redirect URI.
+    BIAB_AUTH_CALLBACK_URL: z.string().url().optional(),
   },
 
   /**
@@ -23,6 +32,17 @@ export const env = createEnv({
    * `NEXT_PUBLIC_`.
    */
   client: {
+    // Production origin used in server-side JSON-LD (LocalBusiness / WebSite).
+    // Falls back to https://example.com when unset.
+    NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
+    // ── Browser-safe BIAB followers/subscribe credentials ──────────────
+    // Publishable token (`pk_…`): origin-locked, rate-limited, scoped to
+    // `followers:self` — safe to expose to the browser. Powers the newsletter
+    // signup. When PK + SITE_ID are unset the Subscribe component degrades to a
+    // "coming soon" placeholder so the template still runs unconfigured.
+    NEXT_PUBLIC_BIAB_PK: z.string().optional(),
+    NEXT_PUBLIC_BIAB_SITE_ID: z.string().uuid().optional(),
+    NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL: z.string().url().optional(),
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
   },
 
@@ -37,6 +57,12 @@ export const env = createEnv({
     BIAB_SITE_ID: process.env.BIAB_SITE_ID,
     BIAB_PACKAGE_API_BASE_URL: process.env.BIAB_PACKAGE_API_BASE_URL,
     BIAB_REVALIDATION_SECRET: process.env.BIAB_REVALIDATION_SECRET,
+    BIAB_AUTH_CALLBACK_URL: process.env.BIAB_AUTH_CALLBACK_URL,
+    NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
+    NEXT_PUBLIC_BIAB_PK: process.env.NEXT_PUBLIC_BIAB_PK,
+    NEXT_PUBLIC_BIAB_SITE_ID: process.env.NEXT_PUBLIC_BIAB_SITE_ID,
+    NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL:
+      process.env.NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

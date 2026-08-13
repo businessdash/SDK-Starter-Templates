@@ -1,0 +1,78 @@
+---
+/**
+ * News banner — renders `bundle.banner` messages as a dismissible strip.
+ *
+ * The richer scheduled-message banner is delivered at runtime via
+ * `bundle.banner` (a multi-message, schedule-aware passthrough). We show the
+ * first active message; "dismiss" hides it for the session via sessionStorage
+ * keyed on the message id, so it doesn't reappear on every navigation.
+ *
+ * Renders nothing when no banner is enabled — safe to drop into any layout.
+ */
+import { getBannerFromBundle, type MarketingBundle } from "../lib/biab-bundle";
+
+interface Props {
+	bundle: MarketingBundle | null;
+}
+
+const { bundle } = Astro.props;
+const banner = getBannerFromBundle(bundle);
+const message = banner?.messages[0] ?? null;
+---
+
+{
+	message ? (
+		<div
+			class:list={["biab-banner", message.urgent && "biab-banner--urgent"]}
+			data-banner
+			data-banner-id={message.id}
+			data-banner-dismissible={
+				message.appearance === "until_dismiss" ? "true" : "false"
+			}
+			role="region"
+			aria-label="Site announcement"
+		>
+			<span class="biab-banner__text">{message.text}</span>
+			{message.linkUrl && message.buttonText ? (
+				<a
+					class:list={[
+						"biab-banner__cta",
+						message.linkStyle === "button" && "biab-btn",
+					]}
+					href={message.linkUrl}
+					target={message.openInNewTab ? "_blank" : undefined}
+					rel={message.openInNewTab ? "noopener" : undefined}
+				>
+					{message.buttonText}
+				</a>
+			) : null}
+			<button
+				class="biab-banner__close"
+				data-banner-close
+				type="button"
+				aria-label="Dismiss announcement"
+			>
+				&times;
+			</button>
+		</div>
+	) : null
+}
+
+<script>
+	const banner = document.querySelector<HTMLDivElement>("[data-banner]");
+	if (banner) {
+		const id = banner.dataset.bannerId ?? "";
+		const key = `biab_banner_dismissed:${id}`;
+		const dismissible = banner.dataset.bannerDismissible === "true";
+		if (dismissible && sessionStorage.getItem(key) === "1") {
+			banner.remove();
+		} else {
+			banner
+				.querySelector<HTMLButtonElement>("[data-banner-close]")
+				?.addEventListener("click", () => {
+					banner.remove();
+					if (dismissible) sessionStorage.setItem(key, "1");
+				});
+		}
+	}
+</script>

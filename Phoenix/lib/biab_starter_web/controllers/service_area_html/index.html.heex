@@ -1,0 +1,12 @@
+<h1>Where we work</h1>
+
+<%!-- One row per variant tuple. This is also what a sitemap iterates. --%>
+<ul :if={@variants != []}>
+  <li :for={variant <- @variants}>
+    <a href={~p"/services/#{variant["service"] || get_in(variant, ["params", "service"])}/#{variant["area"] || get_in(variant, ["params", "area"])}"}>
+      {variant["label"] || "View"}
+    </a>
+  </li>
+</ul>
+
+<p :if={@variants == []} class="muted">No service areas defined yet.</p>

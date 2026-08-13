@@ -1,0 +1,14 @@
+[
+  {
+    "object": "todoImages",
+    "universalIdentifier": "todo-image-seed-welcome",
+    "values": {
+      "url": "https://placehold.co/240x160/png",
+      "alt": "A placeholder image",
+      "label": "Welcome banner"
+    },
+    "relations": {
+      "todo": "todo-seed-welcome"
+    }
+  }
+]

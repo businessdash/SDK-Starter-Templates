@@ -1,11 +1,39 @@
 ---
+// Newsletter signup wired to BIAB followers. Vanilla `.astro` island by default
+// (the base starter ships without React); after `npx astro add react`, swap to
+// the React drop-in: `import Subscribe from "./Subscribe.tsx"` + `client:load`.
+import Subscribe from "./Subscribe.astro";
+
 const year = new Date().getFullYear();
 ---
 
 <footer class="app-footer">
-	<div>© {year} Your Business. All rights reserved.</div>
-	<div>
-		Built with
-		<a href="https://github.com/Gold240sx/business-in-a-box">@biab-dev/sdk</a>
+	<div class="app-footer__about">
+		<div>© {year} Your Business. All rights reserved.</div>
+		<div>
+			Built with
+			<a href="https://github.com/Gold240sx/business-in-a-box">@businessdash/sdk</a>
+		</div>
+	</div>
+	<div class="app-footer__subscribe">
+		<Subscribe
+			idPrefix="footer"
+			label="Stay in the loop"
+			placeholder="you@example.com"
+		/>
+		{/* React drop-in (after `npx astro add react`): <Subscribe client:load idPrefix="footer" label="Stay in the loop" /> */}
 	</div>
 </footer>
+
+<style>
+	.app-footer__about {
+		display: flex;
+		flex-direction: column;
+		gap: 1rem;
+	}
+	.app-footer__subscribe {
+		min-width: 16rem;
+		max-width: 22rem;
+		flex: 1;
+	}
+</style>

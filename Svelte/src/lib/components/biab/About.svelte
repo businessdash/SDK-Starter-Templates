@@ -1,4 +1,6 @@
 <script lang="ts">
+	import Subscribe from '$lib/components/biab/Subscribe.svelte';
+
 	let { body }: { body: string } = $props();
 </script>
 
@@ -10,4 +12,20 @@
 	<p style="color: var(--text); font-size: 1.05rem; text-align: center;">
 		{body}
 	</p>
+	<div class="about__subscribe">
+		<Subscribe
+			source="about"
+			idPrefix="about-subscribe"
+			label="Stay in the loop"
+			buttonLabel="Subscribe"
+		/>
+	</div>
 </section>
+
+<style>
+	.about__subscribe {
+		display: flex;
+		justify-content: center;
+		margin-top: 2rem;
+	}
+</style>

@@ -11,6 +11,9 @@
 		<link rel="stylesheet" href="/styles.css" />
 	</head>
 	<body>
+		<!-- News banner (bundle.banner) mounts here. -->
+		<div id="banner-root"></div>
+
 		<!-- Sections are mounted by JS — see /main.js. Pure DOM
 		     manipulation, no framework, no JSX. The same shape as the
 		     React-Bun starter, just rendered with vanilla `document.createElement`. -->
@@ -20,9 +23,13 @@
 				<nav>
 					<a href="#services">Services</a>
 					<a href="#gallery">Gallery</a>
-					<a href="#booking">Book</a>
-					<a href="#blog">Blog</a>
-					<a href="#contact">Contact</a>
+					<a href="/store">Store</a>
+					<a href="/subscriptions">Plans</a>
+					<a href="/reviews">Reviews</a>
+					<a href="/updates">Updates</a>
+					<a href="/todos">Todos</a>
+					<a href="/cart">Cart</a>
+					<a href="/my-account">Account</a>
 				</nav>
 			</div>
 		</header>
@@ -38,13 +45,24 @@
 		</main>
 
 		<footer class="app-footer">
-			<div>© <span id="year"></span> Your Business. All rights reserved.</div>
-			<div>
-				Built with
-				<a href="https://github.com/Gold240sx/business-in-a-box">@biab-dev/sdk</a>
+			<div class="app-footer__copy">
+				<div>© <span id="year"></span> Your Business. All rights reserved.</div>
+				<div>
+					Built with
+					<a href="https://github.com/Gold240sx/business-in-a-box">@businessdash/sdk</a>
+				</div>
 			</div>
+			<!-- Newsletter signup — same shared section as the About block.
+			     Mounted by /main.js. -->
+			<div class="subscribe subscribe--footer" id="footer-subscribe"></div>
 		</footer>
 
 		<script type="module" src="/main.js"></script>
+		<script type="module">
+			import { mountBanner } from "/banner.js";
+			import { mountSetupBanner } from "/setup-banner.js";
+			mountBanner(document.getElementById("banner-root"));
+			mountSetupBanner();
+		</script>
 	</body>
 </html>

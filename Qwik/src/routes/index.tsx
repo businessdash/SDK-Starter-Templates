@@ -1,8 +1,9 @@
 import { component$, useVisibleTask$ } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$ } from "@builder.io/qwik-city";
-import { initBiabAnalytics } from "@biab-dev/sdk/analytics-core";
+import { initBiabAnalytics } from "@businessdash/sdk/analytics-core";
 
 import { About } from "../components/biab/About";
+import { Banner } from "../components/biab/Banner";
 import { Blog, type BlogPost } from "../components/biab/Blog";
 import { Booking, type EventType } from "../components/biab/Booking";
 import {
@@ -15,6 +16,11 @@ import { Header } from "../components/biab/Header";
 import { Hero, type HeroData } from "../components/biab/Hero";
 import { Services, type Service } from "../components/biab/Services";
 import { getBiab } from "../lib/biab";
+import {
+	type BundleBannerMessage,
+	buildSiteJsonLd,
+	getBannerFromBundle,
+} from "../lib/biab-content";
 
 /**
  * `routeLoader$` runs on the server before render. Five SDK calls
@@ -58,7 +64,7 @@ const SERVICES_FALLBACK: Service[] = [
 	},
 ];
 
-const FORM_SLUG = "contact";
+const FORM_SLUG = "general-inquiry";
 
 const FORM_FALLBACK: FormSchema = {
 	id: "fallback",
@@ -74,7 +80,7 @@ const FORM_FALLBACK: FormSchema = {
 
 const GALLERY_FIELDS = ["id", "src", "title", "category", "blurDataURL"] as const;
 
-export const useBiabData = routeLoader$(async () => {
+export const useBiabData = routeLoader$(async ({ url }) => {
 	const biab = getBiab();
 	if (!biab) {
 		return {
@@ -86,6 +92,14 @@ export const useBiabData = routeLoader$(async () => {
 			blogPosts: [] as BlogPost[],
 			formSchema: FORM_FALLBACK,
 			formSlug: FORM_SLUG,
+			bannerMessages: [] as BundleBannerMessage[],
+			// Site identity + JSON-LD still render with sensible defaults so the
+			// page is crawlable even before BIAB is connected.
+			jsonLd: buildSiteJsonLd({
+				name: "Your Business",
+				siteUrl: url.origin,
+				description: HERO_DEFAULTS.tagline,
+			}),
 		};
 	}
 
@@ -121,14 +135,19 @@ export const useBiabData = routeLoader$(async () => {
 	const heroSection = readSection("hero");
 	const aboutSection = readSection("about");
 	const servicesSection = readSection("services");
+	const companySection = readSection("companyInfo");
+
+	const heroData: HeroData = {
+		title: (heroSection?.title as string) ?? HERO_DEFAULTS.title,
+		tagline: (heroSection?.tagline as string) ?? HERO_DEFAULTS.tagline,
+		ctaLabel: (heroSection?.ctaLabel as string) ?? HERO_DEFAULTS.ctaLabel,
+		ctaHref: (heroSection?.ctaHref as string) ?? HERO_DEFAULTS.ctaHref,
+	};
+
+	const banner = getBannerFromBundle(bundle);
 
 	return {
-		hero: {
-			title: (heroSection?.title as string) ?? HERO_DEFAULTS.title,
-			tagline: (heroSection?.tagline as string) ?? HERO_DEFAULTS.tagline,
-			ctaLabel: (heroSection?.ctaLabel as string) ?? HERO_DEFAULTS.ctaLabel,
-			ctaHref: (heroSection?.ctaHref as string) ?? HERO_DEFAULTS.ctaHref,
-		} satisfies HeroData,
+		hero: heroData,
 		about:
 			typeof aboutSection?.body === "string"
 				? aboutSection.body
@@ -143,6 +162,15 @@ export const useBiabData = routeLoader$(async () => {
 		blogPosts: ((blog as { items?: BlogPost[] })?.items as BlogPost[]) ?? [],
 		formSchema,
 		formSlug: FORM_SLUG,
+		bannerMessages: banner?.messages ?? [],
+		// localBusiness + website JSON-LD, server-rendered into the page head.
+		jsonLd: buildSiteJsonLd({
+			name: (companySection?.name as string) ?? "Your Business",
+			siteUrl: url.origin,
+			description: heroData.tagline,
+			telephone: (companySection?.phone as string) ?? undefined,
+			email: (companySection?.email as string) ?? undefined,
+		}),
 	};
 });
 
@@ -150,15 +178,20 @@ export default component$(() => {
 	const data = useBiabData();
 
 	useVisibleTask$(() => {
-		const siteId = import.meta.env.PUBLIC_BIAB_SITE_ID as
-			| string
-			| undefined;
-		const baseUrl = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL as
-			| string
-			| undefined;
-		const apiKey = import.meta.env.PUBLIC_BIAB_PUBLIC_KEY as
-			| string
-			| undefined;
+		// Prefer the canonical PUBLIC_BIAB_* names (Vite envPrefix), falling
+		// back to the starter's original PUBLIC_BIAB_* names.
+		const siteId =
+			(import.meta.env.PUBLIC_BIAB_SITE_ID as string | undefined) ??
+			(import.meta.env.PUBLIC_BIAB_SITE_ID as string | undefined);
+		const baseUrl =
+			(import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL as
+				| string
+				| undefined) ??
+			(import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL as string | undefined);
+		const apiKey =
+			(import.meta.env.PUBLIC_BIAB_PK as string | undefined) ??
+			(import.meta.env.PUBLIC_BIAB_PK as string | undefined) ??
+			(import.meta.env.PUBLIC_BIAB_PUBLIC_KEY as string | undefined);
 		if (!siteId || !baseUrl || !apiKey) return;
 		const tracker = initBiabAnalytics({ siteId, baseUrl, apiKey });
 		return () => tracker.stop();
@@ -166,6 +199,7 @@ export default component$(() => {
 
 	return (
 		<>
+			<Banner messages={data.value.bannerMessages} />
 			<Header />
 			<main>
 				<Hero hero={data.value.hero} />
@@ -181,13 +215,25 @@ export default component$(() => {
 	);
 });
 
-export const head: DocumentHead = {
-	title: "Your Business — built on BIAB",
-	meta: [
-		{
-			name: "description",
-			content:
-				"Qwik City starter showing how to consume the BIAB SDK via routeLoader$ + server$, with resumable client interactivity for the booking and contact flows.",
-		},
-	],
+export const head: DocumentHead = ({ resolveValue }) => {
+	const data = resolveValue(useBiabData);
+	return {
+		title: "Your Business — built on BIAB",
+		meta: [
+			{
+				name: "description",
+				content:
+					"Qwik City starter showing how to consume the BIAB SDK via routeLoader$ + server$, with resumable client interactivity for the booking and contact flows.",
+			},
+		],
+		// localBusiness + website JSON-LD, server-rendered into <head> by
+		// RouterHead. The string is the array of schema.org nodes built in the
+		// loader via @businessdash/sdk/seo.
+		scripts: [
+			{
+				props: { type: "application/ld+json" },
+				script: data.jsonLd,
+			},
+		],
+	};
 };

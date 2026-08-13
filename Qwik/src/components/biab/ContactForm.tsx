@@ -1,84 +1,66 @@
-import { $, component$, useSignal } from "@builder.io/qwik";
+import { component$ } from "@builder.io/qwik";
 import { server$ } from "@builder.io/qwik-city";
+import { BiabForm } from "@businessdash/sdk/qwik";
+import type {
+	FormSchema,
+	FormSubmitOptions,
+	FormSubmitResult,
+} from "@businessdash/sdk/forms";
 
 import { getBiab } from "../../lib/biab";
 
-export interface FieldDef {
-	id: string;
-	label: string;
-	type: string;
-	required: boolean;
-	placeholder?: string;
-	helpText?: string;
-}
+// Re-export the schema type so `routes/index.tsx` keeps its import path. The
+// loader hands `<BiabForm>` the FULL published schema (nested field tree +
+// settings + org icon) — the drop-in renders every field type, multi-step
+// progress, conditions, and concurrent reveal, identical to the dashboard
+// preview, with no hand-rolled per-field markup here anymore.
+export type { FormSchema };
 
-export interface FormSchema {
-	id: string;
-	slug: string;
-	title?: string;
-	description?: string | null;
-	fields: FieldDef[];
-}
+// The form slug to load + submit. Swap for any of your org's form slugs.
+const SLUG = "general-inquiry";
 
 /**
- * Server RPC — runs only on the server. The SDK's
- * `validateFormSubmission` runs server-side before persisting, so
- * a missing required field throws here without writing to BIAB.
+ * Server RPC — the actual `forms.submit` round-trip runs ONLY here, so the
+ * BIAB bearer key never enters the client bundle. `<BiabForm>` validates +
+ * re-keys the payload (id → published output key) in the headless core, then
+ * hands us the wire-ready payload to forward through the SDK. The SDK re-runs
+ * server-side validation before persisting, so a bad payload fails here without
+ * writing anything to BIAB.
  */
-const submitForm = server$(async function (
-	this,
-	slug: string,
-	data: Record<string, unknown>,
-) {
+const submitContactForm = server$(async function (
+	payload: Record<string, unknown>,
+	options: FormSubmitOptions,
+): Promise<FormSubmitResult> {
 	const biab = getBiab();
-	if (!biab) throw new Error("BIAB not configured.");
-	return await biab.forms.submit(slug, data, {
-		submitterEmail: (data.email as string | undefined) ?? undefined,
-		submitterName: (data.name as string | undefined) ?? undefined,
+	if (!biab) {
+		return {
+			ok: false,
+			status: 0,
+			reason: "network_error",
+			message: "BIAB is not configured (missing env).",
+		};
+	}
+	return await biab.forms.submit(SLUG, payload, {
+		// Recipient hints help BIAB attribute the lead; the field output keys
+		// "email"/"name" come from the published schema.
+		submitterEmail:
+			typeof payload.email === "string" ? payload.email : undefined,
+		submitterName: typeof payload.name === "string" ? payload.name : undefined,
+		source: "qwik-starter",
+		...options,
 	});
 });
 
+/**
+ * The contact section, now a thin shell around the SDK's `<BiabForm>` drop-in.
+ * `schema` comes pre-fetched from the page's `routeLoader$` (server-side, no
+ * client flicker, key stays server-side); `submit$` delegates the round-trip to
+ * the `server$` RPC above. Everything else — values, validation, conditions,
+ * multi-step nav, progress, file uploads, the submit lifecycle — lives in the
+ * headless core. Style it via the `biab-*` classes in your CSS.
+ */
 export const ContactForm = component$<{ schema: FormSchema; slug: string }>(
-	({ schema, slug }) => {
-		const submitting = useSignal(false);
-		const confirmation = useSignal<string | null>(null);
-		const error = useSignal<string | null>(null);
-		// Use a single store-shaped signal for the form values; each
-		// field's input writes back to it via `onInput$`.
-		const data = useSignal<Record<string, string>>({});
-
-		// `preventdefault:submit` on the <form> handles the default
-		// suppression — Qwik warns if we also call event.preventDefault()
-		// from an async handler (it would fire too late).
-		const handleSubmit = $(async () => {
-			submitting.value = true;
-			error.value = null;
-			try {
-				await submitForm(slug, data.value);
-				confirmation.value =
-					"Thanks — we'll be in touch within one business day.";
-				data.value = {};
-			} catch (err) {
-				error.value = err instanceof Error ? err.message : "Couldn't submit.";
-			} finally {
-				submitting.value = false;
-			}
-		});
-
-		if (confirmation.value) {
-			return (
-				<section class="biab-section biab-section--narrow" id="contact">
-					<div class="biab-card contact">
-						<span class="biab-badge" style="align-self: flex-start;">
-							Received
-						</span>
-						<h2 class="biab-section__title">Got it.</h2>
-						<p>{confirmation.value}</p>
-					</div>
-				</section>
-			);
-		}
-
+	({ schema }) => {
 		return (
 			<section class="biab-section biab-section--narrow" id="contact">
 				<div class="biab-section__lead">
@@ -88,70 +70,30 @@ export const ContactForm = component$<{ schema: FormSchema; slug: string }>(
 						<p class="biab-section__sub">{schema.description}</p>
 					) : null}
 				</div>
-				<form
+
+				<BiabForm
+					// Autofill is ON by default in 0.9.12 — `<BiabForm>` infers a
+					// sensible HTML `autocomplete` token per field (name/email/tel/
+					// address/…), so browsers offer autofill with no config. Set
+					// explicitly here to document intent; pass `autoComplete={false}` to
+					// turn it off, or `fieldAutoComplete={{ phone: "tel" }}` to override
+					// individual fields.
+					autoComplete
 					class="biab-card contact"
-					onSubmit$={handleSubmit}
-					preventdefault:submit
+					schema={schema}
+					submit$={submitContactForm}
+					submitLabel="Send message"
 				>
-					{schema.fields.map((field) => (
-						<div key={field.id}>
-							<label class="biab-label" for={`field-${field.id}`}>
-								{field.label}
-								{field.required ? " *" : ""}
-							</label>
-							{field.type === "textarea" ? (
-								<textarea
-									class="biab-textarea"
-									id={`field-${field.id}`}
-									name={field.id}
-									onInput$={(_, target) => {
-										data.value = {
-											...data.value,
-											[field.id]: (target as HTMLTextAreaElement).value,
-										};
-									}}
-									placeholder={field.placeholder ?? ""}
-									required={field.required}
-									value={data.value[field.id] ?? ""}
-								/>
-							) : (
-								<input
-									class="biab-input"
-									id={`field-${field.id}`}
-									name={field.id}
-									onInput$={(_, target) => {
-										data.value = {
-											...data.value,
-											[field.id]: (target as HTMLInputElement).value,
-										};
-									}}
-									placeholder={field.placeholder ?? ""}
-									required={field.required}
-									type={field.type === "email" ? "email" : "text"}
-									value={data.value[field.id] ?? ""}
-								/>
-							)}
-							{field.helpText ? (
-								<small style="color: var(--text-muted);">
-									{field.helpText}
-								</small>
-							) : null}
-						</div>
-					))}
-					<button
-						class="biab-btn"
-						disabled={submitting.value}
-						style="align-self: flex-start;"
-						type="submit"
-					>
-						{submitting.value ? "Sending…" : "Send message"}
-					</button>
-					{error.value ? (
-						<div style="color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;">
-							{error.value}
-						</div>
-					) : null}
-				</form>
+					{/* Optional override slots — style or replace as you like. */}
+					<div q:slot="success" class="biab-form__success">
+						<span class="biab-badge">Received</span>
+						<h3>Got it.</h3>
+						<p>We'll be in touch within one business day.</p>
+					</div>
+					<div q:slot="loading" class="biab-form__loading">
+						Loading form…
+					</div>
+				</BiabForm>
 			</section>
 		);
 	},

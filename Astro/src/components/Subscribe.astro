@@ -1,0 +1,196 @@
+---
+/**
+ * Newsletter signup — vanilla Astro island (no React).
+ *
+ * The base Astro starter ships without React, so this is the default Subscribe
+ * used by the footer + about section. It mirrors the `Subscribe.tsx` React
+ * drop-in's behavior using the SDK's core client directly in a small client
+ * `<script>`:
+ *
+ *   - reads the publishable creds from `PUBLIC_`-prefixed env (Astro inlines
+ *     them into the browser bundle);
+ *   - subscribes via `client.followers.join(...)` (browser-safe — the
+ *     publishable token is origin-locked, public `followers:self` scope only);
+ *   - persists a per-browser "already subscribed" hint in `localStorage` under
+ *     `biab.followers.<siteId>` (exactly what `useFollowers` does internally)
+ *     and reads it on mount to hide the form for return visitors.
+ *
+ * Graceful fallback: when the publishable creds are unset (an unconfigured
+ * checkout), the form degrades to a "coming soon" placeholder.
+ *
+ * To switch to the React drop-in (`Subscribe.tsx`):
+ *   1. `npx astro add react`
+ *   2. swap `Subscribe.astro` → `Subscribe.tsx` with `client:load` where it's used.
+ */
+interface Props {
+	/** Field label above the email input. */
+	label?: string;
+	placeholder?: string;
+	buttonLabel?: string;
+	className?: string;
+	/** Unique id seed so footer + about instances don't collide, and the
+	 *  follower `source` tag for attribution. */
+	idPrefix?: string;
+}
+
+const {
+	label = "Subscribe to our newsletter",
+	placeholder = "you@example.com",
+	buttonLabel = "Subscribe",
+	className = "",
+	idPrefix = "subscribe",
+} = Astro.props;
+
+// PUBLIC_ env is inlined into the client bundle below; here we only read it to
+// pick which mode (live vs placeholder) to render. The browser receives these
+// same values via the data-* attributes for the join call.
+const pk = import.meta.env.PUBLIC_BIAB_PK;
+const siteId = import.meta.env.PUBLIC_BIAB_SITE_ID;
+const baseUrl = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL ?? "";
+const enabled = Boolean(pk && siteId);
+---
+
+<div class={`subscribe-island ${className}`.trim()}>
+	<form
+		class="subscribe"
+		data-subscribe
+		data-enabled={enabled ? "true" : "false"}
+		data-pk={pk ?? ""}
+		data-site-id={siteId ?? ""}
+		data-base-url={baseUrl}
+		data-source={idPrefix}
+	>
+		<label class="biab-label" for={`${idPrefix}-email`}>{label}</label>
+		<div class="subscribe__row">
+			<input
+				autocomplete="email"
+				class="biab-input"
+				id={`${idPrefix}-email`}
+				name="email"
+				placeholder={placeholder}
+				required
+				type="email"
+			/>
+			<button class="biab-btn" type="submit" data-subscribe-btn>
+				{buttonLabel}
+			</button>
+		</div>
+	</form>
+	<p class="subscribe__note" data-subscribe-note hidden></p>
+</div>
+
+<style>
+	.subscribe {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+	}
+	.subscribe__row {
+		display: flex;
+		gap: 0.5rem;
+		align-items: stretch;
+	}
+	.subscribe__row .biab-input {
+		flex: 1;
+	}
+	.subscribe__row .biab-btn {
+		flex-shrink: 0;
+	}
+	.subscribe__note {
+		margin-top: 0.5rem;
+		font-size: 0.85rem;
+		color: var(--accent);
+	}
+	.subscribe__note--error {
+		color: var(--danger);
+	}
+</style>
+
+<script>
+	import { createBiabClient } from "@businessdash/sdk";
+
+	type Mounted = HTMLFormElement & { dataset: DOMStringMap };
+
+	document
+		.querySelectorAll<Mounted>("[data-subscribe]")
+		.forEach((form) => {
+			const island = form.closest<HTMLDivElement>(".subscribe-island");
+			const note = island?.querySelector<HTMLParagraphElement>(
+				"[data-subscribe-note]",
+			);
+			const btn = form.querySelector<HTMLButtonElement>("[data-subscribe-btn]");
+			const input = form.querySelector<HTMLInputElement>('input[name="email"]');
+
+			const enabled = form.dataset.enabled === "true";
+			const pk = form.dataset.pk ?? "";
+			const siteId = form.dataset.siteId ?? "";
+			const baseUrl = form.dataset.baseUrl || undefined;
+			const source = form.dataset.source ?? "subscribe";
+			const storeKey = `biab.followers.${siteId}`;
+
+			function showNote(text: string, isError = false) {
+				if (!note) return;
+				note.textContent = text;
+				note.hidden = false;
+				note.classList.toggle("subscribe__note--error", isError);
+			}
+
+			function markSubscribed() {
+				form.hidden = true;
+				showNote("You're subscribed — thanks!");
+			}
+
+			// Per-browser "already subscribed" hint (mirrors useFollowers).
+			if (enabled && siteId) {
+				try {
+					if (window.localStorage.getItem(storeKey)) {
+						markSubscribed();
+						return;
+					}
+				} catch {
+					// storage disabled — best-effort, fall through to the form
+				}
+			}
+
+			form.addEventListener("submit", async (event) => {
+				event.preventDefault();
+				const email = (input?.value ?? "").trim();
+				if (!email) return;
+				if (btn) {
+					btn.disabled = true;
+					btn.textContent = "…";
+				}
+
+				// Placeholder mode — no publishable creds configured.
+				if (!enabled) {
+					form.hidden = true;
+					showNote("Thanks — newsletter signup is coming soon.");
+					return;
+				}
+
+				try {
+					const client = createBiabClient({
+						apiKey: pk,
+						siteId,
+						...(baseUrl ? { baseUrl } : {}),
+					});
+					await client.followers.join({ email, source });
+					try {
+						window.localStorage.setItem(
+							storeKey,
+							JSON.stringify({ email, at: Date.now() }),
+						);
+					} catch {
+						// best-effort local hint
+					}
+					markSubscribed();
+				} catch {
+					showNote("Couldn't subscribe — please try again.", true);
+					if (btn) {
+						btn.disabled = false;
+						btn.textContent = "Subscribe";
+					}
+				}
+			});
+		});
+</script>

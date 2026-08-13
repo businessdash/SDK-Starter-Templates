@@ -1,0 +1,18 @@
+#extend("base"):
+  #export("title"):Blog#endexport
+  #export("content"):
+    <h1>Blog</h1>
+    #if(count(posts) > 0):
+      <ul class="post-list">
+        #for(post in posts):
+          <li>
+            <a href="/blog/#(post.slug)">#(post.title)</a>
+            <p class="muted">#(post.excerpt)</p>
+          </li>
+        #endfor
+      </ul>
+    #else:
+      <p class="muted">No posts yet.</p>
+    #endif
+  #endexport
+#endextend

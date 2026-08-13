@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 
-import { createGenericRevalidateHandler } from "@biab-dev/sdk/adapters/revalidate";
+import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
 
 export const prerender = false;
 

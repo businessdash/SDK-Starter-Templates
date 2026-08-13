@@ -1,4 +1,4 @@
-import { createGenericRevalidateHandler } from "@biab-dev/sdk/adapters/revalidate";
+import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
 
 /**
  * BIAB → Nuxt revalidation webhook receiver.

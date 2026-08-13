@@ -1,8 +1,11 @@
+import type { FormSchema as SdkFormSchema } from "@businessdash/sdk";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
+import { TODO_FORM_SLUG } from "../../../../biab.data-model.config";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { getBiab } from "@/server/lib/biab";
+import { listTodosWithImages } from "@/server/lib/biab-todos";
 
 /**
  * The BIAB tRPC surface. One router groups every SDK call the
@@ -108,7 +111,7 @@ const SERVICES_FALLBACK: Service[] = [
 	},
 ];
 
-const FORM_SLUG = "contact";
+const FORM_SLUG = "general-inquiry";
 
 const FORM_FALLBACK: FormSchema = {
 	id: "fallback",
@@ -122,7 +125,13 @@ const FORM_FALLBACK: FormSchema = {
 	],
 };
 
-const GALLERY_FIELDS = ["id", "src", "title", "category", "blurDataURL"] as const;
+const GALLERY_FIELDS = [
+	"id",
+	"src",
+	"title",
+	"category",
+	"blurDataURL",
+] as const;
 
 export const biabRouter = createTRPCRouter({
 	/**
@@ -161,9 +170,8 @@ export const biabRouter = createTRPCRouter({
 		]);
 
 		function readSection(name: string): Record<string, unknown> | null {
-			const raw = (bundle as { sections?: Record<string, unknown> })?.sections?.[
-				name
-			];
+			const raw = (bundle as { sections?: Record<string, unknown> })
+				?.sections?.[name];
 			if (
 				raw &&
 				typeof raw === "object" &&
@@ -296,6 +304,56 @@ export const biabRouter = createTRPCRouter({
 					code: "BAD_REQUEST",
 					message: err instanceof Error ? err.message : "Couldn't submit.",
 				});
+			}
+		}),
+
+	/**
+	 * The `/todos` page's read: todos + their images out of the org's custom
+	 * database (see `biab.data-model.config.ts`), plus the generated create
+	 * form's schema. The form schema is `null` until the model is promoted and
+	 * "Todo Form" is set Live — the page shows a setup notice instead.
+	 */
+	todos: publicProcedure.query(async () => {
+		const biab = getBiab();
+		const [result, formSchema] = await Promise.all([
+			listTodosWithImages(),
+			biab
+				? (biab.forms
+						.schema(TODO_FORM_SLUG)
+						.catch(() => null) as Promise<SdkFormSchema | null>)
+				: Promise.resolve(null),
+		]);
+		return { result, formSchema, formSlug: TODO_FORM_SLUG };
+	}),
+
+	/**
+	 * A deeper page of public reviews than the marketing bundle ships. The
+	 * bundle gives the aggregate (count / average) + the first page; the
+	 * reviews wall calls this with the previous `nextOffset` to "load more".
+	 * Returns an empty page (rather than throwing) when unconfigured so the
+	 * UI just stops paginating.
+	 */
+	reviewsPage: publicProcedure
+		.input(
+			z.object({
+				limit: z.number().int().min(1).max(50).optional(),
+				offset: z.number().int().min(0).optional(),
+				source: z.enum(["google", "yelp", "housecall_pro", "other"]).optional(),
+			}),
+		)
+		.query(async ({ input }) => {
+			const biab = getBiab();
+			if (!biab) {
+				return { items: [], totalCount: 0, nextOffset: null } as const;
+			}
+			try {
+				return await biab.reviews.list(input);
+			} catch (err) {
+				if (process.env.NODE_ENV === "development") {
+					const reason = err instanceof Error ? err.message : String(err);
+					console.warn(`[biab] reviews.list failed: ${reason}`);
+				}
+				return { items: [], totalCount: 0, nextOffset: null } as const;
 			}
 		}),
 });

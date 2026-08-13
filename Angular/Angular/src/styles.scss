@@ -1,1 +1,1102 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global styles. These were moved out of the App component's scoped
+ * stylesheet so they apply to the routed page components rendered through
+ * <router-outlet> (component-scoped styles wouldn't reach them). The visual
+ * language is unchanged from the original single-page starter. */
+
+:root {
+	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+body {
+	margin: 0;
+	color: #111827;
+	background: #fafafa;
+}
+
+.header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1rem 1.5rem;
+	border-bottom: 1px solid #e5e7eb;
+	background: #fff;
+
+	.brand {
+		font-weight: 700;
+		font-size: 1.1rem;
+		color: #111827;
+		text-decoration: none;
+	}
+
+	nav {
+		display: flex;
+		gap: 1.25rem;
+		flex-wrap: wrap;
+	}
+
+	nav a {
+		color: #374151;
+		text-decoration: none;
+		font-size: 0.95rem;
+	}
+
+	nav a:hover,
+	nav a.is-active {
+		color: #111827;
+	}
+}
+
+.hero {
+	padding: 4rem 1.5rem 5rem;
+	text-align: center;
+	background: linear-gradient(180deg, #fff 0%, #f3f4f6 100%);
+}
+
+.hero__title {
+	font-size: clamp(2rem, 4vw, 3.25rem);
+	font-weight: 600;
+	letter-spacing: -0.025em;
+	margin: 1rem 0 0.5rem;
+}
+
+.hero__sub {
+	font-size: 1.125rem;
+	color: #4b5563;
+	margin: 0 0 1.5rem;
+}
+
+.biab-badge {
+	display: inline-block;
+	font-size: 0.8rem;
+	background: #ecfdf5;
+	color: #047857;
+	padding: 0.25rem 0.625rem;
+	border-radius: 999px;
+}
+
+.biab-btn {
+	display: inline-block;
+	background: #111827;
+	color: #fff;
+	padding: 0.75rem 1.25rem;
+	border-radius: 0.5rem;
+	font-weight: 600;
+	text-decoration: none;
+	border: 0;
+	cursor: pointer;
+	font: inherit;
+}
+
+.biab-btn:hover {
+	background: #1f2937;
+}
+
+.biab-btn:disabled {
+	opacity: 0.6;
+	cursor: default;
+}
+
+.biab-btn--ghost {
+	background: #fff;
+	color: #111827;
+	border: 1px solid #d1d5db;
+}
+
+.biab-btn--ghost:hover {
+	background: #f3f4f6;
+}
+
+.section {
+	padding: 3rem 1.5rem;
+	max-width: 64rem;
+	margin: 0 auto;
+}
+
+.section__title {
+	font-size: 1.5rem;
+	font-weight: 600;
+	margin: 0 0 1.5rem;
+}
+
+.section__subtitle {
+	font-size: 1.15rem;
+	font-weight: 600;
+	margin: 1.5rem 0 0.75rem;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+	gap: 1rem;
+}
+
+.card {
+	padding: 1.25rem;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.75rem;
+
+	h3 {
+		margin: 0 0 0.5rem;
+		font-size: 1.05rem;
+		font-weight: 600;
+	}
+
+	p {
+		margin: 0 0 0.75rem;
+		color: #4b5563;
+	}
+
+	.price {
+		font-size: 0.85rem;
+		color: #047857;
+		font-weight: 600;
+	}
+}
+
+.card__img,
+.product__img {
+	width: 100%;
+	height: auto;
+	border-radius: 0.5rem;
+	margin-bottom: 0.5rem;
+	display: block;
+}
+
+.product__img {
+	max-width: 24rem;
+}
+
+.muted {
+	color: #6b7280;
+}
+
+.error {
+	color: #b91c1c;
+	font-size: 0.9rem;
+}
+
+.post-list {
+	list-style: none;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+
+	li {
+		padding: 1rem;
+		background: #fff;
+		border: 1px solid #e5e7eb;
+		border-radius: 0.5rem;
+	}
+
+	li a {
+		color: #111827;
+	}
+
+	li p {
+		margin: 0.5rem 0 0;
+		color: #4b5563;
+	}
+}
+
+form {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	max-width: 28rem;
+
+	label {
+		display: flex;
+		flex-direction: column;
+		gap: 0.25rem;
+		font-size: 0.9rem;
+		color: #374151;
+	}
+
+	input,
+	textarea,
+	select {
+		padding: 0.625rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.375rem;
+		font: inherit;
+	}
+}
+
+.footer {
+	padding: 2rem 1.5rem;
+	border-top: 1px solid #e5e7eb;
+	background: #fff;
+	text-align: center;
+	color: #6b7280;
+	font-size: 0.9rem;
+}
+
+/* ── News banner ── */
+.news-banner {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	padding: 0.625rem 1.5rem;
+	background: #111827;
+	color: #fff;
+	font-size: 0.9rem;
+}
+
+.news-banner--urgent {
+	background: #b91c1c;
+}
+
+.news-banner__text {
+	flex: 1;
+}
+
+.news-banner__link {
+	color: #fff;
+	text-decoration: underline;
+}
+
+.news-banner__close {
+	background: transparent;
+	border: 0;
+	color: #fff;
+	font-size: 1.25rem;
+	line-height: 1;
+	cursor: pointer;
+}
+
+/* ── Cart ── */
+.cart-list {
+	list-style: none;
+	padding: 0;
+	margin: 0 0 1rem;
+}
+
+.cart-row {
+	display: grid;
+	grid-template-columns: 1fr auto auto auto;
+	gap: 1rem;
+	align-items: center;
+	padding: 0.75rem 0;
+	border-bottom: 1px solid #e5e7eb;
+}
+
+.cart-row__qty {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+
+	button {
+		width: 1.75rem;
+		height: 1.75rem;
+		border: 1px solid #d1d5db;
+		border-radius: 0.375rem;
+		background: #fff;
+		cursor: pointer;
+	}
+}
+
+.cart-row__remove {
+	background: transparent;
+	border: 0;
+	color: #b91c1c;
+	cursor: pointer;
+	font-size: 0.85rem;
+}
+
+.coupon {
+	flex-direction: row;
+	align-items: flex-end;
+	flex-wrap: wrap;
+	max-width: none;
+}
+
+.cart-total {
+	font-size: 1.1rem;
+}
+
+.cart-actions {
+	display: flex;
+	gap: 0.75rem;
+	flex-wrap: wrap;
+}
+
+.store-links {
+	margin-top: 1.5rem;
+	color: #6b7280;
+
+	a {
+		color: #374151;
+	}
+}
+
+.account-links {
+	display: flex;
+	gap: 0.75rem;
+}
+
+/* ── Store (listing sidebar + richer cards) ── */
+.store__layout {
+	display: grid;
+	grid-template-columns: 15rem 1fr;
+	gap: 2rem;
+	align-items: start;
+}
+
+@media (max-width: 48rem) {
+	.store__layout {
+		grid-template-columns: 1fr;
+	}
+}
+
+.store-sidebar {
+	display: flex;
+	flex-direction: column;
+	gap: 1.25rem;
+	padding: 1.25rem;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.75rem;
+	position: sticky;
+	top: 1rem;
+}
+
+.store-sidebar__group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.store-sidebar__label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #6b7280;
+}
+
+.store-sidebar__clear {
+	align-self: flex-start;
+	font-size: 0.85rem;
+	padding: 0.5rem 0.875rem;
+}
+
+.store-facets {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.125rem;
+}
+
+.store-facet {
+	width: 100%;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.4rem 0.5rem;
+	border: 0;
+	border-radius: 0.375rem;
+	background: transparent;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.9rem;
+	color: #374151;
+	text-align: left;
+}
+
+.store-facet:hover {
+	background: #f3f4f6;
+}
+
+.store-facet--active {
+	background: #111827;
+	color: #fff;
+}
+
+.store-facet__count {
+	font-size: 0.75rem;
+	color: #9ca3af;
+	font-variant-numeric: tabular-nums;
+}
+
+.store-facet--active .store-facet__count {
+	color: #d1d5db;
+}
+
+.store-price {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+}
+
+.store-results {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.store-results__bar {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	flex-wrap: wrap;
+}
+
+.store-sort {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.9rem;
+}
+
+.store-sort .biab-input {
+	width: auto;
+}
+
+.product-card {
+	display: flex;
+	flex-direction: column;
+}
+
+.product-card__media {
+	position: relative;
+	display: block;
+}
+
+.product-card__placeholder {
+	display: block;
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	border-radius: 0.5rem;
+	margin-bottom: 0.5rem;
+	background: #f3f4f6;
+}
+
+.product-card__badges {
+	position: absolute;
+	top: 0.5rem;
+	left: 0.5rem;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+
+.product-badge {
+	font-size: 0.7rem;
+	font-weight: 700;
+	padding: 0.15rem 0.5rem;
+	border-radius: 999px;
+	background: #111827;
+	color: #fff;
+}
+
+.product-badge--sale {
+	background: #b91c1c;
+}
+
+.product-card__rating {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	margin: 0 0 0.5rem;
+	font-size: 0.85rem;
+}
+
+.product-card__price {
+	display: flex;
+	align-items: baseline;
+	gap: 0.4rem;
+	margin: 0 0 0.75rem;
+}
+
+.product-card__from {
+	font-size: 0.75rem;
+}
+
+.product-card__compare {
+	font-size: 0.8rem;
+	color: #9ca3af;
+	text-decoration: line-through;
+}
+
+.product-card__add {
+	margin-top: auto;
+}
+
+.link-btn {
+	border: 0;
+	background: none;
+	padding: 0;
+	color: #374151;
+	text-decoration: underline;
+	cursor: pointer;
+	font: inherit;
+}
+
+/* ── Product detail enrichment (addons + rating summary) ── */
+.product__rating-summary {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: -0.5rem 0 1rem;
+	font-size: 0.95rem;
+}
+
+.addon-rail,
+.store-grid {
+	margin-bottom: 1.5rem;
+}
+
+.addon-card {
+	display: flex;
+	flex-direction: column;
+}
+
+.addon-card__price {
+	display: flex;
+	align-items: baseline;
+	gap: 0.4rem;
+}
+
+.addon-card__add {
+	margin-top: auto;
+}
+
+.review__title {
+	margin: 0.25rem 0 0.25rem;
+}
+
+/* ── Reviews ── */
+.reviews-agg {
+	font-size: 1.1rem;
+	margin-bottom: 1.5rem;
+}
+
+.review-list {
+	list-style: none;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.review {
+	padding: 1rem;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+}
+
+.review__head {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.review__stars {
+	color: #f59e0b;
+}
+
+.review__source {
+	font-size: 0.8rem;
+	text-transform: capitalize;
+}
+
+/* ── Booking ── */
+.booking-select {
+	max-width: 28rem;
+	margin-bottom: 1rem;
+}
+
+.slot-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+	gap: 0.5rem;
+	margin-bottom: 1.5rem;
+}
+
+.slot {
+	padding: 0.5rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem;
+	background: #fff;
+	cursor: pointer;
+	font: inherit;
+	font-size: 0.85rem;
+}
+
+.slot--active {
+	background: #111827;
+	color: #fff;
+	border-color: #111827;
+}
+
+.parallel-body {
+	white-space: pre-wrap;
+	background: #fff;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+	padding: 1rem;
+	font-size: 0.9rem;
+	color: #374151;
+}
+
+/* ── <biab-form> drop-in (@businessdash/sdk/angular) ──────────────────────────
+ * The component renders light-DOM with the `biab-*` class convention and ships
+ * NO styles of its own, so these defaults are yours to override. They reuse the
+ * same neutral palette as the rest of this starter. */
+
+.biab-form {
+	position: relative;
+	display: block;
+}
+
+.biab-form__org-icon {
+	position: absolute;
+	top: 0;
+	right: 0;
+	width: 2.25rem;
+	height: 2.25rem;
+	border-radius: 999px;
+	border: 1px solid #e5e7eb;
+	object-fit: cover;
+}
+
+.biab-form__body,
+.biab-form__fields {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+}
+
+.biab-form__fields {
+	margin-bottom: 1.25rem;
+}
+
+.biab-field {
+	display: flex;
+	flex-direction: column;
+	gap: 0.375rem;
+}
+
+.biab-field--error {
+	border: 1px solid #fca5a5;
+	background: #fef2f2;
+	border-radius: 0.5rem;
+	padding: 0.75rem;
+}
+
+.biab-field__label {
+	font-size: 0.875rem;
+	font-weight: 600;
+	color: #111827;
+}
+
+.biab-field__required {
+	color: #dc2626;
+	margin-left: 0.125rem;
+}
+
+.biab-field__error {
+	font-size: 0.8rem;
+	color: #dc2626;
+	margin: 0;
+}
+
+.biab-field__help {
+	font-size: 0.8rem;
+	color: #6b7280;
+	margin: 0;
+}
+
+.biab-field__title {
+	font-size: 1.5rem;
+	font-weight: 700;
+	margin: 0;
+}
+
+.biab-field__subtitle {
+	font-size: 1.05rem;
+	color: #6b7280;
+	margin: 0;
+}
+
+.biab-field__separator {
+	border: 0;
+	border-top: 1px solid #e5e7eb;
+	margin: 0.25rem 0;
+}
+
+.biab-field__image {
+	max-width: 100%;
+	border-radius: 0.5rem;
+}
+
+.biab-input {
+	width: 100%;
+	padding: 0.5rem 0.625rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem;
+	background: #fff;
+	font: inherit;
+	font-size: 0.95rem;
+	color: #111827;
+	box-sizing: border-box;
+}
+
+.biab-input--textarea {
+	resize: vertical;
+	min-height: 5rem;
+}
+
+.biab-input--radio,
+.biab-input--checkbox,
+.biab-input--colors,
+.biab-input--stars,
+.biab-input--happiness {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	border: 0;
+	padding: 0;
+}
+
+.biab-input--radio,
+.biab-input--checkbox {
+	flex-direction: column;
+	align-items: flex-start;
+}
+
+.biab-radio__item,
+.biab-checkbox__item,
+.biab-input--boolean {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	font-size: 0.95rem;
+	border: 0;
+	width: auto;
+	padding: 0;
+}
+
+.biab-input--date-range,
+.biab-input--time-block,
+.biab-input--appointment,
+.biab-input--address {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.75rem;
+	border: 0;
+	padding: 0;
+}
+
+.biab-subfield {
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+	font-size: 0.8rem;
+	color: #6b7280;
+}
+
+.biab-subfield--full {
+	grid-column: 1 / -1;
+}
+
+.biab-subfield input {
+	padding: 0.5rem 0.625rem;
+	border: 1px solid #d1d5db;
+	border-radius: 0.375rem;
+	font: inherit;
+}
+
+.biab-input--stepper,
+.biab-input--slider {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	border: 0;
+	padding: 0;
+}
+
+.biab-input--stepper {
+	flex-direction: row;
+	align-items: center;
+}
+
+.biab-stepper__value {
+	min-width: 2.5rem;
+	text-align: center;
+	font-variant-numeric: tabular-nums;
+}
+
+.biab-slider__readout {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.75rem;
+	color: #6b7280;
+}
+
+.biab-star,
+.biab-happiness__face {
+	border: 0;
+	background: none;
+	cursor: pointer;
+	font-size: 1.5rem;
+	line-height: 1;
+	color: #d1d5db;
+	padding: 0.125rem;
+}
+
+.biab-star--on {
+	color: #f59e0b;
+}
+
+.biab-happiness__face {
+	opacity: 0.45;
+}
+
+.biab-happiness__face--on {
+	opacity: 1;
+	transform: scale(1.2);
+}
+
+.biab-color {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 999px;
+	border: 2px solid #e5e7eb;
+	cursor: pointer;
+}
+
+.biab-color--on {
+	border-color: #111827;
+	transform: scale(1.1);
+}
+
+.biab-group {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	border: 1px solid #e5e7eb;
+	border-radius: 0.5rem;
+	padding: 1rem;
+}
+
+.biab-group__label {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	color: #6b7280;
+}
+
+.biab-or {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+	border: 1px solid #fcd34d;
+	background: #fffbeb;
+	border-radius: 0.5rem;
+	padding: 1rem;
+}
+
+.biab-or--error {
+	border-color: #fca5a5;
+	background: #fef2f2;
+}
+
+.biab-or__grid {
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	gap: 0.75rem;
+	align-items: center;
+}
+
+.biab-or__divider span {
+	font-size: 0.7rem;
+	font-weight: 800;
+	letter-spacing: 0.1em;
+	color: #b45309;
+}
+
+.biab-or__side-label,
+.biab-or__hint {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: #6b7280;
+}
+
+.biab-flex-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.biab-flex-row__cell {
+	flex: 1;
+	min-width: 11rem;
+}
+
+.biab-progress {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.biab-progress--bar {
+	flex-direction: row;
+	align-items: center;
+	gap: 0.75rem;
+	font-size: 0.8rem;
+	color: #6b7280;
+}
+
+.biab-progress__track {
+	flex: 1;
+	height: 0.375rem;
+	background: #e5e7eb;
+	border-radius: 999px;
+	overflow: hidden;
+}
+
+.biab-progress__fill {
+	height: 100%;
+	background: #111827;
+	transition: width 0.3s ease;
+}
+
+.biab-progress__list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 1rem;
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+.biab-progress__step {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	color: #9ca3af;
+	font-size: 0.8rem;
+}
+
+.biab-progress__step--current,
+.biab-progress__step--done {
+	color: #111827;
+}
+
+.biab-progress__index {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.5rem;
+	height: 1.5rem;
+	border-radius: 999px;
+	border: 1px solid currentColor;
+	font-size: 0.7rem;
+	font-weight: 700;
+}
+
+.biab-form__errors {
+	border: 1px solid #fca5a5;
+	background: #fef2f2;
+	border-radius: 0.5rem;
+	padding: 0.75rem;
+	font-size: 0.85rem;
+	color: #b91c1c;
+}
+
+.biab-form__errors-list {
+	opacity: 0.85;
+	margin-top: 0.25rem;
+}
+
+.biab-nav {
+	display: flex;
+	justify-content: space-between;
+	gap: 0.75rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid #e5e7eb;
+}
+
+.biab-nav .biab-btn--back {
+	margin-right: auto;
+}
+
+.biab-form__success {
+	padding: 1rem;
+	border: 1px solid #6ee7b7;
+	background: #ecfdf5;
+	border-radius: 0.5rem;
+	color: #047857;
+}
+
+.biab-form__loading,
+.biab-form__load-error {
+	padding: 1rem;
+	color: #6b7280;
+}
+
+.biab-form__submit-error {
+	color: #dc2626;
+	font-size: 0.85rem;
+}
+
+/* Honor the form's configured entrance animations (schema.settings.animation),
+ * mapped from the host data-attribute the component sets. */
+@media (prefers-reduced-motion: no-preference) {
+	.biab-form[data-biab-animation="fade"] .biab-form__fields,
+	.biab-form[data-biab-animation="scale"] .biab-form__fields,
+	.biab-form[data-biab-animation="slide"] .biab-form__fields {
+		animation: biab-fade-in 0.45s ease both;
+	}
+
+	.biab-form[data-biab-animation="scale"] .biab-form__fields {
+		animation-name: biab-zoom-in;
+	}
+
+	.biab-form[data-biab-animation="slide"]
+		.biab-form__fields[data-biab-direction="forward"] {
+		animation-name: biab-slide-from-right;
+	}
+
+	.biab-form[data-biab-animation="slide"]
+		.biab-form__fields[data-biab-direction="back"] {
+		animation-name: biab-slide-from-left;
+	}
+}
+
+@keyframes biab-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes biab-zoom-in {
+	from {
+		opacity: 0;
+		transform: scale(0.97);
+	}
+}
+
+@keyframes biab-slide-from-right {
+	from {
+		opacity: 0;
+		transform: translateX(1.5rem);
+	}
+}
+
+@keyframes biab-slide-from-left {
+	from {
+		opacity: 0;
+		transform: translateX(-1.5rem);
+	}
+}
