@@ -147,6 +147,51 @@ struct PortalResource: Sendable {
         try await startVerification(kind: "phone", destination: destination)
     }
 
+    // MARK: Subscription
+
+    /// Subscription state plus the org's live offerings.
+    ///
+    /// Render entitlement from `hasAccess`, never from `status`: a lifetime
+    /// purchase has no period to expire, and a cancelled subscription keeps
+    /// access until the period already paid for ends. `hasAccess` is computed
+    /// server-side by the same function the content gates use.
+    func subscription() async throws -> JSONValue {
+        try await client.get("customer-portal/subscription", headers: extraHeaders)
+    }
+
+    /// Cancel at the end of the paid period.
+    ///
+    /// Ends the RENEWAL, not the access — the customer keeps everything until
+    /// `accessUntil`. Say "active until <that>", because that is what is true.
+    func cancelSubscription() async throws -> JSONValue {
+        try await client.post(
+            "customer-portal/subscription/cancel",
+            body: ["resume": false],
+            headers: extraHeaders
+        )
+    }
+
+    /// Clear a pending cancellation.
+    func resumeSubscription() async throws -> JSONValue {
+        try await client.post(
+            "customer-portal/subscription/cancel",
+            body: ["resume": true],
+            headers: extraHeaders
+        )
+    }
+
+    /// What the subscription entitles them to.
+    ///
+    /// When `entitled` is false these are LOCKED previews, not an empty
+    /// entitlement — show them beside the offer.
+    func subscriberContent(limit: Int? = nil) async throws -> JSONValue {
+        try await client.get(
+            "customer-portal/subscription/content",
+            query: ["limit": limit.map(String.init)],
+            headers: extraHeaders
+        )
+    }
+
     /// Consume the token from the email link or the SMS code.
     ///
     /// Takes only the token: the server already knows which destination it was

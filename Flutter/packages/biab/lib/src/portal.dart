@@ -137,6 +137,43 @@ class PortalResource {
         body: {'token': token},
         headers: _headers,
       );
+
+  // ── Subscription ────────────────────────────────────────────────────────
+
+  /// Subscription state plus the org's live offerings.
+  ///
+  /// Render entitlement from `hasAccess`, never from `status`: a lifetime
+  /// purchase has no period to expire, and a cancelled subscription keeps
+  /// access until the period already paid for ends.
+  Future<Map<String, dynamic>> subscription() =>
+      _client.get('customer-portal/subscription', headers: _headers);
+
+  /// Cancel at the end of the paid period.
+  ///
+  /// Ends the RENEWAL, not the access — the customer keeps everything until
+  /// `accessUntil`. Say "active until <that>", because that is what is true.
+  Future<Map<String, dynamic>> cancelSubscription() => _client.post(
+        'customer-portal/subscription/cancel',
+        body: {'resume': false},
+        headers: _headers,
+      );
+
+  /// Clear a pending cancellation.
+  Future<Map<String, dynamic>> resumeSubscription() => _client.post(
+        'customer-portal/subscription/cancel',
+        body: {'resume': true},
+        headers: _headers,
+      );
+
+  /// What the subscription entitles them to.
+  ///
+  /// When `entitled` is false these are LOCKED previews, not an empty
+  /// entitlement — show them beside the offer.
+  Future<Map<String, dynamic>> subscriberContent({int? limit}) => _client.get(
+        'customer-portal/subscription/content',
+        query: {'limit': limit?.toString()},
+        headers: _headers,
+      );
 }
 
 extension BiabPortal on BiabClient {

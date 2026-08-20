@@ -113,6 +113,75 @@ class Portal
     }
 
     /** @return array<string, string> */
+    // ── Subscription ────────────────────────────────────────────────────
+
+    /**
+     * Subscription state plus the org's live offerings.
+     *
+     * Render entitlement from `hasAccess`, never from `status`: a lifetime
+     * purchase has no period to expire, and a cancelled subscription keeps
+     * access until the period already paid for ends. `hasAccess` is computed
+     * server-side by the same function the content gates use, so the portal
+     * and the gate cannot disagree.
+     *
+     * @return array<string, mixed>
+     */
+    public function subscription(): array
+    {
+        return $this->client->get('customer-portal/subscription', [], $this->headers());
+    }
+
+    /**
+     * Cancel at the end of the paid period.
+     *
+     * Ends the RENEWAL, not the access — the customer has paid for the period
+     * they are in and keeps everything until `accessUntil`. Read that back to
+     * them as "active until <date>", because that is what is true.
+     *
+     * @return array<string, mixed>
+     */
+    public function cancelSubscription(): array
+    {
+        return $this->client->post(
+            'customer-portal/subscription/cancel',
+            ['resume' => false],
+            $this->headers()
+        );
+    }
+
+    /**
+     * Clear a pending cancellation. Nothing has been lost yet, so changing
+     * your mind should cost one call rather than a re-purchase.
+     *
+     * @return array<string, mixed>
+     */
+    public function resumeSubscription(): array
+    {
+        return $this->client->post(
+            'customer-portal/subscription/cancel',
+            ['resume' => true],
+            $this->headers()
+        );
+    }
+
+    /**
+     * What the subscription entitles them to.
+     *
+     * When `entitled` is false these are LOCKED previews, not an empty
+     * entitlement: titles and excerpts, no bodies. Show them beside the offer
+     * — an empty list would hide the pitch at the moment it matters most.
+     *
+     * @return array<string, mixed>
+     */
+    public function subscriberContent(?int $limit = null): array
+    {
+        return $this->client->get(
+            'customer-portal/subscription/content',
+            $limit === null ? [] : ['limit' => (string) $limit],
+            $this->headers()
+        );
+    }
+
     private function headers(): array
     {
         $out = ['X-BIAB-Session-Token' => $this->sessionToken];

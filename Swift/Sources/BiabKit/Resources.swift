@@ -339,3 +339,59 @@ extension BiabClient {
         PortalResource(client: self, sessionToken: sessionToken, organizationID: organizationID)
     }
 }
+
+// MARK: - Subscription
+
+/// The customer's subscription with this org, its controls, and the content it
+/// entitles them to.
+///
+/// One subscription per org — `user_subscriptions` is unique on (user, org) —
+/// so nothing here takes an id.
+extension PortalResource {
+    /// Subscription state plus the org's live offerings.
+    ///
+    /// Render entitlement from `hasAccess`, never from `status`: a lifetime
+    /// purchase has no period to expire, and a cancelled subscription keeps
+    /// access until the period already paid for ends. `hasAccess` is computed
+    /// server-side by the same function the content gates use, so the portal
+    /// and the gate cannot disagree.
+    public func subscription() async throws -> JSONValue {
+        try await client.get("customer-portal/subscription", headers: headers)
+    }
+
+    /// Cancel at the end of the paid period.
+    ///
+    /// This ends the RENEWAL, not the access. The customer has paid for the
+    /// period they are in and keeps everything until `accessUntil` — say
+    /// "active until <that>", because that is what is true.
+    public func cancelSubscription() async throws -> JSONValue {
+        try await client.post(
+            "customer-portal/subscription/cancel",
+            body: ["resume": false],
+            headers: headers
+        )
+    }
+
+    /// Clear a pending cancellation. Nothing has been lost yet, so changing
+    /// your mind should cost one call rather than a re-purchase.
+    public func resumeSubscription() async throws -> JSONValue {
+        try await client.post(
+            "customer-portal/subscription/cancel",
+            body: ["resume": true],
+            headers: headers
+        )
+    }
+
+    /// What the subscription entitles them to — the answer to "what am I
+    /// actually getting for this?", asked right before someone cancels.
+    ///
+    /// When `entitled` is false these are LOCKED previews, not an empty
+    /// entitlement: titles and excerpts, no bodies. Show them beside the offer.
+    public func subscriberContent(limit: Int? = nil) async throws -> JSONValue {
+        try await client.get(
+            "customer-portal/subscription/content",
+            query: ["limit": limit.map(String.init)],
+            headers: headers
+        )
+    }
+}

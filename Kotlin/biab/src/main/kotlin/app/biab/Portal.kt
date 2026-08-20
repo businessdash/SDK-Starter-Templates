@@ -130,6 +130,53 @@ public class PortalResource internal constructor(
     public suspend fun startPhoneVerification(destination: String): JsonElement =
         startVerification("phone", destination)
 
+    // ── Subscription ──────────────────────────────────────────────────────
+
+    /**
+     * Subscription state plus the org's live offerings.
+     *
+     * Render entitlement from `hasAccess`, never from `status`: a lifetime
+     * purchase has no period to expire, and a cancelled subscription keeps
+     * access until the period already paid for ends. `hasAccess` is computed
+     * server-side by the same function the content gates use.
+     */
+    public suspend fun subscription(): JsonElement =
+        client.get("customer-portal/subscription", emptyMap(), headers)
+
+    /**
+     * Cancel at the end of the paid period.
+     *
+     * Ends the RENEWAL, not the access — the customer keeps everything until
+     * `accessUntil`. Say "active until <that>", because that is what is true.
+     */
+    public suspend fun cancelSubscription(): JsonElement =
+        client.post(
+            "customer-portal/subscription/cancel",
+            mapOf("resume" to false),
+            headers,
+        )
+
+    /** Clear a pending cancellation. */
+    public suspend fun resumeSubscription(): JsonElement =
+        client.post(
+            "customer-portal/subscription/cancel",
+            mapOf("resume" to true),
+            headers,
+        )
+
+    /**
+     * What the subscription entitles them to.
+     *
+     * When `entitled` is false these are LOCKED previews, not an empty
+     * entitlement — show them beside the offer.
+     */
+    public suspend fun subscriberContent(limit: Int? = null): JsonElement =
+        client.get(
+            "customer-portal/subscription/content",
+            mapOf("limit" to limit?.toString()),
+            headers,
+        )
+
     /**
      * Consume the token from the email link or the SMS code.
      *

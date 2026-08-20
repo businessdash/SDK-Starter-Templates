@@ -58,6 +58,59 @@ defmodule BiabStarter.Biab.Resources.Portal do
   def notification_preferences(client, token, org_id),
     do: Client.get(client, "customer-portal/notification-preferences", [], headers(token, org_id))
 
+  # ── Subscription ──────────────────────────────────────────────────────
+
+  @doc """
+  Subscription state plus the org's live offerings.
+
+  Render entitlement from `hasAccess`, never from `status`: a lifetime purchase
+  has no period to expire, and a cancelled subscription keeps access until the
+  period already paid for ends. `hasAccess` is computed server-side by the same
+  function the content gates use, so the portal and the gate cannot disagree.
+  """
+  def subscription(client, token, org_id \\ nil),
+    do: Client.get(client, "customer-portal/subscription", [], headers(token, org_id))
+
+  @doc """
+  Cancel at the end of the paid period.
+
+  Ends the RENEWAL, not the access — the customer keeps everything until
+  `accessUntil`. Read that back as "active until <date>", because that is true.
+  """
+  def cancel_subscription(client, token, org_id \\ nil),
+    do:
+      Client.post(
+        client,
+        "customer-portal/subscription/cancel",
+        %{"resume" => false},
+        headers(token, org_id)
+      )
+
+  @doc "Clear a pending cancellation."
+  def resume_subscription(client, token, org_id \\ nil),
+    do:
+      Client.post(
+        client,
+        "customer-portal/subscription/cancel",
+        %{"resume" => true},
+        headers(token, org_id)
+      )
+
+  @doc """
+  What the subscription entitles them to.
+
+  When `entitled` is false these are LOCKED previews, not an empty entitlement
+  — show them beside the offer.
+  """
+  def subscriber_content(client, token, org_id \\ nil, limit \\ nil),
+    do:
+      Client.get(
+        client,
+        "customer-portal/subscription/content",
+        [limit: limit],
+        headers(token, org_id)
+      )
+
   defp headers(token, nil), do: [{"x-biab-session-token", token}]
 
   defp headers(token, org_id),
