@@ -2,13 +2,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "BiabKit",
+    name: "BusinessDashKit",
     platforms: [.iOS(.v26), .macOS(.v26)],
     products: [
         // The data layer. No dependencies — the BIAB Package API is plain REST
         // with a bearer key, so URLSession + Codable covers all of it.
-        .library(name: "BiabKit", targets: ["BiabKit"]),
-        // SwiftUI screens built on BiabKit. A LIBRARY, not an app target:
+        .library(name: "BusinessDashKit", targets: ["BusinessDashKit"]),
+        // SwiftUI screens built on BusinessDashKit. A LIBRARY, not an app target:
         // SwiftPM can't build an iOS app bundle, so the starter app is an
         // Xcode project that imports this. It still compiles under
         // `swift build` on macOS, which is what keeps it honest.
@@ -16,17 +16,17 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "BiabKit",
+            name: "BusinessDashKit",
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(
             name: "BiabStarterApp",
-            dependencies: ["BiabKit"],
+            dependencies: ["BusinessDashKit"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(
-            name: "BiabKitTests",
-            dependencies: ["BiabKit"],
+            name: "BusinessDashKitTests",
+            dependencies: ["BusinessDashKit"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         )
     ]

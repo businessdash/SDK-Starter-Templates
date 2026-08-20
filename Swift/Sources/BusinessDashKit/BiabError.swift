@@ -1,6 +1,6 @@
 import Foundation
 
-/// Everything `BiabKit` can fail with.
+/// Everything `BusinessDashKit` can fail with.
 public enum BiabError: Error, Sendable {
     /// A non-2xx response.
     case http(status: Int, path: String, message: String?)

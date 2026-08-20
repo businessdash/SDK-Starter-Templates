@@ -2,7 +2,7 @@
 
 Two products in one package:
 
-- **`BiabKit`** — the data layer. No dependencies; the Package API is plain REST with a bearer key, so `URLSession` + `Codable` covers all of it.
+- **`BusinessDashKit`** — the data layer. No dependencies; the Package API is plain REST with a bearer key, so `URLSession` + `Codable` covers all of it.
 - **`BiabStarterApp`** — SwiftUI screens built on the kit: shop, cart, blog, Front Desk chat, and the customer portal.
 
 ## The one rule that shapes everything here
@@ -24,7 +24,7 @@ swift build
 swift test
 ```
 
-For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BiabKit` and `BiabStarterApp` to your target.
+For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BusinessDashKit` and `BiabStarterApp` to your target.
 
 Configuration lives in Info.plist — there is no `.env` in an app bundle. `BiabStarter.xcconfig` has the four keys and how to wire them:
 
@@ -81,7 +81,7 @@ every starter. Only the *schema* files are TypeScript.
 ## What's in the kit
 
 ```
-Sources/BiabKit/
+Sources/BusinessDashKit/
   BiabClient.swift        transport, bearer, access gate, the pk_ guard
   BiabError.swift         typed failures + `isUnavailable`
   BiabConfiguration.swift Info.plist reader

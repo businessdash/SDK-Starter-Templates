@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import BiabKit
+@testable import BusinessDashKit
 
 /// A stub transport. This is what `BiabTransport` exists for — the tests
 /// exercise real decoding and real error mapping without a network or a
