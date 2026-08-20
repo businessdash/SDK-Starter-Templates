@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:biab/biab.dart';
+import 'package:businessdash_sdk/businessdash_sdk.dart';
 import 'ui/biab_scope.dart';
 import 'ui/cart_page.dart';
 import 'ui/chat_page.dart';

@@ -1,0 +1,23 @@
+name: businessdash_sdk
+description: >-
+  Official Dart and Flutter client for the BusinessDash Package API —
+  storefront, cart, checkout, blog, forms, chatbot, customer portal and
+  scheduling. Pure Dart, so it runs anywhere Dart does.
+version: 0.9.70
+homepage: https://businessdash.us
+repository: https://github.com/businessdash/platform
+issue_tracker: https://github.com/businessdash/platform/issues
+documentation: https://businessdash.us/docs
+
+environment:
+  sdk: ^3.6.0
+
+dependencies:
+  # The only runtime dependency. The BusinessDash Package API is plain REST
+  # with a bearer key — there is nothing else to pull in, and a client that
+  # drags a framework along is one people cannot use from a CLI or a server.
+  http: ^1.2.0
+
+dev_dependencies:
+  test: ^1.25.0
+  lints: ^4.0.0

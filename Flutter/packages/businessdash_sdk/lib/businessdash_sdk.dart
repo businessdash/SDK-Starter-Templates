@@ -13,6 +13,7 @@ export 'src/models.dart';
 export 'src/money.dart';
 export 'src/portal.dart';
 export 'src/resources.dart';
+export 'src/scheduling.dart';
 export 'src/seo.dart';
 export 'src/social_platforms.generated.dart';
 export 'src/socials.dart';

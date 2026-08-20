@@ -138,6 +138,46 @@ class PortalResource {
         headers: _headers,
       );
 
+  // ── Invitations ─────────────────────────────────────────────────────────
+
+  /// Hand a customer-portal invite link out again.
+  /// 
+  /// ROTATES the token — the previous link stops working. That is the point rather
+  /// than a side effect: if the reason for resending was "it went to the wrong
+  /// address", rotating IS the fix, and reusing the token would leave the wrong
+  /// recipient holding a working invitation.
+  /// 
+  /// Rate limited to one send a minute per invitation, answering 429 with a retry
+  /// hint — resend mails an address the caller chose, so an unbounded one is a
+  /// mail-bombing tool. Refuses a revoked invitation (resending would quietly
+  /// un-revoke it) and a fully-redeemed one.
+  Future<Map<String, dynamic>> resendCustomerInvite(
+    String inviteId, {
+    int? expiresInDays,
+  }) =>
+      _client.post(
+        'customer-invites/${Uri.encodeComponent(inviteId)}/resend',
+        body: {if (expiresInDays != null) 'expiresInDays': expiresInDays},
+        headers: _headers,
+      );
+
+  // ── Dispatch ────────────────────────────────────────────────────────────
+
+  /// Dispatch status for a job the customer owns.
+  ///
+  /// Read `dispatchStatus` (job-level) for "is anyone on the way" and
+  /// `assignments[].dispatchStatus` for per-technician detail. They differ on
+  /// purpose: the job is `completed` only once the LAST assignee finishes, so
+  /// aggregating client-side tells a customer the work is done while someone
+  /// is still on site.
+  ///
+  /// Nothing about the dispatch cascade is exposed — who was offered the job,
+  /// who declined, how many were asked. That is staff-internal.
+  Future<Map<String, dynamic>> dispatchStatus(String jobId) => _client.get(
+        'customer-portal/jobs/${Uri.encodeComponent(jobId)}/eta',
+        headers: _headers,
+      );
+
   // ── Subscription ────────────────────────────────────────────────────────
 
   /// Subscription state plus the org's live offerings.

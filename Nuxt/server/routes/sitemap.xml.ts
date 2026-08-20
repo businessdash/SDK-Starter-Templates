@@ -1,35 +1,51 @@
+import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
+
+import { getBiab } from "../utils/biab";
+
 /**
- * GET /sitemap.xml
+ * The sitemap, assembled from three sources: your own pages, what BusinessDash
+ * owns the shape of (site pages, legal documents, programmatic pages), and
+ * platform content mapped onto YOUR routes.
  *
- * Proxy the auto-generated sitemap from BIAB. The platform endpoint
- * enumerates every materialised parallel-page URL, applies per-page
- * crawl rules, and switches to an empty body when the org's billing is
- * fully suspended — none of that logic lives here. The relative path
- * comes from `client.parallelPages.sitemapUrl()`; we resolve it against
- * the normalized API base URL.
- *
- * Falls back to a valid empty sitemap when BIAB isn't configured or the
- * upstream call fails, so the route never 500s.
+ * Everything in `routes` is opt-in — delete a line and those URLs vanish, which
+ * is right for a business without that surface. A missing URL costs one page's
+ * indexing; a sitemap full of 404s costs trust in every URL in the file. The
+ * customer portal and other token-gated paths are excluded automatically.
  */
-const EMPTY_SITEMAP = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>\n`;
+
+/** Pages that live in THIS repo. Keep in step with `app/pages/`. */
+const STATIC_PATHS = [
+	"/",
+	"/services",
+	"/reviews",
+	"/updates",
+	"/store",
+	"/todos",
+	"/cart",
+	"/subscriptions",
+];
 
 export default defineEventHandler(async (event) => {
-	setResponseHeader(event, "Content-Type", "application/xml; charset=utf-8");
+	const config = useRuntimeConfig();
+	const baseUrl = (
+		(config.public.siteUrl as string | undefined) ??
+		getRequestURL(event).origin
+	).replace(/\/+$/, "");
 
-	const biab = getBiab();
-	const cfg = getBiabBaseConfig();
-	if (!biab || !cfg) return EMPTY_SITEMAP;
+	const client = getBiab();
+	const xml = client
+		? await buildSitemap({
+				client,
+				siteId: (config.biabSiteId as string | undefined) ?? "",
+				baseUrl,
+				staticPaths: STATIC_PATHS,
+				routes: { blog: "/updates", product: "/store" },
+				onSkip: (section, reason) =>
+					console.info(`[sitemap] skipped ${section}: ${reason}`),
+			})
+		: minimalSitemapXml(baseUrl);
 
-	const path = biab.parallelPages.sitemapUrl(); // e.g. sites/<id>/sitemap.xml
-	const url = `${cfg.baseUrl}/${path.replace(/^\//, "")}`;
-	try {
-		const res = await globalThis.fetch(url, {
-			headers: { Authorization: `Bearer ${cfg.apiKey}` },
-		});
-		if (!res.ok) return EMPTY_SITEMAP;
-		setResponseHeader(event, "Cache-Control", "public, max-age=60, s-maxage=60");
-		return await res.text();
-	} catch {
-		return EMPTY_SITEMAP;
-	}
+	setHeader(event, "Content-Type", "application/xml; charset=utf-8");
+	setHeader(event, "Cache-Control", "public, max-age=300");
+	return xml;
 });

@@ -1,0 +1,22 @@
+---
+/**
+ * The 404 body.
+ *
+ * Deliberately static — no BusinessDash call, no data fetch, nothing that can
+ * fail. This renders while something else is broken, so it must not depend on
+ * the thing that is broken.
+ *
+ * Shared by `[...slug].astro` and `404.astro` so the two cannot drift.
+ */
+---
+
+<main class="biab-section biab-section--narrow">
+	<div class="biab-section__lead">
+		<span class="biab-section__eyebrow">404</span>
+		<h1 class="biab-section__title">We couldn&rsquo;t find that page</h1>
+		<p class="biab-section__sub">
+			The link may be out of date, or the page may have moved.
+		</p>
+	</div>
+	<p><a href="/">Back to the homepage</a></p>
+</main>

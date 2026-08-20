@@ -1,54 +1,47 @@
+import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 import { env } from "$env/dynamic/private";
+import { env as publicEnv } from "$env/dynamic/public";
 
-import { seoProxyConfig, sitemapProxyUrl } from "$lib/server/biab-parallel";
-
+import { biab } from "$lib/server/biab";
 import type { RequestHandler } from "./$types";
 
 /**
- * Proxy the auto-generated sitemap from BIAB. The platform endpoint
- * enumerates every materialised parallel-page URL, applies per-page crawl
- * rules, and switches to an empty body when the org's billing is fully
- * suspended (60+ days) — none of that logic lives here. When BIAB isn't
- * configured we serve a valid empty sitemap so crawlers don't 404.
+ * The sitemap, assembled from three sources: your own pages, what BusinessDash
+ * owns the shape of (site pages, legal documents, programmatic pages), and
+ * platform content mapped onto YOUR routes.
+ *
+ * Everything in `routes` is opt-in — delete a line and those URLs vanish, which
+ * is right for a business without that surface. A missing URL costs one page's
+ * indexing; a sitemap full of 404s costs trust in every URL in the file. The
+ * customer portal and other token-gated paths are excluded automatically.
  */
-const EMPTY_SITEMAP = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>\n`;
 
-export const GET: RequestHandler = async () => {
-	const cfg = seoProxyConfig();
-	const url = sitemapProxyUrl();
-	if (!cfg || !url) {
-		return new Response(EMPTY_SITEMAP, {
-			status: 200,
+/** Pages that live in THIS repo. Keep in step with `src/routes/`. */
+const STATIC_PATHS = ["/", "/services", "/reviews", "/updates", "/store", "/todos"];
+
+export const GET: RequestHandler = async ({ url }) => {
+	const baseUrl = url.origin;
+
+	if (!biab) {
+		return new Response(minimalSitemapXml(baseUrl), {
 			headers: { "Content-Type": "application/xml; charset=utf-8" },
 		});
 	}
-	try {
-		const response = await fetch(url, {
-			headers: { Authorization: `Bearer ${cfg.apiKey}` },
-		});
-		if (!response.ok) {
-			return new Response(EMPTY_SITEMAP, {
-				status: 200,
-				headers: { "Content-Type": "application/xml; charset=utf-8" },
-			});
-		}
-		const body = await response.text();
-		return new Response(body, {
-			status: 200,
-			headers: {
-				"Content-Type": "application/xml; charset=utf-8",
-				"Cache-Control": "public, max-age=60, s-maxage=60",
-			},
-		});
-	} catch (err) {
-		if (env.NODE_ENV === "development") {
-			console.warn(
-				`[biab] sitemap proxy failed: ${err instanceof Error ? err.message : String(err)}`,
-			);
-		}
-		return new Response(EMPTY_SITEMAP, {
-			status: 200,
-			headers: { "Content-Type": "application/xml; charset=utf-8" },
-		});
-	}
+
+	const xml = await buildSitemap({
+		client: biab,
+		siteId: publicEnv.PUBLIC_BIAB_SITE_ID ?? env.BIAB_SITE_ID ?? "",
+		baseUrl,
+		staticPaths: STATIC_PATHS,
+		routes: { blog: "/updates", product: "/store" },
+		onSkip: (section, reason) =>
+			console.info(`[sitemap] skipped ${section}: ${reason}`),
+	});
+
+	return new Response(xml, {
+		headers: {
+			"Content-Type": "application/xml; charset=utf-8",
+			"Cache-Control": "public, max-age=300",
+		},
+	});
 };

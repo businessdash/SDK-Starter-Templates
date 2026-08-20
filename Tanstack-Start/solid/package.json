@@ -18,7 +18,7 @@
 		"print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts"
 	},
 	"dependencies": {
-		"@businessdash/sdk": "^0.9.60",
+		"@businessdash/sdk": "^0.9.70",
 		"@fontsource/inter": "^5.1.1",
 		"@t3-oss/env-core": "^0.13.10",
 		"@tailwindcss/vite": "^4.1.18",

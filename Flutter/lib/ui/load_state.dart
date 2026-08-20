@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:biab/biab.dart';
+import 'package:businessdash_sdk/businessdash_sdk.dart';
 
 /// Renders a future with a consistent spinner / message / content shape, and
 /// keeps the "unavailable" case (lapsed plan, suspended site) visually

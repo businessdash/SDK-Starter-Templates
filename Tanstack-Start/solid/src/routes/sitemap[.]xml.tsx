@@ -3,16 +3,14 @@ import { createFileRoute } from "@tanstack/solid-router";
 import { buildSitemapResponse } from "../lib/biab-server-fns";
 
 /**
- * /sitemap.xml — proxies BIAB's auto-generated sitemap. The platform
- * enumerates every materialised parallel-page URL, applies per-page
- * crawl rules, and switches to an empty body when billing is fully
- * suspended. We forward the upstream body; an empty <urlset/> is the
- * graceful fallback when BIAB isn't configured.
+ * /sitemap.xml — assembled in `biab-server-fns`, which is where the API key
+ * and `process.env` belong. Route files are bundled for the client too, so the
+ * server client must not be reached from here.
  */
 export const Route = createFileRoute("/sitemap.xml")({
 	server: {
 		handlers: {
-			GET: () => buildSitemapResponse(),
+			GET: ({ request }) => buildSitemapResponse(request),
 		},
 	},
 });

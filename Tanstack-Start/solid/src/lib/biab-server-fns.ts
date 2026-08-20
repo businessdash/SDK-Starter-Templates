@@ -35,6 +35,14 @@ import type {
 	StorefrontSort,
 	SubscriptionOffering,
 } from "@businessdash/sdk/contracts";
+import {
+	renderLegalPageHtml,
+	resolveLegalPage,
+} from "@businessdash/sdk/legal";
+import {
+	buildSitemap,
+	minimalSitemapXml,
+} from "@businessdash/sdk/sitemap";
 import { createServerFn } from "@tanstack/solid-start";
 import {
 	getCookie,
@@ -257,6 +265,27 @@ export const getHomeData = createServerFn({ method: "GET" }).handler(
 		};
 	},
 );
+
+/**
+ * Resolve a legal page for the catch-all route.
+ *
+ * Returns `{ found: false }` rather than throwing: the ROUTE decides what a
+ * missing document means, and this runs on every unmatched URL — a throw here
+ * would take down paths that have nothing to do with legal pages.
+ */
+export const getLegalPage = createServerFn({ method: "GET" })
+	.validator((data: { slug: string }) => data)
+	.handler(async ({ data }) => {
+		const biab = getBiab();
+		if (!biab) return { found: false as const };
+		const document = await resolveLegalPage({ client: biab, slug: data.slug });
+		if (!document) return { found: false as const };
+		return {
+			found: true as const,
+			title: document.title,
+			html: renderLegalPageHtml(document),
+		};
+	});
 
 export const fetchSlots = createServerFn({ method: "GET" })
 	.validator((data: { slug: string; from: string; to: string }) => data)
@@ -1002,7 +1031,6 @@ export const getHomeJsonLd = createServerFn({ method: "GET" }).handler(
  * the base URL; resolve them and forward the upstream body + status.
  * ──────────────────────────────────────────────────────────────────── */
 
-const SITEMAP_FALLBACK = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>\n`;
 const ROBOTS_FALLBACK = "User-agent: *\nAllow: /\n";
 
 async function proxyBiabEndpoint(
@@ -1046,16 +1074,56 @@ async function proxyBiabEndpoint(
 }
 
 /** Proxy BIAB's auto-generated sitemap.xml (Response). */
-export async function buildSitemapResponse(): Promise<Response> {
+/**
+ * Pages that live in THIS repo. Keep in step with `src/routes/`.
+ *
+ * The platform cannot know these exist, so they are declared by hand.
+ */
+const SITEMAP_STATIC_PATHS = [
+	"/",
+	"/about",
+	"/services",
+	"/reviews",
+	"/updates",
+	"/store",
+	"/todos",
+	"/subscriptions",
+];
+
+/**
+ * Build the sitemap from three sources: the pages above, what BusinessDash
+ * owns the shape of (site pages, legal documents, programmatic pages), and
+ * platform content mapped onto THIS app's routes.
+ *
+ * Everything in `routes` is opt-in — delete a line and those URLs vanish, which
+ * is right for a business without that surface. A missing URL costs one page's
+ * indexing; a sitemap full of 404s costs trust in every URL in the file. The
+ * customer portal and other token-gated paths are excluded automatically.
+ */
+export async function buildSitemapResponse(request: Request): Promise<Response> {
+	const baseUrl = new URL(request.url).origin;
 	const biab = getBiab();
-	const path = biab
-		? biab.parallelPages.sitemapUrl()
-		: `sites/${biabRawConfig()?.siteId ?? ""}/sitemap.xml`;
-	return proxyBiabEndpoint(
-		path,
-		SITEMAP_FALLBACK,
-		"application/xml; charset=utf-8",
-	);
+
+	// Unconfigured: one honest URL rather than an empty <urlset>, which would
+	// affirmatively tell crawlers the site has no pages.
+	const xml = biab
+		? await buildSitemap({
+				client: biab,
+				siteId: biabRawConfig()?.siteId ?? "",
+				baseUrl,
+				staticPaths: SITEMAP_STATIC_PATHS,
+				routes: { blog: "/updates", product: "/store" },
+				onSkip: (section, reason) =>
+					console.info(`[sitemap] skipped ${section}: ${reason}`),
+			})
+		: minimalSitemapXml(baseUrl);
+
+	return new Response(xml, {
+		headers: {
+			"Content-Type": "application/xml; charset=utf-8",
+			"Cache-Control": "public, max-age=300",
+		},
+	});
 }
 
 /** Proxy BIAB's auto-generated robots.txt (Response). */

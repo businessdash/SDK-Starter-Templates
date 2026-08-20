@@ -1,0 +1,50 @@
+---
+/**
+ * The catch-all — legal pages, and everything else's 404.
+ *
+ * ## Your own pages always win
+ *
+ * Astro resolves a static route before a rest parameter, so `pages/privacy.astro`
+ * shadows this file entirely. Write your own privacy policy and this is never
+ * consulted for that path — no config, no conflict, no build error, nothing to
+ * delete. That is why the SDK hands you a resolver rather than generating
+ * `pages/privacy.astro`: two files claiming one route is a build failure, which
+ * would turn "I wrote my own policy" into a broken deploy.
+ *
+ * Anything that is not a legal page returns a real 404 with the shared
+ * not-found body, so an unknown URL never renders a bare legal shell.
+ */
+import Layout from "../layouts/Layout.astro";
+import NotFound from "../components/NotFound.astro";
+import { getBiab } from "../lib/biab";
+import { renderLegalPageHtml, resolveLegalPage } from "@businessdash/sdk/legal";
+
+export const prerender = false;
+
+const client = getBiab();
+// Returns null for an unknown slug AND when BusinessDash is unreachable —
+// this route runs on every unmatched URL, so it must never throw.
+const document = client
+	? await resolveLegalPage({ client, slug: Astro.params.slug })
+	: null;
+---
+
+{
+	document ? (
+		<Layout title={document.title}>
+			<main class="biab-section biab-section--narrow">
+				{/*
+				 * `contentHtml` is sanitised server-side when the org saves it,
+				 * and the title and logo URL are escaped by
+				 * `renderLegalPageHtml`. Style it via the `data-biab-legal-*`
+				 * hooks — the markup ships unstyled so it inherits your site.
+				 */}
+				<Fragment set:html={renderLegalPageHtml(document)} />
+			</main>
+		</Layout>
+	) : (
+		<Layout title="Page not found">
+			<NotFound />
+		</Layout>
+	)
+}

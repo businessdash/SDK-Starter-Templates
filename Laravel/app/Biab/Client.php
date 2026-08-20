@@ -13,6 +13,7 @@ use App\Biab\Resources\Marketing;
 use App\Biab\Resources\Notifications;
 use App\Biab\Resources\ParallelPages;
 use App\Biab\Resources\Portal;
+use App\Biab\Resources\Scheduling;
 use App\Biab\Resources\Reviews;
 use App\Biab\Resources\Storefront;
 use App\Biab\Resources\Subscriptions;
@@ -229,6 +230,12 @@ class Client
     public function chatbot(?string $sessionToken = null): Chatbot
     {
         return new Chatbot($this, $sessionToken);
+    }
+
+    /** Booking and conference calls for a site. */
+    public function scheduling(string $siteId): Scheduling
+    {
+        return new Scheduling($this, $siteId);
     }
 
     // ── Internals ──────────────────────────────────────────────────────────

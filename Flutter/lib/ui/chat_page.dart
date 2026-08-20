@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:biab/biab.dart';
+import 'package:businessdash_sdk/businessdash_sdk.dart';
 import 'biab_scope.dart';
 
 /// Front Desk chat.

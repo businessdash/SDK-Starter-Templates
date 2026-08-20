@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'package:biab/biab.dart';
+import 'package:businessdash_sdk/businessdash_sdk.dart';
 
 /// App-wide BIAB state, handed down the tree.
 ///

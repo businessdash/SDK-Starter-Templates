@@ -17,7 +17,7 @@
     "seed": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-records --records-dir ./biab-records"
   },
   "dependencies": {
-    "@businessdash/sdk": "^0.9.60",
+    "@businessdash/sdk": "^0.9.70",
     "@react-native-async-storage/async-storage": "2.1.0",
     "expo": "~52.0.0",
     "expo-crypto": "~14.0.1",
