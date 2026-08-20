@@ -3,11 +3,10 @@ import SwiftUI
 
 struct StorefrontView: View {
     @Environment(BiabEnvironment.self) private var biab
-    @State private var state: LoadState<[Product]> = .loading
-    @State private var search = ""
+    @State private var model = StorefrontViewModel()
 
     var body: some View {
-        LoadableView(state: state) { products in
+        LoadableView(state: model.state) { products in
             List(products) { product in
                 NavigationLink {
                     ProductDetailView(productID: product.id)
@@ -26,18 +25,15 @@ struct StorefrontView: View {
             }
         }
         .navigationTitle("Shop")
-        .searchable(text: $search)
+        .searchable(text: $model.search)
         // `.task(id:)` cancels the previous load when the query changes, so a
         // fast typist doesn't stack up requests or land an out-of-order result.
-        .task(id: search) { await load() }
-    }
-
-    private func load() async {
-        guard let client = biab.client else {
-            state = .loaded([])
-            return
+        // The cancellation is SwiftUI's job, which is why the view drives it
+        // and the view model does not own a debounce.
+        .task(id: model.search) {
+            model.bind(biab)
+            await model.load()
         }
-        state = await LoadState { try await client.storefront.grid(search: search).products }
     }
 }
 

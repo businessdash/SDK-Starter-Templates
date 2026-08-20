@@ -5,11 +5,10 @@ struct CartView: View {
     @Environment(BiabEnvironment.self) private var biab
     @Environment(\.openURL) private var openURL
 
-    @State private var state: LoadState<CartSnapshot> = .loading
-    @State private var isCheckingOut = false
+    @State private var model = CartViewModel()
 
     var body: some View {
-        LoadableView(state: state) { snapshot in
+        LoadableView(state: model.state) { snapshot in
             List {
                 if snapshot.isEmpty {
                     ContentUnavailableView("Your cart is empty", systemImage: "cart")
@@ -39,58 +38,36 @@ struct CartView: View {
                         Button {
                             Task { await checkout() }
                         } label: {
-                            if isCheckingOut { ProgressView() } else { Text("Checkout") }
+                            if model.isCheckingOut { ProgressView() } else { Text("Checkout") }
                         }
-                        .disabled(isCheckingOut)
+                        .disabled(model.isCheckingOut)
                     }
                 }
             }
         }
         .navigationTitle("Cart")
-        .task { await load() }
-        .refreshable { await load() }
+        .task {
+            model.bind(biab)
+            await model.load()
+        }
+        .refreshable { await model.load() }
     }
 
+    /// A stepper needs two-way binding, and the write is async. The model owns
+    /// the mutation; this only adapts the shape SwiftUI wants.
     private func quantityBinding(for item: CartItem) -> Binding<Int> {
         Binding(
             get: { item.quantity },
-            set: { newValue in Task { await setQuantity(item: item, quantity: newValue) } }
+            set: { newValue in
+                Task { await model.setQuantity(item: item, quantity: newValue) }
+            }
         )
     }
 
-    private func load() async {
-        guard let cart = biab.cart else {
-            state = .loaded(.empty)
-            return
-        }
-        state = await LoadState { try await cart.snapshot() }
-    }
-
-    private func setQuantity(item: CartItem, quantity: Int) async {
-        guard let cart = biab.cart else { return }
-        state = await LoadState {
-            quantity == 0
-                ? try await cart.remove(itemID: item.id)
-                : try await cart.setQuantity(itemID: item.id, quantity: quantity)
-        }
-    }
-
-    /// Checkout hands off to Stripe in a browser. No card data touches this
-    /// process, which is what keeps the app out of PCI scope.
+    /// Opening a browser is a view concern, so the model hands back a URL and
+    /// this opens it. Checkout runs in the browser on purpose — no card data
+    /// touches this process, which is what keeps the app out of PCI scope.
     private func checkout() async {
-        guard let cart = biab.cart else { return }
-        isCheckingOut = true
-        defer { isCheckingOut = false }
-
-        let urls = CheckoutURLs(
-            // Stripe substitutes the real id for the placeholder.
-            successURL: "biabstarter://checkout/success?session_id={CHECKOUT_SESSION_ID}",
-            cancelURL: "biabstarter://checkout/cancel"
-        )
-
-        // Note the field name: `stripeUrl`, not `url`.
-        if let session = try? await cart.startCheckout(urls), let url = session.stripeURL {
-            openURL(url)
-        }
+        if let url = await model.startCheckout() { openURL(url) }
     }
 }

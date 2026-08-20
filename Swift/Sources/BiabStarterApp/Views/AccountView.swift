@@ -11,8 +11,7 @@ struct AccountView: View {
     @Environment(BiabEnvironment.self) private var biab
     @Environment(\.openURL) private var openURL
 
-    @State private var state: LoadState<CustomerWorkBundle>?
-    @State private var signInError: String?
+    @State private var model = AccountViewModel()
 
     var body: some View {
         Group {
@@ -35,7 +34,7 @@ struct AccountView: View {
                 .buttonStyle(.borderedProminent)
                 .disabled(biab.auth == nil)
 
-            if let signInError {
+            if let signInError = model.signInError {
                 Text(signInError).font(.footnote).foregroundStyle(.secondary)
             }
         }
@@ -51,7 +50,7 @@ struct AccountView: View {
                 }
             }
 
-            if let state {
+            if let state = model.state {
                 switch state {
                 case .loading:
                     ProgressView()
@@ -86,34 +85,22 @@ struct AccountView: View {
                 }
             }
         }
-        .task(id: biab.session?.organizationId) { await loadWork() }
-    }
-
-    private func loadWork() async {
-        guard let portal = biab.portal else { return }
-        state = await LoadState { try await portal.work() }
+        // Re-keyed on the org: a customer who switches company must not be
+        // shown the previous one's work while the new load is in flight.
+        .task(id: biab.session?.organizationId) {
+            model.bind(biab)
+            await model.loadWork()
+        }
     }
 
     /// Opens the platform-hosted auth page. The callback returns on the app's
     /// custom URL scheme, which `onOpenURL` in the App body hands to
     /// `BiabEnvironment.completeSignIn(code:state:)`.
     ///
-    /// A production app would present this in `ASWebAuthenticationSession`
-    /// instead, so the browser sheet closes itself and the callback is
-    /// delivered directly. `openURL` keeps this starter free of
-    /// AuthenticationServices and UIKit presentation-anchor plumbing.
+    /// The model builds the URL; opening it is a view concern, which is why
+    /// `openURL` stays here.
     private func startSignIn() async {
-        guard let auth = biab.auth else {
-            signInError = "Set BIABAuthCallbackURL in Info.plist to enable sign-in."
-            return
-        }
-
-        do {
-            openURL(try await auth.startURL())
-        } catch let error as BiabError {
-            signInError = error.errorDescription
-        } catch {
-            signInError = error.localizedDescription
-        }
+        model.bind(biab)
+        if let url = await model.signInURL() { openURL(url) }
     }
 }

@@ -3,10 +3,10 @@ import SwiftUI
 
 struct BlogView: View {
     @Environment(BiabEnvironment.self) private var biab
-    @State private var state: LoadState<[BlogPost]> = .loading
+    @State private var model = BlogViewModel()
 
     var body: some View {
-        LoadableView(state: state) { posts in
+        LoadableView(state: model.state) { posts in
             List(posts) { post in
                 VStack(alignment: .leading, spacing: 4) {
                     Text(post.title).font(.headline)
@@ -26,11 +26,8 @@ struct BlogView: View {
         }
         .navigationTitle("Blog")
         .task {
-            guard let client = biab.client else {
-                state = .loaded([])
-                return
-            }
-            state = await LoadState { try await client.blog.posts().posts }
+            model.bind(biab)
+            await model.load()
         }
     }
 }
