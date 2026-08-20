@@ -4,11 +4,13 @@ namespace App\Biab;
 
 use App\Biab\Resources\Blog;
 use App\Biab\Resources\Cart;
+use App\Biab\Resources\Chatbot;
 use App\Biab\Resources\Checkout;
 use App\Biab\Resources\DataModel;
 use App\Biab\Resources\Followers;
 use App\Biab\Resources\Forms;
 use App\Biab\Resources\Marketing;
+use App\Biab\Resources\Notifications;
 use App\Biab\Resources\ParallelPages;
 use App\Biab\Resources\Portal;
 use App\Biab\Resources\Reviews;
@@ -206,6 +208,27 @@ class Client
     public function portal(string $sessionToken, ?string $organizationId = null): Portal
     {
         return new Portal($this, $sessionToken, $organizationId);
+    }
+
+    /**
+     * Notification preferences and destination verification.
+     *
+     * `$organizationId` chooses WHOSE settings — preferences are stored per
+     * (org, customer), so a customer who buys from three businesses has three
+     * independent matrices. Pass an id from `portal()->myOtherCustomerOrgs()`.
+     */
+    public function notifications(string $sessionToken, ?string $organizationId = null): Notifications
+    {
+        return new Notifications($this, $sessionToken, $organizationId);
+    }
+
+    /**
+     * The Front Desk chatbot. `$sessionToken` resumes an existing thread;
+     * omit it and call `session()` to mint one.
+     */
+    public function chatbot(?string $sessionToken = null): Chatbot
+    {
+        return new Chatbot($this, $sessionToken);
     }
 
     // ── Internals ──────────────────────────────────────────────────────────
