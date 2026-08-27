@@ -18,7 +18,7 @@
     "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts"
   },
   "dependencies": {
-    "@businessdash/sdk": "^0.9.80",
+    "@businessdash/sdk": "^0.9.81",
     "@react-router/node": "^7.18.0",
     "@react-router/serve": "^7.18.0",
     "isbot": "^5.1.0",
