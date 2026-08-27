@@ -13,9 +13,9 @@ importers:
 
   .:
     dependencies:
-      '@biab-dev/sdk':
-        specifier: ^0.9.53
-        version: 0.9.53(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@businessdash/sdk':
+        specifier: ^0.9.80
+        version: 0.9.80(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@3.25.76)
@@ -93,19 +93,6 @@ packages:
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
     engines: {node: '>=10'}
 
-  '@biab-dev/sdk@0.9.53':
-    resolution: {integrity: sha512-4V88oOfcecRl0GOrGtNr/++0ZDOrM1ePWFNdSMCZNBpraeOjb/5KwL8ZqZtUePk6sZDCjOISy0fOzU13ZbN5Ng==}
-    engines: {node: '>=18'}
-    hasBin: true
-    peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
   '@biomejs/biome@2.5.8':
     resolution: {integrity: sha512-aeAeeJB9fSDc7Gq+2GqpQxA0qBj6gj1k2R6L1cYqGePKP/baIq1WX8y6B+D+nRsO5ViQL22K/8IwbqERW0q1nw==}
     engines: {node: '>=14.21.3'}
@@ -158,6 +145,34 @@ packages:
     engines: {node: '>=14.21.3'}
     cpu: [x64]
     os: [win32]
+
+  '@businessdash/sdk@0.9.80':
+    resolution: {integrity: sha512-teHMusoVtVO5B+jFPols6IVPCxigszoqQ3bxQnSUtX783p4EoqzNfpVw0NexI0m+2Mh3aODBfmgbEAoIxjhhTQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      '@angular/core': '>=17.0.0'
+      '@builder.io/qwik': '>=1.5.0 <2'
+      react: '>=18.0.0 <20'
+      react-dom: '>=18.0.0 <20'
+      solid-js: '>=1.8.0 <3'
+      svelte: '>=5.0.0 <6'
+      vue: '>=3.3.0 <4'
+    peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+      '@builder.io/qwik':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      solid-js:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
 
   '@drizzle-team/brocli@0.10.2':
     resolution: {integrity: sha512-z33Il7l5dKjUgGULTqBsQBQwckHh5AbIuxhdsIxDDiZAzBOrZO6q9ogcWC65kU382AfynTfgNumVcNIjuIua6w==}
@@ -1100,15 +1115,6 @@ snapshots:
 
   '@alloc/quick-lru@5.2.0': {}
 
-  '@biab-dev/sdk@0.9.53(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
-    dependencies:
-      '@js-temporal/polyfill': 0.5.1
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
-    optionalDependencies:
-      react: 19.2.8
-      react-dom: 19.2.8(react@19.2.8)
-
   '@biomejs/biome@2.5.8':
     optionalDependencies:
       '@biomejs/cli-darwin-arm64': 2.5.8
@@ -1143,6 +1149,15 @@ snapshots:
 
   '@biomejs/cli-win32-x64@2.5.8':
     optional: true
+
+  '@businessdash/sdk@0.9.80(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@js-temporal/polyfill': 0.5.1
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
+    optionalDependencies:
+      react: 19.2.8
+      react-dom: 19.2.8(react@19.2.8)
 
   '@drizzle-team/brocli@0.10.2': {}
 

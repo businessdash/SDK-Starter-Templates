@@ -8,9 +8,9 @@ importers:
 
   .:
     dependencies:
-      '@biab-dev/sdk':
-        specifier: ^0.9.20
-        version: 0.9.20
+      '@businessdash/sdk':
+        specifier: ^0.9.80
+        version: 0.9.80
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -24,17 +24,32 @@ importers:
 
 packages:
 
-  '@biab-dev/sdk@0.9.20':
-    resolution: {integrity: sha512-y7JlRMejbKMg3icVhP+8awSD16PYwq1vE6SoI7eLfmqtTQqw1FtnhWQIo/fvpBXV+KojFqP4hDv4VOSV6P7rQA==}
+  '@businessdash/sdk@0.9.80':
+    resolution: {integrity: sha512-teHMusoVtVO5B+jFPols6IVPCxigszoqQ3bxQnSUtX783p4EoqzNfpVw0NexI0m+2Mh3aODBfmgbEAoIxjhhTQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
+      '@angular/core': '>=17.0.0'
+      '@builder.io/qwik': '>=1.5.0 <2'
+      react: '>=18.0.0 <20'
+      react-dom: '>=18.0.0 <20'
+      solid-js: '>=1.8.0 <3'
+      svelte: '>=5.0.0 <6'
+      vue: '>=3.3.0 <4'
     peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+      '@builder.io/qwik':
+        optional: true
       react:
         optional: true
       react-dom:
+        optional: true
+      solid-js:
+        optional: true
+      svelte:
+        optional: true
+      vue:
         optional: true
 
   '@js-temporal/polyfill@0.5.1':
@@ -71,7 +86,7 @@ packages:
 
 snapshots:
 
-  '@biab-dev/sdk@0.9.20':
+  '@businessdash/sdk@0.9.80':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76

@@ -16,9 +16,9 @@ importers:
 
   .:
     dependencies:
-      '@biab-dev/sdk':
-        specifier: ^0.9.53
-        version: 0.9.53(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@businessdash/sdk':
+        specifier: ^0.9.80
+        version: 0.9.80(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@react-router/node':
         specifier: ^7.18.0
         version: 7.18.2(react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.9.3)
@@ -197,17 +197,32 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
-  '@biab-dev/sdk@0.9.53':
-    resolution: {integrity: sha512-4V88oOfcecRl0GOrGtNr/++0ZDOrM1ePWFNdSMCZNBpraeOjb/5KwL8ZqZtUePk6sZDCjOISy0fOzU13ZbN5Ng==}
+  '@businessdash/sdk@0.9.80':
+    resolution: {integrity: sha512-teHMusoVtVO5B+jFPols6IVPCxigszoqQ3bxQnSUtX783p4EoqzNfpVw0NexI0m+2Mh3aODBfmgbEAoIxjhhTQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
+      '@angular/core': '>=17.0.0'
+      '@builder.io/qwik': '>=1.5.0 <2'
+      react: '>=18.0.0 <20'
+      react-dom: '>=18.0.0 <20'
+      solid-js: '>=1.8.0 <3'
+      svelte: '>=5.0.0 <6'
+      vue: '>=3.3.0 <4'
     peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+      '@builder.io/qwik':
+        optional: true
       react:
         optional: true
       react-dom:
+        optional: true
+      solid-js:
+        optional: true
+      svelte:
+        optional: true
+      vue:
         optional: true
 
   '@esbuild/aix-ppc64@0.25.12':
@@ -1435,7 +1450,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@biab-dev/sdk@0.9.53(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@businessdash/sdk@0.9.80(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76

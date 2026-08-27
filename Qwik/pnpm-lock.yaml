@@ -13,9 +13,9 @@ importers:
 
   .:
     dependencies:
-      '@biab-dev/sdk':
-        specifier: ^0.9.53
-        version: 0.9.53
+      '@businessdash/sdk':
+        specifier: ^0.9.80
+        version: 0.9.80(@builder.io/qwik@1.20.0(vite@7.3.6(@types/node@20.19.0)(less@4.8.1)(sass@1.102.0)(stylus@0.62.0)(tsx@4.23.12)))
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -71,19 +71,6 @@ packages:
   '@adobe/css-tools@4.3.3':
     resolution: {integrity: sha512-rE0Pygv0sEZ4vBWHlAgJLGDU7Pm8xoO6p3wsEceb7GYAjScrOHpEo8KK/eVkAcnSM+slAEtXjA2JpdjLp4fJQQ==}
 
-  '@biab-dev/sdk@0.9.53':
-    resolution: {integrity: sha512-4V88oOfcecRl0GOrGtNr/++0ZDOrM1ePWFNdSMCZNBpraeOjb/5KwL8ZqZtUePk6sZDCjOISy0fOzU13ZbN5Ng==}
-    engines: {node: '>=18'}
-    hasBin: true
-    peerDependencies:
-      react: '>=18.0.0'
-      react-dom: '>=18.0.0'
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
   '@builder.io/qwik-city@1.20.0':
     resolution: {integrity: sha512-gvw75M0yMDMelF/v56x4P1sLccEYT7jmfGZeWSV4c9KCrVAbY+Sp/w/R3c7WodGztWFRF37n1APXbbxhLIP6vw==}
     engines: {node: '>=16.8.0 <18.0.0 || >=18.11'}
@@ -94,6 +81,34 @@ packages:
     hasBin: true
     peerDependencies:
       vite: '>=5 <8'
+
+  '@businessdash/sdk@0.9.80':
+    resolution: {integrity: sha512-teHMusoVtVO5B+jFPols6IVPCxigszoqQ3bxQnSUtX783p4EoqzNfpVw0NexI0m+2Mh3aODBfmgbEAoIxjhhTQ==}
+    engines: {node: '>=18'}
+    hasBin: true
+    peerDependencies:
+      '@angular/core': '>=17.0.0'
+      '@builder.io/qwik': '>=1.5.0 <2'
+      react: '>=18.0.0 <20'
+      react-dom: '>=18.0.0 <20'
+      solid-js: '>=1.8.0 <3'
+      svelte: '>=5.0.0 <6'
+      vue: '>=3.3.0 <4'
+    peerDependenciesMeta:
+      '@angular/core':
+        optional: true
+      '@builder.io/qwik':
+        optional: true
+      react:
+        optional: true
+      react-dom:
+        optional: true
+      solid-js:
+        optional: true
+      svelte:
+        optional: true
+      vue:
+        optional: true
 
   '@emnapi/runtime@1.11.3':
     resolution: {integrity: sha512-Xz4Tpyki7XyrpbUK1jR1AhdAdaXyhhY4lZ3neLodmhpuWfy2PAQN5B46sAiU4liOXGLkHypn/qU+jvfWSCYYLA==}
@@ -2412,12 +2427,6 @@ snapshots:
   '@adobe/css-tools@4.3.3':
     optional: true
 
-  '@biab-dev/sdk@0.9.53':
-    dependencies:
-      '@js-temporal/polyfill': 0.5.1
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
-
   '@builder.io/qwik-city@1.20.0(@types/node@20.19.0)(less@4.8.1)(rollup@4.62.4)(sass@1.102.0)(stylus@0.62.0)(tsx@4.23.12)(typescript@5.4.5)':
     dependencies:
       '@mdx-js/mdx': 3.1.1
@@ -2452,6 +2461,14 @@ snapshots:
       launch-editor: 2.14.1
       rollup: 4.62.4
       vite: 7.3.6(@types/node@20.19.0)(less@4.8.1)(sass@1.102.0)(stylus@0.62.0)(tsx@4.23.12)
+
+  '@businessdash/sdk@0.9.80(@builder.io/qwik@1.20.0(vite@7.3.6(@types/node@20.19.0)(less@4.8.1)(sass@1.102.0)(stylus@0.62.0)(tsx@4.23.12)))':
+    dependencies:
+      '@js-temporal/polyfill': 0.5.1
+      zod: 3.25.76
+      zod-to-json-schema: 3.25.2(zod@3.25.76)
+    optionalDependencies:
+      '@builder.io/qwik': 1.20.0(vite@7.3.6(@types/node@20.19.0)(less@4.8.1)(sass@1.102.0)(stylus@0.62.0)(tsx@4.23.12))
 
   '@emnapi/runtime@1.11.3':
     dependencies:
