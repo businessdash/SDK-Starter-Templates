@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.9.80
+
+Tracks `@businessdash/sdk` 0.9.80.
+
 ## 0.9.70
 
 Tracks `@businessdash/sdk` 0.9.70.

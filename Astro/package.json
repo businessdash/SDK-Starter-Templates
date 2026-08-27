@@ -20,7 +20,7 @@
 	"dependencies": {
 		"@astrojs/check": "^0.9.9",
 		"@astrojs/node": "^11.0.2",
-		"@businessdash/sdk": "^0.9.70",
+		"@businessdash/sdk": "^0.9.80",
 		"astro": "^7.1.0",
 		"typescript": "^5.6.0",
 		"zod": "^3.25.76"

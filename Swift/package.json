@@ -13,7 +13,7 @@
     "seed": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-records --records-dir ./biab-records"
   },
   "devDependencies": {
-    "@businessdash/sdk": "^0.9.70",
+    "@businessdash/sdk": "^0.9.80",
     "tsx": "^4.22.4",
     "zod": "^3.25.76"
   }

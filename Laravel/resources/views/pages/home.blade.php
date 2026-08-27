@@ -70,12 +70,12 @@
 @endsection
 
 @push('head')
-    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.70/biab-forms.css">
+    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.80/biab-forms.css">
 @endpush
 
 @push('scripts')
     <script type="module">
-        import { setBiabFormClient } from "https://esm.sh/@businessdash/sdk@0.9.70/element";
+        import { setBiabFormClient } from "https://esm.sh/@businessdash/sdk@0.9.80/element";
 
         // The element can't take a client through an HTML attribute, so set
         // a DI default once. `baseUrl` is this app's proxy, not BIAB — the

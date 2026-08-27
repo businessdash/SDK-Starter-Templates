@@ -23,7 +23,7 @@
     "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts"
   },
   "dependencies": {
-    "@businessdash/sdk": "^0.9.70",
+    "@businessdash/sdk": "^0.9.80",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@tanstack/react-query": "^5.69.0",
     "@trpc/client": "^11.0.0",

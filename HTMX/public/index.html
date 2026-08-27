@@ -51,7 +51,7 @@
 			const cfg = window.__BIAB_ANALYTICS__;
 			if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
 				const { initBiabAnalytics } = await import(
-					"https://esm.sh/@businessdash/sdk@0.9.70/analytics-core"
+					"https://esm.sh/@businessdash/sdk@0.9.80/analytics-core"
 				);
 				initBiabAnalytics({
 					siteId: cfg.siteId,
@@ -67,7 +67,7 @@
 		     AFTER registering the proxy client so it never upgrades clientless. -->
 		<script type="module">
 			const { setBiabFormClient } = await import(
-				"https://esm.sh/@businessdash/sdk@0.9.70/element"
+				"https://esm.sh/@businessdash/sdk@0.9.80/element"
 			);
 			setBiabFormClient({
 				forms: {
