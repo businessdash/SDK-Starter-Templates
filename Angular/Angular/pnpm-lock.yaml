@@ -41,8 +41,8 @@ importers:
         specifier: ^21.2.13
         version: 21.2.20(@angular/common@21.2.19(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(@angular/platform-server@21.2.19(@angular/common@21.2.19(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/compiler@21.2.19)(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(@angular/platform-browser@21.2.19(@angular/common@21.2.19(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/router@21.2.19(@angular/common@21.2.19(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(@angular/platform-browser@21.2.19(@angular/common@21.2.19(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2)))(rxjs@7.8.2))
       '@businessdash/sdk':
-        specifier: ^0.9.80
-        version: 0.9.80(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))
+        specifier: ^0.9.81
+        version: 0.9.81(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))
       express:
         specifier: ^5.1.0
         version: 5.2.1
@@ -399,8 +399,8 @@ packages:
     resolution: {integrity: sha512-ctxtJ/eA+t+6q2++vj5j7FYX3nRu311q1wfYH3xjlLOsczhlhxAg2FWNUXhpGvAw3BWo1xBcvOV6/YLc2r5FJw==}
     hasBin: true
 
-  '@businessdash/sdk@0.9.80':
-    resolution: {integrity: sha512-teHMusoVtVO5B+jFPols6IVPCxigszoqQ3bxQnSUtX783p4EoqzNfpVw0NexI0m+2Mh3aODBfmgbEAoIxjhhTQ==}
+  '@businessdash/sdk@0.9.81':
+    resolution: {integrity: sha512-G+sSsJ75QjzC2BHLrVaqE71FE0ZWsGKjOfsOr+RQBpw3RY2Iwm2tkWyppS62czR4ustR6d9FgSDGcD9gtKpepg==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -3219,7 +3219,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@businessdash/sdk@0.9.80(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))':
+  '@businessdash/sdk@0.9.81(@angular/core@21.2.19(@angular/compiler@21.2.19)(rxjs@7.8.2))':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76
