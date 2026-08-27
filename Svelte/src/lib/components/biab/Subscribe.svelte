@@ -15,7 +15,9 @@
 
   One shared component, used in BOTH the footer and the about section.
 
-  Env (SvelteKit public, `$env/static/public`):
+  Env (SvelteKit public, `$env/dynamic/public` — dynamic on purpose: the
+  static module turns an unset var into a BUILD error, and a fresh clone
+  with no .env must still build in placeholder mode):
     PUBLIC_BIAB_PK                       publishable followers token
     PUBLIC_BIAB_SITE_ID                  the site UUID
     PUBLIC_BIAB_PACKAGE_API_BASE_URL     optional, defaults to production apex
@@ -23,11 +25,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { createBiabClient } from '@businessdash/sdk';
-	import {
-		PUBLIC_BIAB_PK,
-		PUBLIC_BIAB_SITE_ID,
-		PUBLIC_BIAB_PACKAGE_API_BASE_URL,
-	} from '$env/static/public';
+	import { env } from '$env/dynamic/public';
 
 	let {
 		label = 'Get updates in your inbox',
@@ -46,9 +44,9 @@
 
 	// Publishable creds are browser-safe. When unset → placeholder mode so the
 	// template still renders in an unconfigured checkout.
-	const PK = PUBLIC_BIAB_PK;
-	const SITE_ID = PUBLIC_BIAB_SITE_ID;
-	const BASE_URL = PUBLIC_BIAB_PACKAGE_API_BASE_URL;
+	const PK = env.PUBLIC_BIAB_PK;
+	const SITE_ID = env.PUBLIC_BIAB_SITE_ID;
+	const BASE_URL = env.PUBLIC_BIAB_PACKAGE_API_BASE_URL;
 	const enabled = Boolean(PK && SITE_ID);
 
 	const STORE_KEY = `biab.followers.${SITE_ID}`;
@@ -60,14 +58,17 @@
 	let subscribedLocally = $state(false);
 
 	// The core client is constructed lazily (live mode only) and bound to the
-	// publishable token. The bearer key never appears here.
-	const client = enabled
-		? createBiabClient({
-				apiKey: PK,
-				siteId: SITE_ID,
-				...(BASE_URL ? { baseUrl: BASE_URL } : {}),
-			})
-		: null;
+	// publishable token. The bearer key never appears here. Guarded on the
+	// values themselves (not `enabled`) so TypeScript narrows the dynamic
+	// env's string | undefined.
+	const client =
+		PK && SITE_ID
+			? createBiabClient({
+					apiKey: PK,
+					siteId: SITE_ID,
+					...(BASE_URL ? { baseUrl: BASE_URL } : {}),
+				})
+			: null;
 
 	onMount(() => {
 		if (!enabled || typeof window === 'undefined') return;
