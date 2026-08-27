@@ -2,6 +2,13 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
+    // Expo's base still says moduleResolution "node" (node10), which
+    // ignores package `exports` maps — so `@businessdash/sdk/native`
+    // typechecks as "module not found" while Metro (exports enabled in
+    // metro.config.js) resolves it fine at runtime. "bundler" matches
+    // what Metro actually does.
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "paths": {
       "@/*": ["./src/*"]
     }

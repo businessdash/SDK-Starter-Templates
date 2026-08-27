@@ -46,7 +46,7 @@ export default function CartScreen() {
               keyExtractor={(item) => String(item.id)}
               renderItem={({ item }) => (
                 <View style={styles.row}>
-                  <Text style={styles.name}>{item.name ?? 'Item'}</Text>
+                  <Text style={styles.name}>{item.productName ?? 'Item'}</Text>
                   {/* Cart lines arrive DECIMAL, unlike product prices. */}
                   <Text style={styles.price}>
                     {amount(item.unitPrice, cart.currency ?? 'USD')} × {item.quantity}

@@ -36,8 +36,19 @@ export default function ProductScreen() {
         product ? (
           <ScrollView contentContainerStyle={styles.content}>
             <Text style={styles.name}>{product.name}</Text>
-            <Text style={styles.price}>{cents(product.cheapestPriceCents)}</Text>
-            {product.description ? <Text>{product.description}</Text> : null}
+            {/* `cheapestPriceCents` and `description` arrive via the row
+                schema's passthrough — served, but typed `unknown` until the
+                contract declares them — so narrow before rendering. */}
+            <Text style={styles.price}>
+              {cents(
+                typeof product.cheapestPriceCents === 'number'
+                  ? product.cheapestPriceCents
+                  : null,
+              )}
+            </Text>
+            {typeof product.description === 'string' && product.description ? (
+              <Text>{product.description}</Text>
+            ) : null}
 
             <Button title="Add to cart" onPress={addToCart} disabled={!visitorToken} />
             {message ? <Text style={styles.note}>{message}</Text> : null}
