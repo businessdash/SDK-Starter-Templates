@@ -51,7 +51,7 @@
 			const cfg = window.__BD_ANALYTICS__;
 			if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
 				const { initBdAnalytics } = await import(
-					"https://esm.sh/@businessdash/sdk@0.9.81/analytics-core"
+					"https://esm.sh/@businessdash/sdk@0.9.90/analytics-core"
 				);
 				initBdAnalytics({
 					siteId: cfg.siteId,
@@ -67,7 +67,7 @@
 		     AFTER registering the proxy client so it never upgrades clientless. -->
 		<script type="module">
 			const { setBdFormClient } = await import(
-				"https://esm.sh/@businessdash/sdk@0.9.81/element"
+				"https://esm.sh/@businessdash/sdk@0.9.90/element"
 			);
 			setBdFormClient({
 				forms: {

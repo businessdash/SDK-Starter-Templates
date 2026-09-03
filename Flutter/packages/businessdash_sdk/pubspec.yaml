@@ -3,7 +3,7 @@ description: >-
   Official Dart and Flutter client for the BusinessDash Package API —
   storefront, cart, checkout, blog, forms, chatbot, customer portal and
   scheduling. Pure Dart, so it runs anywhere Dart does.
-version: 0.9.81
+version: 0.9.90
 homepage: https://businessdash.us
 repository: https://github.com/businessdash/platform
 issue_tracker: https://github.com/businessdash/platform/issues

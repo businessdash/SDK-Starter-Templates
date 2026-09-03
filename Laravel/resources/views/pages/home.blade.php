@@ -70,12 +70,12 @@
 @endsection
 
 @push('head')
-    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.81/bd-forms.css">
+    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.90/bd-forms.css">
 @endpush
 
 @push('scripts')
     <script type="module">
-        import { setBdFormClient } from "https://esm.sh/@businessdash/sdk@0.9.81/element";
+        import { setBdFormClient } from "https://esm.sh/@businessdash/sdk@0.9.90/element";
 
         // The element can't take a client through an HTML attribute, so set
         // a DI default once. `baseUrl` is this app's proxy, not BD — the
