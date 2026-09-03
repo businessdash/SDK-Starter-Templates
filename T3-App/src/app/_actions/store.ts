@@ -3,13 +3,13 @@
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 import { revalidatePath } from "next/cache";
 
-import { getBiab } from "@/server/lib/biab";
+import { getBd } from "@/server/lib/bd";
 import {
 	ensureVisitorToken,
 	getCartSnapshot,
 	getVisitorToken,
 	sdkErrorMessage,
-} from "@/server/lib/biab-store";
+} from "@/server/lib/bd-store";
 
 /**
  * Cart + checkout Server Actions for the `/store` surface. The SDK runs
@@ -24,10 +24,10 @@ export type CartActionResult =
 
 /** Resolve a visitor-scoped cart client, minting the cookie if needed. */
 async function cartClient() {
-	const biab = getBiab();
-	if (!biab) return null;
+	const bd = getBd();
+	if (!bd) return null;
 	const token = await ensureVisitorToken();
-	return biab.cart.forVisitor(token);
+	return bd.cart.forVisitor(token);
 }
 
 async function run(
@@ -37,7 +37,7 @@ async function run(
 ): Promise<CartActionResult> {
 	const cart = await cartClient();
 	if (!cart) {
-		return { ok: false, error: "Store isn't connected (missing BIAB env)." };
+		return { ok: false, error: "Store isn't connected (missing BD env)." };
 	}
 	try {
 		const snapshot = await fn(cart);
@@ -100,14 +100,14 @@ export async function clearCartAction(): Promise<CartActionResult> {
 export async function startCheckoutAction(
 	origin: string,
 ): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-	const biab = getBiab();
-	if (!biab) {
-		return { ok: false, error: "Store isn't connected (missing BIAB env)." };
+	const bd = getBd();
+	if (!bd) {
+		return { ok: false, error: "Store isn't connected (missing BD env)." };
 	}
 	const token = await getVisitorToken();
 	if (!token) return { ok: false, error: "Your cart is empty." };
 	try {
-		const res = await biab.checkout.forVisitor(token).start({
+		const res = await bd.checkout.forVisitor(token).start({
 			successUrl: `${origin}/store/order?session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${origin}/store/cart`,
 		});

@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { Button, FlatList, StyleSheet, Text, TextInput, View } from 'react-native'
 
-import { useVisitorToken } from '@/biab/useBiab'
-import { useChat } from '@/biab/useChat'
+import { useVisitorToken } from '@/bd/useBd'
+import { useChat } from '@/bd/useChat'
 
 export default function ChatScreen() {
   const visitorToken = useVisitorToken()

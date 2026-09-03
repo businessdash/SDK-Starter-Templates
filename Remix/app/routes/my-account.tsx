@@ -11,7 +11,7 @@ import {
 	getCustomerWork,
 	isCustomerPortalConfigured,
 	submitCustomerReview,
-} from "~/lib/biab-portal.server";
+} from "~/lib/bd-portal.server";
 
 export const meta: MetaFunction = () => [
 	{ title: "My account — Your Business" },
@@ -96,7 +96,7 @@ export default function MyAccount() {
 
 					{!data.configured ? (
 						<p className="muted">
-							Customer accounts aren't connected yet. Set BIAB_AUTH_CALLBACK_URL
+							Customer accounts aren't connected yet. Set BD_AUTH_CALLBACK_URL
 							to enable sign-in.
 						</p>
 					) : !data.signedIn ? (
@@ -104,10 +104,10 @@ export default function MyAccount() {
 							<p>You're not signed in.</p>
 							{/* Auth endpoints are resource routes — use plain links. */}
 							<p>
-								<a className="biab-btn" href="/api/biab-auth/sign-in">
+								<a className="bd-btn" href="/api/bd-auth/sign-in">
 									Sign in
 								</a>{" "}
-								<a className="muted" href="/api/biab-auth/sign-up">
+								<a className="muted" href="/api/bd-auth/sign-up">
 									or create an account
 								</a>
 							</p>
@@ -120,7 +120,7 @@ export default function MyAccount() {
 								</h3>
 								<p className="muted">{data.user.email}</p>
 								<p>
-									<a className="muted" href="/api/biab-auth/sign-out">
+									<a className="muted" href="/api/bd-auth/sign-out">
 										Sign out
 									</a>
 								</p>
@@ -194,7 +194,7 @@ export default function MyAccount() {
 											</select>
 										</label>
 									) : null}
-									<button className="biab-btn" type="submit" disabled={submitting}>
+									<button className="bd-btn" type="submit" disabled={submitting}>
 										{submitting ? "Submitting…" : "Submit review"}
 									</button>
 									{actionData?.status === "error" ? (

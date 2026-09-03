@@ -1,4 +1,4 @@
-import { getBiab } from "../biab";
+import { getBd } from "../bd";
 import { html, render } from "../html";
 import { renderSubscribe } from "./subscribe";
 
@@ -11,10 +11,10 @@ const defaults: Array<{ heading: string; body: string }> = [
 
 export async function renderAbout(req?: Request): Promise<string> {
 	let blocks = defaults;
-	const biab = getBiab();
-	if (biab) {
+	const bd = getBd();
+	if (bd) {
 		try {
-			const bundle = await biab.marketing.getPageBundle({
+			const bundle = await bd.marketing.getPageBundle({
 				pageKey: "home",
 				locale: "en",
 			});

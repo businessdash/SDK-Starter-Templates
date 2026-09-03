@@ -11,9 +11,9 @@
 <!--
 	`html` is sanitised server-side when the org saves it, and the title and
 	logo URL are escaped by `renderLegalPageHtml`. Style it via the
-	`data-biab-legal-*` hooks it emits — the markup ships unstyled so it
+	`data-bd-legal-*` hooks it emits — the markup ships unstyled so it
 	inherits your site rather than fighting it.
 -->
-<main class="biab-section biab-section--narrow">
+<main class="bd-section bd-section--narrow">
 	{@html data.html}
 </main>

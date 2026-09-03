@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 
-import { biab, type BundleGalleryItem } from "../lib/biab";
+import { bd, type BundleGalleryItem } from "../lib/bd";
 
 /**
  * Showcases the SDK's **typed field selection** — `fields: [...] as
  * const` narrows the return type so this component only sees the
- * columns it asked for. Server-side, the BIAB Package API SELECTs
+ * columns it asked for. Server-side, the BD Package API SELECTs
  * only those columns; the DB doesn't pay for the unused ones.
  *
  * Change the `fields` literal below and watch TypeScript narrow the
@@ -26,34 +26,34 @@ export function Gallery() {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		biab.gallery
+		bd.gallery
 			.list({ limit: 12, fields: FIELDS })
 			.then((rows) => setItems(rows))
 			.catch((err) => setError(err.message));
 	}, []);
 
 	return (
-		<section className="biab-section" id="gallery">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">Recent work</span>
-				<h2 className="biab-section__title">Gallery</h2>
-				<p className="biab-section__sub">
-					Pulled live from the BIAB gallery surface. Each tile only fetches the
+		<section className="bd-section" id="gallery">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">Recent work</span>
+				<h2 className="bd-section__title">Gallery</h2>
+				<p className="bd-section__sub">
+					Pulled live from the BD gallery surface. Each tile only fetches the
 					fields it actually displays.
 				</p>
 			</div>
 			{error ? (
-				<div className="biab-empty">Couldn't load gallery: {error}</div>
+				<div className="bd-empty">Couldn't load gallery: {error}</div>
 			) : items === null ? (
-				<div className="biab-loading">Loading gallery…</div>
+				<div className="bd-loading">Loading gallery…</div>
 			) : items.length === 0 ? (
-				<div className="biab-empty">
-					No gallery items yet. Add a few in BIAB and they'll appear here.
+				<div className="bd-empty">
+					No gallery items yet. Add a few in BD and they'll appear here.
 				</div>
 			) : (
-				<div className="biab-grid-4">
+				<div className="bd-grid-4">
 					{items.map((item) => (
-						<div className="biab-card gallery-tile" key={item.id}>
+						<div className="bd-card gallery-tile" key={item.id}>
 							{item.src ? (
 								<img
 									alt={item.title ?? item.category ?? "Gallery item"}

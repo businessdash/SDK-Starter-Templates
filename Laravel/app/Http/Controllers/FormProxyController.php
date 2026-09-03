@@ -2,19 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * Same-origin proxy for the `<biab-form>` web component.
+ * Same-origin proxy for the `<bd-form>` web component.
  *
  * The component renders the full form schema client-side — conditional
  * blocks, availability pickers, file uploads — which a hand-written Blade
  * fragment can't match. It needs to reach the API, but the bearer key must
  * not go to the browser. So the browser talks to THIS route, and this route
- * talks to BIAB with the key.
+ * talks to BD with the key.
  *
  * That is the whole reason a Laravel consumer never has to reimplement the
  * form renderer.
@@ -23,7 +23,7 @@ class FormProxyController extends Controller
 {
     public function schema(string $slug): JsonResponse
     {
-        $schema = Biab::attempt(static fn (Client $c) => $c->forms()->schema($slug));
+        $schema = Bd::attempt(static fn (Client $c) => $c->forms()->schema($slug));
 
         return $schema
             ? response()->json($schema)
@@ -35,7 +35,7 @@ class FormProxyController extends Controller
         $payload = $request->json()->all();
         $data = is_array($payload['data'] ?? null) ? $payload['data'] : [];
 
-        $result = Biab::attempt(static fn (Client $c) => $c->forms()->submit(
+        $result = Bd::attempt(static fn (Client $c) => $c->forms()->submit(
             $slug,
             $data,
             submitterEmail: is_string($payload['submitterEmail'] ?? null) ? $payload['submitterEmail'] : null,

@@ -9,7 +9,7 @@ lockfile or `node_modules` leaking into the other.
 ```sh
 cd solid
 pnpm install --ignore-workspace
-cp .env.example .env.local   # then fill in the three BIAB_* variables
+cp .env.example .env.local   # then fill in the three BD_* variables
 pnpm dev
 ```
 

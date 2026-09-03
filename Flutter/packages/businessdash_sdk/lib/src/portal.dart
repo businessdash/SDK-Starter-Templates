@@ -24,14 +24,14 @@ import 'client.dart';
 class PortalResource {
   const PortalResource(this._client, this.sessionToken, {this.organizationId});
 
-  final BiabClient _client;
+  final BdClient _client;
   final String sessionToken;
   final String? organizationId;
 
   Map<String, String> get _headers => {
-        'X-BIAB-Session-Token': sessionToken,
+        'X-BD-Session-Token': sessionToken,
         if (organizationId != null)
-          'X-BIAB-Customer-Portal-Org': organizationId!,
+          'X-BD-Customer-Portal-Org': organizationId!,
       };
 
   /// Org branding and which portal features are on. Call before rendering.
@@ -216,7 +216,7 @@ class PortalResource {
       );
 }
 
-extension BiabPortal on BiabClient {
+extension BdPortal on BdClient {
   /// The portal for one company.
   ///
   /// Pass [organizationId] from `otherOrgs()` to read or write a different

@@ -9,16 +9,16 @@ import {
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
 
 import { SdkSetupBanner } from "./components/SdkSetupBanner";
-import { getAnalyticsConfig } from "./lib/biab.server";
+import { getAnalyticsConfig } from "./lib/bd.server";
 import stylesUrl from "./styles.css?url";
 // SDK form styles: file-upload box, multi-step progress header, choice/
-// availability chips. Required wherever `<BiabForm>` renders (contact, book).
+// availability chips. Required wherever `<BdForm>` renders (contact, book).
 // The container background is intentionally transparent — the template owns it.
-import biabFormsUrl from "@businessdash/sdk/biab-forms.css?url";
+import bdFormsUrl from "@businessdash/sdk/bd-forms.css?url";
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: stylesUrl },
-	{ rel: "stylesheet", href: biabFormsUrl },
+	{ rel: "stylesheet", href: bdFormsUrl },
 ];
 
 export async function loader(_: LoaderFunctionArgs) {
@@ -46,7 +46,7 @@ export default function App() {
 						// in the static client bundle. The dynamic-import below
 						// reads it after hydration.
 						dangerouslySetInnerHTML={{
-							__html: `window.__BIAB_ANALYTICS__=${JSON.stringify(analytics)};`,
+							__html: `window.__BD_ANALYTICS__=${JSON.stringify(analytics)};`,
 						}}
 					/>
 				) : null}
@@ -54,10 +54,10 @@ export default function App() {
 					type="module"
 					dangerouslySetInnerHTML={{
 						__html: `
-							const cfg = window.__BIAB_ANALYTICS__;
+							const cfg = window.__BD_ANALYTICS__;
 							if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
-								import("@businessdash/sdk/analytics-core").then(({ initBiabAnalytics }) => {
-									initBiabAnalytics({
+								import("@businessdash/sdk/analytics-core").then(({ initBdAnalytics }) => {
+									initBdAnalytics({
 										siteId: cfg.siteId,
 										baseUrl: cfg.baseUrl,
 										apiKey: cfg.apiKey,

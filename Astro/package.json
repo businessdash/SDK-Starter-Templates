@@ -1,5 +1,5 @@
 {
-	"name": "biab-astro",
+	"name": "bd-astro",
 	"type": "module",
 	"version": "0.0.1",
 	"engines": {
@@ -11,11 +11,11 @@
 		"preview": "node ./dist/server/entry.mjs",
 		"astro": "astro",
 		"check": "astro check",
-		"sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config biab.config.ts",
-		"sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config biab.config.ts",
-		"print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config biab.config.ts",
-		"sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config biab.data-model.config.ts",
-		"print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts"
+		"sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config bd.config.ts",
+		"sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config bd.config.ts",
+		"print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config bd.config.ts",
+		"sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config bd.data-model.config.ts",
+		"print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
 	},
 	"dependencies": {
 		"@astrojs/check": "^0.9.9",

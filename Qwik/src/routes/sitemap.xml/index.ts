@@ -1,7 +1,7 @@
 import type { RequestHandler } from "@builder.io/qwik-city";
 import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 
-import { getBiab } from "../../lib/biab";
+import { getBd } from "../../lib/bd";
 
 /**
  * The sitemap, assembled from three sources: your own pages, what BusinessDash
@@ -27,13 +27,13 @@ const STATIC_PATHS = [
 
 export const onGet: RequestHandler = async ({ send, url, env }) => {
 	const baseUrl = url.origin;
-	const client = getBiab();
+	const client = getBd();
 
 	const xml = client
 		? await buildSitemap({
 				client,
 				siteId:
-					env.get("PUBLIC_BIAB_SITE_ID") ?? env.get("BIAB_SITE_ID") ?? "",
+					env.get("PUBLIC_BD_SITE_ID") ?? env.get("BD_SITE_ID") ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
 				routes: { blog: "/updates", product: "/store" },

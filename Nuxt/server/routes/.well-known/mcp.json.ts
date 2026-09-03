@@ -12,7 +12,7 @@ let handler: ReturnType<typeof mcpManifestHandler> | null | undefined;
 
 function getHandler() {
 	if (handler !== undefined) return handler;
-	const cfg = getBiabBaseConfig();
+	const cfg = getBdBaseConfig();
 	if (!cfg) {
 		handler = null;
 		return handler;
@@ -25,7 +25,7 @@ export default defineEventHandler(async (event) => {
 	const manifest = getHandler();
 	if (!manifest) {
 		setResponseStatus(event, 503);
-		return { error: "MCP is not configured (set the BIAB env vars)." };
+		return { error: "MCP is not configured (set the BD env vars)." };
 	}
 	return sendWebResponse(event, await manifest(toWebRequest(event)));
 });

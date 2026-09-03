@@ -2,7 +2,7 @@ import Foundation
 
 /// Front Desk chat as an `AsyncStream` of message batches.
 ///
-/// The BIAB chat API is **polling-only** — there is no SSE and no WebSocket
+/// The BD chat API is **polling-only** — there is no SSE and no WebSocket
 /// anywhere in the Package API. The platform's guidance is `chatbot/messages`
 /// every 3–5 seconds while a widget is open. This wraps that loop so a SwiftUI
 /// view can `for await` instead of owning a timer.
@@ -19,7 +19,7 @@ import Foundation
 ///   A transient error is not a reason to end the stream, so the loop
 ///   continues; only cancellation finishes it.
 public struct ChatFeed: Sendable {
-    let client: BiabClient
+    let client: BdClient
     public let sessionID: String
     public let visitorToken: String
 
@@ -28,7 +28,7 @@ public struct ChatFeed: Sendable {
     /// Backoff after a failed poll.
     public var backoffInterval: Duration = .seconds(15)
 
-    public init(client: BiabClient, sessionID: String, visitorToken: String) {
+    public init(client: BdClient, sessionID: String, visitorToken: String) {
         self.client = client
         self.sessionID = sessionID
         self.visitorToken = visitorToken
@@ -124,7 +124,7 @@ public struct ChatFeed: Sendable {
     }
 }
 
-extension BiabClient {
+extension BdClient {
     public func chat(sessionID: String, visitorToken: String) -> ChatFeed {
         ChatFeed(client: self, sessionID: sessionID, visitorToken: visitorToken)
     }

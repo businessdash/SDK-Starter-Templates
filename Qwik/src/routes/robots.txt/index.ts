@@ -1,9 +1,9 @@
 import type { RequestHandler } from "@builder.io/qwik-city";
 
-import { getBiab } from "../../lib/biab";
+import { getBd } from "../../lib/bd";
 
 /**
- * Proxy the auto-generated robots.txt from BIAB. The platform endpoint
+ * Proxy the auto-generated robots.txt from BD. The platform endpoint
  * switches to `Disallow: /` automatically when the org's billing is fully
  * suspended (60+ days) so search engines treat the outage as temporary —
  * that SEO-rescue lives entirely on the platform side.
@@ -21,12 +21,12 @@ function normalizeBaseUrl(input: string): string {
 }
 
 export const onGet: RequestHandler = async ({ send }) => {
-	const biab = getBiab();
-	const apiKey = process.env.BIAB_API_KEY;
+	const bd = getBd();
+	const apiKey = process.env.BD_API_KEY;
 	const rawBaseUrl =
-		process.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
-		process.env.BIAB_PACKAGE_API_BASE_URL;
-	if (!biab || !apiKey || !rawBaseUrl) {
+		process.env.PUBLIC_BD_PACKAGE_API_BASE_URL ??
+		process.env.BD_PACKAGE_API_BASE_URL;
+	if (!bd || !apiKey || !rawBaseUrl) {
 		send(
 			new Response(DEFAULT_ROBOTS, {
 				status: 200,
@@ -35,7 +35,7 @@ export const onGet: RequestHandler = async ({ send }) => {
 		);
 		return;
 	}
-	const url = `${normalizeBaseUrl(rawBaseUrl)}/${biab.parallelPages.robotsUrl()}`;
+	const url = `${normalizeBaseUrl(rawBaseUrl)}/${bd.parallelPages.robotsUrl()}`;
 	try {
 		const res = await fetch(url, {
 			headers: { Authorization: `Bearer ${apiKey}` },

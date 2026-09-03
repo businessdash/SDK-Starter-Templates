@@ -13,7 +13,7 @@ import { ContactFormComponent } from "../sections/contact-form.component";
  * so the new store / cart / account / reviews routes can live alongside it.
  */
 @Component({
-	selector: "biab-home-page",
+	selector: "bd-home-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [
 		HeroComponent,
@@ -25,13 +25,13 @@ import { ContactFormComponent } from "../sections/contact-form.component";
 		ContactFormComponent,
 	],
 	template: `
-		<biab-hero />
-		<biab-about />
-		<biab-services />
-		<biab-reviews-summary />
-		<biab-updates />
-		<biab-blog />
-		<biab-contact-form />
+		<bd-hero />
+		<bd-about />
+		<bd-services />
+		<bd-reviews-summary />
+		<bd-updates />
+		<bd-blog />
+		<bd-contact-form />
 	`,
 })
 export class HomePage {}

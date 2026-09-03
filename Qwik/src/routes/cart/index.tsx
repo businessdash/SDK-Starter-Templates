@@ -3,8 +3,8 @@ import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city"
 
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
 import {
 	applyCartCoupon,
 	clearCart,
@@ -14,12 +14,12 @@ import {
 	removeCartItem,
 	startCheckout,
 	updateCartItem,
-} from "../../lib/biab-store";
-import { getCustomerSession } from "../../lib/biab-portal";
+} from "../../lib/bd-store";
+import { getCustomerSession } from "../../lib/bd-portal";
 
 /**
  * Cart view. `routeLoader$` reads the visitor cart server-side; the mutations
- * are `server$` RPCs that read/write the `biab_cart_visitor` cookie through
+ * are `server$` RPCs that read/write the `bd_cart_visitor` cookie through
  * `this.cookie` and return a fresh snapshot the client swaps in. Checkout
  * starts a Stripe session and returns the hosted URL to redirect to.
  */
@@ -100,18 +100,18 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} cartCount={snapshot?.itemCount ?? 0} />
 			<main>
-				<section class="biab-section biab-section--narrow">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">Checkout</span>
-						<h2 class="biab-section__title">Your cart</h2>
+				<section class="bd-section bd-section--narrow">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Checkout</span>
+						<h2 class="bd-section__title">Your cart</h2>
 					</div>
 
 					{items.length === 0 ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Your cart is empty. <a href="/store">Browse the store →</a>
 						</div>
 					) : (
-						<div class="biab-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
+						<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
 							{items.map((item) => (
 								<div
 									key={item.id}
@@ -164,7 +164,7 @@ export default component$(() => {
 											+
 										</button>
 										<button
-											class="biab-btn biab-btn--ghost"
+											class="bd-btn bd-btn--ghost"
 											disabled={busy.value}
 											onClick$={() => apply(removeItemRpc(item.id))}
 											type="button"
@@ -177,19 +177,19 @@ export default component$(() => {
 
 							<div style="display: flex; gap: 0.5rem; align-items: flex-end;">
 								<div style="flex: 1;">
-									<label class="biab-label" for="coupon">
+									<label class="bd-label" for="coupon">
 										Coupon
 									</label>
 									<input
 										bind:value={couponCode}
-										class="biab-input"
+										class="bd-input"
 										id="coupon"
 										placeholder={snapshot?.couponCode ?? "Code"}
 									/>
 								</div>
 								{snapshot?.couponCode ? (
 									<button
-										class="biab-btn biab-btn--ghost"
+										class="bd-btn bd-btn--ghost"
 										disabled={busy.value}
 										onClick$={() => apply(removeCouponRpc())}
 										type="button"
@@ -198,7 +198,7 @@ export default component$(() => {
 									</button>
 								) : (
 									<button
-										class="biab-btn biab-btn--ghost"
+										class="bd-btn bd-btn--ghost"
 										disabled={busy.value || !couponCode.value}
 										onClick$={() => apply(applyCouponRpc(couponCode.value))}
 										type="button"
@@ -210,7 +210,7 @@ export default component$(() => {
 
 							<div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem;">
 								<button
-									class="biab-btn biab-btn--ghost"
+									class="bd-btn bd-btn--ghost"
 									disabled={busy.value}
 									onClick$={() => apply(clearCartRpc())}
 									type="button"
@@ -225,7 +225,7 @@ export default component$(() => {
 							</div>
 
 							<button
-								class="biab-btn"
+								class="bd-btn"
 								disabled={busy.value}
 								onClick$={checkout}
 								type="button"

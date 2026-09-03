@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
 	const mcp = getMcpHandlers();
 	if (!mcp) {
 		setResponseStatus(event, 503);
-		return { error: "MCP is not configured (set the BIAB env vars)." };
+		return { error: "MCP is not configured (set the BD env vars)." };
 	}
 	return sendWebResponse(event, await mcp.GET());
 });

@@ -3,14 +3,14 @@ import { type FormEvent, useState } from "react";
 import { useFollowers } from "@businessdash/sdk/react";
 
 /**
- * Newsletter signup wired to BIAB followers.
+ * Newsletter signup wired to BD followers.
  *
  * Unlike the rest of this template (which proxies through the Bun server so the
  * bearer key never reaches the browser), the followers/subscribe surface runs
  * directly in the browser via a **publishable token** (`pk_…`): origin-locked,
  * rate-limited, and scoped to `followers:self`. That's why this is the one
  * feature that reads `VITE_`-prefixed env (exposed to the browser bundle) rather
- * than the server-only `BIAB_*` vars in `.env.example`.
+ * than the server-only `BD_*` vars in `.env.example`.
  *
  * `useFollowers` (from `@businessdash/sdk/react`) owns the per-browser
  * "already subscribed" hint (`subscribedLocally`, persisted in localStorage),
@@ -21,18 +21,18 @@ import { useFollowers } from "@businessdash/sdk/react";
  * an unconfigured checkout. One shared component powers both the footer and the
  * about section.
  *
- * Reads the canonical browser-safe names (`VITE_BIAB_*`, exposed to the
+ * Reads the canonical browser-safe names (`VITE_BD_*`, exposed to the
  * bundle via `envPrefix` in vite.config.ts), falling back to the legacy
- * `VITE_BIAB_*` twins so existing setups keep working.
+ * `VITE_BD_*` twins so existing setups keep working.
  */
 
-const BIAB_PK = (import.meta.env.VITE_BIAB_PK ??
-	import.meta.env.VITE_BIAB_PK) as string | undefined;
-const BIAB_SITE_ID = (import.meta.env.VITE_BIAB_SITE_ID ??
-	import.meta.env.VITE_BIAB_SITE_ID) as string | undefined;
-const BIAB_BASE_URL = (import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL ??
-	import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL) as string | undefined;
-const BIAB_FOLLOWERS_ENABLED = Boolean(BIAB_PK && BIAB_SITE_ID);
+const BD_PK = (import.meta.env.VITE_BD_PK ??
+	import.meta.env.VITE_BD_PK) as string | undefined;
+const BD_SITE_ID = (import.meta.env.VITE_BD_SITE_ID ??
+	import.meta.env.VITE_BD_SITE_ID) as string | undefined;
+const BD_BASE_URL = (import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
+	import.meta.env.VITE_BD_PACKAGE_API_BASE_URL) as string | undefined;
+const BD_FOLLOWERS_ENABLED = Boolean(BD_PK && BD_SITE_ID);
 
 export type SubscribeProps = {
 	/** Heading/label shown above the field. */
@@ -47,7 +47,7 @@ export type SubscribeProps = {
 /** Newsletter signup. Live when the publishable token is configured, otherwise a
  *  graceful "coming soon" placeholder with the same fields. */
 export function Subscribe(props: SubscribeProps) {
-	if (BIAB_FOLLOWERS_ENABLED) {
+	if (BD_FOLLOWERS_ENABLED) {
 		return <LiveSubscribe {...props} />;
 	}
 	return <PlaceholderSubscribe {...props} />;
@@ -68,13 +68,13 @@ function SubscribeFields({
 }) {
 	return (
 		<form className="subscribe__form" onSubmit={onSubmit}>
-			<label className="biab-label" htmlFor={`${source}-email`}>
+			<label className="bd-label" htmlFor={`${source}-email`}>
 				{label}
 			</label>
 			<div className="subscribe__row">
 				<input
 					autoComplete="email"
-					className="biab-input"
+					className="bd-input"
 					disabled={disabled}
 					id={`${source}-email`}
 					name="email"
@@ -83,7 +83,7 @@ function SubscribeFields({
 					type="email"
 				/>
 				<button
-					className="biab-btn"
+					className="bd-btn"
 					disabled={disabled}
 					type="submit"
 				>
@@ -94,12 +94,12 @@ function SubscribeFields({
 	);
 }
 
-/** Live signup → BIAB followers table via the publishable token. */
+/** Live signup → BD followers table via the publishable token. */
 function LiveSubscribe(props: SubscribeProps) {
 	const followers = useFollowers({
-		token: BIAB_PK as string,
-		siteId: BIAB_SITE_ID as string,
-		...(BIAB_BASE_URL ? { baseUrl: BIAB_BASE_URL } : {}),
+		token: BD_PK as string,
+		siteId: BD_SITE_ID as string,
+		...(BD_BASE_URL ? { baseUrl: BD_BASE_URL } : {}),
 	});
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "done" | "error"
@@ -145,7 +145,7 @@ function LiveSubscribe(props: SubscribeProps) {
 	);
 }
 
-/** Fallback when BIAB isn't configured (no publishable token). */
+/** Fallback when BD isn't configured (no publishable token). */
 function PlaceholderSubscribe(props: SubscribeProps) {
 	const [submitted, setSubmitted] = useState(false);
 	if (submitted) {

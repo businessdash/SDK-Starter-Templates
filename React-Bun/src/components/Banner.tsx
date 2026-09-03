@@ -1,7 +1,7 @@
 /** News banner — the dismissible `bundle.banner` message (untyped passthrough). */
 import { useEffect, useState } from "react";
-import { biab } from "../lib/biab";
-import type { Loose } from "../lib/biab";
+import { bd } from "../lib/bd";
+import type { Loose } from "../lib/bd";
 
 type Msg = { id: string; text: string; link: string | null; linkText: string | null };
 
@@ -10,7 +10,7 @@ export function Banner() {
 	const [dismissed, setDismissed] = useState(false);
 	useEffect(() => {
 		let alive = true;
-		biab.content
+		bd.content
 			.extras()
 			.then((x) => {
 				if (alive) setMsg(pick(x.banner));

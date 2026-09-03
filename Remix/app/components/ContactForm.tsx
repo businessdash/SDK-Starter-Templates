@@ -1,25 +1,25 @@
-import { BiabForm, type BiabFormsClient } from "@businessdash/sdk/react";
+import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
 import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
 /**
  * Schema-driven contact form (client island).
  *
- * `<BiabForm>` (from `@businessdash/sdk/react`) renders every field by `type`, runs
- * the same validation BIAB enforces, drives multi-step / conditional / grouped
- * forms, and uses the `biab-*` light-DOM classes the template already styles.
+ * `<BdForm>` (from `@businessdash/sdk/react`) renders every field by `type`, runs
+ * the same validation BD enforces, drives multi-step / conditional / grouped
+ * forms, and uses the `bd-*` light-DOM classes the template already styles.
  *
- * Reads/writes through the same-origin `/api/biab/forms` resource route (see
- * `app/routes/api.biab.forms.ts`), so the BIAB bearer key never reaches the
- * browser. The `client` object below structurally satisfies `BiabFormsClient`.
+ * Reads/writes through the same-origin `/api/bd/forms` resource route (see
+ * `app/routes/api.bd.forms.ts`), so the BD bearer key never reaches the
+ * browser. The `client` object below structurally satisfies `BdFormsClient`.
  *
- * Replace `slug="general-inquiry"` with the slug of the form you authored in BIAB at
+ * Replace `slug="general-inquiry"` with the slug of the form you authored in BD at
  * Dashboard → Forms.
  */
-const biabFormsProxy: BiabFormsClient = {
+const bdFormsProxy: BdFormsClient = {
 	forms: {
 		async schema(slug: string): Promise<FormSchema> {
 			const res = await fetch(
-				`/api/biab/forms?slug=${encodeURIComponent(slug)}`,
+				`/api/bd/forms?slug=${encodeURIComponent(slug)}`,
 			);
 			if (!res.ok) throw new Error(`Failed to load form (${res.status}).`);
 			return (await res.json()) as FormSchema;
@@ -29,7 +29,7 @@ const biabFormsProxy: BiabFormsClient = {
 			data: Record<string, unknown>,
 			opts?: Record<string, unknown>,
 		): Promise<FormSubmitResult> {
-			const res = await fetch("/api/biab/forms", {
+			const res = await fetch("/api/bd/forms", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ slug, data, ...opts }),
@@ -42,9 +42,9 @@ const biabFormsProxy: BiabFormsClient = {
 export function ContactForm() {
 	return (
 		<section className="section" id="contact">
-			<BiabForm
+			<BdForm
 				slug="general-inquiry"
-				client={biabFormsProxy}
+				client={bdFormsProxy}
 				submitLabel="Send"
 				successFallback={() => (
 					<p className="muted">Thanks — we'll be in touch.</p>

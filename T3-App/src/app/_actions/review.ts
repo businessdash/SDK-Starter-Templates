@@ -5,11 +5,11 @@ import { z } from "zod";
 import {
 	isCustomerPortalConfigured,
 	submitCustomerReview,
-} from "@/server/lib/biab-portal";
+} from "@/server/lib/bd-portal";
 
 /**
  * Customer review submission (signed-in customer portal). Validates input,
- * submits via the BIAB portal, and lands as `status: 'pending'` until staff
+ * submits via the BD portal, and lands as `status: 'pending'` until staff
  * moderate. Called from the my-account review form.
  */
 
@@ -77,7 +77,7 @@ export async function submitReviewAction(
 	} catch (err) {
 		if (process.env.NODE_ENV === "development") {
 			const reason = err instanceof Error ? err.message : String(err);
-			console.warn(`[biab] submitReview failed: ${reason}`);
+			console.warn(`[bd] submitReview failed: ${reason}`);
 		}
 		return {
 			status: "error",

@@ -5,7 +5,7 @@ import 'models.dart';
 
 /// Front Desk chat as a `Stream` of message batches.
 ///
-/// The BIAB chat API is **polling-only** — there is no SSE and no WebSocket
+/// The BD chat API is **polling-only** — there is no SSE and no WebSocket
 /// anywhere in the Package API. The platform's guidance is `chatbot/messages`
 /// every 3–5 seconds while a widget is open. This wraps that loop so a widget
 /// can `StreamBuilder` instead of owning a `Timer`.
@@ -20,14 +20,14 @@ import 'models.dart';
 ///   a screen stops the network work. No timer to cancel, no leak.
 class ChatFeed {
   ChatFeed({
-    required BiabClient client,
+    required BdClient client,
     required this.sessionId,
     required this.visitorToken,
     this.pollInterval = const Duration(seconds: 4),
     this.backoffInterval = const Duration(seconds: 15),
   }) : _client = client;
 
-  final BiabClient _client;
+  final BdClient _client;
   final String sessionId;
   final String visitorToken;
   final Duration pollInterval;
@@ -107,7 +107,7 @@ class ChatFeed {
   /// conversation that doesn't exist and returns nothing, forever, without
   /// erroring.
   static Future<ChatFeed> start(
-    BiabClient client, {
+    BdClient client, {
     required String visitorToken,
   }) async {
     final body = await client.post('chatbot/persisted-session', body: {

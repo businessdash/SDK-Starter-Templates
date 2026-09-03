@@ -7,7 +7,7 @@ import {
 	isStoreConfigured,
 	listStoreCategories,
 	listStoreProductsWithMeta,
-} from "$lib/server/biab-store";
+} from "$lib/server/bd-store";
 
 /**
  * Storefront index. Lists products via `storefront.listProductsWithMeta`
@@ -17,7 +17,7 @@ import {
  * ?sort) so the grid is shareable/bookmarkable and stays on the server.
  *
  * Reports the current cart count read-only (never mints the visitor
- * cookie here). Renders an "not connected" placeholder when BIAB env is
+ * cookie here). Renders an "not connected" placeholder when BD env is
  * unset, matching the rest of the template's graceful-degradation pattern.
  */
 

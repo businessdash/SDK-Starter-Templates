@@ -1,13 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 
-import { formatMoney, rowImage, rowPriceCents } from "../components/biab/money";
-import { Stars } from "../components/biab/Stars";
+import { formatMoney, rowImage, rowPriceCents } from "../components/bd/money";
+import { Stars } from "../components/bd/Stars";
 import {
 	addToCart,
 	getStoreProduct,
 	getStoreProductExtras,
-} from "../lib/biab-server-fns";
+} from "../lib/bd-server-fns";
 
 /**
  * Storefront product detail. The loader resolves the full product via
@@ -56,9 +56,9 @@ function StoreDetail() {
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow">
+			<section class="bd-section bd-section--narrow">
 				<Link
-					class="biab-section__eyebrow"
+					class="bd-section__eyebrow"
 					style="display: inline-block; margin-bottom: 1rem;"
 					to="/store"
 				>
@@ -68,7 +68,7 @@ function StoreDetail() {
 				<Show
 					when={result().ok}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							<Show
 								when={reason() === "suspended"}
 								fallback={<>This product is unavailable.</>}
@@ -92,7 +92,7 @@ function StoreDetail() {
 						const reviews = () => extras().reviews;
 						return (
 							<>
-								<div class="biab-card" style="padding: 1.5rem;">
+								<div class="bd-card" style="padding: 1.5rem;">
 									<Show when={img}>
 										<img
 											alt={product.name}
@@ -100,7 +100,7 @@ function StoreDetail() {
 											style="aspect-ratio: 16/9; object-fit: cover; border-radius: 0.6rem; margin-bottom: 1.25rem;"
 										/>
 									</Show>
-									<h1 class="biab-section__title" style="text-align: left;">
+									<h1 class="bd-section__title" style="text-align: left;">
 										{product.name}
 									</h1>
 									<Show when={reviews() && (reviews()?.totalCount ?? 0) > 0}>
@@ -124,7 +124,7 @@ function StoreDetail() {
 										<p style="margin-bottom: 1.5rem;">{description}</p>
 									</Show>
 									<button
-										class="biab-btn"
+										class="bd-btn"
 										disabled={busy()}
 										onClick={() => handleAdd(product.id)}
 										type="button"
@@ -142,11 +142,11 @@ function StoreDetail() {
 								<Show when={extras().addons.length > 0}>
 									<section class="store-section">
 										<h2 class="store-section__title">Complete your purchase</h2>
-										<div class="biab-grid-3">
+										<div class="bd-grid-3">
 											<For each={extras().addons}>
 												{(a) => (
 													<Link
-														class="biab-card store-addon"
+														class="bd-card store-addon"
 														params={{ id: a.addonProductId }}
 														style="text-decoration: none; border-bottom: none;"
 														to="/store/$id"
@@ -205,11 +205,11 @@ function StoreDetail() {
 								<Show when={extras().related.length > 0}>
 									<section class="store-section">
 										<h2 class="store-section__title">You may also like</h2>
-										<div class="biab-grid-3">
+										<div class="bd-grid-3">
 											<For each={extras().related}>
 												{(rp) => (
 													<Link
-														class="biab-card store-card"
+														class="bd-card store-card"
 														params={{ id: rp.id }}
 														style="text-decoration: none; border-bottom: none;"
 														to="/store/$id"

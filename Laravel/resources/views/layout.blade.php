@@ -1,11 +1,11 @@
 {{--
-    Page shell. Two BIAB-specific things live here:
+    Page shell. Two BD-specific things live here:
 
-    1. The setup banner — shown until BIAB_SITE_ID is set, so a fresh clone
+    1. The setup banner — shown until BD_SITE_ID is set, so a fresh clone
        tells you what to do instead of rendering a mysteriously empty site.
     2. The two browser islands, both loaded from esm.sh as ES modules. That
        is the whole reason this starter needs no bundler and no npm at
-       runtime: <biab-form> renders the full form schema client-side, and
+       runtime: <bd-form> renders the full form schema client-side, and
        the analytics module records page views.
 
     The islands are pinned to an exact SDK version on purpose. A CDN import
@@ -22,13 +22,13 @@
     @stack('head')
 </head>
 <body>
-    @unless (\App\Biab\Biab::configured())
+    @unless (\App\Bd\Bd::configured())
         <div class="banner banner-setup">
-            <strong>Not connected to BIAB.</strong>
+            <strong>Not connected to BD.</strong>
             Copy <code>.env.example</code> to <code>.env</code> and set
-            <code>BIAB_SITE_ID</code> + <code>BIAB_API_KEY</code>.
+            <code>BD_SITE_ID</code> + <code>BD_API_KEY</code>.
             Every section below is rendering its local fallback.
-            <a href="{{ \App\Biab\Biab::host() }}/login?returnTo=/dashboard/settings/web-content">
+            <a href="{{ \App\Bd\Bd::host() }}/login?returnTo=/dashboard/settings/web-content">
                 Open the setup wizard →
             </a>
         </div>
@@ -69,13 +69,13 @@
         <p class="muted">Powered by BusinessDash</p>
     </footer>
 
-    @if (\App\Biab\Biab::configured())
+    @if (\App\Bd\Bd::configured())
         <script type="module">
             import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.81/analytics-core";
             createAnalytics({
-                siteId: @json(config('biab.site_id')),
-                baseUrl: @json(rtrim(config('biab.host'), '/') . '/api/package/v1'),
-                apiKey: @json(config('biab.publishable_key')),
+                siteId: @json(config('bd.site_id')),
+                baseUrl: @json(rtrim(config('bd.host'), '/') . '/api/package/v1'),
+                apiKey: @json(config('bd.publishable_key')),
             }).trackPageView();
         </script>
     @endif

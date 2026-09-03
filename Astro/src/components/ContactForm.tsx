@@ -1,4 +1,4 @@
-import { BiabForm, type BiabFormsClient } from "@businessdash/sdk/react";
+import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
 import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
 /**
@@ -11,13 +11,13 @@ import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
  *     ---
  *     <ContactForm client:load />
  *
- * `<BiabForm>` (from `@businessdash/sdk/react`) renders every field by `type`, runs
- * the same validation BIAB enforces, drives multi-step / conditional / grouped
- * forms, and uses the `biab-*` light-DOM classes this template already styles.
+ * `<BdForm>` (from `@businessdash/sdk/react`) renders every field by `type`, runs
+ * the same validation BD enforces, drives multi-step / conditional / grouped
+ * forms, and uses the `bd-*` light-DOM classes this template already styles.
  *
- * It reads/writes through the same-origin `/api/biab/forms/[slug]` endpoint, so
- * the BIAB bearer key never reaches the browser. The `client` below structurally
- * satisfies `BiabFormsClient`.
+ * It reads/writes through the same-origin `/api/bd/forms/[slug]` endpoint, so
+ * the BD bearer key never reaches the browser. The `client` below structurally
+ * satisfies `BdFormsClient`.
  *
  * ── Activation ──────────────────────────────────────────────────────────────
  * This island needs React, which the base Astro starter doesn't bundle. To turn
@@ -31,10 +31,10 @@ import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
  */
 const FORM_SLUG = "general-inquiry";
 
-const biabFormsProxy: BiabFormsClient = {
+const bdFormsProxy: BdFormsClient = {
 	forms: {
 		async schema(slug: string): Promise<FormSchema> {
-			const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`);
+			const res = await fetch(`/api/bd/forms/${encodeURIComponent(slug)}`);
 			if (!res.ok) throw new Error(`Failed to load form (${res.status}).`);
 			return (await res.json()) as FormSchema;
 		},
@@ -43,7 +43,7 @@ const biabFormsProxy: BiabFormsClient = {
 			data: Record<string, unknown>,
 			opts?: Record<string, unknown>,
 		): Promise<FormSubmitResult> {
-			const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`, {
+			const res = await fetch(`/api/bd/forms/${encodeURIComponent(slug)}`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ data, ...opts }),
@@ -55,21 +55,21 @@ const biabFormsProxy: BiabFormsClient = {
 
 export default function ContactForm() {
 	return (
-		<section className="biab-section biab-section--narrow" id="contact">
-			<div className="biab-card contact">
-				<BiabForm
+		<section className="bd-section bd-section--narrow" id="contact">
+			<div className="bd-card contact">
+				<BdForm
 					slug={FORM_SLUG}
-					client={biabFormsProxy}
+					client={bdFormsProxy}
 					submitLabel="Send message"
 					successFallback={() => (
 						<div>
 							<span
-								className="biab-badge"
+								className="bd-badge"
 								style={{ alignSelf: "flex-start" }}
 							>
 								Received
 							</span>
-							<h2 className="biab-section__title">Got it.</h2>
+							<h2 className="bd-section__title">Got it.</h2>
 							<p>We'll be in touch within one business day.</p>
 						</div>
 					)}

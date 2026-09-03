@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -13,18 +13,18 @@
 
 <Header />
 
-<main class="biab-section biab-section--narrow">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">Custom collections</span>
-		<h1 class="biab-section__title">Todos</h1>
-		<p class="biab-section__sub">
-			A relational custom-collections demo — todos and their images live in your BIAB custom
+<main class="bd-section bd-section--narrow">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">Custom collections</span>
+		<h1 class="bd-section__title">Todos</h1>
+		<p class="bd-section__sub">
+			A relational custom-collections demo — todos and their images live in your BD custom
 			database.
 		</p>
 	</div>
 
 	<form
-		class="biab-card todo-form"
+		class="bd-card todo-form"
 		method="POST"
 		use:enhance={() => {
 			submitting = true;
@@ -55,16 +55,16 @@
 	</form>
 
 	{#if !data.available}
-		<div class="biab-empty">
+		<div class="bd-empty">
 			{data.reason ??
-				"Todos aren't readable yet — sync + promote biab.data-model.config.ts and check your key's scopes."}
+				"Todos aren't readable yet — sync + promote bd.data-model.config.ts and check your key's scopes."}
 		</div>
 	{:else if data.todos.length === 0}
-		<div class="biab-empty">No todos yet — add the first one.</div>
+		<div class="bd-empty">No todos yet — add the first one.</div>
 	{:else}
 		<ul class="todo-list">
 			{#each data.todos as todo (todo.id)}
-				<li class="biab-card todo-item">
+				<li class="bd-card todo-item">
 					<div class="todo-item__head">
 						<span class="todo-item__mark">{todo.done ? '✓' : '○'}</span>
 						<strong class="todo-item__title" class:todo-item__title--done={todo.done}>
@@ -108,7 +108,7 @@
 		font-size: 0.875rem;
 	}
 	.todo-form__input {
-		border: 1px solid var(--biab-border, #d4d4d8);
+		border: 1px solid var(--bd-border, #d4d4d8);
 		border-radius: 0.5rem;
 		padding: 0.5rem 0.75rem;
 		font: inherit;
@@ -119,7 +119,7 @@
 		border: none;
 		border-radius: 0.5rem;
 		padding: 0.55rem 1.1rem;
-		background: var(--biab-accent, #047857);
+		background: var(--bd-accent, #047857);
 		color: #fff;
 		font-weight: 600;
 		cursor: pointer;
@@ -156,7 +156,7 @@
 	}
 	.todo-item__notes {
 		margin: 0.5rem 0 0;
-		color: var(--biab-muted, #52525b);
+		color: var(--bd-muted, #52525b);
 	}
 	.todo-item__images {
 		display: flex;

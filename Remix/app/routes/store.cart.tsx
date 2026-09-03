@@ -17,7 +17,7 @@ import {
 	startCheckout,
 	updateCartItem,
 	type CartMutationResult,
-} from "~/lib/biab-store.server";
+} from "~/lib/bd-store.server";
 
 export const meta: MetaFunction = () => [{ title: "Cart — Your Business" }];
 
@@ -82,7 +82,7 @@ export async function action({ request }: ActionFunctionArgs) {
 	}
 
 	if (!result.ok) return { ok: false as const, error: result.error };
-	// A visitor reaching /store/cart already holds the `biab_cart_visitor`
+	// A visitor reaching /store/cart already holds the `bd_cart_visitor`
 	// cookie (it's minted on the first add-to-cart, which redirects here), so
 	// no Set-Cookie is needed on these mutations. The mutation succeeded.
 	return { ok: true as const, error: null };
@@ -180,7 +180,7 @@ export default function CartPage() {
 									</Form>
 									<Form method="post">
 										<input type="hidden" name="intent" value="checkout" />
-										<button className="biab-btn" type="submit">
+										<button className="bd-btn" type="submit">
 											Checkout
 										</button>
 									</Form>

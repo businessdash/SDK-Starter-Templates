@@ -74,13 +74,13 @@ main {
 }
 
 /* Grids */
-.biab-grid-3 {
+.bd-grid-3 {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: 1.25rem;
 }
 
-.biab-grid-4 {
+.bd-grid-4 {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
 	gap: 1rem;
@@ -244,11 +244,11 @@ main {
 	align-items: stretch;
 }
 
-.subscribe__row .biab-input {
+.subscribe__row .bd-input {
 	flex: 1 1 auto;
 }
 
-.subscribe__row .biab-btn {
+.subscribe__row .bd-btn {
 	flex: 0 0 auto;
 	white-space: nowrap;
 }
@@ -456,7 +456,7 @@ main {
 	align-items: center;
 	gap: 0.4rem;
 }
-.store-facet__price .biab-input {
+.store-facet__price .bd-input {
 	padding: 0.45rem 0.55rem;
 }
 .store-facet__dash {
@@ -480,7 +480,7 @@ main {
 	align-items: center;
 	gap: 0.5rem;
 }
-.store-sort .biab-select {
+.store-sort .bd-select {
 	width: auto;
 }
 

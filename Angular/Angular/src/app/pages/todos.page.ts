@@ -1,22 +1,22 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
-import { biabApi, type TodosPayload } from "../lib/biab-api.client";
+import { bdApi, type TodosPayload } from "../lib/bd-api.client";
 
 /**
  * Standalone /todos route — the relational custom-collections demo
- * (`biab.data-model.config.ts`: `todos` + `todoImages`, whose `todo` field
+ * (`bd.data-model.config.ts`: `todos` + `todoImages`, whose `todo` field
  * is a RELATION back to `todos`).
  *
- * READ: `GET /api/biab/todos` lists both collections server-side via the
+ * READ: `GET /api/bd/todos` lists both collections server-side via the
  * SDK's `dataModel.listRecords({ object })` and joins images to todos
  * through the `todo` RELATION field.
- * WRITE: `POST /api/biab/todos` submits the generated "Todo Form" (slug
- * `todo-form`) via `biab.forms.submit` — forms are the SDK's documented
+ * WRITE: `POST /api/bd/todos` submits the generated "Todo Form" (slug
+ * `todo-form`) via `bd.forms.submit` — forms are the SDK's documented
  * create path for custom collections; there is no direct row-write surface.
  */
 @Component({
-	selector: "biab-todos-page",
+	selector: "bd-todos-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ReactiveFormsModule, RouterLink],
 	template: `
@@ -24,7 +24,7 @@ import { biabApi, type TodosPayload } from "../lib/biab-api.client";
 			<h1 class="section__title">Todos</h1>
 			<p class="muted">
 				A relational custom-collections demo — todos and their images live in
-				your BIAB custom database.
+				your BD custom database.
 			</p>
 
 			<form class="card todo-form" [formGroup]="todoForm" (ngSubmit)="addTodo()">
@@ -54,7 +54,7 @@ import { biabApi, type TodosPayload } from "../lib/biab-api.client";
 				<p class="muted">
 					{{
 						payload()!.reason ??
-							"Todos aren't readable yet — sync + promote biab.data-model.config.ts and check your key's scopes."
+							"Todos aren't readable yet — sync + promote bd.data-model.config.ts and check your key's scopes."
 					}}
 				</p>
 			} @else if (payload()!.todos.length === 0) {
@@ -159,7 +159,7 @@ export class TodosPage implements OnInit {
 
 	private async load() {
 		this.payload.set(
-			(await biabApi.todos()) ?? {
+			(await bdApi.todos()) ?? {
 				available: false,
 				reason: "Couldn't read todos.",
 				todos: [],
@@ -174,7 +174,7 @@ export class TodosPage implements OnInit {
 		this.message.set(null);
 		this.failed.set(false);
 		const notes = this.todoForm.controls.notes.value.trim();
-		const result = await biabApi.createTodo({
+		const result = await bdApi.createTodo({
 			title,
 			...(notes ? { notes } : {}),
 		});

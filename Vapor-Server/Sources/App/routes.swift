@@ -23,13 +23,13 @@ func routes(_ app: Application) throws {
     app.post("cart", "checkout", use: CartController.checkout)
 
     // ── Machine endpoints ──────────────────────────────────────────────────
-    // Same-origin proxy for the <biab-form> web component: the browser gets
+    // Same-origin proxy for the <bd-form> web component: the browser gets
     // the schema and posts submissions without ever seeing the bearer key.
-    app.get("api", "biab", "forms", ":slug", use: BiabFormController.schema)
-    app.post("api", "biab", "forms", ":slug", use: BiabFormController.submit)
+    app.get("api", "bd", "forms", ":slug", use: BdFormController.schema)
+    app.post("api", "bd", "forms", ":slug", use: BdFormController.submit)
 
     // Authenticated by HMAC over the raw body, not by session.
-    app.post("api", "biab", "revalidate", use: WebhookController.handle)
+    app.post("api", "bd", "revalidate", use: WebhookController.handle)
 
     // ── SEO / AEO ──────────────────────────────────────────────────────────
     app.get("sitemap.xml", use: SeoController.sitemap)

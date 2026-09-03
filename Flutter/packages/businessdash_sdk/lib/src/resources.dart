@@ -2,7 +2,7 @@ import 'client.dart';
 import 'models.dart';
 
 /// The read/write surface, grouped the way the other starters group it.
-extension BiabResources on BiabClient {
+extension BdResources on BdClient {
   // ── Storefront ────────────────────────────────────────────────────────
 
   Future<List<Product>> products({int? limit}) async {
@@ -35,7 +35,7 @@ extension BiabResources on BiabClient {
   // ── Cart + checkout ───────────────────────────────────────────────────
 
   Map<String, String> _cartHeaders(String visitorToken) =>
-      {'X-BIAB-Cart-Visitor': visitorToken};
+      {'X-BD-Cart-Visitor': visitorToken};
 
   Future<CartSnapshot> cart(String visitorToken) async =>
       CartSnapshot.fromJson(await get('cart', headers: _cartHeaders(visitorToken)));
@@ -105,13 +105,13 @@ extension BiabResources on BiabClient {
   }
 
   /// Schema-driven, so this returns the raw map — read it with the
-  /// `BiabBundle` extension and always supply a local fallback.
+  /// `BdBundle` extension and always supply a local fallback.
   Future<Map<String, dynamic>> pageBundle([String pageKey = 'home']) =>
       get(sitePath('marketing/bundle'), query: {'pageKey': pageKey});
 
   // ── Forms ─────────────────────────────────────────────────────────────
 
-  /// The one surface a native app genuinely reimplements: `<biab-form>` is a
+  /// The one surface a native app genuinely reimplements: `<bd-form>` is a
   /// DOM web component with no Flutter counterpart, so the app fetches the
   /// schema and renders it with its own widgets.
   Future<FormSchema> formSchema(String slug) async =>

@@ -1,15 +1,15 @@
-# BIAB SDK — Kotlin starter
+# BD SDK — Kotlin starter
 
 Two Gradle modules:
 
-- **`:biab`** — the client. **Pure Kotlin/JVM**: no Android dependency, so it builds and tests with `./gradlew :biab:test` and no Android SDK, and stays reusable in a server or a Kotlin Multiplatform target later.
+- **`:bd`** — the client. **Pure Kotlin/JVM**: no Android dependency, so it builds and tests with `./gradlew :bd:test` and no Android SDK, and stays reusable in a server or a Kotlin Multiplatform target later.
 - **`:app`** — the Android app (Compose) built on it.
 
 The split is not tidiness. It means the part most likely to be wrong — decoding, error mapping, the access gate — is testable without an emulator.
 
 ## The one rule that shapes everything here
 
-**A mobile app ships its credential in the artifact.** `strings` on an APK finds anything in `BuildConfig`, so `BiabClient` `require`s a **publishable `pk_…` token** and refuses an `sk_…` key at construction.
+**A mobile app ships its credential in the artifact.** `strings` on an APK finds anything in `BuildConfig`, so `BdClient` `require`s a **publishable `pk_…` token** and refuses an `sk_…` key at construction.
 
 That turns out to be barely limiting. The publishable scope set covers the entire customer-facing surface:
 
@@ -22,14 +22,14 @@ So **this app needs no backend-for-frontend.** Only operator/admin writes need a
 The client verifies on its own, with no Android SDK:
 
 ```sh
-./gradlew :biab:test
+./gradlew :bd:test
 ```
 
 The app:
 
 ```sh
 cp local.properties.example local.properties
-# Fill biab.siteId and biab.publishableKey (and sdk.dir, which Android Studio writes)
+# Fill bd.siteId and bd.publishableKey (and sdk.dir, which Android Studio writes)
 
 ./gradlew :app:installDebug
 ```
@@ -40,10 +40,10 @@ For the schema + custom-database flows:
 
 ```sh
 npm install                  # dev-only, for the CLI
-npm run sync-schema          # push biab.config.ts to BIAB's draft slot
+npm run sync-schema          # push bd.config.ts to BD's draft slot
 npm run sync-data-model      # push the todos data model (+ generated form)
-npm run seed                 # upsert the rows in ./biab-records
-npm run view-data-model      # what's LIVE in BIAB right now
+npm run seed                 # upsert the rows in ./bd-records
+npm run view-data-model      # what's LIVE in BD right now
 ```
 
 The CLI is Node, and it is the **only** part of any starter that needs Node.
@@ -52,22 +52,22 @@ Node version — the schema artifact carries a canonical checksum the platform
 verifies, and reimplementing that in another language would mean matching the
 canonicalisation byte for byte.
 
-Seeding is language-neutral: `biab-records/` is plain JSON, identical across
+Seeding is language-neutral: `bd-records/` is plain JSON, identical across
 every starter. Only the *schema* files are TypeScript.
 
 
 ## Why Ktor, not Retrofit
 
-Retrofit is the Android-default answer and it would work. Ktor is here because it keeps `:biab` free of any Android dependency and leaves the **Kotlin Multiplatform** door open — a KMP client could serve Android *and* iOS from one codebase.
+Retrofit is the Android-default answer and it would work. Ktor is here because it keeps `:bd` free of any Android dependency and leaves the **Kotlin Multiplatform** door open — a KMP client could serve Android *and* iOS from one codebase.
 
-Worth knowing that's a real fork in the road: BIAB also ships a native Swift starter with its own `BiabKit`. If you go KMP later, one of those two becomes redundant. Decide that deliberately rather than ending up with both.
+Worth knowing that's a real fork in the road: BD also ships a native Swift starter with its own `BdKit`. If you go KMP later, one of those two becomes redundant. Decide that deliberately rather than ending up with both.
 
 ## What's in the client
 
 ```
-biab/src/main/kotlin/app/biab/
-  BiabClient.kt   transport, bearer, the access gate, the pk_ require
-  BiabError.kt    sealed exception hierarchy + isUnavailable
+bd/src/main/kotlin/app/bd/
+  BdClient.kt   transport, bearer, the access gate, the pk_ require
+  BdError.kt    sealed exception hierarchy + isUnavailable
   Models.kt       @Serializable models for every fixed-shape surface
   Resources.kt    storefront · cart · checkout · blog · reviews
                   subscriptions · forms
@@ -84,7 +84,7 @@ biab/src/main/kotlin/app/biab/
 
 **3. Checkout returns `stripeUrl`, not `url`.** Open it in a browser; no card data touches this process, which keeps the app out of PCI scope.
 
-**4. The cart visitor token is generated locally and must be persisted.** There is no endpoint that mints one — `cart/session` is a tokenized iframe embed, a different feature. `BiabApp.visitorToken` keeps it in `SharedPreferences`, which is right because it's an opaque id, **not** a secret. A session token would belong in `EncryptedSharedPreferences` instead.
+**4. The cart visitor token is generated locally and must be persisted.** There is no endpoint that mints one — `cart/session` is a tokenized iframe embed, a different feature. `BdApp.visitorToken` keeps it in `SharedPreferences`, which is right because it's an opaque id, **not** a secret. A session token would belong in `EncryptedSharedPreferences` instead.
 
 **5. `ignoreUnknownKeys = true` is load-bearing.** The platform returns a superset that grows release to release. Without it, one new column breaks the app on somebody else's deploy.
 
@@ -96,15 +96,15 @@ The loop also de-duplicates on message id: `since` is only as good as what the s
 
 ## What this starter does not do
 
-- **The form renderer isn't built.** `<biab-form>` is a DOM web component with no Compose counterpart, so this is the one surface an app genuinely reimplements. `formSchema()` returns a typed `FormSchema`; rendering it is left to you.
+- **The form renderer isn't built.** `<bd-form>` is a DOM web component with no Compose counterpart, so this is the one surface an app genuinely reimplements. `formSchema()` returns a typed `FormSchema`; rendering it is left to you.
 - **No sign-in / customer portal UI.** The scopes allow it (`tenant_auth:public`, `customer_portal:self`); the hosted auth flow needs a deep-link callback the way the Swift starter does.
 - **One screen.** Shop + add-to-cart. Cart, blog and chat are wired in the client and the ViewModel but have no Compose screens yet.
 
 ## ⚠️ Verification status
 
-**None of this has been compiled.** The machine it was written on has Java 11 and no Kotlin compiler, no Gradle, and no Android SDK. The tests in `biab/src/test` are written but have never run.
+**None of this has been compiled.** The machine it was written on has Java 11 and no Kotlin compiler, no Gradle, and no Android SDK. The tests in `bd/src/test` are written but have never run.
 
-Treat it as reviewed, not verified. `./gradlew :biab:test` is the first thing to run, and it needs no Android SDK — the module split exists partly so that check is cheap.
+Treat it as reviewed, not verified. `./gradlew :bd:test` is the first thing to run, and it needs no Android SDK — the module split exists partly so that check is cheap.
 
 ## Data: environment, schema, seeding, CRUD
 
@@ -117,9 +117,9 @@ Three, from **Dashboard → Developers → API keys**:
 
 | Variable | What it is |
 |---|---|
-| `BIAB_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
-| `BIAB_SITE_ID` | Which site this app is. |
-| `BIAB_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
+| `BD_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
+| `BD_SITE_ID` | Which site this app is. |
+| `BD_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
 
 > A **secret** key must never reach the browser. If this starter renders on the
 > client, use a publishable key — it carries a narrower scope set on purpose, so

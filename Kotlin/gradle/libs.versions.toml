@@ -8,7 +8,7 @@ activity-compose = "1.9.3"
 lifecycle = "2.8.7"
 
 [libraries]
-# Ktor rather than Retrofit/OkHttp: it keeps the :biab module free of any
+# Ktor rather than Retrofit/OkHttp: it keeps the :bd module free of any
 # Android dependency and leaves the Kotlin Multiplatform door open, which
 # matters because a KMP client could serve Android AND iOS from one codebase.
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }

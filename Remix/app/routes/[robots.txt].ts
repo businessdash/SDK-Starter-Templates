@@ -1,7 +1,7 @@
-import { getBiab, getServerConfig } from "~/lib/biab.server";
+import { getBd, getServerConfig } from "~/lib/bd.server";
 
 /**
- * Proxy the auto-generated robots.txt from BIAB (resource route → `/robots.txt`).
+ * Proxy the auto-generated robots.txt from BD (resource route → `/robots.txt`).
  *
  * The platform endpoint switches to `Disallow: /` automatically when the org's
  * billing is fully suspended so search engines treat the outage as temporary —
@@ -22,10 +22,10 @@ function allowAll() {
 
 export async function loader() {
 	const cfg = getServerConfig();
-	const biab = getBiab();
-	if (!cfg || !biab) return allowAll();
+	const bd = getBd();
+	if (!cfg || !bd) return allowAll();
 	try {
-		const path = biab.parallelPages.robotsUrl().replace(/^\//, "");
+		const path = bd.parallelPages.robotsUrl().replace(/^\//, "");
 		const upstream = `${cfg.baseUrl.replace(/\/$/, "")}/${path}`;
 		const res = await fetch(upstream, {
 			headers: { Authorization: `Bearer ${cfg.apiKey}` },

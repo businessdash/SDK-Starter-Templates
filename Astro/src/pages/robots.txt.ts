@@ -1,16 +1,16 @@
 import type { APIRoute } from "astro";
 
-import { biab, getBiabEnv } from "../lib/biab";
+import { bd, getBdEnv } from "../lib/bd";
 
 export const prerender = false;
 
 /**
- * Proxy the auto-generated robots.txt from BIAB. The platform endpoint
+ * Proxy the auto-generated robots.txt from BD. The platform endpoint
  * switches to `Disallow: /` automatically when the org's billing is fully
  * suspended (60+ days) so search engines treat the outage as temporary —
  * that SEO-rescue lives entirely on the platform side.
  *
- * Falls back to a permissive default when BIAB is unconfigured or the upstream
+ * Falls back to a permissive default when BD is unconfigured or the upstream
  * errors.
  */
 
@@ -24,9 +24,9 @@ function fallbackResponse(): Response {
 }
 
 export const GET: APIRoute = async () => {
-	const env = getBiabEnv();
-	if (!env || !biab) return fallbackResponse();
-	const url = `${env.baseUrl}/${biab.parallelPages.robotsUrl()}`;
+	const env = getBdEnv();
+	if (!env || !bd) return fallbackResponse();
+	const url = `${env.baseUrl}/${bd.parallelPages.robotsUrl()}`;
 	try {
 		const res = await fetch(url, {
 			headers: { Authorization: `Bearer ${env.apiKey}` },

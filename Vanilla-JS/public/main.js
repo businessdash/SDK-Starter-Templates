@@ -21,7 +21,7 @@ document.getElementById("year").textContent = String(new Date().getFullYear());
 
 const mount = (id, render) => {
 	const el = document.getElementById(id);
-	if (el) render(el).catch((err) => console.error(`[biab] ${id} failed`, err));
+	if (el) render(el).catch((err) => console.error(`[bd] ${id} failed`, err));
 };
 
 mount("hero", renderHero);
@@ -42,15 +42,15 @@ mount("footer-subscribe", (target) =>
 );
 
 // Privacy-conscious site analytics. Config is injected by the
-// Bun server (see server.ts) as `window.__BIAB_PUBLIC__` so the
+// Bun server (see server.ts) as `window.__BD_PUBLIC__` so the
 // public key never lives in the static bundle.
 const cfg =
 	(typeof window !== "undefined" &&
-		(window).__BIAB_PUBLIC__) ||
+		(window).__BD_PUBLIC__) ||
 	null;
 if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
-	import("@businessdash/sdk/analytics-core").then(({ initBiabAnalytics }) => {
-		initBiabAnalytics({
+	import("@businessdash/sdk/analytics-core").then(({ initBdAnalytics }) => {
+		initBdAnalytics({
 			siteId: cfg.siteId,
 			baseUrl: cfg.baseUrl,
 			apiKey: cfg.apiKey,

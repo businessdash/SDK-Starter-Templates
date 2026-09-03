@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import BiabHeader from "~/components/biab/BiabHeader.vue";
-import BiabFooter from "~/components/biab/BiabFooter.vue";
+import BdHeader from "~/components/bd/BdHeader.vue";
+import BdFooter from "~/components/bd/BdFooter.vue";
 import { useCart, formatMoney } from "~/composables/useCart";
 
 /**
@@ -41,7 +41,7 @@ async function handleCheckout() {
 	try {
 		const res = await $fetch<
 			{ ok: true; url: string } | { ok: false; error: string }
-		>("/api/biab/checkout/start", { method: "POST" });
+		>("/api/bd/checkout/start", { method: "POST" });
 		if (res.ok) {
 			window.location.href = res.url;
 		} else {
@@ -60,19 +60,19 @@ useHead({ title: "Cart — Your Business" });
 
 <template>
 	<div>
-		<BiabHeader />
+		<BdHeader />
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Checkout</span>
-					<h1 class="biab-section__title">Your cart</h1>
+			<section class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Checkout</span>
+					<h1 class="bd-section__title">Your cart</h1>
 				</div>
 
-				<div v-if="!cart || cart.items.length === 0" class="biab-empty">
+				<div v-if="!cart || cart.items.length === 0" class="bd-empty">
 					Your cart is empty. <NuxtLink to="/store">Browse the store →</NuxtLink>
 				</div>
 
-				<div v-else class="biab-card cart">
+				<div v-else class="bd-card cart">
 					<div v-for="item in cart.items" :key="item.id" class="cart-line">
 						<img
 							v-if="item.productImage"
@@ -111,7 +111,7 @@ useHead({ title: "Cart — Your Business" });
 							</button>
 						</div>
 						<button
-							class="biab-btn biab-btn--ghost cart-line__remove"
+							class="bd-btn bd-btn--ghost cart-line__remove"
 							:disabled="busy"
 							type="button"
 							@click="removeItem(item.id)"
@@ -122,9 +122,9 @@ useHead({ title: "Cart — Your Business" });
 
 					<div class="cart__coupon">
 						<template v-if="cart.couponCode">
-							<span class="biab-badge">Coupon: {{ cart.couponCode }}</span>
+							<span class="bd-badge">Coupon: {{ cart.couponCode }}</span>
 							<button
-								class="biab-btn biab-btn--ghost"
+								class="bd-btn bd-btn--ghost"
 								:disabled="busy"
 								type="button"
 								@click="removeCoupon"
@@ -135,11 +135,11 @@ useHead({ title: "Cart — Your Business" });
 						<template v-else>
 							<input
 								v-model="couponInput"
-								class="biab-input"
+								class="bd-input"
 								placeholder="Coupon code"
 							/>
 							<button
-								class="biab-btn biab-btn--ghost"
+								class="bd-btn bd-btn--ghost"
 								:disabled="busy || !couponInput.trim()"
 								type="button"
 								@click="handleApplyCoupon"
@@ -156,7 +156,7 @@ useHead({ title: "Cart — Your Business" });
 
 					<div class="cart__actions">
 						<button
-							class="biab-btn biab-btn--ghost"
+							class="bd-btn bd-btn--ghost"
 							:disabled="busy"
 							type="button"
 							@click="clear"
@@ -164,7 +164,7 @@ useHead({ title: "Cart — Your Business" });
 							Clear cart
 						</button>
 						<button
-							class="biab-btn"
+							class="bd-btn"
 							:disabled="checkingOut || busy"
 							type="button"
 							@click="handleCheckout"
@@ -188,6 +188,6 @@ useHead({ title: "Cart — Your Business" });
 				</div>
 			</section>
 		</main>
-		<BiabFooter />
+		<BdFooter />
 	</div>
 </template>

@@ -1,13 +1,13 @@
-# BIAB SDK — Swift starter
+# BD SDK — Swift starter
 
 Two products in one package:
 
 - **`BusinessDashKit`** — the data layer. No dependencies; the Package API is plain REST with a bearer key, so `URLSession` + `Codable` covers all of it.
-- **`BiabStarterApp`** — SwiftUI screens built on the kit: shop, cart, blog, Front Desk chat, and the customer portal.
+- **`BdStarterApp`** — SwiftUI screens built on the kit: shop, cart, blog, Front Desk chat, and the customer portal.
 
 ## The one rule that shapes everything here
 
-**A native app ships its credential inside the binary.** `strings` on an `.ipa` finds anything you bundle, so `BiabClient` accepts a **publishable `pk_…` token only** and traps at `init` if you hand it an `sk_…` key.
+**A native app ships its credential inside the binary.** `strings` on an `.ipa` finds anything you bundle, so `BdClient` accepts a **publishable `pk_…` token only** and traps at `init` if you hand it an `sk_…` key.
 
 That turns out to be barely limiting. The publishable scope set covers the entire customer-facing surface:
 
@@ -24,16 +24,16 @@ swift build
 swift test
 ```
 
-For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BusinessDashKit` and `BiabStarterApp` to your target.
+For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BusinessDashKit` and `BdStarterApp` to your target.
 
-Configuration lives in Info.plist — there is no `.env` in an app bundle. `BiabStarter.xcconfig` has the four keys and how to wire them:
+Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdStarter.xcconfig` has the four keys and how to wire them:
 
 | Info.plist key | What |
 | --- | --- |
-| `BIABHost` | defaults to `https://www.biab.app` |
-| `BIABPublishableKey` | `pk_…` — never `sk_…` |
-| `BIABSiteID` | the site UUID |
-| `BIABAuthCallbackURL` | e.g. `biabstarter://auth/callback` |
+| `BDHost` | defaults to `https://www.biab.app` |
+| `BDPublishableKey` | `pk_…` — never `sk_…` |
+| `BDSiteID` | the site UUID |
+| `BDAuthCallbackURL` | e.g. `bdstarter://auth/callback` |
 
 **With no keys at all the app still runs** — screens render their empty states and a setup notice appears. A starter you can't launch before signing up isn't a starter.
 
@@ -42,16 +42,16 @@ Your `App` body:
 ```swift
 @main
 struct MyApp: App {
-    @State private var biab = BiabEnvironment()
+    @State private var bd = BdEnvironment()
 
     var body: some Scene {
         WindowGroup {
-            BiabRootView()
-                .environment(biab)
-                .task { await biab.bootstrap() }
+            BdRootView()
+                .environment(bd)
+                .task { await bd.bootstrap() }
                 .onOpenURL { url in
-                    guard let (code, state) = BiabAuth.callbackParameters(from: url) else { return }
-                    Task { try? await biab.completeSignIn(code: code, state: state) }
+                    guard let (code, state) = BdAuth.callbackParameters(from: url) else { return }
+                    Task { try? await bd.completeSignIn(code: code, state: state) }
                 }
         }
     }
@@ -62,10 +62,10 @@ For the schema + custom-database flows:
 
 ```sh
 npm install                  # dev-only, for the CLI
-npm run sync-schema          # push biab.config.ts to BIAB's draft slot
+npm run sync-schema          # push bd.config.ts to BD's draft slot
 npm run sync-data-model      # push the todos data model (+ generated form)
-npm run seed                 # upsert the rows in ./biab-records
-npm run view-data-model      # what's LIVE in BIAB right now
+npm run seed                 # upsert the rows in ./bd-records
+npm run view-data-model      # what's LIVE in BD right now
 ```
 
 The CLI is Node, and it is the **only** part of any starter that needs Node.
@@ -74,7 +74,7 @@ Node version — the schema artifact carries a canonical checksum the platform
 verifies, and reimplementing that in another language would mean matching the
 canonicalisation byte for byte.
 
-Seeding is language-neutral: `biab-records/` is plain JSON, identical across
+Seeding is language-neutral: `bd-records/` is plain JSON, identical across
 every starter. Only the *schema* files are TypeScript.
 
 
@@ -82,11 +82,11 @@ every starter. Only the *schema* files are TypeScript.
 
 ```
 Sources/BusinessDashKit/
-  BiabClient.swift        transport, bearer, access gate, the pk_ guard
-  BiabError.swift         typed failures + `isUnavailable`
-  BiabConfiguration.swift Info.plist reader
-  BiabAuth.swift          hosted sign-in via a custom URL scheme
-  BiabSessionStore.swift  actor: session token → Keychain, visitor id → UserDefaults
+  BdClient.swift        transport, bearer, access gate, the pk_ guard
+  BdError.swift         typed failures + `isUnavailable`
+  BdConfiguration.swift Info.plist reader
+  BdAuth.swift          hosted sign-in via a custom URL scheme
+  BdSessionStore.swift  actor: session token → Keychain, visitor id → UserDefaults
   ChatFeed.swift          the polling chat API as an AsyncStream
   Models.swift            Codable structs for every typed surface
   JSONValue.swift         for the two genuinely schema-driven surfaces
@@ -98,15 +98,15 @@ Sources/BusinessDashKit/
 
 ## Five things that will bite you
 
-**1. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — a client that only checks `statusCode` decodes an empty screen and never notices. `BiabClient` inspects the body *before* the status, deliberately, and there's a test pinning that order.
+**1. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — a client that only checks `statusCode` decodes an empty screen and never notices. `BdClient` inspects the body *before* the status, deliberately, and there's a test pinning that order.
 
 **2. Money has two shapes.** Product, subscription, invoice and quote totals are **integer cents**. Cart `unitPrice`/`subtotal` arrive **decimal**. `Money.cents(_:)` and `Money.amount(_:)` are separate functions so you pick deliberately — mixing them is a 100× error in either direction. Every model property says which it is.
 
-**3. Two different session headers.** `auth/me` takes a lowercase `x-biab-session`. Cart and portal routes take `X-BIAB-Session-Token`. Not interchangeable, and the wrong one reads as "not signed in" rather than as an error.
+**3. Two different session headers.** `auth/me` takes a lowercase `x-bd-session`. Cart and portal routes take `X-BD-Session-Token`. Not interchangeable, and the wrong one reads as "not signed in" rather than as an error.
 
 **4. Checkout returns `stripeUrl`, not `url`.** Open it in a browser; no card data touches this process, which is what keeps the app out of PCI scope.
 
-**5. The cart visitor token is generated locally.** There is no endpoint that mints one — `cart/session` is a different feature (a tokenized iframe embed). `BiabSessionStore` keeps it in `UserDefaults`, because it's an opaque id, not a secret. The *session* token goes in the Keychain, because it is one.
+**5. The cart visitor token is generated locally.** There is no endpoint that mints one — `cart/session` is a different feature (a tokenized iframe embed). `BdSessionStore` keeps it in `UserDefaults`, because it's an opaque id, not a secret. The *session* token goes in the Keychain, because it is one.
 
 ## Chat is polling, and that's the API
 
@@ -122,7 +122,7 @@ Leaving the loop — or SwiftUI cancelling the `.task` on disappear — tears th
 
 ## What this starter does not do
 
-- **The form renderer is minimal.** `<biab-form>` is a DOM web component with no native counterpart, so this is the one surface an app genuinely reimplements. `BiabFormView` covers text, textarea, select and checkbox fields; conditional blocks, availability pickers and uploads are not ported. Extend `field(for:)` — the schema tells you the type.
+- **The form renderer is minimal.** `<bd-form>` is a DOM web component with no native counterpart, so this is the one surface an app genuinely reimplements. `BdFormView` covers text, textarea, select and checkbox fields; conditional blocks, availability pickers and uploads are not ported. Extend `field(for:)` — the schema tells you the type.
 - **Sign-in uses `openURL`, not `ASWebAuthenticationSession`.** A production app should use the latter so the sheet dismisses itself and the callback is delivered directly. `openURL` keeps the starter free of AuthenticationServices presentation-anchor plumbing.
 - **One chat session per install.** A real app would mint a session per topic and persist the id next to the visitor token.
 - **No shipping / address / coupons-admin surfaces.** The endpoints exist; the kit covers what these screens use.
@@ -142,9 +142,9 @@ Three, from **Dashboard → Developers → API keys**:
 
 | Variable | What it is |
 |---|---|
-| `BIAB_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
-| `BIAB_SITE_ID` | Which site this app is. |
-| `BIAB_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
+| `BD_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
+| `BD_SITE_ID` | Which site this app is. |
+| `BD_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
 
 > A **secret** key must never reach the browser. If this starter renders on the
 > client, use a publishable key — it carries a narrower scope set on purpose, so

@@ -10,19 +10,19 @@ import {
 
 import type { CustomerWorkBundle } from "@businessdash/sdk/contracts";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
 import {
 	getCustomerSession,
 	getCustomerWork,
 	isCustomerPortalConfigured,
 	submitCustomerReview,
-} from "../../lib/biab-portal";
+} from "../../lib/bd-portal";
 
 /**
  * Customer portal "my account" page.
  *
- *  - `routeLoader$` reads the `biab_session` cookie via `getCustomerSession`
+ *  - `routeLoader$` reads the `bd_session` cookie via `getCustomerSession`
  *    (which calls `getTenantSession`), then loads the work bundle (`getWork`).
  *  - When signed out, we render sign-in / sign-up links to the auth handler.
  *  - `routeAction$` submits a customer review through the portal.
@@ -84,7 +84,7 @@ export const useSubmitReview = routeAction$(
 function WorkSummary({ work }: { work: CustomerWorkBundle }) {
 	const s = work.summary;
 	return (
-		<div class="biab-card" style="padding: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+		<div class="bd-card" style="padding: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
 			<div>
 				<div style="font-size: 1.5rem; font-weight: 700; color: var(--title);">
 					{s.openJobCount}
@@ -123,32 +123,32 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={signedIn} />
 			<main>
-				<section class="biab-section biab-section--narrow">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">Portal</span>
-						<h2 class="biab-section__title">My account</h2>
+				<section class="bd-section bd-section--narrow">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Portal</span>
+						<h2 class="bd-section__title">My account</h2>
 					</div>
 
 					{!data.value.configured ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Customer accounts aren't connected yet. Set
-							<code> BIAB_AUTH_CALLBACK_URL</code> (see .env.example).
+							<code> BD_AUTH_CALLBACK_URL</code> (see .env.example).
 						</div>
 					) : !signedIn ? (
-						<div class="biab-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
+						<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
 							<p>Sign in to view your jobs, quotes, and invoices.</p>
 							<div style="display: flex; gap: 0.75rem;">
-								<a class="biab-btn" href="/api/biab-auth/sign-in">
+								<a class="bd-btn" href="/api/bd-auth/sign-in">
 									Sign in
 								</a>
-								<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-up">
+								<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">
 									Create account
 								</a>
 							</div>
 						</div>
 					) : (
 						<div style="display: flex; flex-direction: column; gap: 2rem;">
-							<div class="biab-card" style="padding: 1.5rem;">
+							<div class="bd-card" style="padding: 1.5rem;">
 								<div style="font-weight: 600; color: var(--title);">
 									{[data.value.session?.firstName, data.value.session?.lastName]
 										.filter(Boolean)
@@ -160,7 +160,7 @@ export default component$(() => {
 							</div>
 
 							{work?.unlinked ? (
-								<div class="biab-empty">
+								<div class="bd-empty">
 									Your account isn't linked to a customer record yet. Once we
 									connect it, your jobs and invoices will show here.
 								</div>
@@ -169,7 +169,7 @@ export default component$(() => {
 							) : null}
 
 							{/* Customer review submission */}
-							<div class="biab-card" style="padding: 2rem;">
+							<div class="bd-card" style="padding: 2rem;">
 								<h3 style="margin-bottom: 1rem;">Leave a review</h3>
 								{review.value?.ok ? (
 									<p style="color: var(--success);">
@@ -181,10 +181,10 @@ export default component$(() => {
 										style="display: flex; flex-direction: column; gap: 1rem;"
 									>
 										<div>
-											<label class="biab-label" for="rating">
+											<label class="bd-label" for="rating">
 												Rating
 											</label>
-											<select class="biab-select" id="rating" name="rating">
+											<select class="bd-select" id="rating" name="rating">
 												<option value="5">★★★★★ — Excellent</option>
 												<option value="4">★★★★ — Good</option>
 												<option value="3">★★★ — Okay</option>
@@ -193,24 +193,24 @@ export default component$(() => {
 											</select>
 										</div>
 										<div>
-											<label class="biab-label" for="title">
+											<label class="bd-label" for="title">
 												Title (optional)
 											</label>
-											<input class="biab-input" id="title" name="title" />
+											<input class="bd-input" id="title" name="title" />
 										</div>
 										<div>
-											<label class="biab-label" for="body">
+											<label class="bd-label" for="body">
 												Your review
 											</label>
 											<textarea
-												class="biab-textarea"
+												class="bd-textarea"
 												id="body"
 												name="body"
 												required
 											/>
 										</div>
 										<button
-											class="biab-btn"
+											class="bd-btn"
 											style="align-self: flex-start;"
 											type="submit"
 										>

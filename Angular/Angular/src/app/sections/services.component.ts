@@ -1,8 +1,8 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from "@angular/core";
-import { BiabService } from "../lib/biab.service";
+import { BdService } from "../lib/bd.service";
 
 @Component({
-	selector: "biab-services",
+	selector: "bd-services",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<section class="section" id="services">
@@ -20,7 +20,7 @@ import { BiabService } from "../lib/biab.service";
 	`,
 })
 export class ServicesComponent implements OnInit {
-	readonly svc = inject(BiabService);
+	readonly svc = inject(BdService);
 	ngOnInit() {
 		void this.svc.loadHome();
 	}

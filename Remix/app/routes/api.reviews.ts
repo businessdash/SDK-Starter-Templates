@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 
-import { fetchReviewsPage } from "~/lib/biab-pages.server";
+import { fetchReviewsPage } from "~/lib/bd-pages.server";
 
 /**
  * Reviews-wall pagination endpoint (resource route).

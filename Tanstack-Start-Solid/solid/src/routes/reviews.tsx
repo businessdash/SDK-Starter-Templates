@@ -2,7 +2,7 @@ import type { ReviewWallItem } from "@businessdash/sdk/contracts";
 import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 
-import { fetchReviewsPage, getReviewsWall } from "../lib/biab-server-fns";
+import { fetchReviewsPage, getReviewsWall } from "../lib/bd-server-fns";
 
 /**
  * Reviews wall. The aggregate (average / count) rides the marketing
@@ -58,12 +58,12 @@ function ReviewsWall() {
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Reviews</span>
-					<h1 class="biab-section__title">What customers say</h1>
+			<section class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Reviews</span>
+					<h1 class="bd-section__title">What customers say</h1>
 					<Show when={aggregate()?.rating != null}>
-						<p class="biab-section__sub">
+						<p class="bd-section__sub">
 							{stars(aggregate()?.rating ?? 0)}{" "}
 							{(aggregate()?.rating ?? 0).toFixed(1)} average across{" "}
 							{aggregate()?.totalCount ?? 0} reviews
@@ -74,8 +74,8 @@ function ReviewsWall() {
 				<Show
 					when={items().length > 0}
 					fallback={
-						<div class="biab-empty">
-							No reviews yet. Connect a Google/Yelp source in BIAB, or invite
+						<div class="bd-empty">
+							No reviews yet. Connect a Google/Yelp source in BD, or invite
 							customers to leave one from their account.
 						</div>
 					}
@@ -84,7 +84,7 @@ function ReviewsWall() {
 						<For each={items()}>
 							{(review) => (
 								<article
-									class="biab-card"
+									class="bd-card"
 									style="padding: 1.25rem 1.5rem; display: flex; flex-direction: column; gap: 0.4rem;"
 								>
 									<div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem;">
@@ -109,7 +109,7 @@ function ReviewsWall() {
 						<div style="text-align: center; margin-top: 1.5rem;">
 							<button
 								type="button"
-								class="biab-btn biab-btn--ghost"
+								class="bd-btn bd-btn--ghost"
 								disabled={busy()}
 								onClick={loadMore}
 							>

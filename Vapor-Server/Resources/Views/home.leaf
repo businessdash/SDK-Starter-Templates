@@ -31,7 +31,7 @@
 
     <section class="contact">
       <h2>Get in touch</h2>
-      <biab-form slug="general-inquiry" submit-label="Send"></biab-form>
+      <bd-form slug="general-inquiry" submit-label="Send"></bd-form>
     </section>
   #endexport
 #endextend

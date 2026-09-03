@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'package:businessdash_sdk/businessdash_sdk.dart';
-import 'biab_scope.dart';
+import 'bd_scope.dart';
 
 /// Front Desk chat.
 ///
-/// The BIAB chat API is polling-only — there is no SSE or WebSocket anywhere
+/// The BD chat API is polling-only — there is no SSE or WebSocket anywhere
 /// in the Package API. `ChatFeed` wraps that loop in a `Stream`, so this
 /// widget owns no `Timer`: subscribing starts the poll and disposing cancels
 /// it, which stops the network work through the stream's `onCancel`.
@@ -27,7 +27,7 @@ class _ChatPageState extends State<ChatPage> {
     super.didChangeDependencies();
     if (_feed != null) return;
 
-    final scope = BiabScope.of(context);
+    final scope = BdScope.of(context);
     final client = scope.client;
     if (client == null) return;
 

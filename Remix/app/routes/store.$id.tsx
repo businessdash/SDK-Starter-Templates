@@ -21,7 +21,7 @@ import {
 	getStoreProductAddons,
 	getStoreProductReviews,
 	getStoreRelatedProducts,
-} from "~/lib/biab-store.server";
+} from "~/lib/bd-store.server";
 
 export const meta: MetaFunction<typeof loader> = ({ data }) => [
 	{ title: data?.product ? `${data.product.name} — Store` : "Product" },
@@ -197,7 +197,7 @@ export default function ProductDetail() {
 									Quantity
 									<input type="number" name="quantity" min={1} defaultValue={1} />
 								</label>
-								<button className="biab-btn" type="submit" disabled={adding}>
+								<button className="bd-btn" type="submit" disabled={adding}>
 									{adding ? "Adding…" : "Add to cart"}
 								</button>
 								{actionData && actionData.ok === false ? (

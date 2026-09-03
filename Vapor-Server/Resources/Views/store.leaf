@@ -31,7 +31,7 @@
         #endfor
       </ul>
     #else:
-      <p class="muted">No products yet. Add some in the BIAB dashboard, or connect this app to a site.</p>
+      <p class="muted">No products yet. Add some in the BD dashboard, or connect this app to a site.</p>
     #endif
   #endexport
 #endextend

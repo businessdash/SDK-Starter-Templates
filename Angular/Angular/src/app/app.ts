@@ -8,7 +8,7 @@ import { SdkSetupBannerComponent } from "./sections/sdk-setup-banner.component";
 
 /**
  * App shell: dismissible news banner + header nav, the routed view, and the
- * footer, plus the BIAB setup banner shown until the SDK is connected. Page
+ * footer, plus the BD setup banner shown until the SDK is connected. Page
  * content is rendered through the router (see app.routes.ts).
  */
 @Component({

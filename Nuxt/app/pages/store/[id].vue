@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import BiabHeader from "~/components/biab/BiabHeader.vue";
-import BiabFooter from "~/components/biab/BiabFooter.vue";
+import BdHeader from "~/components/bd/BdHeader.vue";
+import BdFooter from "~/components/bd/BdFooter.vue";
 import { useCart } from "~/composables/useCart";
-import type { StoreProductResult } from "../../../server/api/biab/store/product/[id].get";
+import type { StoreProductResult } from "../../../server/api/bd/store/product/[id].get";
 
 /**
  * Product detail. Server-renders the product (via the Nitro endpoint),
@@ -14,7 +14,7 @@ const route = useRoute();
 const id = route.params.id as string;
 
 const { data } = await useFetch<StoreProductResult>(
-	`/api/biab/store/product/${id}`,
+	`/api/bd/store/product/${id}`,
 );
 const product = computed(() => data.value?.product ?? null);
 
@@ -55,20 +55,20 @@ useHead(() => ({ title: product.value?.name ?? "Product — Your Business" }));
 
 <template>
 	<div>
-		<BiabHeader />
+		<BdHeader />
 		<main>
-			<section class="biab-section biab-section--narrow">
+			<section class="bd-section bd-section--narrow">
 				<p class="store-links">
 					<NuxtLink to="/store">← Back to store</NuxtLink>
 				</p>
 
-				<div v-if="data?.suspended" class="biab-empty">
+				<div v-if="data?.suspended" class="bd-empty">
 					The store is temporarily unavailable. Please check back soon.
 				</div>
-				<div v-else-if="!product" class="biab-empty">
+				<div v-else-if="!product" class="bd-empty">
 					This product couldn't be found.
 				</div>
-				<div v-else class="biab-card product-detail">
+				<div v-else class="bd-card product-detail">
 					<img
 						v-if="product.images && product.images.length"
 						:alt="product.name"
@@ -78,11 +78,11 @@ useHead(() => ({ title: product.value?.name ?? "Product — Your Business" }));
 					<h1>{{ product.name }}</h1>
 
 					<div v-if="variants.length" class="product-detail__variants">
-						<label class="biab-label" for="variant">Option</label>
+						<label class="bd-label" for="variant">Option</label>
 						<select
 							id="variant"
 							v-model="selectedVariantId"
-							class="biab-select"
+							class="bd-select"
 						>
 							<option
 								v-for="v in variants"
@@ -95,7 +95,7 @@ useHead(() => ({ title: product.value?.name ?? "Product — Your Business" }));
 					</div>
 
 					<button
-						class="biab-btn"
+						class="bd-btn"
 						:disabled="busy"
 						style="align-self: flex-start"
 						type="button"
@@ -122,6 +122,6 @@ useHead(() => ({ title: product.value?.name ?? "Product — Your Business" }));
 				</div>
 			</section>
 		</main>
-		<BiabFooter />
+		<BdFooter />
 	</div>
 </template>

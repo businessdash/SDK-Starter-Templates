@@ -1,4 +1,4 @@
-import { biab, el } from "../biab.js";
+import { bd, el } from "../bd.js";
 import { renderSubscribe } from "./subscribe.js";
 
 /** @param {HTMLElement} target */
@@ -13,13 +13,13 @@ export async function renderAbout(target) {
 		label: "Like what you see? Get our updates.",
 		source: "about",
 		idPrefix: "about-subscribe",
-	}).catch((err) => console.error("[biab] about subscribe failed", err));
+	}).catch((err) => console.error("[bd] about subscribe failed", err));
 
 	function paint(body) {
 		target.replaceChildren(
-			el("div", { class: "biab-section__lead" }, [
-				el("span", { class: "biab-section__eyebrow" }, ["About"]),
-				el("h2", { class: "biab-section__title" }, [
+			el("div", { class: "bd-section__lead" }, [
+				el("span", { class: "bd-section__eyebrow" }, ["About"]),
+				el("h2", { class: "bd-section__title" }, [
 					"Built around how you actually work.",
 				]),
 			]),
@@ -38,7 +38,7 @@ export async function renderAbout(target) {
 	paint(fallback);
 
 	try {
-		const bundle = await biab.marketing.getPageBundle({ pageKey: "home" });
+		const bundle = await bd.marketing.getPageBundle({ pageKey: "home" });
 		const raw = bundle?.sections?.about;
 		if (raw?.ok && typeof raw.data?.body === "string") paint(raw.data.body);
 	} catch {

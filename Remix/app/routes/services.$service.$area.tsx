@@ -3,15 +3,15 @@ import { data } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { SiteHeader } from "~/components/SiteHeader";
-import { renderServiceArea } from "~/lib/biab-pages.server";
-import { isServiceSuspended } from "~/lib/biab.server";
+import { renderServiceArea } from "~/lib/bd-pages.server";
+import { isServiceSuspended } from "~/lib/bd.server";
 
 /**
  * Programmatic SEO page — one URL per (service × area) declared in
- * `biab.config.ts`'s `defineParallelPage`. The high-level
+ * `bd.config.ts`'s `defineParallelPage`. The high-level
  * `client.parallelPages.render("service-area", { service, area })` returns
  * fully token-resolved `meta` + `body` (token expansion happens server-side
- * inside BIAB), so crawlers see complete HTML.
+ * inside BD), so crawlers see complete HTML.
  */
 
 export const meta: MetaFunction<typeof loader> = ({ data: loaderData }) => {

@@ -13,22 +13,22 @@
  *
  * Pages may pass a `bundle` they already fetched (avoids a second round-trip);
  * otherwise the layout fetches the home bundle for SEO + banner. Everything
- * degrades to starter defaults when BIAB is unconfigured.
+ * degrades to starter defaults when BD is unconfigured.
  */
 import "../styles/global.css";
 // SDK form styles — the file-upload box, the multi-step progress header
 // (steps + bar), and the availability/choice chips ship unstyled without
-// this stylesheet. Imported once here so every route that renders a BIAB
+// this stylesheet. Imported once here so every route that renders a BD
 // form (contact, booking, …) picks it up. The container background is
-// intentionally transparent — the template owns it via `.biab-card`.
-import "@businessdash/sdk/biab-forms.css";
+// intentionally transparent — the template owns it via `.bd-card`.
+import "@businessdash/sdk/bd-forms.css";
 
 import Banner from "../components/Banner.astro";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
 import SdkSetupBanner from "../components/SdkSetupBanner.astro";
-import { getBundle, type MarketingBundle } from "../lib/biab-bundle";
-import { renderSiteJsonLd, seoFromBundle } from "../lib/biab-seo";
+import { getBundle, type MarketingBundle } from "../lib/bd-bundle";
+import { renderSiteJsonLd, seoFromBundle } from "../lib/bd-seo";
 
 interface Props {
 	title?: string;
@@ -44,8 +44,8 @@ interface Props {
 }
 
 const {
-	title = "Your Business — built on BIAB",
-	description = "Astro SSR starter showing how to consume the BIAB SDK directly during server render.",
+	title = "Your Business — built on BD",
+	description = "Astro SSR starter showing how to consume the BD SDK directly during server render.",
 	bundle: providedBundle,
 	hideBanner = false,
 	canonical = null,
@@ -77,12 +77,12 @@ const jsonLd = renderSiteJsonLd(seoFromBundle(bundle));
 		<Footer />
 		<SdkSetupBanner />
 		<script>
-			import { initBiabAnalytics } from "@businessdash/sdk/analytics-core";
-			const siteId = import.meta.env.PUBLIC_BIAB_SITE_ID;
-			const baseUrl = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL;
-			const apiKey = import.meta.env.PUBLIC_BIAB_PUBLIC_KEY;
+			import { initBdAnalytics } from "@businessdash/sdk/analytics-core";
+			const siteId = import.meta.env.PUBLIC_BD_SITE_ID;
+			const baseUrl = import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL;
+			const apiKey = import.meta.env.PUBLIC_BD_PUBLIC_KEY;
 			if (siteId && baseUrl && apiKey) {
-				initBiabAnalytics({ siteId, baseUrl, apiKey });
+				initBdAnalytics({ siteId, baseUrl, apiKey });
 			}
 		</script>
 	</body>

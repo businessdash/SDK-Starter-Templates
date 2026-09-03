@@ -4,20 +4,20 @@ import {
 	routeLoader$,
 	server$,
 } from "@builder.io/qwik-city";
-import { BiabForm } from "@businessdash/sdk/qwik";
+import { BdForm } from "@businessdash/sdk/qwik";
 import type { FormSchema, FormSubmitResult } from "@businessdash/sdk/forms";
 
-import { TODO_FORM_SLUG } from "../../../biab.data-model.config";
-import { getBiab } from "../../lib/biab";
-import { listTodosWithImages } from "../../lib/biab-todos";
+import { TODO_FORM_SLUG } from "../../../bd.data-model.config";
+import { getBd } from "../../lib/bd";
+import { listTodosWithImages } from "../../lib/bd-todos";
 
 /**
  * `/todos` — the relational custom-collections demo. Two collections declared
- * in `biab.data-model.config.ts` — `todos`, and `todoImages` pointing at a
+ * in `bd.data-model.config.ts` — `todos`, and `todoImages` pointing at a
  * todo via a required RELATION field. This page:
  *
  *   - LISTS todos (with any images joined on) in `routeLoader$` via
- *     `dataModel.listRecords` (see `src/lib/biab-todos.ts`) — the documented
+ *     `dataModel.listRecords` (see `src/lib/bd-todos.ts`) — the documented
  *     read path.
  *   - CREATES a todo by submitting the generated `todo-form` through a
  *     `server$` RPC — the documented write path (there is no direct
@@ -28,11 +28,11 @@ import { listTodosWithImages } from "../../lib/biab-todos";
  */
 
 export const useTodosData = routeLoader$(async () => {
-	const biab = getBiab();
+	const bd = getBd();
 	const [result, formSchema] = await Promise.all([
 		listTodosWithImages(),
-		biab
-			? (biab.forms.schema(TODO_FORM_SLUG).catch(() => null) as Promise<
+		bd
+			? (bd.forms.schema(TODO_FORM_SLUG).catch(() => null) as Promise<
 					FormSchema | null
 				>)
 			: Promise.resolve(null),
@@ -40,22 +40,22 @@ export const useTodosData = routeLoader$(async () => {
 	return { result, formSchema };
 });
 
-// Server RPC — the `forms.submit` round-trip runs ONLY here, so the BIAB
+// Server RPC — the `forms.submit` round-trip runs ONLY here, so the BD
 // bearer key never enters the client bundle. The generated `todo-form`
 // carries the `create_records` action that inserts the row server-side.
 const submitTodoForm = server$(async function (
 	payload: Record<string, unknown>,
 ): Promise<FormSubmitResult> {
-	const biab = getBiab();
-	if (!biab) {
+	const bd = getBd();
+	if (!bd) {
 		return {
 			ok: false,
 			status: 0,
 			reason: "network_error",
-			message: "BIAB is not configured (missing env).",
+			message: "BD is not configured (missing env).",
 		};
 	}
-	return await biab.forms.submit(TODO_FORM_SLUG, payload, {
+	return await bd.forms.submit(TODO_FORM_SLUG, payload, {
 		source: "qwik-starter",
 	});
 });
@@ -66,34 +66,34 @@ export default component$(() => {
 
 	return (
 		<>
-			<section class="biab-section biab-section--narrow" id="todos">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Custom collections</span>
-					<h2 class="biab-section__title">Todos</h2>
-					<p class="biab-section__sub">
+			<section class="bd-section bd-section--narrow" id="todos">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Custom collections</span>
+					<h2 class="bd-section__title">Todos</h2>
+					<p class="bd-section__sub">
 						Rows live in your org's custom database — two related collections (
 						<code>todos</code> + <code>todoImages</code>) declared in{" "}
-						<code>biab.data-model.config.ts</code>, read via{" "}
+						<code>bd.data-model.config.ts</code>, read via{" "}
 						<code>dataModel.listRecords</code>, created through the generated{" "}
 						<code>todo-form</code>.
 					</p>
 				</div>
 
 				{result.status === "unconfigured" ? (
-					<div class="biab-empty">
-						BIAB isn't configured — set the env vars in <code>.env.local</code>{" "}
+					<div class="bd-empty">
+						BD isn't configured — set the env vars in <code>.env.local</code>{" "}
 						(see <code>.env.example</code>) to run this demo.
 					</div>
 				) : result.status === "unavailable" ? (
-					<div class="biab-empty">
+					<div class="bd-empty">
 						The todos model isn't readable yet. Run{" "}
-						<code>pnpm sync-data-model</code>, promote it in the BIAB dashboard,
+						<code>pnpm sync-data-model</code>, promote it in the BD dashboard,
 						and make sure your secret key carries the{" "}
 						<code>metadata:read_records</code> scope (custom objects are a
 						plan-gated surface).
 					</div>
 				) : result.todos.length === 0 ? (
-					<div class="biab-empty">No todos yet — add the first one below.</div>
+					<div class="bd-empty">No todos yet — add the first one below.</div>
 				) : (
 					<ul
 						style={{
@@ -105,7 +105,7 @@ export default component$(() => {
 						}}
 					>
 						{result.todos.map((todo) => (
-							<li class="biab-card" key={todo.id}>
+							<li class="bd-card" key={todo.id}>
 								<div
 									style={{
 										alignItems: "center",
@@ -113,7 +113,7 @@ export default component$(() => {
 										gap: "0.5rem",
 									}}
 								>
-									<span class="biab-badge">{todo.done ? "Done" : "Open"}</span>
+									<span class="bd-badge">{todo.done ? "Done" : "Open"}</span>
 									<h3 style={{ margin: 0 }}>{todo.title}</h3>
 								</div>
 								{todo.notes ? <p>{todo.notes}</p> : null}
@@ -157,13 +157,13 @@ export default component$(() => {
 			</section>
 
 			{result.status !== "unconfigured" ? (
-				<section class="biab-section biab-section--narrow" id="add-todo">
-					<div class="biab-section__lead">
-						<h2 class="biab-section__title">Add a todo</h2>
+				<section class="bd-section bd-section--narrow" id="add-todo">
+					<div class="bd-section__lead">
+						<h2 class="bd-section__title">Add a todo</h2>
 					</div>
 					{formSchema ? (
-						<BiabForm
-							class="biab-card"
+						<BdForm
+							class="bd-card"
 							schema={formSchema}
 							submit$={submitTodoForm}
 							submitLabel="Add todo"
@@ -173,13 +173,13 @@ export default component$(() => {
 								setTimeout(() => window.location.reload(), 900);
 							}}
 						>
-							<div q:slot="success" class="biab-form__success">
-								<span class="biab-badge">Added</span>
+							<div q:slot="success" class="bd-form__success">
+								<span class="bd-badge">Added</span>
 								<p>Saved to your custom DB.</p>
 							</div>
-						</BiabForm>
+						</BdForm>
 					) : (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							The create form isn't live yet — promote the data model and
 							activate "Todo Form" (slug <code>todo-form</code>) in the
 							dashboard's Forms surface.

@@ -1,12 +1,12 @@
 /** /cart — line items, quantity, coupon, clear, and Stripe checkout. */
-import { biab, el, dollars } from "/biab.js";
+import { bd, el, dollars } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 export default async function render(root) {
 	root.replaceChildren(pageHead("Your cart"), el("p", { class: "page__loading" }, ["Loading…"]));
 	let snap;
 	try {
-		snap = await biab.cart.get();
+		snap = await bd.cart.get();
 	} catch (err) {
 		root.replaceChildren(pageHead("Your cart"), errBox(err));
 		return;
@@ -45,7 +45,7 @@ function paint(root, snap) {
 						class: "cart-item__remove",
 						type: "button",
 						"aria-label": "Remove",
-						onClick: async () => repaint(await biab.cart.remove(it.id)),
+						onClick: async () => repaint(await bd.cart.remove(it.id)),
 					}, ["Remove"]),
 				]),
 			),
@@ -71,7 +71,7 @@ function paint(root, snap) {
 			checkoutBtn.disabled = true;
 			checkoutStatus.textContent = "Starting checkout…";
 			try {
-				const { url } = await biab.checkout.start({ origin: location.origin });
+				const { url } = await bd.checkout.start({ origin: location.origin });
 				location.href = url;
 			} catch (err) {
 				checkoutStatus.textContent = `Couldn't start checkout: ${err?.message ?? err}`;
@@ -85,7 +85,7 @@ function paint(root, snap) {
 			el("button", {
 				class: "btn btn--ghost",
 				type: "button",
-				onClick: async () => repaint(await biab.cart.clear()),
+				onClick: async () => repaint(await bd.cart.clear()),
 			}, ["Clear cart"]),
 			checkoutBtn,
 		]),
@@ -100,13 +100,13 @@ function qtyControl(it, repaint) {
 		class: "qty__btn",
 		type: "button",
 		"aria-label": "Decrease quantity",
-		onClick: async () => repaint(await biab.cart.update(it.id, Math.max(0, it.quantity - 1))),
+		onClick: async () => repaint(await bd.cart.update(it.id, Math.max(0, it.quantity - 1))),
 	}, ["−"]);
 	const inc = el("button", {
 		class: "qty__btn",
 		type: "button",
 		"aria-label": "Increase quantity",
-		onClick: async () => repaint(await biab.cart.update(it.id, it.quantity + 1)),
+		onClick: async () => repaint(await bd.cart.update(it.id, it.quantity + 1)),
 	}, ["+"]);
 	return el("div", { class: "qty" }, [dec, el("span", { class: "qty__n" }, [String(it.quantity)]), inc]);
 }
@@ -118,7 +118,7 @@ function couponRow(snap, repaint) {
 			el("button", {
 				class: "btn btn--ghost btn--sm",
 				type: "button",
-				onClick: async () => repaint(await biab.cart.removeCoupon()),
+				onClick: async () => repaint(await bd.cart.removeCoupon()),
 			}, ["Remove"]),
 		]);
 	}
@@ -132,7 +132,7 @@ function couponRow(snap, repaint) {
 			if (!code) return;
 			msg.textContent = "Applying…";
 			try {
-				repaint(await biab.cart.applyCoupon(code));
+				repaint(await bd.cart.applyCoupon(code));
 			} catch (err) {
 				msg.textContent = err?.message ?? "Invalid code";
 			}

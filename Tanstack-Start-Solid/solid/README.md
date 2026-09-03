@@ -1,14 +1,14 @@
-# BIAB SDK — TanStack Solid Start starter
+# BD SDK — TanStack Solid Start starter
 
 Same generic business site as the other framework starters, built on **TanStack Solid Start** (Solid.js + TanStack Router + TanStack Start SSR + Nitro). The shape is closest to the Qwik starter: route `loader` for SSR data, `createServerFn` for client-callable RPCs — no separate API endpoint files needed for those.
 
 ## Why this shape
 
-TanStack Start's `createServerFn` compiles function bodies as RPC endpoints. The bearer key in `src/lib/biab.ts` is only reachable through `createServerFn` handlers, so the bundler drops it from the client chunk. Solid's signals (`createSignal`, `createEffect`) handle reactive client state with fine-grained updates — no virtual DOM, no rehydration cost.
+TanStack Start's `createServerFn` compiles function bodies as RPC endpoints. The bearer key in `src/lib/bd.ts` is only reachable through `createServerFn` handlers, so the bundler drops it from the client chunk. Solid's signals (`createSignal`, `createEffect`) handle reactive client state with fine-grained updates — no virtual DOM, no rehydration cost.
 
 ```
-browser → page load → loader() → getHomeData() → biab.gallery.list(...) → BIAB
-        ↘ client event → fetchSlots(...) → biab.scheduling.getAvailableSlots(...)
+browser → page load → loader() → getHomeData() → bd.gallery.list(...) → BD
+        ↘ client event → fetchSlots(...) → bd.scheduling.getAvailableSlots(...)
                                           ↑
                                           └ SDK lives only in server-fn scope
 ```
@@ -25,16 +25,16 @@ Three additions, mirrored across every starter:
 | **MCP connector proxy** | `/api/mcp` + `/.well-known/mcp.json` | `mcpHandler` + `mcpManifestHandler` from `@businessdash/sdk/mcp` |
 | **Relational custom collections** | `/todos` | `collection()` + `bd` builders, `dataModel.listRecords`, generated `todo-form` |
 
-- **AEO surfaces.** Orgs curate an answer-engine index + product feed at BIAB → Marketing → AI Distribution; the llms.txt convention only works at the site's own root, so `src/routes/llms[.]txt.tsx` proxies it from this domain. The product feed needs no proxy — submit its BIAB URL (built by `productFeedUrl`) to merchant programs directly; `/ai/product-feed` is a convenience redirect to it.
-- **MCP connector.** `src/routes/api/mcp.tsx` + `src/routes/[.]well-known.mcp[.]json.tsx` give this self-hosted domain the same per-site MCP connector the platform serves natively — the URL an org hands to Claude / ChatGPT / Gemini is their own site. The proxy is thin: BIAB still enforces the org's MCP opt-in and per-tool write gates.
-- **Todos demo.** `biab.data-model.config.ts` declares two related collections (`todos`, and `todoImages` with a required RELATION to `todos`) with the 0.9.50+ `collection()` + `bd` builders. Push with `pnpm sync-data-model`, promote in the dashboard, set the generated "Todo Form" live, then open `/todos` — TanStack Start server functions in `src/lib/biab-server-fns.ts` (`getTodosData`, `submitTodoForm`) do the reads via `dataModel.listRecords` and create todos by submitting the generated `todo-form`. Reads go through the data-model client, writes go through forms; there is no direct row-write API for consumers.
+- **AEO surfaces.** Orgs curate an answer-engine index + product feed at BD → Marketing → AI Distribution; the llms.txt convention only works at the site's own root, so `src/routes/llms[.]txt.tsx` proxies it from this domain. The product feed needs no proxy — submit its BD URL (built by `productFeedUrl`) to merchant programs directly; `/ai/product-feed` is a convenience redirect to it.
+- **MCP connector.** `src/routes/api/mcp.tsx` + `src/routes/[.]well-known.mcp[.]json.tsx` give this self-hosted domain the same per-site MCP connector the platform serves natively — the URL an org hands to Claude / ChatGPT / Gemini is their own site. The proxy is thin: BD still enforces the org's MCP opt-in and per-tool write gates.
+- **Todos demo.** `bd.data-model.config.ts` declares two related collections (`todos`, and `todoImages` with a required RELATION to `todos`) with the 0.9.50+ `collection()` + `bd` builders. Push with `pnpm sync-data-model`, promote in the dashboard, set the generated "Todo Form" live, then open `/todos` — TanStack Start server functions in `src/lib/bd-server-fns.ts` (`getTodosData`, `submitTodoForm`) do the reads via `dataModel.listRecords` and create todos by submitting the generated `todo-form`. Reads go through the data-model client, writes go through forms; there is no direct row-write API for consumers.
 
 ## Setup
 
 ```sh
 npm install     # or bun / pnpm
 cp .env.example .env.local
-# Fill BIAB_API_KEY, BIAB_SITE_ID, BIAB_PACKAGE_API_BASE_URL
+# Fill BD_API_KEY, BD_SITE_ID, BD_PACKAGE_API_BASE_URL
 
 npm run dev     # vite dev --port 3000
 ```
@@ -50,17 +50,17 @@ npm run start   # node .output/server/index.mjs
 
 ## What's in each section
 
-Every surface below is server-driven by a `createServerFn` in `src/lib/biab-server-fns.ts` (the only place the secret key is reachable) and degrades gracefully when BIAB env is unset.
+Every surface below is server-driven by a `createServerFn` in `src/lib/bd-server-fns.ts` (the only place the secret key is reachable) and degrades gracefully when BD env is unset.
 
 ### Home page (`src/routes/index.tsx`)
 
 | Section | Where it lives | SDK call |
 | --- | --- | --- |
-| **Hero / About / Services** | `getHomeData` server fn reads marketing bundle, passes props to components | `biab.marketing.getPageBundle(...)` |
-| **Gallery** | `getHomeData` with const-generic field selection | `biab.gallery.list({ limit: 12, fields: [...] as const })` |
-| **Blog** | `getHomeData` | `biab.blog.listPosts({ limit: 6 })` |
-| **Booking** | Event-type list server-rendered; slots + confirm via `fetchSlots` + `confirmBooking` | `biab.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
-| **Contact form** | Form schema server-rendered; submit via `submitContactForm` | `biab.forms.schema(slug)`, `biab.forms.submit(...)` |
+| **Hero / About / Services** | `getHomeData` server fn reads marketing bundle, passes props to components | `bd.marketing.getPageBundle(...)` |
+| **Gallery** | `getHomeData` with const-generic field selection | `bd.gallery.list({ limit: 12, fields: [...] as const })` |
+| **Blog** | `getHomeData` | `bd.blog.listPosts({ limit: 6 })` |
+| **Booking** | Event-type list server-rendered; slots + confirm via `fetchSlots` + `confirmBooking` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
+| **Contact form** | Form schema server-rendered; submit via `submitContactForm` | `bd.forms.schema(slug)`, `bd.forms.submit(...)` |
 | **News banner** | `getSiteContentExtras` → `NewsBanner` (dismissible bar) | `bundle.banner` (untyped passthrough) |
 | **JSON-LD** | `getHomeJsonLd` injected via the route `head` `scripts` | `localBusiness()` + `website()` from `@businessdash/sdk/seo` |
 
@@ -73,16 +73,16 @@ Every surface below is server-driven by a `createServerFn` in `src/lib/biab-serv
 | **Cart** | `src/routes/store.cart.tsx` | `cart.forVisitor(t)` get/update/remove/coupon/clear + `checkout.forVisitor(t).start(...)` |
 | **Subscriptions** | `src/routes/subscriptions.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` |
 
-The cart is keyed on a visitor UUID we own, stored in an httpOnly cookie `biab_cart_visitor`. It's read on cart loads and minted on the first write — all inside the server fns via TanStack Start's `getCookie` / `setCookie` (`@tanstack/solid-start/server`). Checkout and subscription "subscribe" return a Stripe-hosted URL; the client redirects to it.
+The cart is keyed on a visitor UUID we own, stored in an httpOnly cookie `bd_cart_visitor`. It's read on cart loads and minted on the first write — all inside the server fns via TanStack Start's `getCookie` / `setCookie` (`@tanstack/solid-start/server`). Checkout and subscription "subscribe" return a Stripe-hosted URL; the client redirects to it.
 
 ### Auth + customer portal
 
 | Surface | File | SDK call |
 | --- | --- | --- |
-| **Auth handler** | `src/routes/api/biab-auth.$.tsx` (catch-all) | `createAuthHandler(...)` → `/api/biab-auth/{sign-in,sign-up,callback,sign-out,me}` |
-| **My account** | `src/routes/my-account.tsx` | `getTenantSession(...)` on `biab_session`, `customerPortal(org).withSession(t).getWork()`, `.submitReview(...)` |
+| **Auth handler** | `src/routes/api/bd-auth.$.tsx` (catch-all) | `createAuthHandler(...)` → `/api/bd-auth/{sign-in,sign-up,callback,sign-out,me}` |
+| **My account** | `src/routes/my-account.tsx` | `getTenantSession(...)` on `bd_session`, `customerPortal(org).withSession(t).getWork()`, `.submitReview(...)` |
 
-Sign-in / sign-up / sign-out are plain links to the catch-all handler (no client SDK needed). The handler sets a `biab_session` httpOnly cookie; `my-account`'s loader validates it server-side, shows the user + a work-summary (jobs / quotes / invoices), and offers a moderated review-submission form.
+Sign-in / sign-up / sign-out are plain links to the catch-all handler (no client SDK needed). The handler sets a `bd_session` httpOnly cookie; `my-account`'s loader validates it server-side, shows the user + a work-summary (jobs / quotes / invoices), and offers a moderated review-submission form.
 
 ### Reviews, updates, SEO, programmatic pages
 
@@ -99,40 +99,40 @@ Bundle review items (`{ reviewee, description, date }`) and `reviews.list` wall 
 
 ### Suspension handling
 
-Bundle / store / parallel-page reads catch `BiabPaymentLapsedError` / `BiabServiceSuspendedError` (both extend `BiabAccessRejectedError`) and render a minimal "temporarily unavailable" state instead of crashing.
+Bundle / store / parallel-page reads catch `BdPaymentLapsedError` / `BdServiceSuspendedError` (both extend `BdAccessRejectedError`) and render a minimal "temporarily unavailable" state instead of crashing.
 
 ## Adding a new SDK surface
 
-1. **Static data** — add a field to `HomeData` and the `getHomeData` handler in `src/lib/biab-server-fns.ts`. Pass it through the route loader to a component as a prop.
-2. **Interactive RPC** — add another `createServerFn({ method: ... }).validator(...).handler(...)` in `biab-server-fns.ts`. Import and `await` it from any Solid component.
+1. **Static data** — add a field to `HomeData` and the `getHomeData` handler in `src/lib/bd-server-fns.ts`. Pass it through the route loader to a component as a prop.
+2. **Interactive RPC** — add another `createServerFn({ method: ... }).validator(...).handler(...)` in `bd-server-fns.ts`. Import and `await` it from any Solid component.
 
 No API route file needed for the RPC case — TanStack Start generates the transport.
 
 ## Webhook revalidation (built in)
 
-`src/routes/api/biab/revalidate.tsx` mounts the SDK's framework-agnostic handler via `createServerFileRoute` + `POST`. Register the URL in BIAB at `/dashboard/settings/integrations`, paste the `whsec_…` into `BIAB_REVALIDATION_SECRET`, and BIAB will POST a signed `content.published` event on every publish. The callback in `revalidate.tsx` is where you wire response-level cache purging once you add it.
+`src/routes/api/bd/revalidate.tsx` mounts the SDK's framework-agnostic handler via `createServerFileRoute` + `POST`. Register the URL in BD at `/dashboard/settings/integrations`, paste the `whsec_…` into `BD_REVALIDATION_SECRET`, and BD will POST a signed `content.published` event on every publish. The callback in `revalidate.tsx` is where you wire response-level cache purging once you add it.
 
 ## Configuration + env
 
 | Var | Purpose |
 | --- | --- |
-| `BIAB_API_KEY` | Server-only bearer key (Site Settings → API Keys). |
-| `BIAB_SITE_ID` | The site UUID this app represents. |
-| `BIAB_PACKAGE_API_BASE_URL` | Where BIAB is hosted (e.g. `https://www.biab.app`). |
-| `BIAB_REVALIDATION_SECRET` | HMAC secret for the revalidate webhook. |
-| `BIAB_AUTH_CALLBACK_URL` | Public URL of `/api/biab-auth/callback` — required for auth + portal. |
+| `BD_API_KEY` | Server-only bearer key (Site Settings → API Keys). |
+| `BD_SITE_ID` | The site UUID this app represents. |
+| `BD_PACKAGE_API_BASE_URL` | Where BD is hosted (e.g. `https://www.biab.app`). |
+| `BD_REVALIDATION_SECRET` | HMAC secret for the revalidate webhook. |
+| `BD_AUTH_CALLBACK_URL` | Public URL of `/api/bd-auth/callback` — required for auth + portal. |
 
-All are **server-only** — never prefix with `VITE_` or they leak to the browser bundle. `biab.config.ts` (root) is the dashboard-editable content schema; `npm run sync-schema` / `sync-content` / `print-schema` publish + inspect it.
+All are **server-only** — never prefix with `VITE_` or they leak to the browser bundle. `bd.config.ts` (root) is the dashboard-editable content schema; `npm run sync-schema` / `sync-content` / `print-schema` publish + inspect it.
 
-## Project layout (BIAB-relevant only)
+## Project layout (BD-relevant only)
 
 ```
-biab.config.ts                                 # marketing schema + defineParallelPage("service-area")
+bd.config.ts                                 # marketing schema + defineParallelPage("service-area")
 src/
 ├── lib/
-│   ├── biab.ts                                # SDK client + bundle/banner/updates/reviews helpers (server-only)
-│   └── biab-server-fns.ts                     # all createServerFn RPCs + sitemap/robots/SEO builders
-├── components/biab/
+│   ├── bd.ts                                # SDK client + bundle/banner/updates/reviews helpers (server-only)
+│   └── bd-server-fns.ts                     # all createServerFn RPCs + sitemap/robots/SEO builders
+├── components/bd/
 │   ├── Header.tsx · Footer.tsx · Hero.tsx · About.tsx · Services.tsx
 │   ├── Gallery.tsx · Blog.tsx
 │   ├── Booking.tsx · ContactForm.tsx          # createSignal + createEffect
@@ -147,9 +147,9 @@ src/
 │   ├── services.index.tsx · services.$service.$area.tsx   # programmatic SEO
 │   ├── sitemap[.]xml.tsx · robots[.]txt.tsx    # SEO proxies
 │   └── api/
-│       ├── biab/revalidate.tsx                # webhook receiver
-│       └── biab-auth.$.tsx                     # auth catch-all (createAuthHandler)
-└── styles.css                                 # Existing tokens + appended BIAB tokens
+│       ├── bd/revalidate.tsx                # webhook receiver
+│       └── bd-auth.$.tsx                     # auth catch-all (createAuthHandler)
+└── styles.css                                 # Existing tokens + appended BD tokens
 ```
 
 ## Solid 1.x idioms used
@@ -160,18 +160,18 @@ src/
 - Component props are reactive — read `props.x` (not destructured) inside JSX
 - Event handlers like `onInput`, `onClick` — same shape as React
 
-The BIAB layer doesn't care which framework lives on top — Solid components just receive plain data from the loader and call typed server functions.
+The BD layer doesn't care which framework lives on top — Solid components just receive plain data from the loader and call typed server functions.
 
 
 ## Where your content comes from
 
-Nothing business-specific is hardcoded in this template — it all comes from BIAB,
+Nothing business-specific is hardcoded in this template — it all comes from BD,
 through **two distinct sources**. Keep them straight:
 
 ### 1. Company Profile — managed in the dashboard
 
 Your **service hours, service areas, payment options, warranties, social links,
-and phone number** are edited in your BIAB dashboard under
+and phone number** are edited in your BD dashboard under
 **Settings → Company Profile**, and arrive on the marketing bundle. Read them off
 the bundle — never hardcode them in this template:
 
@@ -191,16 +191,16 @@ content sync below.
 ### 2. Marketing content — schema + content sync
 
 Your page copy (hero, about, services, …) is declared as a schema in
-`biab.config.ts` and seeded from `src/content/<locale>/…`. Push both with the
+`bd.config.ts` and seeded from `src/content/<locale>/…`. Push both with the
 package scripts:
 
 ```sh
-sync-schema    # push the content SCHEMA to BIAB's draft slot, then promote it in the dashboard
+sync-schema    # push the content SCHEMA to BD's draft slot, then promote it in the dashboard
 sync-content   # seed the section VALUES from src/content/**
 ```
 
 Put one JSON file per section under `src/content/<locale>/<page>/<section>.json`
-(matching `biab.config.ts`), then run `sync-content`. Edit and re-run any time.
+(matching `bd.config.ts`), then run `sync-content`. Edit and re-run any time.
 
 ## Data: environment, schema, seeding, CRUD
 
@@ -213,9 +213,9 @@ Three, from **Dashboard → Developers → API keys**:
 
 | Variable | What it is |
 |---|---|
-| `BIAB_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
-| `BIAB_SITE_ID` | Which site this app is. |
-| `BIAB_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
+| `BD_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
+| `BD_SITE_ID` | Which site this app is. |
+| `BD_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
 
 > A **secret** key must never reach the browser. If this starter renders on the
 > client, use a publishable key — it carries a narrower scope set on purpose, so
@@ -292,7 +292,7 @@ npx tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema
 **Reads** are on the site client:
 
 ```ts
-const site = client.site(process.env.BIAB_SITE_ID!)
+const site = client.site(process.env.BD_SITE_ID!)
 
 const page = await site.dataModel.listRecords({ object: 'projects' })
 const everything = await site.dataModel.listAllRecords({ object: 'projects' })

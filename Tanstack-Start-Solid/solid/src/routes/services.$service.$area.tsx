@@ -1,12 +1,12 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { Show } from "solid-js";
 
-import { renderServiceAreaPage } from "../lib/biab-server-fns";
+import { renderServiceAreaPage } from "../lib/bd-server-fns";
 
 /**
  * Programmatic SEO page: /services/[service]/[area]. SSR-rendered — the
  * loader calls `parallelPages.render("service-area", { service, area })`,
- * which resolves all tokens server-side in BIAB. The `head` callback
+ * which resolves all tokens server-side in BD. The `head` callback
  * lifts the returned meta (title / description / canonical) into the
  * document head so crawlers see fully-resolved tags. Suspended-billing
  * orgs degrade to a minimal "unavailable" state.
@@ -40,10 +40,10 @@ function ServiceAreaPage() {
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow">
+			<section class="bd-section bd-section--narrow">
 				<Link
 					to="/services"
-					class="biab-section__eyebrow"
+					class="bd-section__eyebrow"
 					style="display: inline-block; margin-bottom: 1rem;"
 				>
 					← All areas
@@ -52,7 +52,7 @@ function ServiceAreaPage() {
 				<Show
 					when={result().ok}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							<Show
 								when={reason() === "suspended"}
 								fallback={<>This page isn't available.</>}
@@ -72,16 +72,16 @@ function ServiceAreaPage() {
 						} | null;
 						return (
 							<>
-								<h1 class="biab-section__title" style="text-align: left;">
+								<h1 class="bd-section__title" style="text-align: left;">
 									{r.meta.title.split(" | ")[0]}
 								</h1>
-								<p class="biab-section__sub" style="margin: 0.75rem 0 2rem;">
+								<p class="bd-section__sub" style="margin: 0.75rem 0 2rem;">
 									{r.meta.description}
 								</p>
 								<Show
 									when={body?.PageTitle || body?.PageHeadline || body?.intro}
 								>
-									<div class="biab-card" style="padding: 1.5rem;">
+									<div class="bd-card" style="padding: 1.5rem;">
 										<Show when={body?.PageTitle}>
 											<h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">
 												{body?.PageTitle}

@@ -16,12 +16,12 @@
  */
 import Layout from "../layouts/Layout.astro";
 import NotFound from "../components/NotFound.astro";
-import { getBiab } from "../lib/biab";
+import { getBd } from "../lib/bd";
 import { renderLegalPageHtml, resolveLegalPage } from "@businessdash/sdk/legal";
 
 export const prerender = false;
 
-const client = getBiab();
+const client = getBd();
 // Returns null for an unknown slug AND when BusinessDash is unreachable —
 // this route runs on every unmatched URL, so it must never throw.
 const document = client
@@ -32,11 +32,11 @@ const document = client
 {
 	document ? (
 		<Layout title={document.title}>
-			<main class="biab-section biab-section--narrow">
+			<main class="bd-section bd-section--narrow">
 				{/*
 				 * `contentHtml` is sanitised server-side when the org saves it,
 				 * and the title and logo URL are escaped by
-				 * `renderLegalPageHtml`. Style it via the `data-biab-legal-*`
+				 * `renderLegalPageHtml`. Style it via the `data-bd-legal-*`
 				 * hooks — the markup ships unstyled so it inherits your site.
 				 */}
 				<Fragment set:html={renderLegalPageHtml(document)} />

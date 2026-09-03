@@ -2,18 +2,18 @@ import { Link } from 'expo-router'
 import { useState } from 'react'
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 
-import { getBiab, isConfigured } from '@/biab/client'
-import { cents } from '@/biab/money'
-import { useLoad } from '@/biab/useBiab'
+import { getBd, isConfigured } from '@/bd/client'
+import { cents } from '@/bd/money'
+import { useLoad } from '@/bd/useBd'
 import { LoadState, SetupBanner } from '@/components/LoadState'
 
 export default function ShopScreen() {
   const [search, setSearch] = useState('')
 
   const state = useLoad(async () => {
-    const biab = getBiab()
-    if (!biab) return []
-    const result = await biab.storefront.listProductsWithMeta({
+    const bd = getBd()
+    if (!bd) return []
+    const result = await bd.storefront.listProductsWithMeta({
       search: search || undefined,
       limit: 24,
     })

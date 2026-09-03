@@ -4,7 +4,7 @@
  *
  * HTMX is fully server-rendered, so unlike the React starter (which uses the
  * browser-safe `useFollowers` hook + a publishable `pk_…` token) this template
- * joins followers SERVER-SIDE through the same configured `getBiab()` client
+ * joins followers SERVER-SIDE through the same configured `getBd()` client
  * that powers every other section — `client.followers.join({ email, source })`.
  * The browser only ever sees HTML; no key, no SDK, no publishable token.
  *
@@ -13,17 +13,17 @@
  *   - SDK unconfigured → same fields, submit just shows "coming soon"
  *
  * "Already subscribed" hint: on a successful join we set a per-browser cookie
- * (`biab_follower`) and read it on render to skip straight to the confirmation —
+ * (`bd_follower`) and read it on render to skip straight to the confirmation —
  * the server-side analogue of what `useFollowers().subscribedLocally` does.
  */
 
-import { getBiab } from "../biab";
+import { getBd } from "../bd";
 import { html, raw, render, type Raw } from "../html";
 import { getCookie } from "../layout";
 
 /** Per-browser "already subscribed" hint (server-side analogue of the React
  *  hook's localStorage flag). Not httpOnly so it's purely a UI hint. */
-export const FOLLOWER_COOKIE = "biab_follower";
+export const FOLLOWER_COOKIE = "bd_follower";
 const FOLLOWER_MAX_AGE = 60 * 60 * 24 * 365; // 1 year
 
 export function followerSetCookie(email: string): string {
@@ -120,17 +120,17 @@ export async function handleSubscribe(
 		};
 	}
 
-	const biab = getBiab();
-	if (!biab) {
+	const bd = getBd();
+	if (!bd) {
 		// Unconfigured — acknowledge locally (placeholder mode), no cookie.
 		return { body: render(comingSoonNotice(className)) };
 	}
 
 	try {
-		await biab.followers.join({ email, source });
+		await bd.followers.join({ email, source });
 		return { body: render(subscribedNotice(className)), setCookie: followerSetCookie(email) };
 	} catch (err) {
-		console.error("[biab] follower join failed:", err);
+		console.error("[bd] follower join failed:", err);
 		return {
 			body: render(
 				html`<p class="subscribe__error">Couldn't subscribe — please try again.</p>`,

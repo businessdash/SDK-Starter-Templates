@@ -2,11 +2,11 @@ import Foundation
 
 /// A decoded JSON value of unknown shape.
 ///
-/// Two BIAB surfaces are schema-driven and genuinely can't be modelled as
+/// Two BD surfaces are schema-driven and genuinely can't be modelled as
 /// fixed structs, because the org defines their shape in the dashboard:
 ///
-/// * the **marketing bundle** — whatever `biab.config.ts` declared
-/// * **custom-database records** — whatever `biab.data-model.config.ts` declared
+/// * the **marketing bundle** — whatever `bd.config.ts` declared
+/// * **custom-database records** — whatever `bd.data-model.config.ts` declared
 ///
 /// Everything else in this kit is a real struct. Reaching for `JSONValue` on a
 /// typed endpoint means the struct is wrong, not that the endpoint is dynamic.

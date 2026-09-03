@@ -123,7 +123,7 @@ export function CartClient({ initial }: { initial: CartSnapshot }) {
 				))}
 			</ul>
 
-			<div className="cart__summary biab-card">
+			<div className="cart__summary bd-card">
 				<h2>Summary</h2>
 
 				{snapshot.couponCode ? (
@@ -143,13 +143,13 @@ export function CartClient({ initial }: { initial: CartSnapshot }) {
 				) : (
 					<div className="cart__couponRow">
 						<input
-							className="biab-input"
+							className="bd-input"
 							onChange={(e) => setCouponCode(e.target.value)}
 							placeholder="Coupon code"
 							value={couponCode}
 						/>
 						<button
-							className="biab-btn biab-btn--ghost"
+							className="bd-btn bd-btn--ghost"
 							disabled={pending || !couponCode.trim()}
 							onClick={() => apply(() => applyCouponAction(couponCode.trim()))}
 							type="button"
@@ -170,7 +170,7 @@ export function CartClient({ initial }: { initial: CartSnapshot }) {
 				</div>
 
 				<button
-					className="biab-btn cart__checkout"
+					className="bd-btn cart__checkout"
 					disabled={checkoutPending || pending}
 					onClick={checkout}
 					type="button"

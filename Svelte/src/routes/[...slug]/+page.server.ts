@@ -1,7 +1,7 @@
 import { error } from "@sveltejs/kit";
 import { renderLegalPageHtml, resolveLegalPage } from "@businessdash/sdk/legal";
 
-import { biab } from "$lib/server/biab";
+import { bd } from "$lib/server/bd";
 import type { PageServerLoad } from "./$types";
 
 /**
@@ -20,8 +20,8 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ params }) => {
 	// Returns null for an unknown slug AND when BusinessDash is unreachable —
 	// this route runs on every unmatched URL, so it must never throw.
-	const document = biab
-		? await resolveLegalPage({ client: biab, slug: params.slug })
+	const document = bd
+		? await resolveLegalPage({ client: bd, slug: params.slug })
 		: null;
 
 	// `error(404)` renders `+error.svelte` with a real 404 status, rather than

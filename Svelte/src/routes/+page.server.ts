@@ -1,13 +1,13 @@
 import type { PageServerLoad } from "./$types";
 
-import { biab } from "$lib/server/biab";
+import { bd } from "$lib/server/bd";
 import {
 	fetchBundleSafe,
 	getBannerFromBundle,
 	readSection,
 	type BundleBanner,
-} from "$lib/server/biab-bundle";
-import { buildHomeJsonLd } from "$lib/server/biab-seo";
+} from "$lib/server/bd-bundle";
+import { buildHomeJsonLd } from "$lib/server/bd-seo";
 
 /**
  * Server-side load — runs on every request and only on the server, so the
@@ -16,7 +16,7 @@ import { buildHomeJsonLd } from "$lib/server/biab-seo";
  * slowest (rarely > 200ms in practice).
  *
  * Interactive surfaces (slot computation, booking submit, contact submit,
- * cart) hit `+server.ts` endpoints under `src/routes/api/biab/` so client
+ * cart) hit `+server.ts` endpoints under `src/routes/api/bd/` so client
  * `fetch()` never sees the bearer key.
  *
  * The bundle fetch goes through `fetchBundleSafe`, which turns the
@@ -83,7 +83,7 @@ export const load: PageServerLoad = async () => {
 		description: HERO_DEFAULTS.tagline,
 	});
 
-	if (!biab) {
+	if (!bd) {
 		return {
 			configured: false as const,
 			unavailable: false as const,
@@ -102,10 +102,10 @@ export const load: PageServerLoad = async () => {
 
 	const [bundleResult, gallery, eventTypes, blog, formSchema] = await Promise.all([
 		fetchBundleSafe("home", "en"),
-		biab.gallery.list({ limit: 12, fields: GALLERY_FIELDS }).catch(() => []),
-		biab.scheduling.listEventTypes().catch(() => []),
-		biab.blog.listPosts({ limit: 6 }).catch(() => ({ items: [] as unknown[] })),
-		biab.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK),
+		bd.gallery.list({ limit: 12, fields: GALLERY_FIELDS }).catch(() => []),
+		bd.scheduling.listEventTypes().catch(() => []),
+		bd.blog.listPosts({ limit: 6 }).catch(() => ({ items: [] as unknown[] })),
+		bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK),
 	]);
 
 	// Billing suspended / payment lapsed → minimal unavailable state.

@@ -2,10 +2,10 @@
 /**
  * Generic business site composed of server-rendered sections.
  *
- * Each section component reads from `biab.*` directly. The static-data
+ * Each section component reads from `bd.*` directly. The static-data
  * sections (Hero, About, Services, Gallery, Blog, Reviews) are pure
  * server-render. Booking and ContactForm ship a tiny client island that talks
- * to Astro endpoints under `/api/biab/*`.
+ * to Astro endpoints under `/api/bd/*`.
  *
  * The shared `Layout` adds the news banner, JSON-LD, header (with cart + auth
  * state), and footer. Same canonical section set as the React-Bun and
@@ -20,9 +20,9 @@ import Reviews from "../components/Reviews.astro";
 import Services from "../components/Services.astro";
 import Layout from "../layouts/Layout.astro";
 
-// Schema-driven contact form. The `<BiabForm>` drop-in ships as a React island
+// Schema-driven contact form. The `<BdForm>` drop-in ships as a React island
 // (`ContactForm.tsx`); enable React with `npx astro add react`, then it renders
-// every field, validates, and submits through `/api/biab/forms/[slug]`.
+// every field, validates, and submits through `/api/bd/forms/[slug]`.
 //
 // The base starter ships without React, so the page uses the vanilla
 // `ContactForm.astro` island by default. To switch to the React drop-in:

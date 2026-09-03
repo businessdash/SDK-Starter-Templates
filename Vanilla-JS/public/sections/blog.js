@@ -1,4 +1,4 @@
-import { biab, el, empty, loading } from "../biab.js";
+import { bd, el, empty, loading } from "../bd.js";
 
 function formatDate(iso) {
 	if (!iso) return "";
@@ -14,10 +14,10 @@ function formatDate(iso) {
 /** @param {HTMLElement} target */
 export async function renderBlog(target) {
 	target.replaceChildren(
-		el("div", { class: "biab-section__lead" }, [
-			el("span", { class: "biab-section__eyebrow" }, ["Latest"]),
-			el("h2", { class: "biab-section__title" }, ["From the blog"]),
-			el("p", { class: "biab-section__sub" }, [
+		el("div", { class: "bd-section__lead" }, [
+			el("span", { class: "bd-section__eyebrow" }, ["Latest"]),
+			el("h2", { class: "bd-section__title" }, ["From the blog"]),
+			el("p", { class: "bd-section__sub" }, [
 				"Tips, customer stories, and what we're working on this month.",
 			]),
 		]),
@@ -26,7 +26,7 @@ export async function renderBlog(target) {
 
 	let posts = [];
 	try {
-		const result = await biab.blog.listPosts({ limit: 6 });
+		const result = await bd.blog.listPosts({ limit: 6 });
 		posts = result?.items ?? [];
 	} catch {
 		posts = [];
@@ -38,7 +38,7 @@ export async function renderBlog(target) {
 	if (posts.length === 0) {
 		target.append(
 			empty(
-				"No blog posts published yet. Add one in BIAB and it'll appear here.",
+				"No blog posts published yet. Add one in BD and it'll appear here.",
 			),
 		);
 		return;
@@ -47,11 +47,11 @@ export async function renderBlog(target) {
 	target.append(
 		el(
 			"div",
-			{ class: "biab-grid-3" },
+			{ class: "bd-grid-3" },
 			posts.map((post) =>
 				el(
 					"a",
-					{ class: "biab-card blog-card", href: `/blog/${post.slug}` },
+					{ class: "bd-card blog-card", href: `/blog/${post.slug}` },
 					[
 						el("span", { class: "blog-card__meta" }, [
 							formatDate(post.publishedAt),

@@ -1,24 +1,24 @@
 <script setup lang="ts">
-import BiabHeader from "~/components/biab/BiabHeader.vue";
-import BiabFooter from "~/components/biab/BiabFooter.vue";
-import type { TodosPayload } from "../../server/api/biab/todos.get";
+import BdHeader from "~/components/bd/BdHeader.vue";
+import BdFooter from "~/components/bd/BdFooter.vue";
+import type { TodosPayload } from "../../server/api/bd/todos.get";
 
 // Slug of the generated create form — see TODO_FORM_SLUG in
-// `biab.data-model.config.ts`. Kept as a local literal so the schema config
+// `bd.data-model.config.ts`. Kept as a local literal so the schema config
 // (which imports the SDK's schema pipeline) never enters the client bundle.
 const TODO_FORM_SLUG = "todo-form";
 
 /**
- * Todos — the relational custom-collections demo (`biab.data-model.config.ts`).
+ * Todos — the relational custom-collections demo (`bd.data-model.config.ts`).
  *
- * READ: `/api/biab/todos` lists both collections via the SDK's
+ * READ: `/api/bd/todos` lists both collections via the SDK's
  * `dataModel.listRecords({ object })` and joins images to todos through the
  * `todo` RELATION field.
  * WRITE: submitting the generated "Todo Form" (slug `todo-form`) through the
- * existing `/api/biab/forms/[slug]` proxy — forms are the SDK's documented
+ * existing `/api/bd/forms/[slug]` proxy — forms are the SDK's documented
  * create path for custom collections; there is no direct row-write surface.
  */
-const { data, refresh } = await useFetch<TodosPayload>("/api/biab/todos");
+const { data, refresh } = await useFetch<TodosPayload>("/api/bd/todos");
 
 const title = ref("");
 const notes = ref("");
@@ -33,7 +33,7 @@ async function addTodo() {
 	failed.value = false;
 	try {
 		const result = await $fetch<{ ok: boolean; message?: string }>(
-			`/api/biab/forms/${TODO_FORM_SLUG}`,
+			`/api/bd/forms/${TODO_FORM_SLUG}`,
 			{
 				method: "POST",
 				body: {
@@ -68,19 +68,19 @@ useHead({ title: "Todos — Your Business" });
 
 <template>
 	<div>
-		<BiabHeader />
+		<BdHeader />
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Custom collections</span>
-					<h1 class="biab-section__title">Todos</h1>
-					<p class="biab-section__sub">
+			<section class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Custom collections</span>
+					<h1 class="bd-section__title">Todos</h1>
+					<p class="bd-section__sub">
 						A relational custom-collections demo — todos and their images live
-						in your BIAB custom database.
+						in your BD custom database.
 					</p>
 				</div>
 
-				<form class="biab-card todo-form" @submit.prevent="addTodo">
+				<form class="bd-card todo-form" @submit.prevent="addTodo">
 					<label class="todo-form__label" for="todo-title">Title</label>
 					<input
 						id="todo-title"
@@ -104,17 +104,17 @@ useHead({ title: "Todos — Your Business" });
 					</p>
 				</form>
 
-				<div v-if="!data || !data.available" class="biab-empty">
+				<div v-if="!data || !data.available" class="bd-empty">
 					{{
 						data?.reason ??
-						"Todos aren't readable yet — sync + promote biab.data-model.config.ts and check your key's scopes."
+						"Todos aren't readable yet — sync + promote bd.data-model.config.ts and check your key's scopes."
 					}}
 				</div>
-				<div v-else-if="data.todos.length === 0" class="biab-empty">
+				<div v-else-if="data.todos.length === 0" class="bd-empty">
 					No todos yet — add the first one.
 				</div>
 				<ul v-else class="todo-list">
-					<li v-for="todo in data.todos" :key="todo.id" class="biab-card todo-item">
+					<li v-for="todo in data.todos" :key="todo.id" class="bd-card todo-item">
 						<div class="todo-item__head">
 							<span class="todo-item__mark">{{ todo.done ? "✓" : "○" }}</span>
 							<strong :class="todo.done ? 'todo-item__title todo-item__title--done' : 'todo-item__title'">
@@ -137,7 +137,7 @@ useHead({ title: "Todos — Your Business" });
 				</ul>
 			</section>
 		</main>
-		<BiabFooter />
+		<BdFooter />
 	</div>
 </template>
 
@@ -154,7 +154,7 @@ useHead({ title: "Todos — Your Business" });
 	font-size: 0.875rem;
 }
 .todo-form__input {
-	border: 1px solid var(--biab-border, #d4d4d8);
+	border: 1px solid var(--bd-border, #d4d4d8);
 	border-radius: 0.5rem;
 	padding: 0.5rem 0.75rem;
 	font: inherit;
@@ -165,7 +165,7 @@ useHead({ title: "Todos — Your Business" });
 	border: none;
 	border-radius: 0.5rem;
 	padding: 0.55rem 1.1rem;
-	background: var(--biab-accent, #047857);
+	background: var(--bd-accent, #047857);
 	color: #fff;
 	font-weight: 600;
 	cursor: pointer;
@@ -202,7 +202,7 @@ useHead({ title: "Todos — Your Business" });
 }
 .todo-item__notes {
 	margin: 0.5rem 0 0;
-	color: var(--biab-muted, #52525b);
+	color: var(--bd-muted, #52525b);
 }
 .todo-item__images {
 	display: flex;

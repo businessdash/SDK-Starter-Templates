@@ -7,8 +7,8 @@ import {
 import express from 'express';
 import { join } from 'node:path';
 
-import { mountBiabApi } from './server/biab-api';
-import { buildHomeJsonLd } from './server/biab-seo';
+import { mountBdApi } from './server/bd-api';
+import { buildHomeJsonLd } from './server/bd-seo';
 
 const browserDistFolder = join(import.meta.dirname, '../browser');
 
@@ -16,7 +16,7 @@ const app = express();
 const angularApp = new AngularNodeAppEngine();
 
 /**
- * BIAB server endpoints. ALL calls that hold the API key live behind these
+ * BD server endpoints. ALL calls that hold the API key live behind these
  * routes (auth handler, revalidate webhook, sitemap/robots proxies, and the
  * JSON endpoints the Angular browser app fetches for home/store/cart/reviews/
  * portal/parallel-pages). The key never reaches the browser bundle.
@@ -24,7 +24,7 @@ const angularApp = new AngularNodeAppEngine();
  * Mounted before the Angular catch-all so /api/* and /sitemap.xml /robots.txt
  * win over SSR.
  */
-mountBiabApi(app);
+mountBdApi(app);
 
 /**
  * Serve static files from /browser
@@ -40,7 +40,7 @@ app.use(
 /**
  * Handle all other requests by rendering the Angular application, then inject
  * server-built JSON-LD (localBusiness + website) into the home document's
- * <head> so crawlers see structured data. No-ops when BIAB env is unset.
+ * <head> so crawlers see structured data. No-ops when BD env is unset.
  */
 app.use((req, res, next) => {
   angularApp

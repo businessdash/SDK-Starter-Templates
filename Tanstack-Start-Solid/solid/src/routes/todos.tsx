@@ -2,20 +2,20 @@ import { createFileRoute, useRouter } from "@tanstack/solid-router";
 import { For, Show } from "solid-js";
 
 import {
-	BiabForm,
-	type BiabClient,
+	BdForm,
+	type BdClient,
 	type FormSubmitResult,
 } from "@businessdash/sdk/solid";
 
-import { getTodosData, submitTodoForm } from "../lib/biab-server-fns";
+import { getTodosData, submitTodoForm } from "../lib/bd-server-fns";
 
 /**
  * `/todos` — the relational custom-collections demo. Two collections declared
- * in `biab.data-model.config.ts` — `todos`, and `todoImages` pointing at a
+ * in `bd.data-model.config.ts` — `todos`, and `todoImages` pointing at a
  * todo via a required RELATION field. This page:
  *
  *   - LISTS todos (with any images joined on) in the loader via
- *     `dataModel.listRecords` (join in `lib/biab-todos.ts`) — the documented
+ *     `dataModel.listRecords` (join in `lib/bd-todos.ts`) — the documented
  *     read path.
  *   - CREATES a todo by submitting the generated `todo-form` through the
  *     `submitTodoForm` server fn — the documented write path (there is no
@@ -63,33 +63,33 @@ function TodosPage() {
 				}
 			},
 		},
-	} as unknown as BiabClient;
+	} as unknown as BdClient;
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow" id="todos">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Custom collections</span>
-					<h2 class="biab-section__title">Todos</h2>
-					<p class="biab-section__sub">
+			<section class="bd-section bd-section--narrow" id="todos">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Custom collections</span>
+					<h2 class="bd-section__title">Todos</h2>
+					<p class="bd-section__sub">
 						Rows live in your org's custom database — two related collections (
 						<code>todos</code> + <code>todoImages</code>) declared in{" "}
-						<code>biab.data-model.config.ts</code>, read via{" "}
+						<code>bd.data-model.config.ts</code>, read via{" "}
 						<code>dataModel.listRecords</code>, created through the generated{" "}
 						<code>todo-form</code>.
 					</p>
 				</div>
 
 				<Show when={data().result.status === "unconfigured"}>
-					<div class="biab-empty">
-						BIAB isn't configured — set the env vars in <code>.env</code> (see{" "}
+					<div class="bd-empty">
+						BD isn't configured — set the env vars in <code>.env</code> (see{" "}
 						<code>.env.example</code>) to run this demo.
 					</div>
 				</Show>
 				<Show when={data().result.status === "unavailable"}>
-					<div class="biab-empty">
+					<div class="bd-empty">
 						The todos model isn't readable yet. Run{" "}
-						<code>pnpm sync-data-model</code>, promote it in the BIAB dashboard,
+						<code>pnpm sync-data-model</code>, promote it in the BD dashboard,
 						and make sure your secret key carries the{" "}
 						<code>metadata:read_records</code> scope (custom objects are a
 						plan-gated surface).
@@ -101,7 +101,7 @@ function TodosPage() {
 						<Show
 							when={ok().todos.length > 0}
 							fallback={
-								<div class="biab-empty">
+								<div class="bd-empty">
 									No todos yet — add the first one below.
 								</div>
 							}
@@ -117,7 +117,7 @@ function TodosPage() {
 							>
 								<For each={ok().todos}>
 									{(todo) => (
-										<li class="biab-card">
+										<li class="bd-card">
 											<div
 												style={{
 													"align-items": "center",
@@ -125,7 +125,7 @@ function TodosPage() {
 													gap: "0.5rem",
 												}}
 											>
-												<span class="biab-badge">
+												<span class="bd-badge">
 													{todo.done ? "Done" : "Open"}
 												</span>
 												<h3 style={{ margin: "0" }}>{todo.title}</h3>
@@ -178,14 +178,14 @@ function TodosPage() {
 			</section>
 
 			<Show when={data().result.status !== "unconfigured"}>
-				<section class="biab-section biab-section--narrow" id="add-todo">
-					<div class="biab-section__lead">
-						<h2 class="biab-section__title">Add a todo</h2>
+				<section class="bd-section bd-section--narrow" id="add-todo">
+					<div class="bd-section__lead">
+						<h2 class="bd-section__title">Add a todo</h2>
 					</div>
 					<Show
 						when={data().formSchema}
 						fallback={
-							<div class="biab-empty">
+							<div class="bd-empty">
 								The create form isn't live yet — promote the data model and
 								activate "Todo Form" (slug <code>todo-form</code>) in the
 								dashboard's Forms surface.
@@ -193,8 +193,8 @@ function TodosPage() {
 						}
 					>
 						{(schema) => (
-							<div class="biab-card">
-								<BiabForm
+							<div class="bd-card">
+								<BdForm
 									schema={schema()}
 									client={submitClient}
 									submitLabel="Add todo"

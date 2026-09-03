@@ -1,9 +1,9 @@
 import { fail } from "@sveltejs/kit";
-import { createBiabDevClient } from "@businessdash/sdk";
+import { createBdApiClient } from "@businessdash/sdk";
 
 import { env } from "$env/dynamic/private";
 import { env as publicEnv } from "$env/dynamic/public";
-import { biab } from "$lib/server/biab";
+import { bd } from "$lib/server/bd";
 
 import type { Actions, PageServerLoad } from "./$types";
 
@@ -11,10 +11,10 @@ import {
 	TODOS_OBJECT_ID,
 	TODO_IMAGES_OBJECT_ID,
 	TODO_FORM_SLUG,
-} from "../../../biab.data-model.config";
+} from "../../../bd.data-model.config";
 
 /**
- * Todos — the relational custom-collections demo (`biab.data-model.config.ts`).
+ * Todos — the relational custom-collections demo (`bd.data-model.config.ts`).
  *
  * READ (load): the SDK's documented custom-database read path —
  * `dataModel.listRecords({ object })` — for both collections, joined here.
@@ -23,7 +23,7 @@ import {
  * objects, then group images by the todo record they point at.
  *
  * WRITE (action): submitting the generated "Todo Form" (slug `todo-form`)
- * via `biab.forms.submit(...)` — forms are the SDK's documented create path
+ * via `bd.forms.submit(...)` — forms are the SDK's documented create path
  * for custom collections; there is no direct row-write surface.
  *
  * Needs `metadata:read_records` on the secret key + the org's custom-objects
@@ -49,12 +49,12 @@ function normalizeBaseUrl(input: string): string {
 }
 
 function getDataModel() {
-	const apiKey = env.BIAB_API_KEY;
-	const siteId = publicEnv.PUBLIC_BIAB_SITE_ID ?? env.BIAB_SITE_ID;
+	const apiKey = env.BD_API_KEY;
+	const siteId = publicEnv.PUBLIC_BD_SITE_ID ?? env.BD_SITE_ID;
 	const rawBaseUrl =
-		publicEnv.PUBLIC_BIAB_PACKAGE_API_BASE_URL ?? env.BIAB_PACKAGE_API_BASE_URL;
+		publicEnv.PUBLIC_BD_PACKAGE_API_BASE_URL ?? env.BD_PACKAGE_API_BASE_URL;
 	if (!apiKey || !siteId || !rawBaseUrl) return null;
-	return createBiabDevClient({ apiKey, baseUrl: normalizeBaseUrl(rawBaseUrl) })
+	return createBdApiClient({ apiKey, baseUrl: normalizeBaseUrl(rawBaseUrl) })
 		.site(siteId)
 		.dataModel;
 }
@@ -68,7 +68,7 @@ export const load: PageServerLoad = async () => {
 	if (!dataModel) {
 		return {
 			available: false as const,
-			reason: "BIAB isn't configured — see .env.example.",
+			reason: "BD isn't configured — see .env.example.",
 			todos: [] as TodoItem[],
 		};
 	}
@@ -133,8 +133,8 @@ export const load: PageServerLoad = async () => {
 export const actions: Actions = {
 	/** Create a todo by submitting the generated "Todo Form". */
 	default: async ({ request }) => {
-		if (!biab) {
-			return fail(503, { message: "BIAB isn't configured — see .env.example." });
+		if (!bd) {
+			return fail(503, { message: "BD isn't configured — see .env.example." });
 		}
 		const form = await request.formData();
 		const title = String(form.get("title") ?? "").trim();
@@ -144,7 +144,7 @@ export const actions: Actions = {
 		}
 		// Keyed by each field's output key — `validateFormSubmission` accepts
 		// output keys (preferred) or legacy field ids.
-		const result = await biab.forms.submit(TODO_FORM_SLUG, {
+		const result = await bd.forms.submit(TODO_FORM_SLUG, {
 			title,
 			...(notes ? { notes } : {}),
 		});

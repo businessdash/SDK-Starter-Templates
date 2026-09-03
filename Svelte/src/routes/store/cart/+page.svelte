@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
-	import StoreNav from '$lib/components/biab/StoreNav.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
+	import StoreNav from '$lib/components/bd/StoreNav.svelte';
 	import type { CartSnapshot } from '@businessdash/sdk/contracts';
 	import {
 		applyCoupon,
@@ -12,7 +12,7 @@
 		startCheckout,
 		updateCartItem,
 		type CartCallResult,
-	} from '$lib/biab/cart-client';
+	} from '$lib/bd/cart-client';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -61,20 +61,20 @@
 <Header />
 <StoreNav {cartCount} />
 
-<main class="biab-section biab-section--narrow">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">Checkout</span>
-		<h1 class="biab-section__title">Your cart</h1>
+<main class="bd-section bd-section--narrow">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">Checkout</span>
+		<h1 class="bd-section__title">Your cart</h1>
 	</div>
 
 	{#if !data.configured}
-		<div class="biab-empty">Store isn't connected.</div>
+		<div class="bd-empty">Store isn't connected.</div>
 	{:else if !snapshot || snapshot.items.length === 0}
-		<div class="biab-empty">
+		<div class="bd-empty">
 			Your cart is empty. <a href="/store">Browse products →</a>
 		</div>
 	{:else}
-		<div class="biab-card cart">
+		<div class="bd-card cart">
 			{#each snapshot.items as item (item.id)}
 				<div class="cart-row">
 					{#if item.productImage}
@@ -89,7 +89,7 @@
 					</div>
 					<div class="cart-row__qty">
 						<input
-							class="biab-input"
+							class="bd-input"
 							type="number"
 							min="0"
 							max="999"
@@ -116,9 +116,9 @@
 
 			<div class="cart-coupon">
 				{#if snapshot.couponCode}
-					<span class="biab-badge">Coupon: {snapshot.couponCode}</span>
+					<span class="bd-badge">Coupon: {snapshot.couponCode}</span>
 					<button
-						class="biab-btn biab-btn--ghost"
+						class="bd-btn bd-btn--ghost"
 						onclick={() => withBusy(removeCoupon)}
 						disabled={busy}
 					>
@@ -126,13 +126,13 @@
 					</button>
 				{:else}
 					<input
-						class="biab-input"
+						class="bd-input"
 						placeholder="Coupon code"
 						bind:value={couponCode}
 						style="max-width: 12rem;"
 					/>
 					<button
-						class="biab-btn biab-btn--ghost"
+						class="bd-btn bd-btn--ghost"
 						onclick={() => couponCode && withBusy(() => applyCoupon(couponCode))}
 						disabled={busy || !couponCode}
 					>
@@ -147,10 +147,10 @@
 			</div>
 
 			<div class="cart-actions">
-				<button class="biab-btn biab-btn--ghost" onclick={() => withBusy(clearCart)} disabled={busy}>
+				<button class="bd-btn bd-btn--ghost" onclick={() => withBusy(clearCart)} disabled={busy}>
 					Clear cart
 				</button>
-				<button class="biab-btn" onclick={checkout} disabled={busy}>
+				<button class="bd-btn" onclick={checkout} disabled={busy}>
 					{busy ? 'Working…' : 'Checkout'}
 				</button>
 			</div>

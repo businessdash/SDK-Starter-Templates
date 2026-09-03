@@ -1,6 +1,6 @@
 /** /services/:service/:area — one rendered programmatic-SEO page. The body
- *  is server-rendered HTML from BIAB (token-resolved), so it's trusted. */
-import { biab, el } from "/biab.js";
+ *  is server-rendered HTML from BD (token-resolved), so it's trusted. */
+import { bd, el } from "/bd.js";
 import { errBox } from "./_ui.js";
 
 export default async function render(root) {
@@ -13,7 +13,7 @@ export default async function render(root) {
 		return;
 	}
 	try {
-		const res = await biab.parallelPages.render("service-area", { service, area });
+		const res = await bd.parallelPages.render("service-area", { service, area });
 		const meta = res?.meta ?? {};
 		const nodes = [
 			el("a", { class: "backlink", href: "/services" }, ["← All areas"]),

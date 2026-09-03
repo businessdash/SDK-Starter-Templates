@@ -4,12 +4,12 @@ import {
 	getCartSnapshot,
 	isStoreConfigured,
 	listStoreSubscriptions,
-} from "$lib/server/biab-store";
+} from "$lib/server/bd-store";
 
 /**
  * Subscriptions list. Recurring offerings from `subscriptions.list`.
  * Starting a subscription checkout goes through the
- * `/api/biab/subscriptions/[id]/checkout` endpoint.
+ * `/api/bd/subscriptions/[id]/checkout` endpoint.
  */
 export const load: PageServerLoad = async ({ cookies }) => {
 	if (!isStoreConfigured()) {

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from "@angular/core";
-import { BiabService } from "../lib/biab.service";
+import { BdService } from "../lib/bd.service";
 
 /**
  * "Updates" feed fed by `bundle.updates` (Google-Business-style posts).
@@ -7,7 +7,7 @@ import { BiabService } from "../lib/biab.service";
  * org has no updates.
  */
 @Component({
-	selector: "biab-updates",
+	selector: "bd-updates",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		@if (svc.updates().length > 0) {
@@ -31,7 +31,7 @@ import { BiabService } from "../lib/biab.service";
 	`,
 })
 export class UpdatesComponent implements OnInit {
-	readonly svc = inject(BiabService);
+	readonly svc = inject(BdService);
 	ngOnInit() {
 		void this.svc.loadHome();
 	}

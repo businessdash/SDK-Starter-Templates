@@ -1,15 +1,15 @@
 ---
 /**
  * Product detail. Server-renders one product via `storefront.getProduct(id)`,
- * with an inline add-to-cart island that posts to `/api/biab/cart/add`
+ * with an inline add-to-cart island that posts to `/api/bd/cart/add`
  * (mints the visitor cookie, returns the new snapshot) then sends the shopper
  * to the cart.
  *
  * Suspension-aware (503) and unconfigured-safe.
  */
-import { biab } from "../../lib/biab";
-import { isStoreConfigured } from "../../lib/biab-store";
-import { isSuspensionError, suspendedResponse } from "../../lib/biab-suspension";
+import { bd } from "../../lib/bd";
+import { isStoreConfigured } from "../../lib/bd-store";
+import { isSuspensionError, suspendedResponse } from "../../lib/bd-suspension";
 import Layout from "../../layouts/Layout.astro";
 
 export const prerender = false;
@@ -29,9 +29,9 @@ let product: ProductDetail | null = null;
 let notFound = false;
 let suspended = false;
 
-if (biab && id) {
+if (bd && id) {
 	try {
-		product = (await biab.storefront.getProduct(id)) as ProductDetail;
+		product = (await bd.storefront.getProduct(id)) as ProductDetail;
 	} catch (err) {
 		if (isSuspensionError(err)) suspended = true;
 		else notFound = true;
@@ -66,14 +66,14 @@ const variants = product?.variants ?? [];
 	title={product ? `${product.name} — Store` : "Product — Store"}
 	description={description ?? "Product detail"}
 >
-	<section class="biab-section biab-section--narrow" id="product">
+	<section class="bd-section bd-section--narrow" id="product">
 		<a class="product-back" href="/store">← Back to store</a>
 
 		{
 			!isStoreConfigured() ? (
-				<div class="biab-empty">Store isn't connected.</div>
+				<div class="bd-empty">Store isn't connected.</div>
 			) : notFound || !product ? (
-				<div class="biab-empty">
+				<div class="bd-empty">
 					That product isn't available. <a href="/store">Browse the store →</a>
 				</div>
 			) : (
@@ -84,15 +84,15 @@ const variants = product?.variants ?? [];
 						<div class="product-detail__img product-detail__img--empty" />
 					)}
 					<div class="product-detail__info">
-						<h1 class="biab-section__title">{product.name}</h1>
+						<h1 class="bd-section__title">{product.name}</h1>
 						{description ? <p>{description}</p> : null}
 
 						{variants.length > 0 ? (
 							<div>
-								<label class="biab-label" for="variant">
+								<label class="bd-label" for="variant">
 									Choose an option
 								</label>
-								<select class="biab-select" id="variant" data-variant>
+								<select class="bd-select" id="variant" data-variant>
 									{variants.map((v) => (
 										<option value={String(v.id ?? "")}>
 											{variantLabel(v)}
@@ -103,11 +103,11 @@ const variants = product?.variants ?? [];
 						) : null}
 
 						<div class="product-detail__qty">
-							<label class="biab-label" for="qty">
+							<label class="bd-label" for="qty">
 								Quantity
 							</label>
 							<input
-								class="biab-input"
+								class="bd-input"
 								id="qty"
 								type="number"
 								min="1"
@@ -117,7 +117,7 @@ const variants = product?.variants ?? [];
 							/>
 						</div>
 
-						<button class="biab-btn" data-add-to-cart type="button">
+						<button class="bd-btn" data-add-to-cart type="button">
 							Add to cart
 						</button>
 						<div data-add-error hidden></div>
@@ -184,7 +184,7 @@ const variants = product?.variants ?? [];
 			addBtn.textContent = "Adding…";
 			if (errorBox) errorBox.hidden = true;
 			try {
-				const res = await fetch("/api/biab/cart/add", {
+				const res = await fetch("/api/bd/cart/add", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({ productId, variantId, quantity }),

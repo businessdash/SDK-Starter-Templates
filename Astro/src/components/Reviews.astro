@@ -2,12 +2,12 @@
 /**
  * Reviews wall — aggregate (average / count) + first page of reviews from the
  * marketing bundle, plus a "load more" client island that paginates deeper via
- * the `/api/biab/reviews` endpoint (which wraps `reviews.list`).
+ * the `/api/bd/reviews` endpoint (which wraps `reviews.list`).
  *
  * The aggregate + first page ride the bundle, so the initial render is pure
  * server-render with zero JS; "Load more" is the only interactive part.
  */
-import { getBundle, getReviewsFromBundle } from "../lib/biab-bundle";
+import { getBundle, getReviewsFromBundle } from "../lib/bd-bundle";
 
 const bundle = await getBundle();
 const reviews = getReviewsFromBundle(bundle);
@@ -34,19 +34,19 @@ function formatDate(iso: string): string {
 }
 ---
 
-<section class="biab-section" id="reviews">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">What people say</span>
-		<h2 class="biab-section__title">Reviews</h2>
+<section class="bd-section" id="reviews">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">What people say</span>
+		<h2 class="bd-section__title">Reviews</h2>
 		{
 			average ? (
-				<p class="biab-section__sub">
+				<p class="bd-section__sub">
 					<strong style="color: var(--accent);">{average} ★</strong> average
 					across {totalCount} review{totalCount === 1 ? "" : "s"}.
 				</p>
 			) : (
-				<p class="biab-section__sub">
-					Aggregate + reviews are delivered live from BIAB once you've collected
+				<p class="bd-section__sub">
+					Aggregate + reviews are delivered live from BD once you've collected
 					a few.
 				</p>
 			)
@@ -55,15 +55,15 @@ function formatDate(iso: string): string {
 
 	{
 		firstPage.length === 0 ? (
-			<div class="biab-empty">
-				No reviews yet. Connect a review source in BIAB (Google / Yelp /
+			<div class="bd-empty">
+				No reviews yet. Connect a review source in BD (Google / Yelp /
 				Housecall Pro) and they'll appear here.
 			</div>
 		) : (
 			<>
-				<div class="biab-grid-3" data-reviews-list>
+				<div class="bd-grid-3" data-reviews-list>
 					{firstPage.map((r) => (
-						<article class="biab-card review-card">
+						<article class="bd-card review-card">
 							<div class="review-card__stars" aria-label={`${r.rating} stars`}>
 								{stars(r.rating)}
 							</div>
@@ -78,7 +78,7 @@ function formatDate(iso: string): string {
 				{totalCount > firstPage.length ? (
 					<div style="text-align: center; margin-top: 2rem;">
 						<button
-							class="biab-btn biab-btn--ghost"
+							class="bd-btn bd-btn--ghost"
 							data-reviews-more
 							data-offset={String(firstPage.length)}
 							type="button"
@@ -123,7 +123,7 @@ function formatDate(iso: string): string {
 		moreBtn.disabled = true;
 		moreBtn.textContent = "Loading…";
 		try {
-			const res = await fetch(`/api/biab/reviews?offset=${offset}&limit=6`);
+			const res = await fetch(`/api/bd/reviews?offset=${offset}&limit=6`);
 			if (!res.ok) throw new Error(await res.text());
 			const data = (await res.json()) as {
 				items: Array<{
@@ -137,7 +137,7 @@ function formatDate(iso: string): string {
 			};
 			for (const r of data.items) {
 				const card = document.createElement("article");
-				card.className = "biab-card review-card";
+				card.className = "bd-card review-card";
 				card.innerHTML = `
 					<div class="review-card__stars" aria-label="${r.rating} stars">${starsFor(r.rating)}</div>
 					<p class="review-card__text"></p>

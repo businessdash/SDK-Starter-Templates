@@ -1,11 +1,11 @@
 /// Reads a value out of a schema-driven payload, with a fallback.
 ///
-/// Two BIAB surfaces genuinely can't be fixed models, because the org defines
+/// Two BD surfaces genuinely can't be fixed models, because the org defines
 /// their shape in the dashboard: the **marketing bundle** (whatever
-/// `biab.config.ts` declared) and **custom-database records**. Everything
+/// `bd.config.ts` declared) and **custom-database records**. Everything
 /// else in this library is a real class — reaching for this on a typed
 /// endpoint means the model is wrong, not that the endpoint is dynamic.
-extension BiabBundle on Map<String, dynamic>? {
+extension BdBundle on Map<String, dynamic>? {
   /// Walk a key path: `bundle.path(['sections', 'hero', 'headline'])`.
   ///
   /// Returns null for a missing key AND for an empty string, because those

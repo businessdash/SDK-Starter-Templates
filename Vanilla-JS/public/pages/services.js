@@ -1,11 +1,11 @@
 /** /services — index of programmatic-SEO variants (service × area). */
-import { biab, el } from "/biab.js";
+import { bd, el } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 export default async function render(root) {
 	root.replaceChildren(pageHead("Service areas", "Programmatic-SEO pages, one per service × area."));
 	try {
-		const res = await biab.parallelPages.listVariants("service-area");
+		const res = await bd.parallelPages.listVariants("service-area");
 		const variants = res?.variants ?? res?.items ?? [];
 		if (!variants.length) {
 			root.append(el("p", { class: "muted" }, ["No parallel pages generated yet."]));

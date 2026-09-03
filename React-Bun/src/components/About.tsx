@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 import { Subscribe } from "./Subscribe";
 
 export function About() {
 	const [body, setBody] = useState<string | null>(null);
 
 	useEffect(() => {
-		biab.marketing
+		bd.marketing
 			.getPageBundle({ pageKey: "home" })
 			.then((bundle) => {
 				const raw = (bundle as { sections?: Record<string, unknown> })?.sections
@@ -27,10 +27,10 @@ export function About() {
 	}, []);
 
 	return (
-		<section className="biab-section biab-section--narrow" id="about">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">About</span>
-				<h2 className="biab-section__title">Built around how you actually work.</h2>
+		<section className="bd-section bd-section--narrow" id="about">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">About</span>
+				<h2 className="bd-section__title">Built around how you actually work.</h2>
 			</div>
 			<p style={{ color: "var(--text)", fontSize: "1.05rem", textAlign: "center" }}>
 				{body ??

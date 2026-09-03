@@ -9,7 +9,7 @@ import {
 	getStoreProductReviews,
 	getStoreRelatedProducts,
 	isStoreConfigured,
-} from "$lib/server/biab-store";
+} from "$lib/server/bd-store";
 
 /**
  * Product detail. Resolves the full product (with variants) via
@@ -18,7 +18,7 @@ import {
  * degrade to null/empty independently, so the page still renders if any of
  * them are unavailable. 404s when the product isn't live / doesn't belong to
  * this org (the SDK throws); renders the "not connected" placeholder when
- * BIAB env is unset.
+ * BD env is unset.
  */
 export const load: PageServerLoad = async ({ params, cookies }) => {
 	if (!isStoreConfigured()) {

@@ -5,48 +5,48 @@
  * Server-render the event-type list (Class A — cached, no key in
  * the browser). Slots + booking confirmation are interactive, so a
  * `<script>` block calls the same-origin Astro endpoints under
- * `/api/biab/scheduling/*` which forward to BIAB via the SDK.
+ * `/api/bd/scheduling/*` which forward to BD via the SDK.
  *
  * The browser only ever sees same-origin paths; the API key stays
  * on the Astro server.
  */
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 import type { SchedulingEventType } from "@businessdash/sdk";
 
 let eventTypes: SchedulingEventType[] = [];
 
-if (biab) {
+if (bd) {
 	try {
-		eventTypes = await biab.scheduling.listEventTypes();
+		eventTypes = await bd.scheduling.listEventTypes();
 	} catch {
 		eventTypes = [];
 	}
 }
 ---
 
-<section class="biab-section biab-section--narrow" id="booking">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">Schedule</span>
-		<h2 class="biab-section__title">Book a time</h2>
-		<p class="biab-section__sub">
+<section class="bd-section bd-section--narrow" id="booking">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">Schedule</span>
+		<h2 class="bd-section__title">Book a time</h2>
+		<p class="bd-section__sub">
 			Pick a slot and we'll send confirmation + a calendar invite.
 		</p>
 	</div>
 
-	<div class="biab-card booking" data-booking-root>
+	<div class="bd-card booking" data-booking-root>
 		{
 			eventTypes.length === 0 ? (
-				<div class="biab-empty">
-					No event types configured yet. Add one in BIAB at Dashboard →
+				<div class="bd-empty">
+					No event types configured yet. Add one in BD at Dashboard →
 					Scheduling → Event Types.
 				</div>
 			) : (
 				<>
 					<div>
-						<label class="biab-label" for="event-type">
+						<label class="bd-label" for="event-type">
 							What for?
 						</label>
-						<select class="biab-select" id="event-type" data-event-select>
+						<select class="bd-select" id="event-type" data-event-select>
 							{eventTypes.map((ev) => (
 								<option value={ev.slug}>
 									{ev.name} · {ev.durationMinutes}min
@@ -55,30 +55,30 @@ if (biab) {
 						</select>
 					</div>
 					<div>
-						<div class="biab-label">Next available slots</div>
+						<div class="bd-label">Next available slots</div>
 						<div data-slots>
-							<div class="biab-loading">Loading availability…</div>
+							<div class="bd-loading">Loading availability…</div>
 						</div>
 					</div>
 					<div data-invitee hidden>
 						<div class="field-row field-row--cols">
 							<div>
-								<label class="biab-label" for="booking-name">
+								<label class="bd-label" for="booking-name">
 									Your name
 								</label>
 								<input
-									class="biab-input"
+									class="bd-input"
 									id="booking-name"
 									name="name"
 									placeholder="Jane Doe"
 								/>
 							</div>
 							<div>
-								<label class="biab-label" for="booking-email">
+								<label class="bd-label" for="booking-email">
 									Email
 								</label>
 								<input
-									class="biab-input"
+									class="bd-input"
 									id="booking-email"
 									name="email"
 									placeholder="jane@example.com"
@@ -87,11 +87,11 @@ if (biab) {
 							</div>
 						</div>
 						<div style="margin-top: 1rem;">
-							<label class="biab-label" for="booking-phone">
+							<label class="bd-label" for="booking-phone">
 								Phone (optional)
 							</label>
 							<input
-								class="biab-input"
+								class="bd-input"
 								id="booking-phone"
 								name="phone"
 								placeholder="(555) 555-0100"
@@ -99,18 +99,18 @@ if (biab) {
 							/>
 						</div>
 						<div style="margin-top: 1rem;">
-							<label class="biab-label" for="booking-notes">
+							<label class="bd-label" for="booking-notes">
 								Anything we should know?
 							</label>
 							<textarea
-								class="biab-textarea"
+								class="bd-textarea"
 								id="booking-notes"
 								name="notes"
 								placeholder="Optional"
 							/>
 						</div>
 						<button
-							class="biab-btn"
+							class="bd-btn"
 							data-confirm
 							style="margin-top: 1rem;"
 							type="button"
@@ -167,7 +167,7 @@ if (biab) {
 		async function loadSlots(slug: string) {
 			if (!slotsBox) return;
 			slotsBox.innerHTML =
-				'<div class="biab-loading">Computing availability…</div>';
+				'<div class="bd-loading">Computing availability…</div>';
 			if (inviteeBox) inviteeBox.hidden = true;
 			pickedSlot = null;
 			try {
@@ -178,14 +178,14 @@ if (biab) {
 					from: from.toISOString(),
 					to: to.toISOString(),
 				});
-				const res = await fetch(`/api/biab/scheduling/slots?${params}`);
+				const res = await fetch(`/api/bd/scheduling/slots?${params}`);
 				if (!res.ok) throw new Error(await res.text());
 				const data = (await res.json()) as {
 					slots: Array<{ startAt: string; endAt: string }>;
 				};
 				if (!data.slots.length) {
 					slotsBox.innerHTML =
-						'<div class="biab-empty">No availability in the next week.</div>';
+						'<div class="bd-empty">No availability in the next week.</div>';
 					return;
 				}
 				slotsBox.innerHTML = "";
@@ -212,7 +212,7 @@ if (biab) {
 				slotsBox.append(row);
 			} catch (err) {
 				const message = err instanceof Error ? err.message : "Unknown error";
-				slotsBox.innerHTML = `<div class="biab-empty">Couldn't load slots: ${message}</div>`;
+				slotsBox.innerHTML = `<div class="bd-empty">Couldn't load slots: ${message}</div>`;
 			}
 		}
 
@@ -242,7 +242,7 @@ if (biab) {
 			confirmBtn.textContent = "Confirming…";
 			errorBox.hidden = true;
 			try {
-				const res = await fetch("/api/biab/scheduling/bookings", {
+				const res = await fetch("/api/bd/scheduling/bookings", {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -260,8 +260,8 @@ if (biab) {
 				if (!res.ok) throw new Error(await res.text());
 				const result = (await res.json()) as { bookingId: string };
 				root!.innerHTML = `
-					<span class="biab-badge" style="align-self: flex-start;">Booked</span>
-					<h2 class="biab-section__title">You're on the calendar.</h2>
+					<span class="bd-badge" style="align-self: flex-start;">Booked</span>
+					<h2 class="bd-section__title">You're on the calendar.</h2>
 					<p style="color: var(--text);">Booking confirmed (#${result.bookingId.slice(0, 8)}). Check ${email} for details.</p>
 				`;
 			} catch (err) {

@@ -21,11 +21,11 @@ import Foundation
 /// the one from confirmation — otherwise the calendar invite you send points at
 /// a dead room.
 public struct SchedulingResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
     let siteID: String
 
     private func path(_ suffix: String) -> String {
-        "sites/\(BiabClient.escape(siteID))/scheduling/\(suffix)"
+        "sites/\(BdClient.escape(siteID))/scheduling/\(suffix)"
     }
 
     /// What the org offers to book.
@@ -35,7 +35,7 @@ public struct SchedulingResource: Sendable {
 
     /// One event type, plus the questions asked when booking it.
     public func eventType(_ slug: String) async throws -> JSONValue {
-        try await client.get(path("event-types/\(BiabClient.escape(slug))"))
+        try await client.get(path("event-types/\(BdClient.escape(slug))"))
     }
 
     /// Free slots in a window.
@@ -44,7 +44,7 @@ public struct SchedulingResource: Sendable {
     /// computation walks every host's calendar, so a wide range is a slow one.
     public func availableSlots(_ slug: String, from: String, to: String) async throws -> JSONValue {
         try await client.get(
-            path("event-types/\(BiabClient.escape(slug))/slots"),
+            path("event-types/\(BdClient.escape(slug))/slots"),
             query: ["from": from, "to": to]
         )
     }
@@ -62,7 +62,7 @@ public struct SchedulingResource: Sendable {
     /// Read a booking with one of its signed tokens.
     public func booking(_ token: String, type: String = "manage") async throws -> JSONValue {
         try await client.get(
-            path("bookings/\(BiabClient.escape(token))"),
+            path("bookings/\(BdClient.escape(token))"),
             query: ["type": type]
         )
     }
@@ -71,7 +71,7 @@ public struct SchedulingResource: Sendable {
     public func reschedule(token: String, newStartAt: String, reason: String? = nil) async throws -> JSONValue {
         var body = ["action": "reschedule", "newStartAt": newStartAt]
         if let reason { body["reason"] = reason }
-        return try await client.post(path("bookings/\(BiabClient.escape(token))"), body: body)
+        return try await client.post(path("bookings/\(BdClient.escape(token))"), body: body)
     }
 
     /// Cancel a booking — the INVITEE side, with their cancel token.
@@ -82,7 +82,7 @@ public struct SchedulingResource: Sendable {
     public func cancel(token: String, reason: String? = nil) async throws -> JSONValue {
         var body = ["action": "cancel"]
         if let reason { body["reason"] = reason }
-        return try await client.post(path("bookings/\(BiabClient.escape(token))"), body: body)
+        return try await client.post(path("bookings/\(BdClient.escape(token))"), body: body)
     }
 
     /// Move a booking as STAFF, with the API key rather than an invitee token.
@@ -99,7 +99,7 @@ public struct SchedulingResource: Sendable {
         if let reason { body["reason"] = reason }
         if let actorUserID { body["actorUserId"] = actorUserID }
         return try await client.post(
-            path("bookings/\(BiabClient.escape(bookingID))/manage"),
+            path("bookings/\(BdClient.escape(bookingID))/manage"),
             body: body
         )
     }
@@ -114,13 +114,13 @@ public struct SchedulingResource: Sendable {
         if let reason { body["reason"] = reason }
         if let actorUserID { body["actorUserId"] = actorUserID }
         return try await client.post(
-            path("bookings/\(BiabClient.escape(bookingID))/manage"),
+            path("bookings/\(BdClient.escape(bookingID))/manage"),
             body: body
         )
     }
 }
 
-extension BiabClient {
+extension BdClient {
     /// Booking and conference calls for a site.
     public func scheduling(siteID: String) -> SchedulingResource {
         SchedulingResource(client: self, siteID: siteID)

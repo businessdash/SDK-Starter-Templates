@@ -1,10 +1,10 @@
 import { mcpHandler } from "@businessdash/sdk/mcp";
 
-import { getDistributionConfig } from "@/server/lib/biab-distribution";
+import { getDistributionConfig } from "@/server/lib/bd-distribution";
 
 /**
  * `/api/mcp` — this site's MCP connector on its OWN domain. The platform's
- * host-resolved `/api/mcp` only exists on sites BIAB serves; this proxy gives
+ * host-resolved `/api/mcp` only exists on sites BD serves; this proxy gives
  * a self-hosted app the same connector surface, so the URL an org hands to
  * Claude / ChatGPT / Gemini is their own site.
  *
@@ -22,7 +22,7 @@ export async function POST(request: Request) {
 			{
 				jsonrpc: "2.0",
 				id: null,
-				error: { code: -32603, message: "BIAB is not configured." },
+				error: { code: -32603, message: "BD is not configured." },
 			},
 			{ status: 503 },
 		);

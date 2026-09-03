@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import BiabHeader from "~/components/biab/BiabHeader.vue";
-import BiabFooter from "~/components/biab/BiabFooter.vue";
-import NotFoundBody from "~/components/biab/NotFoundBody.vue";
+import BdHeader from "~/components/bd/BdHeader.vue";
+import BdFooter from "~/components/bd/BdFooter.vue";
+import NotFoundBody from "~/components/bd/NotFoundBody.vue";
 
 /**
  * The catch-all — legal pages, and everything else's 404.
@@ -21,7 +21,7 @@ const slug = computed(() => {
 	return Array.isArray(raw) ? raw.join("/") : (raw ?? "");
 });
 
-const { data } = await useFetch("/api/biab/legal", {
+const { data } = await useFetch("/api/bd/legal", {
 	query: { slug },
 });
 
@@ -37,16 +37,16 @@ useHead(() => ({
 </script>
 
 <template>
-	<BiabHeader />
+	<BdHeader />
 	<!--
 		`html` is sanitised server-side when the org saves it, and the title and
 		logo URL are escaped by `renderLegalPageHtml`. Style it via the
-		`data-biab-legal-*` hooks — the markup ships unstyled so it inherits
+		`data-bd-legal-*` hooks — the markup ships unstyled so it inherits
 		your site rather than fighting it.
 	-->
-	<main v-if="data?.found" class="biab-section biab-section--narrow">
+	<main v-if="data?.found" class="bd-section bd-section--narrow">
 		<div v-html="data.html" />
 	</main>
 	<NotFoundBody v-else />
-	<BiabFooter />
+	<BdFooter />
 </template>

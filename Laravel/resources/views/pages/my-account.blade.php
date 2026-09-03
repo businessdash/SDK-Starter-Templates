@@ -3,7 +3,7 @@
 @section('content')
     <h1>My account</h1>
     <p>Signed in as {{ data_get($user, 'email', 'a customer') }}.</p>
-    <a href="/api/biab-auth/sign-out">Sign out</a>
+    <a href="/api/bd-auth/sign-out">Sign out</a>
 
     @if (session('review_status'))
         <p class="notice">{{ session('review_status') }}</p>

@@ -1,18 +1,18 @@
 import * as WebBrowser from 'expo-web-browser'
 import { FlatList, StyleSheet, Text, View, Button } from 'react-native'
 
-import { getBiab } from '@/biab/client'
-import { amount } from '@/biab/money'
-import { useLoad, useVisitorToken } from '@/biab/useBiab'
+import { getBd } from '@/bd/client'
+import { amount } from '@/bd/money'
+import { useLoad, useVisitorToken } from '@/bd/useBd'
 import { LoadState } from '@/components/LoadState'
 
 export default function CartScreen() {
   const visitorToken = useVisitorToken()
 
   const state = useLoad(async () => {
-    const biab = getBiab()
-    if (!biab || !visitorToken) return null
-    return biab.cart.forVisitor(visitorToken).get()
+    const bd = getBd()
+    if (!bd || !visitorToken) return null
+    return bd.cart.forVisitor(visitorToken).get()
   }, [visitorToken])
 
   /**
@@ -22,13 +22,13 @@ export default function CartScreen() {
    * The field is `stripeUrl`, not `url`.
    */
   async function checkout() {
-    const biab = getBiab()
-    if (!biab || !visitorToken) return
+    const bd = getBd()
+    if (!bd || !visitorToken) return
 
-    const session = await biab.checkout.forVisitor(visitorToken).start({
+    const session = await bd.checkout.forVisitor(visitorToken).start({
       // Stripe substitutes the real id for the placeholder.
-      successUrl: 'biabstarter://checkout/success?session_id={CHECKOUT_SESSION_ID}',
-      cancelUrl: 'biabstarter://checkout/cancel',
+      successUrl: 'bdstarter://checkout/success?session_id={CHECKOUT_SESSION_ID}',
+      cancelUrl: 'bdstarter://checkout/cancel',
     })
 
     await WebBrowser.openBrowserAsync(session.stripeUrl)

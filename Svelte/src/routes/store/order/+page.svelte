@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
-	import StoreNav from '$lib/components/biab/StoreNav.svelte';
-	import { formatCents } from '$lib/biab/cart-client';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
+	import StoreNav from '$lib/components/bd/StoreNav.svelte';
+	import { formatCents } from '$lib/bd/cart-client';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -14,11 +14,11 @@
 <Header />
 <StoreNav />
 
-<main class="biab-section biab-section--narrow">
-	<div class="biab-card order">
+<main class="bd-section bd-section--narrow">
+	<div class="bd-card order">
 		{#if data.status && paid}
-			<span class="biab-badge" style="align-self: flex-start;">Paid</span>
-			<h1 class="biab-section__title">Thanks for your order.</h1>
+			<span class="bd-badge" style="align-self: flex-start;">Paid</span>
+			<h1 class="bd-section__title">Thanks for your order.</h1>
 			{#if data.status.customerName}
 				<p>We've emailed a receipt to {data.status.customerEmail ?? 'you'}.</p>
 			{/if}
@@ -29,16 +29,16 @@
 				</p>
 			{/if}
 		{:else if data.status}
-			<h1 class="biab-section__title">Payment pending</h1>
+			<h1 class="bd-section__title">Payment pending</h1>
 			<p>
 				Your checkout session is <strong>{data.status.paymentStatus}</strong>. If
 				you completed payment, it may take a moment to confirm.
 			</p>
 		{:else}
-			<h1 class="biab-section__title">Order status unavailable</h1>
+			<h1 class="bd-section__title">Order status unavailable</h1>
 			<p>We couldn't look up this checkout session.</p>
 		{/if}
-		<a class="biab-btn biab-btn--ghost" href="/store" style="align-self: flex-start;">
+		<a class="bd-btn bd-btn--ghost" href="/store" style="align-self: flex-start;">
 			Continue shopping
 		</a>
 	</div>

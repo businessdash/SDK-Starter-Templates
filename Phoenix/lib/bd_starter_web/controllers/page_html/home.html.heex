@@ -1,0 +1,50 @@
+<%!--
+  Every section reads the marketing bundle and falls back to local copy, so
+  this page is complete before you have credentials. `get_in` with a default
+  does the work an `??` chain does in the JS starters: the bundle is absent
+  entirely when BD isn't configured, and partially absent when a section
+  hasn't been authored yet.
+--%>
+<section class="hero">
+  <h1>{bundle(@bundle, ["sections", "hero", "headline"], "A business, in a box.")}</h1>
+  <p>{bundle(@bundle, ["sections", "hero", "subhead"], "Everything the operation needs, on your own domain.")}</p>
+  <a class="button" href={bundle(@bundle, ["sections", "hero", "ctaHref"], ~p"/store")}>
+    {bundle(@bundle, ["sections", "hero", "ctaLabel"], "Browse the store")}
+  </a>
+</section>
+
+<section class="about">
+  <h2>{bundle(@bundle, ["sections", "about", "title"], "About us")}</h2>
+  <p>{bundle(@bundle, ["sections", "about", "body"], "Tell your story here — this copy lives in the BD dashboard once you're connected.")}</p>
+</section>
+
+<section :if={@products != []} class="services">
+  <h2>{bundle(@bundle, ["sections", "services", "title"], "What we offer")}</h2>
+  <ul class="grid">
+    <li :for={product <- @products} class="card">
+      <a href={~p"/store/#{product["id"]}"}>
+        <h3>{product["name"]}</h3>
+        <p class="muted">{product["description"]}</p>
+      </a>
+    </li>
+  </ul>
+</section>
+
+<section :if={@posts != []} class="blog-teaser">
+  <h2>From the blog</h2>
+  <ul>
+    <li :for={post <- @posts}>
+      <a href={~p"/blog/#{post["slug"]}"}>{post["title"]}</a>
+    </li>
+  </ul>
+</section>
+
+<section class="contact">
+  <h2>Get in touch</h2>
+  <%!--
+    A dead view, so LiveView's DOM patcher isn't involved and the component can
+    own its subtree freely. Under a LiveView this same markup needs a
+    phx-update="ignore" wrapper — see the README.
+  --%>
+  <bd-form slug="general-inquiry" submit-label="Send"></bd-form>
+</section>

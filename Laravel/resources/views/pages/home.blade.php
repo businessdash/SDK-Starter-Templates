@@ -6,7 +6,7 @@
     {{--
         Every section reads the marketing bundle and falls back to local copy.
         `data_get` with a default is doing the work an `??` chain would do in
-        the JS starters — the bundle is absent entirely when BIAB isn't
+        the JS starters — the bundle is absent entirely when BD isn't
         configured, and partially absent when a section hasn't been authored.
     --}}
     <section class="hero">
@@ -21,7 +21,7 @@
 
     <section class="about">
         <h2>{{ data_get($bundle, 'sections.about.title', 'About us') }}</h2>
-        <p>{{ data_get($bundle, 'sections.about.body', 'Tell your story here — this copy lives in the BIAB dashboard once you are connected.') }}</p>
+        <p>{{ data_get($bundle, 'sections.about.body', 'Tell your story here — this copy lives in the BD dashboard once you are connected.') }}</p>
     </section>
 
     @if ($products)
@@ -58,30 +58,30 @@
     <section class="contact">
         <h2>Get in touch</h2>
         {{--
-            The <biab-form> web component, pointed at this app's own proxy.
+            The <bd-form> web component, pointed at this app's own proxy.
             It renders the whole `general-inquiry` schema — flex rows, the
             conditional preferred-method block, the availability picker —
             which a hand-written Blade fragment can't reproduce. The bearer
             key stays server-side because the component only ever talks to
-            /api/biab/forms/*.
+            /api/bd/forms/*.
         --}}
-        <biab-form slug="general-inquiry" submit-label="Send"></biab-form>
+        <bd-form slug="general-inquiry" submit-label="Send"></bd-form>
     </section>
 @endsection
 
 @push('head')
-    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.81/biab-forms.css">
+    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.81/bd-forms.css">
 @endpush
 
 @push('scripts')
     <script type="module">
-        import { setBiabFormClient } from "https://esm.sh/@businessdash/sdk@0.9.81/element";
+        import { setBdFormClient } from "https://esm.sh/@businessdash/sdk@0.9.81/element";
 
         // The element can't take a client through an HTML attribute, so set
-        // a DI default once. `baseUrl` is this app's proxy, not BIAB — the
+        // a DI default once. `baseUrl` is this app's proxy, not BD — the
         // proxy injects the real key server-side.
-        setBiabFormClient({
-            baseUrl: "/api/biab/forms",
+        setBdFormClient({
+            baseUrl: "/api/bd/forms",
             apiKey: "browser-proxy",
         });
     </script>

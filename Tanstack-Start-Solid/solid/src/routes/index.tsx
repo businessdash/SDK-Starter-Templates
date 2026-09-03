@@ -1,20 +1,20 @@
 import { createFileRoute } from "@tanstack/solid-router";
 
-import { About } from "../components/biab/About";
-import { Blog } from "../components/biab/Blog";
-import { Booking } from "../components/biab/Booking";
-import { ContactForm } from "../components/biab/ContactForm";
-import { BiabFooter } from "../components/biab/Footer";
-import { Gallery } from "../components/biab/Gallery";
-import { BiabHeader } from "../components/biab/Header";
-import { Hero } from "../components/biab/Hero";
-import { NewsBanner } from "../components/biab/NewsBanner";
-import { Services } from "../components/biab/Services";
+import { About } from "../components/bd/About";
+import { Blog } from "../components/bd/Blog";
+import { Booking } from "../components/bd/Booking";
+import { ContactForm } from "../components/bd/ContactForm";
+import { BdFooter } from "../components/bd/Footer";
+import { Gallery } from "../components/bd/Gallery";
+import { BdHeader } from "../components/bd/Header";
+import { Hero } from "../components/bd/Hero";
+import { NewsBanner } from "../components/bd/NewsBanner";
+import { Services } from "../components/bd/Services";
 import {
 	getHomeData,
 	getHomeJsonLd,
 	getSiteContentExtras,
-} from "../lib/biab-server-fns";
+} from "../lib/bd-server-fns";
 
 /**
  * `loader` runs `getHomeData` (a `createServerFn`) plus the banner/updates
@@ -49,7 +49,7 @@ function App() {
 	return (
 		<>
 			<NewsBanner banner={data().extras.banner} />
-			<BiabHeader />
+			<BdHeader />
 			<main>
 				<Hero hero={home().hero} />
 				<About body={home().about} />
@@ -59,7 +59,7 @@ function App() {
 				<Blog posts={home().blogPosts} />
 				<ContactForm schema={home().formSchema} slug={home().formSlug} />
 			</main>
-			<BiabFooter />
+			<BdFooter />
 		</>
 	);
 }

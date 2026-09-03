@@ -11,8 +11,8 @@ import {
 	TODOS_OBJECT_ID,
 	TODO_IMAGES_OBJECT_ID,
 	TODO_FORM_SLUG,
-} from "../biab.data-model.config";
-import { getBiab, getBiabDataModel, getSession, portalFor } from "./biab";
+} from "../bd.data-model.config";
+import { getBd, getBdDataModel, getSession, portalFor } from "./bd";
 import { cached } from "./cache";
 import { html, raw, render, type Raw } from "./html";
 import {
@@ -26,7 +26,7 @@ import {
 	resolveVisitor,
 } from "./layout";
 
-const NOT_CONFIGURED = new Error("BIAB not configured");
+const NOT_CONFIGURED = new Error("BD not configured");
 
 // ── store ──────────────────────────────────────────────────────────
 
@@ -90,16 +90,16 @@ export async function storePage(url: URL, isHxRequest = false): Promise<string> 
 	const origin = url.origin;
 	const params = url.searchParams;
 	const filters = parseStoreFilters(params);
-	const biab = getBiab();
+	const bd = getBd();
 
 	let layout: Raw;
 
-	if (!biab) {
+	if (!bd) {
 		layout = html`<div id="store-layout" class="store-layout store-layout--message">${errBlock(NOT_CONFIGURED)}</div>`;
 	} else {
 		try {
 			const [meta, cats] = await Promise.all([
-				biab.storefront.listProductsWithMeta({
+				bd.storefront.listProductsWithMeta({
 					...(filters.search ? { search: filters.search } : {}),
 					...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
 					...(filters.minRating != null ? { minRating: filters.minRating } : {}),
@@ -108,7 +108,7 @@ export async function storePage(url: URL, isHxRequest = false): Promise<string> 
 					...(filters.sort ? { sort: filters.sort } : {}),
 					limit: 48,
 				}),
-				biab.storefront.listCategories().catch(() => ({ items: [] as any[] })),
+				bd.storefront.listCategories().catch(() => ({ items: [] as any[] })),
 			]);
 			const items = (meta as any)?.items ?? [];
 			// Full layout (sidebar + grid) so an htmx swap keeps active filter
@@ -273,18 +273,18 @@ function productCard(p: any): Raw {
 }
 
 export async function productPage(origin: string, id: string): Promise<string> {
-	const biab = getBiab();
+	const bd = getBd();
 	let body: Raw;
-	if (!biab) body = errBlock(NOT_CONFIGURED);
+	if (!bd) body = errBlock(NOT_CONFIGURED);
 	else {
 		try {
-			const product = (await biab.storefront.getProduct(id)) as any;
+			const product = (await bd.storefront.getProduct(id)) as any;
 			// Detail extras — each fetched independently and gracefully omitted when
-			// empty (or when its endpoint is unavailable on an older BIAB).
+			// empty (or when its endpoint is unavailable on an older BD).
 			const [reviews, related, addons] = await Promise.all([
-				biab.storefront.getProductReviews(id, { limit: 20 }).catch(() => null),
-				biab.storefront.getRelatedProducts(id, { limit: 6 }).catch(() => null),
-				biab.storefront.getProductAddons(id).catch(() => null),
+				bd.storefront.getProductReviews(id, { limit: 20 }).catch(() => null),
+				bd.storefront.getRelatedProducts(id, { limit: 6 }).catch(() => null),
+				bd.storefront.getProductAddons(id).catch(() => null),
 			]);
 
 			const images = productImageUrls(product);
@@ -426,11 +426,11 @@ function relatedGrid(related: any): Raw {
 // ── cart ───────────────────────────────────────────────────────────
 
 async function getCartSnap(token: string | null): Promise<any> {
-	const biab = getBiab();
+	const bd = getBd();
 	const emptyCart = { items: [], itemCount: 0, subtotal: 0, currency: "USD" };
-	if (!biab || !token) return emptyCart;
+	if (!bd || !token) return emptyCart;
 	try {
-		return await biab.cart.forVisitor(token).get();
+		return await bd.cart.forVisitor(token).get();
 	} catch {
 		return emptyCart;
 	}
@@ -511,8 +511,8 @@ export async function handleCartOp(
 	req: Request,
 	op: "add" | "update" | "remove" | "coupon" | "coupon-remove" | "clear",
 ): Promise<{ body: string; setCookie?: string; status?: number }> {
-	const biab = getBiab();
-	if (!biab) return { body: render(errBlock(NOT_CONFIGURED)), status: 503 };
+	const bd = getBd();
+	if (!bd) return { body: render(errBlock(NOT_CONFIGURED)), status: 503 };
 	const form = await req.formData();
 	let token = getCookie(req, VISITOR_COOKIE);
 	let setCookie: string | undefined;
@@ -521,7 +521,7 @@ export async function handleCartOp(
 		token = r.token;
 		setCookie = r.setCookie;
 	}
-	const cart = biab.cart.forVisitor(token);
+	const cart = bd.cart.forVisitor(token);
 	try {
 		if (op === "add") {
 			const variantId = form.get("variantId");
@@ -547,12 +547,12 @@ export async function handleCartOp(
 // ── subscriptions ──────────────────────────────────────────────────
 
 export async function subscriptionsPage(origin: string): Promise<string> {
-	const biab = getBiab();
+	const bd = getBd();
 	let body: Raw;
-	if (!biab) body = errBlock(NOT_CONFIGURED);
+	if (!bd) body = errBlock(NOT_CONFIGURED);
 	else {
 		try {
-			const res = (await biab.subscriptions.list()) as any;
+			const res = (await bd.subscriptions.list()) as any;
 			const items = res?.items ?? [];
 			body = items.length
 				? html`<div class="plan-grid">${items.map(
@@ -589,10 +589,10 @@ export async function reviewsMore(offset: number): Promise<string> {
 }
 
 async function reviewItems(offset: number): Promise<Raw> {
-	const biab = getBiab();
-	if (!biab) return html`<li>${errBlock(NOT_CONFIGURED)}</li>`;
+	const bd = getBd();
+	if (!bd) return html`<li>${errBlock(NOT_CONFIGURED)}</li>`;
 	try {
-		const res = (await biab.reviews.list({ limit: 10, offset })) as any;
+		const res = (await bd.reviews.list({ limit: 10, offset })) as any;
 		const items = res?.items ?? [];
 		if (!items.length && offset === 0) return html`<li class="muted">No reviews yet.</li>`;
 		const more =
@@ -627,14 +627,14 @@ function stars(n: any): string {
 // ── updates ────────────────────────────────────────────────────────
 
 export async function updatesPage(origin: string): Promise<string> {
-	const biab = getBiab();
+	const bd = getBd();
 	let body: Raw;
-	if (!biab) body = errBlock(NOT_CONFIGURED);
+	if (!bd) body = errBlock(NOT_CONFIGURED);
 	else {
 		try {
 			// biome-ignore lint: updates is an untyped bundle passthrough at 0.9.5
-			const bundle = (await cached("bundle:home:en", ["biab:marketing"], () =>
-				biab.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
+			const bundle = (await cached("bundle:home:en", ["bd:marketing"], () =>
+				bd.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
 			)) as any;
 			const items = normalizeUpdates(bundle?.updates);
 			body = items.length
@@ -683,12 +683,12 @@ function cap(s: any): string {
 // ── parallel pages (programmatic SEO) ──────────────────────────────
 
 export async function servicesPage(origin: string): Promise<string> {
-	const biab = getBiab();
+	const bd = getBd();
 	let body: Raw;
-	if (!biab) body = errBlock(NOT_CONFIGURED);
+	if (!bd) body = errBlock(NOT_CONFIGURED);
 	else {
 		try {
-			const res = (await biab.parallelPages.listVariants("service-area")) as any;
+			const res = (await bd.parallelPages.listVariants("service-area")) as any;
 			const variants = res?.variants ?? res?.items ?? [];
 			body = variants.length
 				? html`<ul class="variant-list">${variants.map((v: any) => {
@@ -712,13 +712,13 @@ export async function servicesPage(origin: string): Promise<string> {
 }
 
 export async function serviceAreaPage(origin: string, service: string, area: string): Promise<string> {
-	const biab = getBiab();
+	const bd = getBd();
 	let body: Raw;
 	let title = `${service} in ${area}`;
-	if (!biab) body = errBlock(NOT_CONFIGURED);
+	if (!bd) body = errBlock(NOT_CONFIGURED);
 	else {
 		try {
-			const res = (await biab.parallelPages.render("service-area", { service, area })) as any;
+			const res = (await bd.parallelPages.render("service-area", { service, area })) as any;
 			const meta = res?.meta ?? {};
 			if (meta.title) title = meta.title;
 			const bdy = res?.body;
@@ -743,8 +743,8 @@ export async function myAccountPage(origin: string, sessionCookie: string | null
 			<div class="signin-card">
 				<p>You're not signed in.</p>
 				<div class="signin-card__actions">
-					<a class="btn btn--primary" href="/api/biab-auth/sign-in">Sign in</a>
-					<a class="btn btn--ghost" href="/api/biab-auth/sign-up">Create account</a>
+					<a class="btn btn--primary" href="/api/bd-auth/sign-in">Sign in</a>
+					<a class="btn btn--ghost" href="/api/bd-auth/sign-up">Create account</a>
 				</div>
 			</div>`;
 	} else {
@@ -759,7 +759,7 @@ export async function myAccountPage(origin: string, sessionCookie: string | null
 		body = html`<header class="page__head"><h1 class="page__title">My account</h1></header>
 			<div class="account-head">
 				<p>Signed in as <strong>${u.firstName || u.email || "customer"}</strong></p>
-				<a class="btn btn--ghost btn--sm" href="/api/biab-auth/sign-out">Sign out</a>
+				<a class="btn btn--ghost btn--sm" href="/api/bd-auth/sign-out">Sign out</a>
 			</div>
 			<h2 class="section-title">Your work</h2>
 			${jobs.length
@@ -801,7 +801,7 @@ export async function submitReviewFragment(req: Request): Promise<string> {
 // ── todos (custom-collections demo) ────────────────────────────────
 //
 // The relational custom-collections demo declared in
-// `biab.data-model.config.ts`: a `todos` collection plus `todoImages`, whose
+// `bd.data-model.config.ts`: a `todos` collection plus `todoImages`, whose
 // `todo` field is a RELATION back to `todos`.
 //
 // READ: the SDK's documented custom-database read path —
@@ -811,7 +811,7 @@ export async function submitReviewFragment(req: Request): Promise<string> {
 // objects, then group images by the todo record they point at.
 //
 // WRITE: submitting the generated "Todo Form" (slug `todo-form`) via
-// `biab.forms.submit(...)` — forms are the SDK's documented create path for
+// `bd.forms.submit(...)` — forms are the SDK's documented create path for
 // custom collections; there is no direct row-write surface.
 
 type TodoImage = { url: string; alt: string | null; label: string | null };
@@ -830,9 +830,9 @@ function asOptionalText(value: unknown): string | null {
 async function readTodos(): Promise<
 	{ available: true; todos: TodoItem[] } | { available: false; reason: string }
 > {
-	const dataModel = getBiabDataModel();
+	const dataModel = getBdDataModel();
 	if (!dataModel) {
-		return { available: false, reason: "BIAB isn't configured — see .env.example." };
+		return { available: false, reason: "BD isn't configured — see .env.example." };
 	}
 	const [todosRes, imagesRes] = await Promise.all([
 		dataModel.listRecords({ object: TODOS_OBJECT_ID, limit: 50 }),
@@ -925,12 +925,12 @@ export async function todosPage(origin: string): Promise<string> {
 		origin,
 		title: "Todos",
 		description:
-			"A relational custom-collections demo — todos and their images live in your BIAB custom database.",
+			"A relational custom-collections demo — todos and their images live in your BD custom database.",
 		body: html`<header class="page__head">
 				<h1 class="page__title">Todos</h1>
 				<p class="muted">
 					A relational custom-collections demo — todos and their images live in
-					your BIAB custom database.
+					your BD custom database.
 				</p>
 			</header>
 			${await todosRegion()}`,
@@ -939,9 +939,9 @@ export async function todosPage(origin: string): Promise<string> {
 
 /** POST /todos — create via the generated "Todo Form", re-render the region. */
 export async function todosCreateFragment(req: Request): Promise<string> {
-	const biab = getBiab();
-	if (!biab) {
-		return render(await todosRegion({ text: "BIAB isn't configured — see .env.example.", error: true }));
+	const bd = getBd();
+	if (!bd) {
+		return render(await todosRegion({ text: "BD isn't configured — see .env.example.", error: true }));
 	}
 	const form = await req.formData();
 	const title = String(form.get("title") ?? "").trim();
@@ -951,7 +951,7 @@ export async function todosCreateFragment(req: Request): Promise<string> {
 	}
 	// Keyed by each field's output key — `validateFormSubmission` accepts
 	// output keys (preferred) or legacy field ids.
-	const result = await biab.forms.submit(TODO_FORM_SLUG, {
+	const result = await bd.forms.submit(TODO_FORM_SLUG, {
 		title,
 		...(notes ? { notes } : {}),
 	});

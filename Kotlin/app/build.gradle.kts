@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "app.biabstarter"
+    namespace = "app.bdstarter"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "app.biabstarter"
+        applicationId = "app.bdstarter"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -25,9 +25,9 @@ android {
             if (file.exists()) file.inputStream().use { load(it) }
         }
 
-        buildConfigField("String", "BIAB_HOST", "\"${properties.getProperty("biab.host") ?: "https://www.biab.app"}\"")
-        buildConfigField("String", "BIAB_SITE_ID", "\"${properties.getProperty("biab.siteId") ?: ""}\"")
-        buildConfigField("String", "BIAB_PK", "\"${properties.getProperty("biab.publishableKey") ?: ""}\"")
+        buildConfigField("String", "BD_HOST", "\"${properties.getProperty("bd.host") ?: "https://www.biab.app"}\"")
+        buildConfigField("String", "BD_SITE_ID", "\"${properties.getProperty("bd.siteId") ?: ""}\"")
+        buildConfigField("String", "BD_PK", "\"${properties.getProperty("bd.publishableKey") ?: ""}\"")
     }
 
     buildFeatures {
@@ -46,7 +46,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":biab"))
+    implementation(project(":bd"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)

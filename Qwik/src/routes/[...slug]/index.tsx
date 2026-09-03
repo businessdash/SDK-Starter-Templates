@@ -6,7 +6,7 @@ import {
 	resolveLegalPage,
 } from "@businessdash/sdk/legal";
 
-import { getBiab } from "../../lib/biab";
+import { getBd } from "../../lib/bd";
 
 /**
  * The catch-all — legal pages, and everything else's 404.
@@ -21,7 +21,7 @@ import { getBiab } from "../../lib/biab";
  * build failure, which would turn "I wrote my own policy" into a broken deploy.
  */
 export const useLegalPage = routeLoader$(async (event) => {
-	const client = getBiab();
+	const client = getBd();
 	// Returns null for an unknown slug AND when BusinessDash is unreachable —
 	// this route runs on every unmatched URL, so it must never throw.
 	const document = client
@@ -47,11 +47,11 @@ export default component$(() => {
 
 	if (!page.value) {
 		return (
-			<main class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">404</span>
-					<h1 class="biab-section__title">We couldn't find that page</h1>
-					<p class="biab-section__sub">
+			<main class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">404</span>
+					<h1 class="bd-section__title">We couldn't find that page</h1>
+					<p class="bd-section__sub">
 						The link may be out of date, or the page may have moved.
 					</p>
 				</div>
@@ -63,11 +63,11 @@ export default component$(() => {
 	}
 
 	return (
-		<main class="biab-section biab-section--narrow">
+		<main class="bd-section bd-section--narrow">
 			{/*
 			 * `html` is sanitised server-side when the org saves it, and the
 			 * title and logo URL are escaped by `renderLegalPageHtml`. Style it
-			 * via the `data-biab-legal-*` hooks — the markup ships unstyled so
+			 * via the `data-bd-legal-*` hooks — the markup ships unstyled so
 			 * it inherits your site rather than fighting it.
 			 */}
 			<div dangerouslySetInnerHTML={page.value.html} />

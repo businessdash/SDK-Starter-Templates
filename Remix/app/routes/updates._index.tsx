@@ -5,8 +5,8 @@ import { SiteHeader } from "~/components/SiteHeader";
 import {
 	getMarketingBundle,
 	getUpdatesFromBundle,
-} from "~/lib/biab-bundle.server";
-import { isServiceSuspended } from "~/lib/biab.server";
+} from "~/lib/bd-bundle.server";
+import { isServiceSuspended } from "~/lib/bd.server";
 
 export const meta: MetaFunction = () => [{ title: "Updates — Your Business" }];
 

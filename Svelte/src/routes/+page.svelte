@@ -1,14 +1,14 @@
 <script lang="ts">
-	import About from '$lib/components/biab/About.svelte';
-	import Banner from '$lib/components/biab/Banner.svelte';
-	import Blog from '$lib/components/biab/Blog.svelte';
-	import Booking from '$lib/components/biab/Booking.svelte';
-	import ContactForm from '$lib/components/biab/ContactForm.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
-	import Gallery from '$lib/components/biab/Gallery.svelte';
-	import Header from '$lib/components/biab/Header.svelte';
-	import Hero from '$lib/components/biab/Hero.svelte';
-	import Services from '$lib/components/biab/Services.svelte';
+	import About from '$lib/components/bd/About.svelte';
+	import Banner from '$lib/components/bd/Banner.svelte';
+	import Blog from '$lib/components/bd/Blog.svelte';
+	import Booking from '$lib/components/bd/Booking.svelte';
+	import ContactForm from '$lib/components/bd/ContactForm.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
+	import Gallery from '$lib/components/bd/Gallery.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Hero from '$lib/components/bd/Hero.svelte';
+	import Services from '$lib/components/bd/Services.svelte';
 
 	import type { PageData } from './$types';
 
@@ -16,15 +16,15 @@
 </script>
 
 <svelte:head>
-	<!-- Server-rendered LocalBusiness + WebSite JSON-LD (see biab-seo.ts). -->
+	<!-- Server-rendered LocalBusiness + WebSite JSON-LD (see bd-seo.ts). -->
 	{@html data.jsonLd}
 </svelte:head>
 
 {#if data.unavailable}
 	<Header />
-	<main class="biab-section biab-section--narrow">
-		<div class="biab-empty">
-			<h1 class="biab-section__title" style="margin-bottom: 0.5rem;">
+	<main class="bd-section bd-section--narrow">
+		<div class="bd-empty">
+			<h1 class="bd-section__title" style="margin-bottom: 0.5rem;">
 				Site temporarily unavailable
 			</h1>
 			<p>

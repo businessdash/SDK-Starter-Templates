@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 
 import { mcpManifestHandler } from "@businessdash/sdk/mcp";
 
-import { getDistributionConfig } from "~/lib/biab-distribution.server";
+import { getDistributionConfig } from "~/lib/bd-distribution.server";
 
 /**
  * `/.well-known/mcp.json` (resource route) — the MCP discovery manifest, with

@@ -12,7 +12,7 @@
  *   - subscribes via `client.followers.join(...)` (browser-safe — the
  *     publishable token is origin-locked, public `followers:self` scope only);
  *   - persists a per-browser "already subscribed" hint in `localStorage` under
- *     `biab.followers.<siteId>` (exactly what `useFollowers` does internally)
+ *     `bd.followers.<siteId>` (exactly what `useFollowers` does internally)
  *     and reads it on mount to hide the form for return visitors.
  *
  * Graceful fallback: when the publishable creds are unset (an unconfigured
@@ -44,9 +44,9 @@ const {
 // PUBLIC_ env is inlined into the client bundle below; here we only read it to
 // pick which mode (live vs placeholder) to render. The browser receives these
 // same values via the data-* attributes for the join call.
-const pk = import.meta.env.PUBLIC_BIAB_PK;
-const siteId = import.meta.env.PUBLIC_BIAB_SITE_ID;
-const baseUrl = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL ?? "";
+const pk = import.meta.env.PUBLIC_BD_PK;
+const siteId = import.meta.env.PUBLIC_BD_SITE_ID;
+const baseUrl = import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL ?? "";
 const enabled = Boolean(pk && siteId);
 ---
 
@@ -60,18 +60,18 @@ const enabled = Boolean(pk && siteId);
 		data-base-url={baseUrl}
 		data-source={idPrefix}
 	>
-		<label class="biab-label" for={`${idPrefix}-email`}>{label}</label>
+		<label class="bd-label" for={`${idPrefix}-email`}>{label}</label>
 		<div class="subscribe__row">
 			<input
 				autocomplete="email"
-				class="biab-input"
+				class="bd-input"
 				id={`${idPrefix}-email`}
 				name="email"
 				placeholder={placeholder}
 				required
 				type="email"
 			/>
-			<button class="biab-btn" type="submit" data-subscribe-btn>
+			<button class="bd-btn" type="submit" data-subscribe-btn>
 				{buttonLabel}
 			</button>
 		</div>
@@ -90,10 +90,10 @@ const enabled = Boolean(pk && siteId);
 		gap: 0.5rem;
 		align-items: stretch;
 	}
-	.subscribe__row .biab-input {
+	.subscribe__row .bd-input {
 		flex: 1;
 	}
-	.subscribe__row .biab-btn {
+	.subscribe__row .bd-btn {
 		flex-shrink: 0;
 	}
 	.subscribe__note {
@@ -107,7 +107,7 @@ const enabled = Boolean(pk && siteId);
 </style>
 
 <script>
-	import { createBiabClient } from "@businessdash/sdk";
+	import { createBdClient } from "@businessdash/sdk";
 
 	type Mounted = HTMLFormElement & { dataset: DOMStringMap };
 
@@ -126,7 +126,7 @@ const enabled = Boolean(pk && siteId);
 			const siteId = form.dataset.siteId ?? "";
 			const baseUrl = form.dataset.baseUrl || undefined;
 			const source = form.dataset.source ?? "subscribe";
-			const storeKey = `biab.followers.${siteId}`;
+			const storeKey = `bd.followers.${siteId}`;
 
 			function showNote(text: string, isError = false) {
 				if (!note) return;
@@ -169,7 +169,7 @@ const enabled = Boolean(pk && siteId);
 				}
 
 				try {
-					const client = createBiabClient({
+					const client = createBdClient({
 						apiKey: pk,
 						siteId,
 						...(baseUrl ? { baseUrl } : {}),

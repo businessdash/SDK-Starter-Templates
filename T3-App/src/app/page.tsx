@@ -1,35 +1,35 @@
 import { renderJsonLdToHtml } from "@businessdash/sdk/seo";
 
-import { About } from "@/app/_components/biab/About";
-import { Blog } from "@/app/_components/biab/Blog";
-import { Booking } from "@/app/_components/biab/Booking";
-import { ContactForm } from "@/app/_components/biab/ContactForm";
-import { BiabFooter } from "@/app/_components/biab/Footer";
-import { Gallery } from "@/app/_components/biab/Gallery";
-import { BiabHeader } from "@/app/_components/biab/Header";
-import { Hero } from "@/app/_components/biab/Hero";
-import { NewsBanner } from "@/app/_components/biab/NewsBanner";
-import { Reviews } from "@/app/_components/biab/Reviews";
-import { Services } from "@/app/_components/biab/Services";
-import { Updates } from "@/app/_components/biab/Updates";
+import { About } from "@/app/_components/bd/About";
+import { Blog } from "@/app/_components/bd/Blog";
+import { Booking } from "@/app/_components/bd/Booking";
+import { ContactForm } from "@/app/_components/bd/ContactForm";
+import { BdFooter } from "@/app/_components/bd/Footer";
+import { Gallery } from "@/app/_components/bd/Gallery";
+import { BdHeader } from "@/app/_components/bd/Header";
+import { Hero } from "@/app/_components/bd/Hero";
+import { NewsBanner } from "@/app/_components/bd/NewsBanner";
+import { Reviews } from "@/app/_components/bd/Reviews";
+import { Services } from "@/app/_components/bd/Services";
+import { Updates } from "@/app/_components/bd/Updates";
 import {
 	getBannerFromBundle,
-	getBiabBundle,
+	getBdBundle,
 	getReviewsFromBundle,
 	getUpdatesFromBundle,
 	SiteUnavailableError,
-} from "@/server/lib/biab";
-import { homeJsonLd } from "@/server/lib/biab-seo";
+} from "@/server/lib/bd";
+import { homeJsonLd } from "@/server/lib/bd-seo";
 import { api } from "@/trpc/server";
 
 /**
- * Server Component composes the BIAB home. `api.biab.home()` calls the tRPC
- * procedure directly (no HTTP round-trip), and a parallel `getBiabBundle`
+ * Server Component composes the BD home. `api.bd.home()` calls the tRPC
+ * procedure directly (no HTTP round-trip), and a parallel `getBdBundle`
  * read supplies the news banner, the updates feed, and the reviews aggregate +
  * first page. JSON-LD (`LocalBusiness` + `WebSite`) is injected server-side so
  * crawlers see structured data.
  *
- * If the org's billing is fully suspended, `getBiabBundle` throws
+ * If the org's billing is fully suspended, `getBdBundle` throws
  * `SiteUnavailableError`; we catch it and render a minimal "site unavailable"
  * state instead of the full page.
  */
@@ -39,7 +39,7 @@ export default async function Home() {
 	let bundle = null;
 	let unavailable = false;
 	try {
-		bundle = await getBiabBundle("home");
+		bundle = await getBdBundle("home");
 	} catch (err) {
 		if (err instanceof SiteUnavailableError) unavailable = true;
 		else throw err;
@@ -47,15 +47,15 @@ export default async function Home() {
 
 	if (unavailable) {
 		return (
-			<main className="biab-section biab-section--narrow">
-				<div className="biab-empty">
+			<main className="bd-section bd-section--narrow">
+				<div className="bd-empty">
 					This site is temporarily unavailable. Please check back soon.
 				</div>
 			</main>
 		);
 	}
 
-	const [data, jsonLd] = await Promise.all([api.biab.home(), homeJsonLd()]);
+	const [data, jsonLd] = await Promise.all([api.bd.home(), homeJsonLd()]);
 	const banner = getBannerFromBundle(bundle);
 	const updates = getUpdatesFromBundle(bundle);
 	const reviews = getReviewsFromBundle(bundle);
@@ -71,7 +71,7 @@ export default async function Home() {
 				hidden
 			/>
 			<NewsBanner banner={banner} />
-			<BiabHeader />
+			<BdHeader />
 			<main>
 				<Hero hero={data.hero} />
 				<About body={data.about} />
@@ -83,7 +83,7 @@ export default async function Home() {
 				<Blog posts={data.blogPosts} />
 				<ContactForm schema={data.formSchema} slug={data.formSlug} />
 			</main>
-			<BiabFooter />
+			<BdFooter />
 		</>
 	);
 }

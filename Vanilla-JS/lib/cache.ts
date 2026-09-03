@@ -1,10 +1,10 @@
 /**
- * Tiny in-memory, tag-keyed TTL cache for the server's BIAB reads.
+ * Tiny in-memory, tag-keyed TTL cache for the server's BD reads.
  *
  * Frameworks like Next give you `revalidateTag`; a plain Bun server doesn't,
  * so this is the real cache the revalidation webhook busts. Every cached read
- * is stored under a key with a set of tags (e.g. `biab:marketing`,
- * `biab:catalog`). When BIAB publishes a change it POSTs `/api/biab/revalidate`
+ * is stored under a key with a set of tags (e.g. `bd:marketing`,
+ * `bd:catalog`). When BD publishes a change it POSTs `/api/bd/revalidate`
  * with the affected tags; `invalidateTags()` drops every matching entry so the
  * next request refetches fresh data — no redeploy, no stale page.
  */

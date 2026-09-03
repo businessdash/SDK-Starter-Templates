@@ -1,0 +1,38 @@
+<h1>Todos</h1>
+
+<p class="muted">
+  The relational custom-database demo: <code>todos</code> plus
+  <code>todoImages</code>, whose <code>todo</code> field is a relation back.
+  Reads come from the data-model API; the create goes through the generated form.
+</p>
+
+<form method="post" action={~p"/todos"}>
+  <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+  <input type="text" name="title" required placeholder="What needs doing?" />
+  <input type="text" name="notes" placeholder="Notes (optional)" />
+  <button type="submit">Add</button>
+</form>
+
+<ul :if={@todos != []} class="todos">
+  <li :for={todo <- @todos}>
+    <strong>{get_in(todo, ["fields", "title"])}</strong>
+    <span :if={get_in(todo, ["fields", "done"])} class="done">done</span>
+    <p class="muted">{get_in(todo, ["fields", "notes"])}</p>
+    <img
+      :for={image <- Map.get(@images_by_todo, todo["id"], [])}
+      src={get_in(image, ["fields", "url"])}
+      alt=""
+      width="120"
+    />
+  </li>
+</ul>
+
+<p :if={@todos == []} class="muted">
+  <span :if={@configured}>
+    No todos yet. Run <code>npm run sync-data-model</code>, promote the model in
+    the dashboard, then set the generated "Todo Form" Live.
+  </span>
+  <span :if={not @configured}>
+    Connect this app to a BD site to see live records.
+  </span>
+</p>

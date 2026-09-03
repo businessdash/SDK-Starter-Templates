@@ -5,15 +5,15 @@
  * `{ messages: [{ text, link, linkText, displayFromUtc, displayUntilUtc }] }`.
  */
 
-import { biab, el } from "/biab.js";
+import { bd, el } from "/bd.js";
 
-const DISMISS_KEY = "biab-banner-dismissed";
+const DISMISS_KEY = "bd-banner-dismissed";
 
 export async function mountBanner(root) {
 	if (!root) return;
 	let extras;
 	try {
-		extras = await biab.content.extras();
+		extras = await bd.content.extras();
 	} catch {
 		return; // unconfigured / unavailable → no banner
 	}

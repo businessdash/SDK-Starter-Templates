@@ -7,7 +7,7 @@ export const env = createEnv({
    * isn't built with invalid env vars.
    */
   server: {
-    // Optional: the BIAB Web Content SDK needs NO database. Set this only if you
+    // Optional: the BD Web Content SDK needs NO database. Set this only if you
     // use this starter's example tRPC/DB features. Accessing `db` without it
     // throws a helpful error (see src/server/db/index.ts) rather than crashing
     // the app at boot.
@@ -15,15 +15,15 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
-    BIAB_API_KEY: z.string().optional(),
+    BD_API_KEY: z.string().optional(),
     // Legacy fallbacks — prefer the NEXT_PUBLIC_ twins below (non-secret, and the
     // browser needs them). Kept optional so existing deployments don't break.
-    BIAB_SITE_ID: z.string().uuid().optional(),
-    BIAB_PACKAGE_API_BASE_URL: z.string().url().optional(),
-    BIAB_REVALIDATION_SECRET: z.string().optional(),
+    BD_SITE_ID: z.string().uuid().optional(),
+    BD_PACKAGE_API_BASE_URL: z.string().url().optional(),
+    BD_REVALIDATION_SECRET: z.string().optional(),
     // Public URL of your auth handler's /callback route. Required for
     // sign-in / sign-up / customer portal. Register it as a WorkOS redirect URI.
-    BIAB_AUTH_CALLBACK_URL: z.string().url().optional(),
+    BD_AUTH_CALLBACK_URL: z.string().url().optional(),
   },
 
   /**
@@ -35,14 +35,14 @@ export const env = createEnv({
     // Production origin used in server-side JSON-LD (LocalBusiness / WebSite).
     // Falls back to https://example.com when unset.
     NEXT_PUBLIC_SITE_URL: z.string().url().optional(),
-    // ── Browser-safe BIAB followers/subscribe credentials ──────────────
+    // ── Browser-safe BD followers/subscribe credentials ──────────────
     // Publishable token (`pk_…`): origin-locked, rate-limited, scoped to
     // `followers:self` — safe to expose to the browser. Powers the newsletter
     // signup. When PK + SITE_ID are unset the Subscribe component degrades to a
     // "coming soon" placeholder so the template still runs unconfigured.
-    NEXT_PUBLIC_BIAB_PK: z.string().optional(),
-    NEXT_PUBLIC_BIAB_SITE_ID: z.string().uuid().optional(),
-    NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL: z.string().url().optional(),
+    NEXT_PUBLIC_BD_PK: z.string().optional(),
+    NEXT_PUBLIC_BD_SITE_ID: z.string().uuid().optional(),
+    NEXT_PUBLIC_BD_PACKAGE_API_BASE_URL: z.string().url().optional(),
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
   },
 
@@ -53,16 +53,16 @@ export const env = createEnv({
   runtimeEnv: {
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
-    BIAB_API_KEY: process.env.BIAB_API_KEY,
-    BIAB_SITE_ID: process.env.BIAB_SITE_ID,
-    BIAB_PACKAGE_API_BASE_URL: process.env.BIAB_PACKAGE_API_BASE_URL,
-    BIAB_REVALIDATION_SECRET: process.env.BIAB_REVALIDATION_SECRET,
-    BIAB_AUTH_CALLBACK_URL: process.env.BIAB_AUTH_CALLBACK_URL,
+    BD_API_KEY: process.env.BD_API_KEY,
+    BD_SITE_ID: process.env.BD_SITE_ID,
+    BD_PACKAGE_API_BASE_URL: process.env.BD_PACKAGE_API_BASE_URL,
+    BD_REVALIDATION_SECRET: process.env.BD_REVALIDATION_SECRET,
+    BD_AUTH_CALLBACK_URL: process.env.BD_AUTH_CALLBACK_URL,
     NEXT_PUBLIC_SITE_URL: process.env.NEXT_PUBLIC_SITE_URL,
-    NEXT_PUBLIC_BIAB_PK: process.env.NEXT_PUBLIC_BIAB_PK,
-    NEXT_PUBLIC_BIAB_SITE_ID: process.env.NEXT_PUBLIC_BIAB_SITE_ID,
-    NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL:
-      process.env.NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL,
+    NEXT_PUBLIC_BD_PK: process.env.NEXT_PUBLIC_BD_PK,
+    NEXT_PUBLIC_BD_SITE_ID: process.env.NEXT_PUBLIC_BD_SITE_ID,
+    NEXT_PUBLIC_BD_PACKAGE_API_BASE_URL:
+      process.env.NEXT_PUBLIC_BD_PACKAGE_API_BASE_URL,
     // NEXT_PUBLIC_CLIENTVAR: process.env.NEXT_PUBLIC_CLIENTVAR,
   },
   /**

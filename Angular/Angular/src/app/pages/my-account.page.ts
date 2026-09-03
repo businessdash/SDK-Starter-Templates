@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
-import { biabApi, type PortalMe } from "../lib/biab-api.client";
+import { bdApi, type PortalMe } from "../lib/bd-api.client";
 
 /**
- * Customer portal. The auth handler (mounted at /api/biab-auth/*) sets an
+ * Customer portal. The auth handler (mounted at /api/bd-auth/*) sets an
  * httpOnly session cookie; the server reads it and returns the signed-in
- * user plus their work bundle (open jobs etc.) from `/api/biab/portal/me`.
+ * user plus their work bundle (open jobs etc.) from `/api/bd/portal/me`.
  * Signed-out visitors get sign-in / sign-up links (plain hrefs — the handler
  * 302s through WorkOS). Signed-in customers can submit a review (reactive
- * form → `/api/biab/portal/review`).
+ * form → `/api/bd/portal/review`).
  */
 @Component({
-	selector: "biab-my-account-page",
+	selector: "bd-my-account-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ReactiveFormsModule],
 	template: `
@@ -23,13 +23,13 @@ import { biabApi, type PortalMe } from "../lib/biab-api.client";
 			} @else if (!me()?.signedIn) {
 				<p class="muted">Sign in to see your jobs, quotes, and invoices.</p>
 				<p class="account-links">
-					<a class="biab-btn" href="/api/biab-auth/sign-in">Sign in</a>
-					<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-up">Create account</a>
+					<a class="bd-btn" href="/api/bd-auth/sign-in">Sign in</a>
+					<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">Create account</a>
 				</p>
 			} @else if (me(); as m) {
 				<p>
 					Signed in as <strong>{{ m.user?.firstName || m.user?.email }}</strong>
-					· <a href="/api/biab-auth/sign-out">Sign out</a>
+					· <a href="/api/bd-auth/sign-out">Sign out</a>
 				</p>
 
 				@if (m.work; as work) {
@@ -78,7 +78,7 @@ import { biabApi, type PortalMe } from "../lib/biab-api.client";
 							Your review
 							<textarea formControlName="body" rows="3"></textarea>
 						</label>
-						<button class="biab-btn" type="submit" [disabled]="reviewForm.invalid || reviewStatus() === 'sending'">
+						<button class="bd-btn" type="submit" [disabled]="reviewForm.invalid || reviewStatus() === 'sending'">
 							{{ reviewStatus() === "sending" ? "Sending…" : "Submit review" }}
 						</button>
 						@if (reviewStatus() === "error") {
@@ -102,7 +102,7 @@ export class MyAccountPage implements OnInit {
 	});
 
 	async ngOnInit() {
-		this.me.set(await biabApi.portalMe());
+		this.me.set(await bdApi.portalMe());
 		this.state.set("ready");
 	}
 
@@ -110,7 +110,7 @@ export class MyAccountPage implements OnInit {
 		if (this.reviewForm.invalid) return;
 		this.reviewStatus.set("sending");
 		const { rating, title, body } = this.reviewForm.getRawValue();
-		const res = await biabApi.submitReview({
+		const res = await bdApi.submitReview({
 			rating: Number(rating),
 			...(title ? { title } : {}),
 			body,

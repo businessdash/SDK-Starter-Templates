@@ -1,4 +1,4 @@
-import { biab, el, empty } from "../biab.js";
+import { bd, el, empty } from "../bd.js";
 
 /**
  * Calendly-shape end-to-end booking flow:
@@ -52,7 +52,7 @@ export async function renderBooking(target) {
 		state.pickedSlot = null;
 		rerender();
 		try {
-			state.slots = await biab.scheduling.getAvailableSlots(slug, {
+			state.slots = await bd.scheduling.getAvailableSlots(slug, {
 				from: startOfTomorrow(),
 				to: plusWeek(startOfTomorrow()),
 			});
@@ -74,7 +74,7 @@ export async function renderBooking(target) {
 		state.error = null;
 		rerender();
 		try {
-			const result = await biab.scheduling.confirmBooking({
+			const result = await bd.scheduling.confirmBooking({
 				eventTypeSlug: state.selectedSlug,
 				startAt: new Date(state.pickedSlot),
 				invitee: {
@@ -95,21 +95,21 @@ export async function renderBooking(target) {
 	}
 
 	function rerender() {
-		const lead = el("div", { class: "biab-section__lead" }, [
-			el("span", { class: "biab-section__eyebrow" }, ["Schedule"]),
-			el("h2", { class: "biab-section__title" }, ["Book a time"]),
-			el("p", { class: "biab-section__sub" }, [
+		const lead = el("div", { class: "bd-section__lead" }, [
+			el("span", { class: "bd-section__eyebrow" }, ["Schedule"]),
+			el("h2", { class: "bd-section__title" }, ["Book a time"]),
+			el("p", { class: "bd-section__sub" }, [
 				"Pick a slot and we'll send confirmation + a calendar invite.",
 			]),
 		]);
 
 		if (state.confirmation) {
 			target.replaceChildren(
-				el("div", { class: "biab-card booking" }, [
-					el("span", { class: "biab-badge", style: "align-self: flex-start;" }, [
+				el("div", { class: "bd-card booking" }, [
+					el("span", { class: "bd-badge", style: "align-self: flex-start;" }, [
 						"Booked",
 					]),
-					el("h2", { class: "biab-section__title" }, ["You're on the calendar."]),
+					el("h2", { class: "bd-section__title" }, ["You're on the calendar."]),
 					el("p", { style: "color: var(--text);" }, [state.confirmation]),
 				]),
 			);
@@ -119,9 +119,9 @@ export async function renderBooking(target) {
 		if (state.eventTypes.length === 0) {
 			target.replaceChildren(
 				lead,
-				el("div", { class: "biab-card booking" }, [
+				el("div", { class: "bd-card booking" }, [
 					empty(
-						"No event types configured yet. Add one in BIAB at Dashboard → Scheduling → Event Types.",
+						"No event types configured yet. Add one in BD at Dashboard → Scheduling → Event Types.",
 					),
 				]),
 			);
@@ -131,7 +131,7 @@ export async function renderBooking(target) {
 		const eventSelect = el(
 			"select",
 			{
-				class: "biab-select",
+				class: "bd-select",
 				id: "event-type",
 				onChange: (e) => {
 					state.selectedSlug = e.currentTarget.value;
@@ -152,7 +152,7 @@ export async function renderBooking(target) {
 
 		const slotsBlock = (() => {
 			if (state.slots === null) {
-				return el("div", { class: "biab-loading" }, ["Computing availability…"]);
+				return el("div", { class: "bd-loading" }, ["Computing availability…"]);
 			}
 			if (state.slots.length === 0) {
 				return empty(
@@ -184,11 +184,11 @@ export async function renderBooking(target) {
 			? [
 					el("div", { class: "field-row field-row--cols" }, [
 						el("div", {}, [
-							el("label", { class: "biab-label", for: "booking-name" }, [
+							el("label", { class: "bd-label", for: "booking-name" }, [
 								"Your name",
 							]),
 							el("input", {
-								class: "biab-input",
+								class: "bd-input",
 								id: "booking-name",
 								placeholder: "Jane Doe",
 								value: state.invitee.name,
@@ -198,11 +198,11 @@ export async function renderBooking(target) {
 							}),
 						]),
 						el("div", {}, [
-							el("label", { class: "biab-label", for: "booking-email" }, [
+							el("label", { class: "bd-label", for: "booking-email" }, [
 								"Email",
 							]),
 							el("input", {
-								class: "biab-input",
+								class: "bd-input",
 								id: "booking-email",
 								type: "email",
 								placeholder: "jane@example.com",
@@ -214,11 +214,11 @@ export async function renderBooking(target) {
 						]),
 					]),
 					el("div", {}, [
-						el("label", { class: "biab-label", for: "booking-phone" }, [
+						el("label", { class: "bd-label", for: "booking-phone" }, [
 							"Phone (optional)",
 						]),
 						el("input", {
-							class: "biab-input",
+							class: "bd-input",
 							id: "booking-phone",
 							type: "tel",
 							placeholder: "(555) 555-0100",
@@ -229,11 +229,11 @@ export async function renderBooking(target) {
 						}),
 					]),
 					el("div", {}, [
-						el("label", { class: "biab-label", for: "booking-notes" }, [
+						el("label", { class: "bd-label", for: "booking-notes" }, [
 							"Anything we should know?",
 						]),
 						el("textarea", {
-							class: "biab-textarea",
+							class: "bd-textarea",
 							id: "booking-notes",
 							placeholder: "Optional",
 							value: state.invitee.notes,
@@ -246,7 +246,7 @@ export async function renderBooking(target) {
 						"button",
 						{
 							type: "button",
-							class: "biab-btn",
+							class: "bd-btn",
 							disabled:
 								state.confirming || !state.invitee.email || !state.invitee.name,
 							onClick: handleConfirm,
@@ -273,13 +273,13 @@ export async function renderBooking(target) {
 
 		target.replaceChildren(
 			lead,
-			el("div", { class: "biab-card booking" }, [
+			el("div", { class: "bd-card booking" }, [
 				el("div", {}, [
-					el("label", { class: "biab-label", for: "event-type" }, ["What for?"]),
+					el("label", { class: "bd-label", for: "event-type" }, ["What for?"]),
 					eventSelect,
 				]),
 				el("div", {}, [
-					el("div", { class: "biab-label" }, ["Next available slots"]),
+					el("div", { class: "bd-label" }, ["Next available slots"]),
 					slotsBlock,
 				]),
 				...inviteeBlock,
@@ -289,7 +289,7 @@ export async function renderBooking(target) {
 	}
 
 	try {
-		state.eventTypes = await biab.scheduling.listEventTypes();
+		state.eventTypes = await bd.scheduling.listEventTypes();
 		if (state.eventTypes[0]) {
 			state.selectedSlug = state.eventTypes[0].slug;
 			rerender();

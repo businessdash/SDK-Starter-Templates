@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getCartSnapshot } from "@/server/lib/biab-store";
+import { getCartSnapshot } from "@/server/lib/bd-store";
 
 import { CartClient } from "../_components/CartClient";
 
@@ -11,12 +11,12 @@ export default async function CartPage() {
 
 	return (
 		<div>
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">Cart</span>
-				<h1 className="biab-section__title">Your cart</h1>
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">Cart</span>
+				<h1 className="bd-section__title">Your cart</h1>
 			</div>
 			{!snapshot || snapshot.items.length === 0 ? (
-				<div className="biab-empty">
+				<div className="bd-empty">
 					Your cart is empty. <Link href="/store">Browse products →</Link>
 				</div>
 			) : (

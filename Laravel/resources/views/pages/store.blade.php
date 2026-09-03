@@ -30,6 +30,6 @@
         </li>
         @if ($loop->last)</ul>@endif
     @empty
-        <p class="muted">No products yet. Add some in the BIAB dashboard, or connect this app to a site.</p>
+        <p class="muted">No products yet. Add some in the BD dashboard, or connect this app to a site.</p>
     @endforelse
 @endsection

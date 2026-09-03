@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit, signal } from "@angular/core";
-import { BiabService } from "../lib/biab.service";
+import { BdService } from "../lib/bd.service";
 
 /**
  * Dismissible announcement bar fed by `bundle.banner` (delivered via the
@@ -7,7 +7,7 @@ import { BiabService } from "../lib/biab.service";
  * bar for the session. No-ops when no banner is configured.
  */
 @Component({
-	selector: "biab-news-banner",
+	selector: "bd-news-banner",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		@if (visible() && message(); as m) {
@@ -30,7 +30,7 @@ import { BiabService } from "../lib/biab.service";
 	`,
 })
 export class NewsBannerComponent implements OnInit {
-	readonly svc = inject(BiabService);
+	readonly svc = inject(BdService);
 	private readonly dismissed = signal(false);
 
 	readonly message = computed(() => {

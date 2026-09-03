@@ -2,7 +2,7 @@ import { Routes } from "@angular/router";
 
 /**
  * App routes. The home page keeps the original single-page marketing layout
- * at `/`; the BIAB commerce + portal + programmatic-SEO surfaces are lazy
+ * at `/`; the BD commerce + portal + programmatic-SEO surfaces are lazy
  * routes so they don't weigh down the home bundle.
  */
 export const routes: Routes = [

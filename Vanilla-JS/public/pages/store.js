@@ -1,5 +1,5 @@
 /**
- * /store — full shop page on `biab.storefront.listProductsWithMeta`.
+ * /store — full shop page on `bd.storefront.listProductsWithMeta`.
  *
  * The meta endpoint returns enriched grid cards (price / compare-at / rating /
  * badges) plus the facets a sidebar needs: `categoryCounts` (merged with
@@ -7,7 +7,7 @@
  * min-rating controls. State lives in the URL query so a filtered grid is
  * shareable + back-button friendly; we re-fetch on every change.
  */
-import { biab, el, money } from "/biab.js";
+import { bd, el, money } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 const SORTS = [
@@ -19,12 +19,12 @@ const SORTS = [
 ];
 
 export default async function render(root) {
-	root.replaceChildren(pageHead("Store", "Native storefront on the BIAB SDK."));
+	root.replaceChildren(pageHead("Store", "Native storefront on the BD SDK."));
 
 	// Category names (best-effort — facets still work without them).
 	let categories = [];
 	try {
-		const res = await biab.storefront.listCategories();
+		const res = await bd.storefront.listCategories();
 		categories = res?.items ?? [];
 	} catch {
 		// no names → fall back to the raw categoryId label
@@ -62,7 +62,7 @@ export default async function render(root) {
 		main.replaceChildren(el("p", { class: "page__loading" }, ["Loading…"]));
 		syncUrl();
 		try {
-			const res = await biab.storefront.listProductsWithMeta({
+			const res = await bd.storefront.listProductsWithMeta({
 				limit: 48,
 				...(state.search ? { search: state.search } : {}),
 				...(state.categoryId ? { categoryId: state.categoryId } : {}),
@@ -89,7 +89,7 @@ export default async function render(root) {
 		const sort = el(
 			"select",
 			{
-				class: "biab-select store-sort",
+				class: "bd-select store-sort",
 				"aria-label": "Sort products",
 				onChange: (e) => {
 					state.sort = e.target.value;
@@ -112,7 +112,7 @@ export default async function render(root) {
 
 		// Search box.
 		const searchInput = el("input", {
-			class: "biab-input",
+			class: "bd-input",
 			type: "search",
 			placeholder: "Search products",
 			value: state.search,
@@ -221,10 +221,10 @@ function facetRow(label, active, onClick) {
 
 function productCard(p) {
 	const badges = [];
-	if (p.isBestSeller) badges.push(badge("Best seller", "biab-badge"));
-	if (p.isNew) badges.push(badge("New", "biab-badge"));
-	if (p.isOnSale) badges.push(badge("Sale", "biab-badge store-badge--sale"));
-	if (p.isLowStock) badges.push(badge("Low stock", "biab-badge store-badge--low"));
+	if (p.isBestSeller) badges.push(badge("Best seller", "bd-badge"));
+	if (p.isNew) badges.push(badge("New", "bd-badge"));
+	if (p.isOnSale) badges.push(badge("Sale", "bd-badge store-badge--sale"));
+	if (p.isLowStock) badges.push(badge("Low stock", "bd-badge store-badge--low"));
 
 	const priceRow = [];
 	if (p.cheapestPriceCents != null) {

@@ -1,4 +1,4 @@
-import { getBiab } from "../biab";
+import { getBd } from "../bd";
 import { html, render } from "../html";
 
 const defaults = {
@@ -10,10 +10,10 @@ const defaults = {
 
 export async function renderHero(): Promise<string> {
 	let hero = defaults;
-	const biab = getBiab();
-	if (biab) {
+	const bd = getBd();
+	if (bd) {
 		try {
-			const bundle = await biab.marketing.getPageBundle({
+			const bundle = await bd.marketing.getPageBundle({
 				pageKey: "home",
 				locale: "en",
 			});
@@ -39,10 +39,10 @@ export async function renderHero(): Promise<string> {
 	}
 	return render(html`
 		<section class="hero" id="hero">
-			<span class="biab-badge">Open · Mon–Sat</span>
+			<span class="bd-badge">Open · Mon–Sat</span>
 			<h1 class="hero__title">${hero.title}</h1>
 			<p class="hero__sub">${hero.tagline}</p>
-			<a class="biab-btn" href="${hero.ctaHref}">${hero.ctaLabel}</a>
+			<a class="bd-btn" href="${hero.ctaHref}">${hero.ctaLabel}</a>
 		</section>
 	`);
 }

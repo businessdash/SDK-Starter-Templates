@@ -1,11 +1,11 @@
 import { component$ } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$ } from "@builder.io/qwik-city";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
-import { getBiab } from "../../lib/biab";
-import { getUpdatesFromBundle } from "../../lib/biab-content";
-import { getCustomerSession } from "../../lib/biab-portal";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
+import { getBd } from "../../lib/bd";
+import { getUpdatesFromBundle } from "../../lib/bd-content";
+import { getCustomerSession } from "../../lib/bd-portal";
 
 /**
  * News / Updates feed. `bundle.updates` is a Google-Business-style posts feed
@@ -13,12 +13,12 @@ import { getCustomerSession } from "../../lib/biab-portal";
  * it defensively via `getUpdatesFromBundle`.
  */
 export const useUpdates = routeLoader$(async ({ cookie }) => {
-	const biab = getBiab();
+	const bd = getBd();
 	const session = await getCustomerSession(cookie);
-	if (!biab) {
+	if (!bd) {
 		return { configured: false, items: [], signedIn: !!session };
 	}
-	const bundle = await biab.marketing
+	const bundle = await bd.marketing
 		.getPageBundle({ pageKey: "home", locale: "en" })
 		.catch(() => null);
 	return {
@@ -47,27 +47,27 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} />
 			<main>
-				<section class="biab-section biab-section--narrow">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">News</span>
-						<h2 class="biab-section__title">Updates</h2>
-						<p class="biab-section__sub">
-							Recent posts, synced from the business profile via the BIAB
+				<section class="bd-section bd-section--narrow">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">News</span>
+						<h2 class="bd-section__title">Updates</h2>
+						<p class="bd-section__sub">
+							Recent posts, synced from the business profile via the BD
 							marketing bundle.
 						</p>
 					</div>
 
 					{!data.value.configured ? (
-						<div class="biab-empty">
-							Updates aren't connected yet. Set the BIAB env vars to pull them
+						<div class="bd-empty">
+							Updates aren't connected yet. Set the BD env vars to pull them
 							in.
 						</div>
 					) : data.value.items.length === 0 ? (
-						<div class="biab-empty">No updates posted yet.</div>
+						<div class="bd-empty">No updates posted yet.</div>
 					) : (
 						<div style="display: flex; flex-direction: column; gap: 1.25rem;">
 							{data.value.items.map((u) => (
-								<article class="biab-card" style="padding: 1.5rem;" key={u.id}>
+								<article class="bd-card" style="padding: 1.5rem;" key={u.id}>
 									{u.imageUrl ? (
 										<img
 											alt={u.title ?? "Update"}
@@ -84,7 +84,7 @@ export default component$(() => {
 											{formatDate(u.postedAt)}
 										</span>
 										{u.link ? (
-											<a class="biab-btn biab-btn--ghost" href={u.link}>
+											<a class="bd-btn bd-btn--ghost" href={u.link}>
 												Learn more
 											</a>
 										) : null}

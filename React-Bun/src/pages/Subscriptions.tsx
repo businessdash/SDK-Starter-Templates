@@ -1,8 +1,8 @@
-import { biab, money } from "../lib/biab";
+import { bd, money } from "../lib/bd";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 export function Subscriptions() {
-	const { data, error, loading } = useApi(() => biab.subscriptions.list());
+	const { data, error, loading } = useApi(() => bd.subscriptions.list());
 	const items: Record<string, any>[] = data?.items ?? [];
 	return (
 		<main className="page">

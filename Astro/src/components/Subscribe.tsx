@@ -32,12 +32,12 @@ import { type FormEvent, useState } from "react";
  * degrades to a "coming soon" placeholder so the page never breaks.
  */
 
-const BIAB_PK = import.meta.env.PUBLIC_BIAB_PK as string | undefined;
-const BIAB_SITE_ID = import.meta.env.PUBLIC_BIAB_SITE_ID as string | undefined;
-const BIAB_BASE_URL = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL as
+const BD_PK = import.meta.env.PUBLIC_BD_PK as string | undefined;
+const BD_SITE_ID = import.meta.env.PUBLIC_BD_SITE_ID as string | undefined;
+const BD_BASE_URL = import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as
 	| string
 	| undefined;
-const BIAB_FOLLOWERS_ENABLED = Boolean(BIAB_PK && BIAB_SITE_ID);
+const BD_FOLLOWERS_ENABLED = Boolean(BD_PK && BD_SITE_ID);
 
 type SubscribeProps = {
 	/** Field label above the email input. */
@@ -50,17 +50,17 @@ type SubscribeProps = {
 	idPrefix?: string;
 };
 
-/** Newsletter signup. Wired to BIAB followers via the publishable token; the
+/** Newsletter signup. Wired to BD followers via the publishable token; the
  *  same component powers the footer and the about-section signups. */
 export default function Subscribe(props: SubscribeProps) {
-	if (BIAB_FOLLOWERS_ENABLED) {
+	if (BD_FOLLOWERS_ENABLED) {
 		return <LiveSubscribe {...props} />;
 	}
 	return <PlaceholderSubscribe {...props} />;
 }
 
 /** Shared input + button markup (identical look in both modes), styled with the
- *  template's `biab-*` light-DOM classes. */
+ *  template's `bd-*` light-DOM classes. */
 function SubscribeFields({
 	label = "Subscribe to our newsletter",
 	placeholder = "you@example.com",
@@ -74,13 +74,13 @@ function SubscribeFields({
 }) {
 	return (
 		<form className="subscribe" onSubmit={onSubmit}>
-			<label className="biab-label" htmlFor={`${idPrefix}-email`}>
+			<label className="bd-label" htmlFor={`${idPrefix}-email`}>
 				{label}
 			</label>
 			<div className="subscribe__row">
 				<input
 					autoComplete="email"
-					className="biab-input"
+					className="bd-input"
 					disabled={disabled}
 					id={`${idPrefix}-email`}
 					name="email"
@@ -88,7 +88,7 @@ function SubscribeFields({
 					required
 					type="email"
 				/>
-				<button className="biab-btn" disabled={disabled} type="submit">
+				<button className="bd-btn" disabled={disabled} type="submit">
 					{disabled ? "…" : buttonLabel}
 				</button>
 			</div>
@@ -96,12 +96,12 @@ function SubscribeFields({
 	);
 }
 
-/** Live signup → BIAB followers table via the publishable token. */
+/** Live signup → BD followers table via the publishable token. */
 function LiveSubscribe(props: SubscribeProps) {
 	const followers = useFollowers({
-		token: BIAB_PK as string,
-		siteId: BIAB_SITE_ID as string,
-		...(BIAB_BASE_URL ? { baseUrl: BIAB_BASE_URL } : {}),
+		token: BD_PK as string,
+		siteId: BD_SITE_ID as string,
+		...(BD_BASE_URL ? { baseUrl: BD_BASE_URL } : {}),
 	});
 	const [status, setStatus] = useState<
 		"idle" | "submitting" | "done" | "error"
@@ -147,7 +147,7 @@ function LiveSubscribe(props: SubscribeProps) {
 	);
 }
 
-/** Fallback when BIAB isn't configured (no publishable token). */
+/** Fallback when BD isn't configured (no publishable token). */
 function PlaceholderSubscribe(props: SubscribeProps) {
 	const [submitted, setSubmitted] = useState(false);
 	if (submitted) {

@@ -3,11 +3,11 @@ import { RouterLink, RouterLinkActive } from "@angular/router";
 
 /**
  * Site header. The brand + "Home" use routerLink so cross-route navigation
- * works; the commerce/portal links route to the new BIAB surfaces.
+ * works; the commerce/portal links route to the new BD surfaces.
  * Sign-in is a plain href — the auth handler 302s through WorkOS.
  */
 @Component({
-	selector: "biab-header",
+	selector: "bd-header",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink, RouterLinkActive],
 	template: `

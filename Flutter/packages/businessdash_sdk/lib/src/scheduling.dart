@@ -23,7 +23,7 @@ import 'client.dart';
 class SchedulingResource {
   const SchedulingResource(this._client, this.siteId);
 
-  final BiabClient _client;
+  final BdClient _client;
   final String siteId;
 
   String _path(String suffix) =>
@@ -128,7 +128,7 @@ class SchedulingResource {
       );
 }
 
-extension BiabScheduling on BiabClient {
+extension BdScheduling on BdClient {
   /// Booking and conference calls for [siteId].
   SchedulingResource scheduling(String siteId) =>
       SchedulingResource(this, siteId);

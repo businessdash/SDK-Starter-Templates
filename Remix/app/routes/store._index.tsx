@@ -7,7 +7,7 @@ import {
 	getCartSnapshot,
 	listStoreCategories,
 	listStoreProductsWithMeta,
-} from "~/lib/biab-store.server";
+} from "~/lib/bd-store.server";
 
 export const meta: MetaFunction = () => [
 	{ title: "Store — Your Business" },
@@ -114,7 +114,7 @@ export default function StoreIndex() {
 
 					{!connected ? (
 						<p className="muted">
-							Store isn't connected yet. Add your BIAB env to list products.
+							Store isn't connected yet. Add your BD env to list products.
 						</p>
 					) : (
 						<div className="store-layout">
@@ -218,7 +218,7 @@ export default function StoreIndex() {
 									{activeCategory ? (
 										<input type="hidden" name="category" value={activeCategory} />
 									) : null}
-									<button className="biab-btn" type="submit">
+									<button className="bd-btn" type="submit">
 										Apply filters
 									</button>
 								</Form>
@@ -242,13 +242,13 @@ export default function StoreIndex() {
 												{p.isBestSeller || p.isNew || p.isLowStock ? (
 													<div className="card__badges">
 														{p.isBestSeller ? (
-															<span className="biab-badge">Best seller</span>
+															<span className="bd-badge">Best seller</span>
 														) : null}
 														{p.isNew ? (
-															<span className="biab-badge">New</span>
+															<span className="bd-badge">New</span>
 														) : null}
 														{p.isLowStock ? (
-															<span className="biab-badge">Low stock</span>
+															<span className="bd-badge">Low stock</span>
 														) : null}
 													</div>
 												) : null}

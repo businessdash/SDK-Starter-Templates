@@ -1,11 +1,11 @@
 /** /updates — the `bundle.updates` feed (Google-Business-style posts). */
-import { biab, el } from "/biab.js";
+import { bd, el } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 export default async function render(root) {
 	root.replaceChildren(pageHead("Updates", "News, offers, and events."));
 	try {
-		const { updates } = await biab.content.extras();
+		const { updates } = await bd.content.extras();
 		const items = normalize(updates);
 		if (!items.length) {
 			root.append(el("p", { class: "muted" }, ["No updates posted yet."]));

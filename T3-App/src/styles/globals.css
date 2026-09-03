@@ -7,13 +7,13 @@
 
 
 /* ──────────────────────────────────────────────────────────────────
-   BIAB-style design tokens, additive layer over the existing
-   Tailwind setup. The BIAB sections use these classes; any other
+   BD-style design tokens, additive layer over the existing
+   Tailwind setup. The BD sections use these classes; any other
    UI in this starter keeps its own styling.
    ────────────────────────────────────────────────────────────────── */
 /* ──────────────────────────────────────────────────────────────────
-   BIAB-style design tokens.
-   Mirror the variable names BIAB uses on its own admin surfaces
+   BD-style design tokens.
+   Mirror the variable names BD uses on its own admin surfaces
    (themes.css) so consumer sites can drop into the same look + feel
    without inventing a new visual language. Override these in your
    own app — the section components below only reference variables.
@@ -49,7 +49,7 @@
 	--danger: #b1142e;
 	--danger-bg: rgba(177, 20, 46, 0.1);
 
-	/* Neumorphic shadows (BIAB house style) */
+	/* Neumorphic shadows (BD house style) */
 	--card-neu-top-left: rgba(255, 255, 255, 0.9);
 	--card-neu-shadow: rgba(8, 6, 13, 0.06);
 	--card-neu-halo: rgba(96, 51, 184, 0.06);
@@ -153,7 +153,7 @@ img {
 }
 
 /* Common card primitive — used by Services, Gallery tiles, Blog posts. */
-.biab-card {
+.bd-card {
 	background: var(--card);
 	border: 1px solid var(--border);
 	border-radius: 1rem;
@@ -166,7 +166,7 @@ img {
 		box-shadow 0.18s ease;
 }
 
-.biab-card:hover {
+.bd-card:hover {
 	transform: translateY(-2px);
 	box-shadow:
 		-8px -8px 18px var(--card-neu-top-left),
@@ -174,7 +174,7 @@ img {
 		0 0 0 1px var(--accent-border);
 }
 
-.biab-btn {
+.bd-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -193,28 +193,28 @@ img {
 		box-shadow 0.12s ease;
 }
 
-.biab-btn:hover {
+.bd-btn:hover {
 	background: var(--accent-strong);
 	transform: translateY(-1px);
 }
 
-.biab-btn:disabled {
+.bd-btn:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 }
 
-.biab-btn--ghost {
+.bd-btn--ghost {
 	background: transparent;
 	color: var(--accent);
 	border-color: var(--accent-border);
 }
 
-.biab-btn--ghost:hover {
+.bd-btn--ghost:hover {
 	background: var(--accent-bg);
 	color: var(--accent);
 }
 
-.biab-badge {
+.bd-badge {
 	display: inline-block;
 	padding: 0.15rem 0.6rem;
 	background: var(--accent-bg);
@@ -227,9 +227,9 @@ img {
 	text-transform: uppercase;
 }
 
-.biab-input,
-.biab-textarea,
-.biab-select {
+.bd-input,
+.bd-textarea,
+.bd-select {
 	width: 100%;
 	padding: 0.6rem 0.85rem;
 	background: var(--sub-card);
@@ -239,21 +239,21 @@ img {
 	font-family: var(--sans);
 }
 
-.biab-input:focus,
-.biab-textarea:focus,
-.biab-select:focus {
+.bd-input:focus,
+.bd-textarea:focus,
+.bd-select:focus {
 	outline: none;
 	border-color: var(--accent);
 	background: var(--card);
 	box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-.biab-textarea {
+.bd-textarea {
 	min-height: 8rem;
 	resize: vertical;
 }
 
-.biab-label {
+.bd-label {
 	display: block;
 	font-size: 0.85rem;
 	font-weight: 600;
@@ -262,17 +262,17 @@ img {
 }
 
 /* Section spacing */
-.biab-section {
+.bd-section {
 	max-width: 72rem;
 	margin: 0 auto;
 	padding: 5rem 1.25rem;
 }
 
-.biab-section--narrow {
+.bd-section--narrow {
 	max-width: 48rem;
 }
 
-.biab-section__lead {
+.bd-section__lead {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -280,7 +280,7 @@ img {
 	text-align: center;
 }
 
-.biab-section__eyebrow {
+.bd-section__eyebrow {
 	color: var(--accent);
 	font-size: 0.78rem;
 	font-weight: 700;
@@ -288,24 +288,24 @@ img {
 	text-transform: uppercase;
 }
 
-.biab-section__title {
+.bd-section__title {
 	font-size: clamp(1.75rem, 4vw, 2.5rem);
 }
 
-.biab-section__sub {
+.bd-section__sub {
 	color: var(--text-muted);
 	font-size: 1.05rem;
 	max-width: 36rem;
 	margin: 0 auto;
 }
 
-.biab-loading {
+.bd-loading {
 	color: var(--text-muted);
 	font-size: 0.9rem;
 	font-style: italic;
 }
 
-.biab-empty {
+.bd-empty {
 	color: var(--text-muted);
 	font-size: 0.9rem;
 	padding: 2rem;
@@ -389,13 +389,13 @@ main {
 }
 
 /* Grids */
-.biab-grid-3 {
+.bd-grid-3 {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: 1.25rem;
 }
 
-.biab-grid-4 {
+.bd-grid-4 {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
 	gap: 1rem;
@@ -531,13 +531,13 @@ main {
 }
 
 /* ──────────────────────────────────────────────────────────────────
-   BIAB parity surfaces — store, cart, account, reviews, updates,
+   BD parity surfaces — store, cart, account, reviews, updates,
    news banner. Additive, reuses the same design tokens as the home
    sections above so the new pages feel native.
    ────────────────────────────────────────────────────────────────── */
 
 /* Inline code + notices */
-.biab-code {
+.bd-code {
 	font-family: var(--mono);
 	font-size: 0.85em;
 	background: var(--accent-bg);
@@ -545,18 +545,18 @@ main {
 	padding: 0.1em 0.4em;
 	border-radius: 0.4rem;
 }
-.biab-notice {
+.bd-notice {
 	border: 1px solid var(--border-strong);
 	background: var(--sub-card);
 	border-radius: 1rem;
 	padding: 1.5rem;
 }
-.biab-notice h2 {
+.bd-notice h2 {
 	color: var(--title);
 	font-weight: 600;
 	margin-bottom: 0.35rem;
 }
-.biab-notice p {
+.bd-notice p {
 	color: var(--text-muted);
 	font-size: 0.92rem;
 }
@@ -678,7 +678,7 @@ main {
 	align-items: center;
 	gap: 0.75rem;
 }
-.store-buy__qty .biab-input {
+.store-buy__qty .bd-input {
 	width: 5rem;
 }
 .store-buy__ok {
@@ -888,7 +888,7 @@ main {
 	margin-bottom: 2rem;
 	text-align: left;
 }
-.account__head .biab-section__lead {
+.account__head .bd-section__lead {
 	text-align: left;
 }
 .account__signedout {
@@ -938,7 +938,7 @@ main {
 	font-size: 0.88rem;
 	margin-top: 0.25rem;
 }
-.biab-badge--active {
+.bd-badge--active {
 	background: var(--success-bg);
 	color: var(--success);
 	border-color: transparent;

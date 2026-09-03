@@ -1,13 +1,13 @@
 import {
-	BiabPaymentLapsedError,
-	BiabServiceSuspendedError,
+	BdPaymentLapsedError,
+	BdServiceSuspendedError,
 } from "@businessdash/sdk";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { BiabFooter } from "@/app/_components/biab/Footer";
-import { BiabHeader } from "@/app/_components/biab/Header";
-import { getBiab } from "@/server/lib/biab";
+import { BdFooter } from "@/app/_components/bd/Footer";
+import { BdHeader } from "@/app/_components/bd/Header";
+import { getBd } from "@/server/lib/bd";
 
 type Params = Promise<{ service: string; area: string }>;
 
@@ -15,7 +15,7 @@ const PARALLEL_KEY = "service-area";
 
 /**
  * Programmatic SEO page: one URL per (service × area) combination declared in
- * `biab.config.ts` (`defineParallelPage`). BIAB resolves the tokens
+ * `bd.config.ts` (`defineParallelPage`). BD resolves the tokens
  * server-side so crawlers see fully-rendered copy. Pair with the
  * `/sitemap.xml` + `/robots.txt` proxies so the platform enumerates these.
  */
@@ -23,10 +23,10 @@ const PARALLEL_KEY = "service-area";
 export async function generateStaticParams(): Promise<
 	Array<{ service: string; area: string }>
 > {
-	const biab = getBiab();
-	if (!biab) return [];
+	const bd = getBd();
+	if (!bd) return [];
 	try {
-		const { variants } = await biab.parallelPages.listVariants(PARALLEL_KEY);
+		const { variants } = await bd.parallelPages.listVariants(PARALLEL_KEY);
 		return variants.map((v) => ({
 			service: v.service ?? "",
 			area: v.area ?? "",
@@ -41,17 +41,17 @@ export async function generateStaticParams(): Promise<
 
 async function loadVariant(params: Params) {
 	const { service, area } = await params;
-	const biab = getBiab();
-	if (!biab) return null;
+	const bd = getBd();
+	if (!bd) return null;
 	try {
-		return await biab.parallelPages.render(PARALLEL_KEY, { service, area });
+		return await bd.parallelPages.render(PARALLEL_KEY, { service, area });
 	} catch (err) {
 		// A suspended org should surface as a 503-ish outage; re-throw so the
 		// framework error boundary handles it rather than 404-ing a real page.
-		if (err instanceof BiabServiceSuspendedError) throw err;
+		if (err instanceof BdServiceSuspendedError) throw err;
 		// Lapsed payments shouldn't reach static reads, but bail to notFound()
 		// if they do so the page never renders half-broken.
-		if (err instanceof BiabPaymentLapsedError) return null;
+		if (err instanceof BdPaymentLapsedError) return null;
 		if (process.env.NODE_ENV === "development") {
 			console.warn("[parallel-pages] render failed:", err);
 		}
@@ -91,16 +91,16 @@ export default async function ServiceAreaPage({ params }: { params: Params }) {
 
 	return (
 		<>
-			<BiabHeader />
-			<main className="biab-section biab-section--narrow">
-				<div className="biab-section__lead">
-					<h1 className="biab-section__title">
+			<BdHeader />
+			<main className="bd-section bd-section--narrow">
+				<div className="bd-section__lead">
+					<h1 className="bd-section__title">
 						{variant.meta.title.split(" | ")[0]}
 					</h1>
-					<p className="biab-section__sub">{variant.meta.description}</p>
+					<p className="bd-section__sub">{variant.meta.description}</p>
 				</div>
 				{body?.PageTitle || body?.heading ? (
-					<div className="biab-card service-area">
+					<div className="bd-card service-area">
 						<h2>{body.PageTitle ?? body.heading}</h2>
 						{body.PageHeadline || body.body ? (
 							<p>{body.PageHeadline ?? body.body}</p>
@@ -108,7 +108,7 @@ export default async function ServiceAreaPage({ params }: { params: Params }) {
 					</div>
 				) : null}
 			</main>
-			<BiabFooter />
+			<BdFooter />
 		</>
 	);
 }

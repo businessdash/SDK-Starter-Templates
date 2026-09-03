@@ -1,4 +1,4 @@
-import { biab, el } from "../biab.js";
+import { bd, el } from "../bd.js";
 
 const FALLBACK = [
 	{
@@ -31,7 +31,7 @@ function formatPrice(s) {
 }
 
 function card(service) {
-	return el("article", { class: "biab-card service-card" }, [
+	return el("article", { class: "bd-card service-card" }, [
 		el("h3", {}, [service.title]),
 		el("p", {}, [service.description]),
 		el("div", { class: "service-card__price" }, [formatPrice(service)]),
@@ -42,16 +42,16 @@ function card(service) {
 export async function renderServices(target) {
 	function paint(items) {
 		target.replaceChildren(
-			el("div", { class: "biab-section__lead" }, [
-				el("span", { class: "biab-section__eyebrow" }, ["What we do"]),
-				el("h2", { class: "biab-section__title" }, ["Services"]),
-				el("p", { class: "biab-section__sub" }, [
+			el("div", { class: "bd-section__lead" }, [
+				el("span", { class: "bd-section__eyebrow" }, ["What we do"]),
+				el("h2", { class: "bd-section__title" }, ["Services"]),
+				el("p", { class: "bd-section__sub" }, [
 					"Clear scope, clear price. Add-ons quoted before any work starts.",
 				]),
 			]),
 			el(
 				"div",
-				{ class: "biab-grid-3" },
+				{ class: "bd-grid-3" },
 				items.map(card),
 			),
 		);
@@ -60,7 +60,7 @@ export async function renderServices(target) {
 	paint(FALLBACK);
 
 	try {
-		const bundle = await biab.marketing.getPageBundle({ pageKey: "home" });
+		const bundle = await bd.marketing.getPageBundle({ pageKey: "home" });
 		const raw = bundle?.sections?.services;
 		const list = raw?.ok ? raw.data?.items : null;
 		if (Array.isArray(list) && list.length > 0) paint(list);

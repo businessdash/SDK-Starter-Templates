@@ -7,7 +7,7 @@
  */
 export const environment = {
 	production: true,
-	biabPk: "",
-	biabSiteId: "",
-	biabBaseUrl: "https://www.biab.app",
+	bdPk: "",
+	bdSiteId: "",
+	bdBaseUrl: "https://www.biab.app",
 };

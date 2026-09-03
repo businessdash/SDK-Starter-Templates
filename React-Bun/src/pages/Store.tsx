@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { biab, money } from "../lib/biab";
+import { bd, money } from "../lib/bd";
 import { Link } from "../lib/router";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
@@ -40,7 +40,7 @@ export function Store() {
 
 	const { data, error, loading } = useApi(
 		() =>
-			biab.storefront.listProductsWithMeta({
+			bd.storefront.listProductsWithMeta({
 				limit: 48,
 				...(search ? { search } : {}),
 				...(categoryId ? { categoryId } : {}),
@@ -52,7 +52,7 @@ export function Store() {
 		[search, categoryId, minRating, minPriceCents, maxPriceCents, sort],
 	);
 	// Categories load once for the sidebar (id → display name).
-	const { data: catData } = useApi(() => biab.storefront.listCategories(), []);
+	const { data: catData } = useApi(() => bd.storefront.listCategories(), []);
 
 	const items: Record<string, any>[] = data?.items ?? [];
 	const categoryCounts: { categoryId: string; count: number }[] = data?.categoryCounts ?? [];
@@ -78,15 +78,15 @@ export function Store() {
 
 	return (
 		<main className="page">
-			<PageHead title="Store" sub="Native storefront on the BIAB SDK." />
+			<PageHead title="Store" sub="Native storefront on the BD SDK." />
 			<div className="store-layout">
 				<aside className="store-sidebar">
 					<div className="store-facet">
-						<label className="biab-label" htmlFor="store-search">
+						<label className="bd-label" htmlFor="store-search">
 							Search
 						</label>
 						<input
-							className="biab-input"
+							className="bd-input"
 							id="store-search"
 							type="search"
 							placeholder="Search products…"
@@ -130,7 +130,7 @@ export function Store() {
 						<div className="store-facet__title">Price</div>
 						<div className="store-facet__price">
 							<input
-								className="biab-input"
+								className="bd-input"
 								type="number"
 								min={0}
 								inputMode="decimal"
@@ -141,7 +141,7 @@ export function Store() {
 							/>
 							<span className="store-facet__dash">—</span>
 							<input
-								className="biab-input"
+								className="bd-input"
 								type="number"
 								min={0}
 								inputMode="decimal"
@@ -188,7 +188,7 @@ export function Store() {
 						<label className="store-sort">
 							<span className="muted">Sort</span>
 							<select
-								className="biab-select"
+								className="bd-select"
 								value={sort}
 								onChange={(e) => setSort(e.target.value as Sort)}
 							>
@@ -203,7 +203,7 @@ export function Store() {
 
 					{error ? <ErrorBox error={error} /> : null}
 					{data && items.length === 0 ? (
-						<p className="biab-empty">
+						<p className="bd-empty">
 							{hasFilters
 								? "No products match these filters."
 								: "No products published yet."}
@@ -230,13 +230,13 @@ export function Store() {
 											<div className="product-card__img product-card__img--ph" />
 										)}
 										<div className="product-card__badges">
-											{p.isOnSale ? <span className="biab-badge badge--sale">Sale</span> : null}
-											{p.isNew ? <span className="biab-badge">New</span> : null}
+											{p.isOnSale ? <span className="bd-badge badge--sale">Sale</span> : null}
+											{p.isNew ? <span className="bd-badge">New</span> : null}
 											{p.isBestSeller ? (
-												<span className="biab-badge">Best seller</span>
+												<span className="bd-badge">Best seller</span>
 											) : null}
 											{p.isLowStock ? (
-												<span className="biab-badge badge--low">Low stock</span>
+												<span className="bd-badge badge--low">Low stock</span>
 											) : null}
 										</div>
 									</div>

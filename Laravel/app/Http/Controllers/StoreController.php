@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -16,9 +16,9 @@ class StoreController extends Controller
         $sort = $request->query('sort');
         $cacheKey = 'storefront:grid:'.md5(json_encode([$search, $categoryId, $sort]));
 
-        $grid = Biab::remember(
+        $grid = Bd::remember(
             $cacheKey,
-            ['biab:storefront'],
+            ['bd:storefront'],
             static fn (Client $c) => $c->storefront()->listProductsWithMeta(
                 search: is_string($search) ? $search : null,
                 categoryId: is_string($categoryId) ? $categoryId : null,
@@ -28,9 +28,9 @@ class StoreController extends Controller
             default: ['items' => [], 'categoryCounts' => []],
         );
 
-        $categories = Biab::remember(
+        $categories = Bd::remember(
             'storefront:categories',
-            ['biab:storefront'],
+            ['bd:storefront'],
             static fn (Client $c) => $c->storefront()->listCategories(),
             default: ['items' => []],
         );
@@ -46,25 +46,25 @@ class StoreController extends Controller
 
     public function show(string $id): View
     {
-        $product = Biab::remember(
+        $product = Bd::remember(
             "storefront:product:{$id}",
-            ['biab:storefront'],
+            ['bd:storefront'],
             static fn (Client $c) => $c->storefront()->getProduct($id),
             default: null,
         );
 
         abort_if($product === null, 404);
 
-        $related = Biab::remember(
+        $related = Bd::remember(
             "storefront:related:{$id}",
-            ['biab:storefront'],
+            ['bd:storefront'],
             static fn (Client $c) => $c->storefront()->getRelatedProducts($id, limit: 4),
             default: ['items' => []],
         );
 
-        $reviews = Biab::remember(
+        $reviews = Bd::remember(
             "storefront:reviews:{$id}",
-            ['biab:storefront', 'biab:reviews'],
+            ['bd:storefront', 'bd:reviews'],
             static fn (Client $c) => $c->storefront()->getProductReviews($id, limit: 5),
             default: ['items' => []],
         );

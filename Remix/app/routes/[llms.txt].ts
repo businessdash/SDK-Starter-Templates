@@ -1,11 +1,11 @@
 import { llmsTxtHandler } from "@businessdash/sdk/distribution";
 
-import { getDistributionConfig } from "~/lib/biab-distribution.server";
+import { getDistributionConfig } from "~/lib/bd-distribution.server";
 
 /**
  * `/llms.txt` (resource route) — the answer-engine index for this site,
  * served from its own domain root (the only place the llms.txt convention
- * works), proxied from the copy the org curates at BIAB → Marketing →
+ * works), proxied from the copy the org curates at BD → Marketing →
  * AI Distribution.
  *
  * Upstream 404 passes through untouched (feed disabled or the org's

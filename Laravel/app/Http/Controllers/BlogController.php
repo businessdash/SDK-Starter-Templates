@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\View\View;
 
 class BlogController extends Controller
 {
     public function index(): View
     {
-        $posts = Biab::remember(
+        $posts = Bd::remember(
             'blog:list',
-            ['biab:blog'],
+            ['bd:blog'],
             static fn (Client $c) => $c->blog()->listPosts(limit: 20),
             default: ['items' => []],
         );
@@ -22,18 +22,18 @@ class BlogController extends Controller
 
     public function show(string $slug): View
     {
-        $post = Biab::remember(
+        $post = Bd::remember(
             "blog:post:{$slug}",
-            ['biab:blog', "biab:blog:{$slug}"],
+            ['bd:blog', "bd:blog:{$slug}"],
             static fn (Client $c) => $c->blog()->getPost($slug),
             default: null,
         );
 
         abort_if($post === null, 404);
 
-        $comments = Biab::remember(
+        $comments = Bd::remember(
             "blog:comments:{$slug}",
-            ['biab:blog', "biab:blog:{$slug}"],
+            ['bd:blog', "bd:blog:{$slug}"],
             static fn (Client $c) => $c->blog()->listComments($slug, limit: 50),
             default: ['items' => []],
         );

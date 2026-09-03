@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:businessdash_sdk/businessdash_sdk.dart';
-import 'biab_scope.dart';
+import 'bd_scope.dart';
 import 'load_state.dart';
 
 class CartPage extends StatefulWidget {
@@ -21,7 +21,7 @@ class _CartPageState extends State<CartPage> {
   }
 
   void _reload() {
-    final scope = BiabScope.of(context);
+    final scope = BdScope.of(context);
     setState(() {
       _cart = scope.client?.cart(scope.visitorToken);
     });
@@ -31,7 +31,7 @@ class _CartPageState extends State<CartPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Cart')),
-      body: BiabBuilder<CartSnapshot>(
+      body: BdBuilder<CartSnapshot>(
         future: _cart,
         builder: (context, cart) {
           if (cart.isEmpty) {
@@ -83,15 +83,15 @@ class _CartPageState extends State<CartPage> {
   ///
   /// The field is `stripeUrl`, not `url`.
   Future<void> _checkout() async {
-    final scope = BiabScope.of(context);
+    final scope = BdScope.of(context);
     final client = scope.client;
     if (client == null) return;
 
     final session = await client.startCheckout(
       scope.visitorToken,
       // Stripe substitutes the real id for the placeholder.
-      successUrl: 'biabstarter://checkout/success?session_id={CHECKOUT_SESSION_ID}',
-      cancelUrl: 'biabstarter://checkout/cancel',
+      successUrl: 'bdstarter://checkout/success?session_id={CHECKOUT_SESSION_ID}',
+      cancelUrl: 'bdstarter://checkout/cancel',
     );
 
     if (!mounted) return;

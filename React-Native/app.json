@@ -1,14 +1,14 @@
 {
   "expo": {
-    "name": "BIAB Starter",
-    "slug": "biab-starter",
+    "name": "BD Starter",
+    "slug": "bd-starter",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "scheme": "biabstarter",
+    "scheme": "bdstarter",
     "ios": { "supportsTablet": true },
-    "android": { "package": "app.biabstarter" },
+    "android": { "package": "app.bdstarter" },
     "plugins": ["expo-router", "expo-secure-store"],
     "experiments": { "typedRoutes": true }
   }

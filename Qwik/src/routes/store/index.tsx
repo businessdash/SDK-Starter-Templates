@@ -8,8 +8,8 @@ import {
 } from "@builder.io/qwik-city";
 
 import {
-	BiabPaymentLapsedError,
-	BiabServiceSuspendedError,
+	BdPaymentLapsedError,
+	BdServiceSuspendedError,
 } from "@businessdash/sdk";
 import type {
 	StorefrontCategory,
@@ -17,17 +17,17 @@ import type {
 	StorefrontSort,
 } from "@businessdash/sdk/contracts";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
-import { Stars } from "../../components/biab/Stars";
-import { getBiab } from "../../lib/biab";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
+import { Stars } from "../../components/bd/Stars";
+import { getBd } from "../../lib/bd";
 import {
 	formatMoney,
 	getCartSnapshot,
 	listStoreCategories,
 	listStoreProductsWithMeta,
-} from "../../lib/biab-store";
-import { getCustomerSession } from "../../lib/biab-portal";
+} from "../../lib/bd-store";
+import { getCustomerSession } from "../../lib/bd-portal";
 
 const SORT_VALUES: readonly StorefrontSort[] = [
 	"featured",
@@ -67,7 +67,7 @@ function parsePrice(raw: string | undefined): {
  * errors degrade to a minimal "unavailable" state instead of crashing.
  */
 export const useStoreData = routeLoader$(async ({ cookie, query }) => {
-	const biab = getBiab();
+	const bd = getBd();
 	const empty = {
 		configured: false,
 		suspended: false,
@@ -79,7 +79,7 @@ export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 		signedIn: false,
 	} as const;
 
-	if (!biab) return empty;
+	if (!bd) return empty;
 
 	const search = query.get("q")?.trim() || undefined;
 	const categoryId = query.get("category") || undefined;
@@ -121,8 +121,8 @@ export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 		} as const;
 	} catch (err) {
 		if (
-			err instanceof BiabServiceSuspendedError ||
-			err instanceof BiabPaymentLapsedError
+			err instanceof BdServiceSuspendedError ||
+			err instanceof BdPaymentLapsedError
 		) {
 			return { ...empty, configured: true, suspended: true } as const;
 		}
@@ -164,23 +164,23 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} cartCount={data.value.cartCount} />
 			<main>
-				<section class="biab-section">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">Shop</span>
-						<h2 class="biab-section__title">Store</h2>
-						<p class="biab-section__sub">
-							Live products from the BIAB storefront surface. Filter, add to cart,
+				<section class="bd-section">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Shop</span>
+						<h2 class="bd-section__title">Store</h2>
+						<p class="bd-section__sub">
+							Live products from the BD storefront surface. Filter, add to cart,
 							and check out via Stripe.
 						</p>
 					</div>
 
 					{data.value.suspended ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							The store is temporarily unavailable. Please check back soon.
 						</div>
 					) : !data.value.configured ? (
-						<div class="biab-empty">
-							Store isn't connected yet. Set the BIAB env vars (see
+						<div class="bd-empty">
+							Store isn't connected yet. Set the BD env vars (see
 							<code> .env.example</code>) to go live.
 						</div>
 					) : (
@@ -196,11 +196,11 @@ export default component$(() => {
 										setParam("q", q || null);
 									}}
 								>
-									<label class="biab-label" for="store-search">
+									<label class="bd-label" for="store-search">
 										Search
 									</label>
 									<input
-										class="biab-input"
+										class="bd-input"
 										id="store-search"
 										name="q"
 										placeholder="Search products…"
@@ -259,20 +259,20 @@ export default component$(() => {
 									<div class="store-filter__price">
 										<input
 											bind:value={minPrice}
-											class="biab-input"
+											class="bd-input"
 											inputMode="numeric"
 											placeholder={`$${data.value.priceRange.minDollars}`}
 										/>
 										<span class="store-filter__dash">–</span>
 										<input
 											bind:value={maxPrice}
-											class="biab-input"
+											class="bd-input"
 											inputMode="numeric"
 											placeholder={`$${data.value.priceRange.maxDollars}`}
 										/>
 									</div>
 									<button
-										class="biab-btn biab-btn--ghost store-filter__apply"
+										class="bd-btn bd-btn--ghost store-filter__apply"
 										type="submit"
 									>
 										Apply
@@ -324,7 +324,7 @@ export default component$(() => {
 									<label class="store-results__sort">
 										<span>Sort</span>
 										<select
-											class="biab-select"
+											class="bd-select"
 											onChange$={(e) =>
 												setParam(
 													"sort",
@@ -345,15 +345,15 @@ export default component$(() => {
 								</div>
 
 								{data.value.items.length === 0 ? (
-									<div class="biab-empty">
+									<div class="bd-empty">
 										No products match these filters. Try clearing a filter or
 										broadening your search.
 									</div>
 								) : (
-									<div class="biab-grid-3">
+									<div class="bd-grid-3">
 										{data.value.items.map((p) => (
 											<Link
-												class="biab-card service-card store-card"
+												class="bd-card service-card store-card"
 												href={`/store/${p.id}`}
 												key={p.id}
 											>
@@ -371,13 +371,13 @@ export default component$(() => {
 													{p.isBestSeller || p.isNew || p.isOnSale ? (
 														<div class="store-card__badges">
 															{p.isBestSeller ? (
-																<span class="biab-badge">Best seller</span>
+																<span class="bd-badge">Best seller</span>
 															) : null}
 															{p.isNew ? (
-																<span class="biab-badge">New</span>
+																<span class="bd-badge">New</span>
 															) : null}
 															{p.isOnSale ? (
-																<span class="biab-badge store-card__badge--sale">
+																<span class="bd-badge store-card__badge--sale">
 																	Sale
 																</span>
 															) : null}
@@ -429,7 +429,7 @@ export const head: DocumentHead = {
 		{
 			name: "description",
 			content:
-				"Browse and filter products from the BIAB storefront. Server-rendered via routeLoader$ with a visitor-token cart.",
+				"Browse and filter products from the BD storefront. Server-rendered via routeLoader$ with a visitor-token cart.",
 		},
 	],
 };

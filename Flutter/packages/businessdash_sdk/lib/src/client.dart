@@ -4,12 +4,12 @@ import 'package:http/http.dart' as http;
 
 import 'errors.dart';
 
-/// Transport for the BIAB Package API.
+/// Transport for the BD Package API.
 ///
 /// ## The token rule
 ///
 /// A mobile app **holds its credential in the artifact** — `strings` on an APK
-/// or IPA finds anything you ship. So `BiabClient` takes a **publishable
+/// or IPA finds anything you ship. So `BdClient` takes a **publishable
 /// `pk_…` token** and asserts on an `sk_…` key rather than letting a secret
 /// ride to the store.
 ///
@@ -27,15 +27,15 @@ import 'errors.dart';
 /// CDN response can't hard-fail a page. A client that only checks
 /// `statusCode` decodes an empty screen and never notices, so [_decode]
 /// inspects the body first.
-class BiabClient {
-  BiabClient({
+class BdClient {
+  BdClient({
     required Uri host,
     required String publishableKey,
     required this.siteId,
     http.Client? httpClient,
   })  : assert(
           !publishableKey.startsWith('sk_'),
-          'BiabClient was given a SECRET key. A mobile app ships its '
+          'BdClient was given a SECRET key. A mobile app ships its '
           'credential inside the binary, where `strings` finds it — use a '
           'publishable pk_ token instead, and route anything that genuinely '
           'needs a secret key through a server you control.',
@@ -117,7 +117,7 @@ class BiabClient {
     try {
       response = await http.Response.fromStream(await _http.send(request));
     } catch (error) {
-      throw BiabTransportException(error);
+      throw BdTransportException(error);
     }
 
     return _decode(response, path);
@@ -129,14 +129,14 @@ class BiabClient {
       final decoded = response.body.isEmpty ? {} : jsonDecode(response.body);
       body = decoded is Map<String, dynamic> ? decoded : <String, dynamic>{};
     } on FormatException catch (error) {
-      throw BiabDecodingException(path, error);
+      throw BdDecodingException(path, error);
     }
 
     // Checked BEFORE the status code, deliberately: reads signal the gate
     // with a 200 and a body flag, so a status-first check would let an empty
     // screen through as success.
     if (body['available'] == false && body['reason'] is String) {
-      throw BiabAccessRejectedException(
+      throw BdAccessRejectedException(
         reason: AccessRejectionReason.parse(body['reason'] as String),
         message: body['message'] as String? ?? 'Unavailable.',
         upgradeUrl: body['upgradeUrl'] as String?,
@@ -144,7 +144,7 @@ class BiabClient {
     }
 
     if (response.statusCode >= 300) {
-      throw BiabHttpException(
+      throw BdHttpException(
         status: response.statusCode,
         path: path,
         message: body['message'] as String?,

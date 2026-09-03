@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -11,7 +11,7 @@ use Illuminate\View\View;
 /**
  * The relational custom-database demo.
  *
- * `biab.data-model.config.ts` declares two objects: `todos`, and `todoImages`
+ * `bd.data-model.config.ts` declares two objects: `todos`, and `todoImages`
  * whose `todo` field is a RELATION back to todos. Push them with
  * `npm run sync-data-model`, promote in the dashboard, then set the generated
  * "Todo Form" Live.
@@ -30,12 +30,12 @@ class TodosController extends Controller
 
     public function index(): View
     {
-        $todos = Biab::attempt(
+        $todos = Bd::attempt(
             static fn (Client $c) => $c->dataModel()->listAllRecords('todos'),
             default: [],
         );
 
-        $images = Biab::attempt(
+        $images = Bd::attempt(
             static fn (Client $c) => $c->dataModel()->listAllRecords('todoImages'),
             default: [],
         );
@@ -54,7 +54,7 @@ class TodosController extends Controller
         return view('pages.todos', [
             'todos' => $todos,
             'imagesByTodo' => $imagesByTodo,
-            'configured' => Biab::configured(),
+            'configured' => Bd::configured(),
         ]);
     }
 
@@ -65,7 +65,7 @@ class TodosController extends Controller
             'notes' => ['nullable', 'string', 'max:2000'],
         ]);
 
-        $result = Biab::attempt(static fn (Client $c) => $c->forms()->submit(
+        $result = Bd::attempt(static fn (Client $c) => $c->forms()->submit(
             self::TODO_FORM_SLUG,
             array_filter([
                 'title' => $validated['title'],
@@ -76,7 +76,7 @@ class TodosController extends Controller
         ));
 
         if ($result) {
-            Biab::forget(['biab:data-model']);
+            Bd::forget(['bd:data-model']);
         }
 
         return back()->with(

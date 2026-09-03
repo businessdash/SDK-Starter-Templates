@@ -2,7 +2,7 @@ import type { RequestHandler } from "@builder.io/qwik-city";
 
 import { mcpManifestHandler } from "@businessdash/sdk/mcp";
 
-import { getDistributionConfig } from "../../../lib/biab-distribution";
+import { getDistributionConfig } from "../../../lib/bd-distribution";
 
 /**
  * `/.well-known/mcp.json` — the MCP discovery manifest, with the endpoint URL

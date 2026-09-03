@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { biab } from "../lib/biab";
-import type { Loose } from "../lib/biab";
+import { bd } from "../lib/bd";
+import type { Loose } from "../lib/bd";
 import { ErrorBox, PageHead } from "./ui";
 
 function stars(n: any): string {
@@ -18,7 +18,7 @@ export function Reviews() {
 	const load = async (o: number) => {
 		setLoading(true);
 		try {
-			const res: Loose = await biab.reviews.list({ limit: 10, offset: o });
+			const res: Loose = await bd.reviews.list({ limit: 10, offset: o });
 			setItems((prev) => [...prev, ...(res.items ?? [])]);
 			setTotal(typeof res.totalCount === "number" ? res.totalCount : null);
 			setOffset(res.nextOffset ?? null);

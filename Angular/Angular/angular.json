@@ -30,7 +30,7 @@
               }
             ],
             "styles": [
-              "node_modules/@businessdash/sdk/dist/biab-forms.css",
+              "node_modules/@businessdash/sdk/dist/bd-forms.css",
               "src/styles.scss"
             ],
             "server": "src/main.server.ts",

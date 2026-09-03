@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "BiabVaporStarter",
+    name: "BdVaporStarter",
     platforms: [.macOS(.v14)],
     dependencies: [
         .package(url: "https://github.com/vapor/vapor.git", from: "4.106.0"),

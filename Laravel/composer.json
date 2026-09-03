@@ -1,8 +1,8 @@
 {
-    "name": "biab/laravel-starter",
+    "name": "bd/laravel-starter",
     "type": "project",
-    "description": "BIAB SDK — Laravel starter. The same generic business site the other starters render, server-side in Blade.",
-    "keywords": ["biab", "business-in-a-box", "laravel", "starter"],
+    "description": "BD SDK — Laravel starter. The same generic business site the other starters render, server-side in Blade.",
+    "keywords": ["bd", "business-in-a-box", "laravel", "starter"],
     "license": "MIT",
     "require": {
         "php": "^8.2",

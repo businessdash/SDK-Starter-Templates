@@ -136,18 +136,18 @@ export function StoreView({
 
 	return (
 		<div>
-			<div className="biab-section__lead" style={{ textAlign: "left" }}>
-				<span className="biab-section__eyebrow">Shop</span>
-				<h1 className="biab-section__title">Products</h1>
-				<p className="biab-section__sub" style={{ margin: 0 }}>
+			<div className="bd-section__lead" style={{ textAlign: "left" }}>
+				<span className="bd-section__eyebrow">Shop</span>
+				<h1 className="bd-section__title">Products</h1>
+				<p className="bd-section__sub" style={{ margin: 0 }}>
 					Filterable grid + facets via{" "}
-					<code className="biab-code">storefront.listProductsWithMeta()</code>
+					<code className="bd-code">storefront.listProductsWithMeta()</code>
 				</p>
 			</div>
 
 			{status === "unconfigured" ? (
 				<Notice
-					body="BIAB env (BIAB_API_KEY / BIAB_SITE_ID / base URL) isn't set, so the SDK client can't initialise. See .env.example."
+					body="BD env (BD_API_KEY / BD_SITE_ID / base URL) isn't set, so the SDK client can't initialise. See .env.example."
 					title="Store isn't connected"
 				/>
 			) : status === "failed" ? (
@@ -160,11 +160,11 @@ export function StoreView({
 					{/* Sidebar facets */}
 					<aside className="store-sidebar">
 						<form onSubmit={onSearch}>
-							<label className="biab-label" htmlFor="store-search">
+							<label className="bd-label" htmlFor="store-search">
 								Search
 							</label>
 							<input
-								className="biab-input"
+								className="bd-input"
 								defaultValue={filters.search ?? ""}
 								id="store-search"
 								name="q"
@@ -212,7 +212,7 @@ export function StoreView({
 							<p className="store-facet__title">Price</p>
 							<div className="store-facet__price">
 								<input
-									className="biab-input"
+									className="bd-input"
 									defaultValue={filters.minDollars ?? ""}
 									inputMode="numeric"
 									name="min"
@@ -220,14 +220,14 @@ export function StoreView({
 								/>
 								<span aria-hidden>–</span>
 								<input
-									className="biab-input"
+									className="bd-input"
 									defaultValue={filters.maxDollars ?? ""}
 									inputMode="numeric"
 									name="max"
 									placeholder={`$${meta.priceRange.maxDollars}`}
 								/>
 							</div>
-							<button className="biab-btn biab-btn--ghost" type="submit">
+							<button className="bd-btn bd-btn--ghost" type="submit">
 								Apply
 							</button>
 						</form>
@@ -270,14 +270,14 @@ export function StoreView({
 					{/* Grid */}
 					<div className="store-results">
 						<div className="store-results__bar">
-							<p className="biab-loading" style={{ fontStyle: "normal" }}>
+							<p className="bd-loading" style={{ fontStyle: "normal" }}>
 								{meta.items.length} product
 								{meta.items.length === 1 ? "" : "s"}
 							</p>
 							<label className="store-sort">
 								<span>Sort</span>
 								<select
-									className="biab-select"
+									className="bd-select"
 									onChange={(e) =>
 										setParam(
 											"sort",
@@ -301,10 +301,10 @@ export function StoreView({
 								title="Nothing here yet"
 							/>
 						) : (
-							<div className="biab-grid-3">
+							<div className="bd-grid-3">
 								{meta.items.map((p) => (
 									<Link
-										className="biab-card store-card"
+										className="bd-card store-card"
 										href={`/store/${p.id}`}
 										key={p.id}
 									>
@@ -322,11 +322,11 @@ export function StoreView({
 											)}
 											<div className="store-card__badges">
 												{p.isBestSeller ? (
-													<span className="biab-badge">Best seller</span>
+													<span className="bd-badge">Best seller</span>
 												) : null}
-												{p.isNew ? <span className="biab-badge">New</span> : null}
+												{p.isNew ? <span className="bd-badge">New</span> : null}
 												{p.isOnSale ? (
-													<span className="biab-badge store-badge--sale">
+													<span className="bd-badge store-badge--sale">
 														Sale
 													</span>
 												) : null}

@@ -1,6 +1,6 @@
 import { mcpManifestHandler } from "@businessdash/sdk/mcp";
 
-import { getDistributionConfig } from "@/server/lib/biab-distribution";
+import { getDistributionConfig } from "@/server/lib/bd-distribution";
 
 /**
  * `/.well-known/mcp.json` — the MCP discovery manifest, with the endpoint URL

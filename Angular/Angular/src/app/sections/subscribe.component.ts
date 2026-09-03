@@ -11,10 +11,10 @@ import {
 	Validators,
 } from "@angular/forms";
 
-import { BIAB_FOLLOWERS_ENABLED, FollowersService } from "../lib/followers.service";
+import { BD_FOLLOWERS_ENABLED, FollowersService } from "../lib/followers.service";
 
 /**
- * Newsletter signup. Wired to BIAB followers via the browser-safe publishable
+ * Newsletter signup. Wired to BD followers via the browser-safe publishable
  * token (see `FollowersService`); the SAME component powers the footer and the
  * about-section signups — mirroring DGP's shared `SubscribeStub`.
  *
@@ -28,7 +28,7 @@ import { BIAB_FOLLOWERS_ENABLED, FollowersService } from "../lib/followers.servi
  * while still sharing the singleton's localStorage hint.
  */
 @Component({
-	selector: "biab-subscribe",
+	selector: "bd-subscribe",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ReactiveFormsModule],
 	template: `
@@ -49,7 +49,7 @@ import { BIAB_FOLLOWERS_ENABLED, FollowersService } from "../lib/followers.servi
 						[disabled]="submitting()"
 						required
 					/>
-					<button class="biab-btn" type="submit" [disabled]="submitting()">
+					<button class="bd-btn" type="submit" [disabled]="submitting()">
 						{{ submitting() ? "…" : buttonLabel() }}
 					</button>
 				</div>
@@ -110,7 +110,7 @@ export class SubscribeComponent {
 	}
 
 	doneMessage(): string {
-		return BIAB_FOLLOWERS_ENABLED
+		return BD_FOLLOWERS_ENABLED
 			? "You're subscribed — thanks!"
 			: "Thanks — newsletter signup is coming soon.";
 	}
@@ -121,7 +121,7 @@ export class SubscribeComponent {
 		if (!email) return;
 
 		// Placeholder mode (unconfigured): just acknowledge, no network call.
-		if (!BIAB_FOLLOWERS_ENABLED) {
+		if (!BD_FOLLOWERS_ENABLED) {
 			this.done.set(true);
 			return;
 		}

@@ -1,0 +1,49 @@
+<%!--
+  Shown until BD_SITE_ID is set, so a fresh clone tells you what to do
+  instead of rendering a mysteriously empty site.
+--%>
+<div :if={not BdStarter.Bd.configured?()} class="banner banner-setup">
+  <strong>Not connected to BD.</strong>
+  Copy <code>.env.example</code> to <code>.env</code> and set
+  <code>BD_SITE_ID</code> + <code>BD_API_KEY</code>. Every section below is
+  rendering its local fallback.
+  <a href={"#{BdStarter.Bd.host()}/login?returnTo=/dashboard/settings/web-content"}>
+    Open the setup wizard →
+  </a>
+</div>
+
+<header class="site-header">
+  <a class="brand" href={~p"/"}>BD Phoenix starter</a>
+  <nav>
+    <a href={~p"/store"}>Store</a>
+    <a href={~p"/services"}>Services</a>
+    <a href={~p"/blog"}>Blog</a>
+    <a href={~p"/reviews"}>Reviews</a>
+    <a href={~p"/subscriptions"}>Plans</a>
+    <a href={~p"/todos"}>Todos</a>
+    <a href={~p"/chat"}>Chat</a>
+    <a href={~p"/cart"}>Cart</a>
+    <a href={~p"/my-account"}>My account</a>
+  </nav>
+</header>
+
+<main>
+  <p :if={Phoenix.Flash.get(@flash, :info)} class="notice">
+    {Phoenix.Flash.get(@flash, :info)}
+  </p>
+  <p :if={Phoenix.Flash.get(@flash, :error)} class="notice notice-error">
+    {Phoenix.Flash.get(@flash, :error)}
+  </p>
+
+  {@inner_content}
+</main>
+
+<footer class="site-footer">
+  <form method="post" action={~p"/subscribe"} class="subscribe">
+    <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+    <label for="subscribe-email">Get updates</label>
+    <input id="subscribe-email" type="email" name="email" required placeholder="you@example.com" />
+    <button type="submit">Subscribe</button>
+  </form>
+  <p class="muted">Powered by BusinessDash</p>
+</footer>

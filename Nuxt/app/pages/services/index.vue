@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import BiabHeader from "~/components/biab/BiabHeader.vue";
-import BiabFooter from "~/components/biab/BiabFooter.vue";
-import type { ParallelVariantsResult } from "../../../server/api/biab/parallel/variants.get";
+import BdHeader from "~/components/bd/BdHeader.vue";
+import BdFooter from "~/components/bd/BdFooter.vue";
+import type { ParallelVariantsResult } from "../../../server/api/bd/parallel/variants.get";
 
 /**
  * Service-area index. Lists every materialised (service × area) variant
- * of the `service-area` parallel page declared in `biab.config.ts`, and
+ * of the `service-area` parallel page declared in `bd.config.ts`, and
  * links to its SSR-rendered detail route at
  * `/services/[service]/[area]`. The variants come from
  * `parallelPages.listVariants("service-area")`.
  */
 const { data } = await useFetch<ParallelVariantsResult>(
-	"/api/biab/parallel/variants",
+	"/api/bd/parallel/variants",
 	{ query: { key: "service-area" } },
 );
 
@@ -27,20 +27,20 @@ useHead({ title: "Service areas — Your Business" });
 
 <template>
 	<div>
-		<BiabHeader />
+		<BdHeader />
 		<main>
-			<section class="biab-section">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Coverage</span>
-					<h1 class="biab-section__title">Service areas</h1>
-					<p class="biab-section__sub">
+			<section class="bd-section">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Coverage</span>
+					<h1 class="bd-section__title">Service areas</h1>
+					<p class="bd-section__sub">
 						Programmatic SEO pages — one URL per service × area, rendered
-						server-side from BIAB with fully-resolved meta + body.
+						server-side from BD with fully-resolved meta + body.
 					</p>
 				</div>
 
-				<div v-if="!data || data.variants.length === 0" class="biab-empty">
-					No service-area pages yet. Add services and service areas in BIAB, then
+				<div v-if="!data || data.variants.length === 0" class="bd-empty">
+					No service-area pages yet. Add services and service areas in BD, then
 					publish — they fan out into pages here.
 				</div>
 				<ul v-else class="services-index">
@@ -52,6 +52,6 @@ useHead({ title: "Service areas — Your Business" });
 				</ul>
 			</section>
 		</main>
-		<BiabFooter />
+		<BdFooter />
 	</div>
 </template>

@@ -3,7 +3,7 @@
  * Server-rendered hero — calls the SDK during render. The marketing
  * bundle's `hero` section overrides local defaults when authored.
  */
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 
 const defaults = {
 	title: "Service that shows up — on time.",
@@ -14,9 +14,9 @@ const defaults = {
 
 let hero = defaults;
 
-if (biab) {
+if (bd) {
 	try {
-		const bundle = await biab.marketing.getPageBundle({
+		const bundle = await bd.marketing.getPageBundle({
 			pageKey: "home",
 			locale: "en",
 		});
@@ -38,8 +38,8 @@ if (biab) {
 ---
 
 <section class="hero" id="hero">
-	<span class="biab-badge">Open · Mon–Sat</span>
+	<span class="bd-badge">Open · Mon–Sat</span>
 	<h1 class="hero__title">{hero.title}</h1>
 	<p class="hero__sub">{hero.tagline}</p>
-	<a class="biab-btn" href={hero.ctaHref}>{hero.ctaLabel}</a>
+	<a class="bd-btn" href={hero.ctaHref}>{hero.ctaLabel}</a>
 </section>

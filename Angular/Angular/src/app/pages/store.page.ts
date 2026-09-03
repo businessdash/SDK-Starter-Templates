@@ -8,13 +8,13 @@ import {
 } from "@angular/core";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import {
-	biabApi,
+	bdApi,
 	type CategoryCount,
 	type ProductCard,
 	type ProductCategory,
 	type StoreFilters,
 	type StoreSort,
-} from "../lib/biab-api.client";
+} from "../lib/bd-api.client";
 
 const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 	{ value: "featured", label: "Featured" },
@@ -26,16 +26,16 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 
 /**
  * Storefront listing — platform-style shop page. Products + facets come from
- * the BIAB `listProductsWithMeta` surface via `/api/biab/store/products-meta`
+ * the BD `listProductsWithMeta` surface via `/api/bd/store/products-meta`
  * (the API key stays server-side). The sidebar filters (search, categories +
  * counts, price range, min rating, sort) are reflected into the URL query
  * string so a filtered grid is shareable/back-button friendly. Cards carry
  * cover image, price/compare-at, star rating + count, and badges. "Add to
- * cart" posts through `/api/biab/cart/items`. Degrades to an empty/unconfigured
+ * cart" posts through `/api/bd/cart/items`. Degrades to an empty/unconfigured
  * state gracefully.
  */
 @Component({
-	selector: "biab-store-page",
+	selector: "bd-store-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -52,7 +52,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 							<span class="store-sidebar__label">Search</span>
 							<input
 								type="search"
-								class="biab-input"
+								class="bd-input"
 								placeholder="Search products…"
 								[value]="search()"
 								(input)="onSearch($any($event.target).value)"
@@ -93,7 +93,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 							<div class="store-price">
 								<input
 									type="number"
-									class="biab-input"
+									class="bd-input"
 									min="0"
 									inputmode="numeric"
 									placeholder="Min"
@@ -104,7 +104,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 								<span class="muted">–</span>
 								<input
 									type="number"
-									class="biab-input"
+									class="bd-input"
 									min="0"
 									inputmode="numeric"
 									placeholder="Max"
@@ -118,7 +118,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 						<label class="store-sidebar__group">
 							<span class="store-sidebar__label">Minimum rating</span>
 							<select
-								class="biab-input"
+								class="bd-input"
 								[value]="minRatingValue()"
 								(change)="onMinRating($any($event.target).value)"
 							>
@@ -131,7 +131,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 						</label>
 
 						@if (hasActiveFilters()) {
-							<button class="biab-btn biab-btn--ghost store-sidebar__clear" type="button" (click)="clearFilters()">
+							<button class="bd-btn bd-btn--ghost store-sidebar__clear" type="button" (click)="clearFilters()">
 								Clear filters
 							</button>
 						}
@@ -149,7 +149,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 							</span>
 							<label class="store-sort">
 								<span class="muted">Sort</span>
-								<select class="biab-input" [value]="sort()" (change)="onSort($any($event.target).value)">
+								<select class="bd-input" [value]="sort()" (change)="onSort($any($event.target).value)">
 									@for (o of sortOptions; track o.value) {
 										<option [value]="o.value">{{ o.label }}</option>
 									}
@@ -163,7 +163,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 							@if (hasActiveFilters()) {
 								<p class="muted">No products match these filters. <button class="link-btn" type="button" (click)="clearFilters()">Clear filters</button>.</p>
 							} @else {
-								<p class="muted">No products yet — add them in BIAB (Products) and they appear here.</p>
+								<p class="muted">No products yet — add them in BD (Products) and they appear here.</p>
 							}
 						} @else {
 							<div class="grid store-grid">
@@ -207,7 +207,7 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 										}
 
 										<button
-											class="biab-btn product-card__add"
+											class="bd-btn product-card__add"
 											type="button"
 											(click)="add(p.id)"
 											[disabled]="adding() === p.id"
@@ -279,7 +279,7 @@ export class StorePage implements OnInit {
 	async ngOnInit() {
 		this.readFiltersFromUrl();
 		// Categories are facet-stable; load once alongside the first grid.
-		const cats = await biabApi.categories();
+		const cats = await bdApi.categories();
 		this.categories.set(cats?.items ?? []);
 		await this.load();
 	}
@@ -332,7 +332,7 @@ export class StorePage implements OnInit {
 
 	private async load() {
 		this.state.set("loading");
-		const res = await biabApi.productsMeta(this.currentFilters());
+		const res = await bdApi.productsMeta(this.currentFilters());
 		if (!res) {
 			this.state.set("unavailable");
 			return;
@@ -412,7 +412,7 @@ export class StorePage implements OnInit {
 
 	async add(productId: string) {
 		this.adding.set(productId);
-		await biabApi.addToCart(productId, 1);
+		await bdApi.addToCart(productId, 1);
 		this.adding.set(null);
 	}
 }

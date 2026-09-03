@@ -1,5 +1,5 @@
-import { biab } from "../lib/biab";
-import type { Loose } from "../lib/biab";
+import { bd } from "../lib/bd";
+import type { Loose } from "../lib/bd";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 function normalize(updates: Loose | null | undefined): Record<string, any>[] {
@@ -16,7 +16,7 @@ function cap(s: any): string {
 }
 
 export function Updates() {
-	const { data, error, loading } = useApi(() => biab.content.extras());
+	const { data, error, loading } = useApi(() => bd.content.extras());
 	const items = normalize(data?.updates);
 	return (
 		<main className="page">

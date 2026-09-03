@@ -35,7 +35,7 @@ export function renderFooter(req?: Request): string {
 					req,
 				)}
 			</div>
-			<p>© ${year} Your Business — built on BIAB.</p>
+			<p>© ${year} Your Business — built on BD.</p>
 		</footer>
 	`);
 }

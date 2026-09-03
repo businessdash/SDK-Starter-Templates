@@ -2,9 +2,9 @@
 	import { page } from '$app/state';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
-	import { initBiabAnalytics } from '@businessdash/sdk/analytics-core';
+	import { initBdAnalytics } from '@businessdash/sdk/analytics-core';
 	import { locales, localizeHref } from '$lib/paraglide/runtime';
-	import SdkSetupBanner from '$lib/components/biab/SdkSetupBanner.svelte';
+	import SdkSetupBanner from '$lib/components/bd/SdkSetupBanner.svelte';
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 
@@ -12,11 +12,11 @@
 
 	onMount(() => {
 		if (!browser) return;
-		const siteId = import.meta.env.PUBLIC_BIAB_SITE_ID;
-		const baseUrl = import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL;
-		const apiKey = import.meta.env.PUBLIC_BIAB_PUBLIC_KEY;
+		const siteId = import.meta.env.PUBLIC_BD_SITE_ID;
+		const baseUrl = import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL;
+		const apiKey = import.meta.env.PUBLIC_BD_PUBLIC_KEY;
 		if (!siteId || !baseUrl || !apiKey) return;
-		const tracker = initBiabAnalytics({ siteId, baseUrl, apiKey });
+		const tracker = initBdAnalytics({ siteId, baseUrl, apiKey });
 		return () => tracker.stop();
 	});
 </script>

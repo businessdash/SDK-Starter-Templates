@@ -2,7 +2,7 @@ import {
 	isStoreConfigured,
 	listStoreCategories,
 	listStoreProductsWithMeta,
-} from "@/server/lib/biab-store";
+} from "@/server/lib/bd-store";
 
 import {
 	StoreView,

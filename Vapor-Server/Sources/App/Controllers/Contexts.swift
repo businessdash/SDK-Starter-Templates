@@ -32,7 +32,7 @@ struct HomeContext: Content {
         headline: "A business, in a box.",
         subhead: "Everything the operation needs, on your own domain.",
         aboutTitle: "About us",
-        aboutBody: "Tell your story here — this copy lives in the BIAB dashboard once you're connected.",
+        aboutBody: "Tell your story here — this copy lives in the BD dashboard once you're connected.",
         products: []
     )
 }

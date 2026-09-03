@@ -1,4 +1,4 @@
-import { getBiab } from "../biab";
+import { getBd } from "../bd";
 import { html, render } from "../html";
 
 type Service = {
@@ -31,10 +31,10 @@ const defaults: Service[] = [
 
 export async function renderServices(): Promise<string> {
 	let items = defaults;
-	const biab = getBiab();
-	if (biab) {
+	const bd = getBd();
+	if (bd) {
 		try {
-			const list = await biab.storefront.listProducts({ limit: 6 });
+			const list = await bd.storefront.listProducts({ limit: 6 });
 			if (Array.isArray(list?.items) && list.items.length > 0) {
 				items = list.items.map((p: any) => ({
 					id: p.id,

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
 	import type { ReviewState } from './+page.server';
 
@@ -25,36 +25,36 @@
 
 <Header />
 
-<main class="biab-section biab-section--narrow">
+<main class="bd-section bd-section--narrow">
 	{#if !data.configured}
-		<div class="biab-empty">
-			Customer accounts aren't configured. Set <code>BIAB_AUTH_CALLBACK_URL</code>
+		<div class="bd-empty">
+			Customer accounts aren't configured. Set <code>BD_AUTH_CALLBACK_URL</code>
 			(plus the API key + base URL) to enable sign-in.
 		</div>
 	{:else if !data.session}
-		<div class="biab-card account-signin">
-			<h1 class="biab-section__title">My account</h1>
+		<div class="bd-card account-signin">
+			<h1 class="bd-section__title">My account</h1>
 			<p>Sign in to view your jobs, quotes and invoices, and to leave a review.</p>
 			<div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-				<a class="biab-btn" href="/api/biab-auth/sign-in">Sign in</a>
-				<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-up">Create account</a>
+				<a class="bd-btn" href="/api/bd-auth/sign-in">Sign in</a>
+				<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">Create account</a>
 			</div>
 		</div>
 	{:else}
-		<div class="biab-section__lead" style="text-align: left;">
-			<span class="biab-section__eyebrow">Account</span>
-			<h1 class="biab-section__title">Welcome back, {displayName()}.</h1>
+		<div class="bd-section__lead" style="text-align: left;">
+			<span class="bd-section__eyebrow">Account</span>
+			<h1 class="bd-section__title">Welcome back, {displayName()}.</h1>
 		</div>
 
-		<div class="biab-card account-card">
+		<div class="bd-card account-card">
 			<div class="account-card__head">
 				<div>
 					<strong>{user?.email ?? 'Signed in'}</strong>
 					{#if data.session.role}
-						<span class="biab-badge">{data.session.role}</span>
+						<span class="bd-badge">{data.session.role}</span>
 					{/if}
 				</div>
-				<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-out">Sign out</a>
+				<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-out">Sign out</a>
 			</div>
 
 			{#if work}
@@ -77,7 +77,7 @@
 								{#each work.jobs.slice(0, 5) as job (job.id)}
 									<li>
 										<strong>{job.name ?? 'Job'}</strong>
-										<span class="biab-badge">{job.status}</span>
+										<span class="bd-badge">{job.status}</span>
 									</li>
 								{/each}
 							</ul>
@@ -87,16 +87,16 @@
 			{/if}
 		</div>
 
-		<div class="biab-card account-card">
+		<div class="bd-card account-card">
 			<h3>Leave a review</h3>
 			{#if review?.status === 'success'}
 				<div class="account-msg account-msg--ok">{review.message}</div>
 			{:else}
 				<form method="POST" action="?/submitReview" use:enhance class="review-form">
 					<div>
-						<label class="biab-label" for="rating">Rating (1–5)</label>
+						<label class="bd-label" for="rating">Rating (1–5)</label>
 						<input
-							class="biab-input"
+							class="bd-input"
 							id="rating"
 							name="rating"
 							type="number"
@@ -110,17 +110,17 @@
 						{/if}
 					</div>
 					<div>
-						<label class="biab-label" for="title">Title (optional)</label>
-						<input class="biab-input" id="title" name="title" type="text" />
+						<label class="bd-label" for="title">Title (optional)</label>
+						<input class="bd-input" id="title" name="title" type="text" />
 					</div>
 					<div>
-						<label class="biab-label" for="body">Your review</label>
-						<textarea class="biab-textarea" id="body" name="body" required></textarea>
+						<label class="bd-label" for="body">Your review</label>
+						<textarea class="bd-textarea" id="body" name="body" required></textarea>
 						{#if review?.status === 'error' && review.fieldErrors?.body}
 							<small style="color: var(--danger);">{review.fieldErrors.body}</small>
 						{/if}
 					</div>
-					<button class="biab-btn" type="submit" style="align-self: flex-start;">
+					<button class="bd-btn" type="submit" style="align-self: flex-start;">
 						Submit review
 					</button>
 					{#if review?.status === 'error'}
@@ -150,7 +150,7 @@
 		gap: 1rem;
 		flex-wrap: wrap;
 	}
-	.account-card__head .biab-badge {
+	.account-card__head .bd-badge {
 		margin-left: 0.5rem;
 	}
 	.account-note {

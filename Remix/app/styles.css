@@ -74,7 +74,7 @@ body {
 	margin: 0 0 1.5rem;
 }
 
-.biab-badge {
+.bd-badge {
 	display: inline-block;
 	font-size: 0.8rem;
 	background: var(--accent-soft);
@@ -83,7 +83,7 @@ body {
 	border-radius: 999px;
 }
 
-.biab-btn {
+.bd-btn {
 	display: inline-block;
 	background: var(--btn-bg);
 	color: var(--btn-fg);
@@ -95,11 +95,11 @@ body {
 	cursor: pointer;
 }
 
-.biab-btn:hover {
+.bd-btn:hover {
 	background: var(--btn-bg-hover);
 }
 
-.biab-btn:disabled {
+.bd-btn:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 }

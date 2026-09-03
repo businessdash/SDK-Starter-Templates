@@ -1,11 +1,11 @@
-/** /subscriptions — recurring plans from `biab.subscriptions.list`. */
-import { biab, el, money } from "/biab.js";
+/** /subscriptions — recurring plans from `bd.subscriptions.list`. */
+import { bd, el, money } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 export default async function render(root) {
 	root.replaceChildren(pageHead("Plans", "Recurring subscriptions, billed via Stripe."));
 	try {
-		const res = await biab.subscriptions.list();
+		const res = await bd.subscriptions.list();
 		const items = res?.items ?? [];
 		if (!items.length) {
 			root.append(el("p", { class: "muted" }, ["No subscription plans yet."]));

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/solid-router";
 
-import { buildMcpManifestResponse } from "../lib/biab-server-fns";
+import { buildMcpManifestResponse } from "../lib/bd-server-fns";
 
 /**
  * /.well-known/mcp.json — the MCP discovery manifest, with the endpoint URL

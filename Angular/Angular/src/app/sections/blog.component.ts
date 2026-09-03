@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, inject, OnInit } from "@angular/core";
-import { BiabService } from "../lib/biab.service";
+import { BdService } from "../lib/bd.service";
 
 @Component({
-	selector: "biab-blog",
+	selector: "bd-blog",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<section class="section" id="blog">
 			<h2 class="section__title">From the blog</h2>
 			@if (svc.blog().length === 0) {
-				<p class="muted">No posts yet — author them in BIAB and they appear here.</p>
+				<p class="muted">No posts yet — author them in BD and they appear here.</p>
 			} @else {
 				<ul class="post-list">
 					@for (post of svc.blog(); track post.slug) {
@@ -26,7 +26,7 @@ import { BiabService } from "../lib/biab.service";
 	`,
 })
 export class BlogComponent implements OnInit {
-	readonly svc = inject(BiabService);
+	readonly svc = inject(BdService);
 	ngOnInit() {
 		void this.svc.loadBlog();
 	}

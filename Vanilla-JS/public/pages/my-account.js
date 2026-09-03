@@ -1,12 +1,12 @@
 /** /my-account — customer portal: session, work bundle, review submission. */
-import { biab, el } from "/biab.js";
+import { bd, el } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 export default async function render(root) {
 	root.replaceChildren(pageHead("My account"), el("p", { class: "page__loading" }, ["Loading…"]));
 	let data;
 	try {
-		data = await biab.portal.work();
+		data = await bd.portal.work();
 	} catch (err) {
 		root.replaceChildren(pageHead("My account"), errBox(err));
 		return;
@@ -19,8 +19,8 @@ export default async function render(root) {
 			el("div", { class: "signin-card" }, [
 				el("p", {}, ["You're not signed in."]),
 				el("div", { class: "signin-card__actions" }, [
-					el("a", { class: "btn btn--primary", href: "/api/biab-auth/sign-in" }, ["Sign in"]),
-					el("a", { class: "btn btn--ghost", href: "/api/biab-auth/sign-up" }, ["Create account"]),
+					el("a", { class: "btn btn--primary", href: "/api/bd-auth/sign-in" }, ["Sign in"]),
+					el("a", { class: "btn btn--ghost", href: "/api/bd-auth/sign-up" }, ["Create account"]),
 				]),
 			]),
 		);
@@ -32,7 +32,7 @@ export default async function render(root) {
 	nodes.push(
 		el("div", { class: "account-head" }, [
 			el("p", {}, ["Signed in as ", el("strong", {}, [u.firstName || u.email || "customer"])]),
-			el("a", { class: "btn btn--ghost btn--sm", href: "/api/biab-auth/sign-out" }, ["Sign out"]),
+			el("a", { class: "btn btn--ghost btn--sm", href: "/api/bd-auth/sign-out" }, ["Sign out"]),
 		]),
 	);
 
@@ -79,7 +79,7 @@ function reviewForm() {
 				btn.disabled = true;
 				msg.textContent = "Submitting…";
 				try {
-					const res = await biab.portal.submitReview({ rating: Number(rating.value), body: text.value.trim() });
+					const res = await bd.portal.submitReview({ rating: Number(rating.value), body: text.value.trim() });
 					msg.textContent =
 						res?.status === "pending"
 							? "Thanks! Your review is pending moderation."

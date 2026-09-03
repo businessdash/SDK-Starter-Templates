@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Auth;
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Auth;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
  * Customer portal. Everything here is per-customer, so nothing is cached —
- * `Biab::attempt()` rather than `Biab::remember()`.
+ * `Bd::attempt()` rather than `Bd::remember()`.
  */
 class PortalController extends Controller
 {
@@ -19,12 +19,12 @@ class PortalController extends Controller
     {
         $session = $this->session($request);
         if (! $session) {
-            return redirect('/api/biab-auth/sign-in?returnTo=/my-account');
+            return redirect('/api/bd-auth/sign-in?returnTo=/my-account');
         }
 
-        $token = $request->cookie(config('biab.session_cookie'));
+        $token = $request->cookie(config('bd.session_cookie'));
 
-        $work = Biab::attempt(
+        $work = Bd::attempt(
             static fn (Client $c) => $c->portal($token, $session['organizationId'] ?? null)->getWork(),
             default: null,
         );
@@ -44,12 +44,12 @@ class PortalController extends Controller
 
         $session = $this->session($request);
         if (! $session) {
-            return redirect('/api/biab-auth/sign-in?returnTo=/my-account');
+            return redirect('/api/bd-auth/sign-in?returnTo=/my-account');
         }
 
-        $token = $request->cookie(config('biab.session_cookie'));
+        $token = $request->cookie(config('bd.session_cookie'));
 
-        $result = Biab::attempt(static fn (Client $c) => $c
+        $result = Bd::attempt(static fn (Client $c) => $c
             ->portal($token, $session['organizationId'] ?? null)
             ->submitReview([
                 'rating' => $validated['rating'],
@@ -70,7 +70,7 @@ class PortalController extends Controller
             return null;
         }
 
-        $cookie = $request->cookie(config('biab.session_cookie'));
+        $cookie = $request->cookie(config('bd.session_cookie'));
 
         return $auth->session(is_string($cookie) ? $cookie : null);
     }

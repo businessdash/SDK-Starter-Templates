@@ -1,4 +1,4 @@
-import { getBiab } from "./biab.server";
+import { getBd } from "./bd.server";
 
 /**
  * Server-only section loaders. Each loader runs inside the home
@@ -15,10 +15,10 @@ const heroDefaults = {
 };
 
 export async function loadHero() {
-	const biab = getBiab();
-	if (!biab) return heroDefaults;
+	const bd = getBd();
+	if (!bd) return heroDefaults;
 	try {
-		const bundle = await biab.marketing.getPageBundle({
+		const bundle = await bd.marketing.getPageBundle({
 			pageKey: "home",
 			locale: "en",
 		});
@@ -52,10 +52,10 @@ const aboutDefaults: Array<{ heading: string; body: string }> = [
 ];
 
 export async function loadAbout() {
-	const biab = getBiab();
-	if (!biab) return aboutDefaults;
+	const bd = getBd();
+	if (!bd) return aboutDefaults;
 	try {
-		const bundle = await biab.marketing.getPageBundle({
+		const bundle = await bd.marketing.getPageBundle({
 			pageKey: "home",
 			locale: "en",
 		});
@@ -104,13 +104,13 @@ const servicesDefaults = [
 ];
 
 export async function loadServices() {
-	const biab = getBiab();
-	if (!biab) return servicesDefaults;
+	const bd = getBd();
+	if (!bd) return servicesDefaults;
 	try {
 		// `storefront.listProducts` is the catalog read. The product ROW carries
 		// id/name/images/categoryId; price + description live on the variants /
-		// passthrough, so read those defensively (see DGP `biab-store.ts`).
-		const list = await biab.storefront.listProducts({ limit: 6 });
+		// passthrough, so read those defensively (see DGP `bd-store.ts`).
+		const list = await bd.storefront.listProducts({ limit: 6 });
 		if (Array.isArray(list?.items) && list.items.length > 0) {
 			return list.items.map((p) => {
 				const extra = p as Record<string, unknown>;
@@ -139,10 +139,10 @@ export async function loadServices() {
 }
 
 export async function loadBlog() {
-	const biab = getBiab();
-	if (!biab) return [];
+	const bd = getBd();
+	if (!bd) return [];
 	try {
-		const list = await biab.blog.listPosts({ limit: 4 });
+		const list = await bd.blog.listPosts({ limit: 4 });
 		if (Array.isArray(list?.items)) {
 			return list.items.map((p) => ({
 				slug: p.slug,
@@ -165,15 +165,15 @@ export type GalleryTile = {
 };
 
 /**
- * Public project-media gallery. Pulls newest-first from the BIAB media
+ * Public project-media gallery. Pulls newest-first from the BD media
  * library via the `gallery` resource with typed field selection. Returns
  * `[]` when unconfigured or empty, so the section renders a placeholder.
  */
 export async function loadGallery(limit = 9): Promise<GalleryTile[]> {
-	const biab = getBiab();
-	if (!biab) return [];
+	const bd = getBd();
+	if (!bd) return [];
 	try {
-		const items = await biab.gallery.list({
+		const items = await bd.gallery.list({
 			limit,
 			fields: ["id", "src", "alt", "title"] as const,
 		});
@@ -193,22 +193,22 @@ export async function submitContact(input: {
 	email: string;
 	message: string;
 }): Promise<{ ok: boolean; reason?: string }> {
-	const biab = getBiab();
-	if (!biab) {
-		console.warn("[biab] contact submission received but SDK not configured");
+	const bd = getBd();
+	if (!bd) {
+		console.warn("[bd] contact submission received but SDK not configured");
 		return { ok: true };
 	}
 	try {
 		// `forms.submit(slug, data, opts?)` — positional args. The data map is
-		// keyed by the form's field ids as configured in the BIAB Forms editor.
-		await biab.forms.submit("general-inquiry", {
+		// keyed by the form's field ids as configured in the BD Forms editor.
+		await bd.forms.submit("general-inquiry", {
 			name: input.name,
 			email: input.email,
 			message: input.message,
 		});
 		return { ok: true };
 	} catch (err) {
-		console.error("[biab] forms.submit failed:", err);
+		console.error("[bd] forms.submit failed:", err);
 		return {
 			ok: false,
 			reason: err instanceof Error ? err.message : "Unknown error",

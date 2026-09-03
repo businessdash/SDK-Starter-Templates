@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getStoreProduct } from "@/server/lib/biab-store";
+import { getStoreProduct } from "@/server/lib/bd-store";
 
 import { AddToCart } from "../_components/AddToCart";
 import { Notice } from "../_components/Notice";
@@ -38,7 +38,7 @@ export default async function ProductPage({
 
 	return (
 		<div className="store-detail">
-			<div className="store-detail__media biab-card">
+			<div className="store-detail__media bd-card">
 				{img ? (
 					// eslint-disable-next-line @next/next/no-img-element
 					<img alt={product.name} src={img} />
@@ -51,8 +51,8 @@ export default async function ProductPage({
 				<Link className="store-detail__back" href="/store">
 					← Products
 				</Link>
-				<h1 className="biab-section__title">{product.name}</h1>
-				{desc ? <p className="biab-section__sub">{desc}</p> : null}
+				<h1 className="bd-section__title">{product.name}</h1>
+				{desc ? <p className="bd-section__sub">{desc}</p> : null}
 
 				{variants.length === 0 ? (
 					<Notice

@@ -3,16 +3,16 @@ export default defineNuxtConfig({
 	compatibilityDate: "2025-07-15",
 	devtools: { enabled: true },
 	/**
-	 * Global stylesheets. `biab-tokens.css` is the site's own theme; the SDK's
-	 * `biab-forms.css` styles the `<BiabForm>` internals the tokens can't reach —
+	 * Global stylesheets. `bd-tokens.css` is the site's own theme; the SDK's
+	 * `bd-forms.css` styles the `<BdForm>` internals the tokens can't reach —
 	 * the file-upload box, the multi-step progress header (steps + bar), and the
 	 * availability/choice chips. Those are unstyled without it. The SDK omits the
 	 * form container background on purpose (it's transparent) so the template owns
 	 * the surface; don't add one in the SDK layer.
 	 */
-	css: ["~/assets/css/biab-tokens.css", "@businessdash/sdk/biab-forms.css"],
+	css: ["~/assets/css/bd-tokens.css", "@businessdash/sdk/bd-forms.css"],
 	/**
-	 * `@businessdash/sdk/vue` ships its `<BiabForm>` binding as raw source (a `.vue`
+	 * `@businessdash/sdk/vue` ships its `<BdForm>` binding as raw source (a `.vue`
 	 * SFC + `.ts`), so Nuxt must run it through its own Vue/Vite pipeline rather
 	 * than treating it as a pre-built node_modules dependency. `build.transpile`
 	 * is what makes Nuxt compile the SFC; `optimizeDeps.exclude` keeps Vite's
@@ -21,7 +21,7 @@ export default defineNuxtConfig({
 	build: { transpile: ["@businessdash/sdk"] },
 	vite: { optimizeDeps: { exclude: ["@businessdash/sdk"] } },
 	/**
-	 * BIAB env, consolidated here — the one idiomatic place Nuxt centralizes
+	 * BD env, consolidated here — the one idiomatic place Nuxt centralizes
 	 * env, so the whole app reads it through `useRuntimeConfig()`. Each key
 	 * prefers the canonical name shipped in `.env.example` (matching the T3
 	 * starter + the SDK) and falls back to this starter's original `NUXT_*`
@@ -33,25 +33,25 @@ export default defineNuxtConfig({
 	 */
 	runtimeConfig: {
 		// Secret API key (`sk_…`) — server-only, never exposed to the browser.
-		biabApiKey: process.env.BIAB_API_KEY ?? process.env.NUXT_BIAB_API_KEY ?? "",
-		biabSiteId:
-			process.env.NUXT_PUBLIC_BIAB_SITE_ID ??
-			process.env.NUXT_BIAB_SITE_ID ??
+		bdApiKey: process.env.BD_API_KEY ?? process.env.NUXT_BD_API_KEY ?? "",
+		bdSiteId:
+			process.env.NUXT_PUBLIC_BD_SITE_ID ??
+			process.env.NUXT_BD_SITE_ID ??
 			"",
-		biabPackageApiBaseUrl:
-			process.env.NUXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
-			process.env.NUXT_BIAB_PACKAGE_API_BASE_URL ??
+		bdPackageApiBaseUrl:
+			process.env.NUXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
+			process.env.NUXT_BD_PACKAGE_API_BASE_URL ??
 			"https://www.biab.app",
 		// HMAC secret (`whsec_…`) for the revalidate webhook — server-only.
-		biabRevalidationSecret:
-			process.env.BIAB_REVALIDATION_SECRET ??
-			process.env.NUXT_BIAB_REVALIDATION_SECRET ??
+		bdRevalidationSecret:
+			process.env.BD_REVALIDATION_SECRET ??
+			process.env.NUXT_BD_REVALIDATION_SECRET ??
 			"",
 		// Public, fully-qualified URL of the auth handler's /callback route.
 		// Required for sign-in / sign-up / customer portal.
-		biabAuthCallbackUrl:
-			process.env.BIAB_AUTH_CALLBACK_URL ??
-			process.env.NUXT_BIAB_AUTH_CALLBACK_URL ??
+		bdAuthCallbackUrl:
+			process.env.BD_AUTH_CALLBACK_URL ??
+			process.env.NUXT_BD_AUTH_CALLBACK_URL ??
 			"",
 		/**
 		 * Browser-exposed config. Unlike the keys above, `public.*` IS inlined into
@@ -61,17 +61,17 @@ export default defineNuxtConfig({
 		 * widget (followers) and the visitor analytics tracker (`app/app.vue`).
 		 */
 		public: {
-			biabPublicKey:
-				process.env.NUXT_PUBLIC_BIAB_PK ??
-				process.env.NUXT_PUBLIC_BIAB_PUBLIC_KEY ??
+			bdPublicKey:
+				process.env.NUXT_PUBLIC_BD_PK ??
+				process.env.NUXT_PUBLIC_BD_PUBLIC_KEY ??
 				"",
-			biabSiteId:
-				process.env.NUXT_PUBLIC_BIAB_SITE_ID ??
-				process.env.NUXT_PUBLIC_BIAB_SITE_ID ??
+			bdSiteId:
+				process.env.NUXT_PUBLIC_BD_SITE_ID ??
+				process.env.NUXT_PUBLIC_BD_SITE_ID ??
 				"",
-			biabPackageApiBaseUrl:
-				process.env.NUXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
-				process.env.NUXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
+			bdPackageApiBaseUrl:
+				process.env.NUXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
+				process.env.NUXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
 				"https://www.biab.app",
 		},
 	},

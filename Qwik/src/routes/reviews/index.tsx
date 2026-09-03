@@ -3,10 +3,10 @@ import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city"
 
 import type { ReviewWallItem } from "@businessdash/sdk/contracts";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
-import { fetchReviewsPage } from "../../lib/biab-content";
-import { getCustomerSession } from "../../lib/biab-portal";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
+import { fetchReviewsPage } from "../../lib/bd-content";
+import { getCustomerSession } from "../../lib/bd-portal";
 
 const PAGE_SIZE = 10;
 
@@ -82,12 +82,12 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} />
 			<main>
-				<section class="biab-section biab-section--narrow">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">Reviews</span>
-						<h2 class="biab-section__title">What customers say</h2>
+				<section class="bd-section bd-section--narrow">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Reviews</span>
+						<h2 class="bd-section__title">What customers say</h2>
 						{data.value.totalCount > 0 ? (
-							<p class="biab-section__sub">
+							<p class="bd-section__sub">
 								<Stars rating={avg} /> · {data.value.totalCount} review
 								{data.value.totalCount === 1 ? "" : "s"}
 							</p>
@@ -95,16 +95,16 @@ export default component$(() => {
 					</div>
 
 					{!data.value.configured ? (
-						<div class="biab-empty">
-							Reviews aren't connected yet. Set the BIAB env vars to pull them
+						<div class="bd-empty">
+							Reviews aren't connected yet. Set the BD env vars to pull them
 							in.
 						</div>
 					) : items.value.length === 0 ? (
-						<div class="biab-empty">No reviews yet. Be the first!</div>
+						<div class="bd-empty">No reviews yet. Be the first!</div>
 					) : (
 						<div style="display: flex; flex-direction: column; gap: 1rem;">
 							{items.value.map((r) => (
-								<div class="biab-card" style="padding: 1.5rem;" key={r.id}>
+								<div class="bd-card" style="padding: 1.5rem;" key={r.id}>
 									<div style="display: flex; justify-content: space-between; align-items: center;">
 										<strong style="color: var(--title);">
 											{r.reviewerName}
@@ -121,7 +121,7 @@ export default component$(() => {
 
 							{nextOffset.value !== null ? (
 								<button
-									class="biab-btn biab-btn--ghost"
+									class="bd-btn bd-btn--ghost"
 									disabled={loading.value}
 									onClick$={loadMore}
 									style="align-self: center; margin-top: 1rem;"

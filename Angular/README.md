@@ -9,7 +9,7 @@ copy, and keeping it self-contained means its `package.json`, lockfile and
 ```sh
 cd Angular
 pnpm install
-cp .env.example .env.local   # then fill in the three BIAB_* variables
+cp .env.example .env.local   # then fill in the three BD_* variables
 pnpm dev
 ```
 

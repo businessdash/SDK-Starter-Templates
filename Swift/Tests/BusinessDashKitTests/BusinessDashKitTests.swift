@@ -3,10 +3,10 @@ import Testing
 
 @testable import BusinessDashKit
 
-/// A stub transport. This is what `BiabTransport` exists for — the tests
+/// A stub transport. This is what `BdTransport` exists for — the tests
 /// exercise real decoding and real error mapping without a network or a
 /// URLProtocol subclass.
-struct StubTransport: BiabTransport {
+struct StubTransport: BdTransport {
     let status: Int
     let json: String
     /// Captures the request so a test can assert on the URL that was built.
@@ -44,8 +44,8 @@ struct StubTransport: BiabTransport {
     }
 }
 
-private func makeClient(_ transport: any BiabTransport) -> BiabClient {
-    BiabClient(
+private func makeClient(_ transport: any BdTransport) -> BdClient {
+    BdClient(
         host: URL(string: "https://www.biab.app")!,
         publishableKey: "pk_test",
         siteID: "site-123",
@@ -59,7 +59,7 @@ private func makeClient(_ transport: any BiabTransport) -> BiabClient {
 struct AccessGateTests {
     /// The subtle one. Reads signal a lapsed plan with **HTTP 200** and a body
     /// flag, so a client that only checks `statusCode` decodes an empty page
-    /// and shows nothing. This test is the reason `BiabClient` inspects the
+    /// and shows nothing. This test is the reason `BdClient` inspects the
     /// body before the status.
     @Test("A 200 carrying available:false throws rather than decoding")
     func gateOnSuccessfulStatus() async throws {
@@ -73,14 +73,14 @@ struct AccessGateTests {
             )
         )
 
-        await #expect(throws: BiabError.self) {
+        await #expect(throws: BdError.self) {
             _ = try await client.storefront.list()
         }
 
         do {
             _ = try await client.storefront.list()
             Issue.record("Expected the gate to throw.")
-        } catch let error as BiabError {
+        } catch let error as BdError {
             guard case .accessRejected(let reason, let upgradeURL, _) = error else {
                 Issue.record("Expected .accessRejected, got \(error)")
                 return
@@ -93,7 +93,7 @@ struct AccessGateTests {
 
     @Test("plan_required is not treated as 'temporarily unavailable'")
     func planRequiredIsNotUnavailable() {
-        let error = BiabError.accessRejected(reason: .planRequired, upgradeURL: nil, message: "")
+        let error = BdError.accessRejected(reason: .planRequired, upgradeURL: nil, message: "")
         #expect(error.isUnavailable == false)
     }
 }
@@ -185,7 +185,7 @@ struct DecodingTests {
         ],"nextCursor":null}
         """
 
-        let response = try JSONDecoder.biab.decode(
+        let response = try JSONDecoder.bd.decode(
             DataModelRecordsResponse.self, from: Data(json.utf8)
         )
 
@@ -234,11 +234,11 @@ struct RequestTests {
         let client = makeClient(StubTransport(json: "{}", recorder: recorder))
 
         _ = try? await client.portal(sessionToken: "tok", organizationID: "org-1").context()
-        #expect(recorder.request?.value(forHTTPHeaderField: "X-BIAB-Session-Token") == "tok")
-        #expect(recorder.request?.value(forHTTPHeaderField: "X-BIAB-Customer-Portal-Org") == "org-1")
+        #expect(recorder.request?.value(forHTTPHeaderField: "X-BD-Session-Token") == "tok")
+        #expect(recorder.request?.value(forHTTPHeaderField: "X-BD-Customer-Portal-Org") == "org-1")
 
-        _ = await BiabAuth(client: client, callbackURL: "a://cb").session(token: "tok")
-        #expect(recorder.request?.value(forHTTPHeaderField: "x-biab-session") == "tok")
+        _ = await BdAuth(client: client, callbackURL: "a://cb").session(token: "tok")
+        #expect(recorder.request?.value(forHTTPHeaderField: "x-bd-session") == "tok")
     }
 }
 
@@ -265,7 +265,7 @@ struct JSONValueTests {
         let json = """
         {"sections":{"hero":{"headline":"Real headline","subhead":""},"about":{}}}
         """
-        return try JSONDecoder.biab.decode(JSONValue.self, from: Data(json.utf8))
+        return try JSONDecoder.bd.decode(JSONValue.self, from: Data(json.utf8))
     }
 
     @Test("A key path reads through nested objects")

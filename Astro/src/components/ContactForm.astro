@@ -1,6 +1,6 @@
 ---
 /**
- * Contact form — the SDK's `<biab-form>` web component (framework-agnostic, no
+ * Contact form — the SDK's `<bd-form>` web component (framework-agnostic, no
  * React, so it fits this React-free Astro starter).
  *
  * It fetches the schema and renders EVERY field type — including the rich
@@ -9,37 +9,37 @@
  * then validates and submits. The hand-rolled flat renderer this replaced could
  * only show top-level text inputs.
  *
- * All network calls go through this template's same-origin `/api/biab/forms/[slug]`
- * proxy (see `src/pages/api/biab/forms/[slug].ts`), so the BIAB bearer key never
+ * All network calls go through this template's same-origin `/api/bd/forms/[slug]`
+ * proxy (see `src/pages/api/bd/forms/[slug].ts`), so the BD bearer key never
  * reaches the browser. To use your own form, change `FORM_SLUG` to a slug you
- * authored in BIAB → Forms (or just create a `general-inquiry` form to override
+ * authored in BD → Forms (or just create a `general-inquiry` form to override
  * the platform default).
  *
- * The `<biab-form>` element is created in the client `<script>` AFTER the proxy
+ * The `<bd-form>` element is created in the client `<script>` AFTER the proxy
  * client is registered — the element renders an error hint if it upgrades before
  * a client exists, and doesn't re-mount when one arrives later.
  */
 const FORM_SLUG = "general-inquiry";
 ---
 
-<section class="biab-section biab-section--narrow" id="contact">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">Contact</span>
-		<h2 class="biab-section__title">Get in touch</h2>
-		<p class="biab-section__sub">We'll get back within one business day.</p>
+<section class="bd-section bd-section--narrow" id="contact">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">Contact</span>
+		<h2 class="bd-section__title">Get in touch</h2>
+		<p class="bd-section__sub">We'll get back within one business day.</p>
 	</div>
-	<div class="biab-card contact" data-biab-contact data-slug={FORM_SLUG}></div>
+	<div class="bd-card contact" data-bd-contact data-slug={FORM_SLUG}></div>
 </section>
 
 <script>
-	import { setBiabFormClient } from "@businessdash/sdk/element";
+	import { setBdFormClient } from "@businessdash/sdk/element";
 	import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
-	// Same-origin proxy → /api/biab/forms/[slug]; the bearer key stays server-side.
-	setBiabFormClient({
+	// Same-origin proxy → /api/bd/forms/[slug]; the bearer key stays server-side.
+	setBdFormClient({
 		forms: {
 			async schema(slug: string): Promise<FormSchema> {
-				const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`);
+				const res = await fetch(`/api/bd/forms/${encodeURIComponent(slug)}`);
 				if (!res.ok) throw new Error(`Failed to load form (${res.status}).`);
 				return (await res.json()) as FormSchema;
 			},
@@ -48,7 +48,7 @@ const FORM_SLUG = "general-inquiry";
 				data: Record<string, unknown>,
 				opts?: { submitterEmail?: string; submitterName?: string },
 			): Promise<FormSubmitResult> {
-				const res = await fetch(`/api/biab/forms/${encodeURIComponent(slug)}`, {
+				const res = await fetch(`/api/bd/forms/${encodeURIComponent(slug)}`, {
 					method: "POST",
 					headers: { "Content-Type": "application/json" },
 					body: JSON.stringify({
@@ -75,9 +75,9 @@ const FORM_SLUG = "general-inquiry";
 	});
 
 	// Create the element only after the client is set (avoids the no-client hint).
-	const mount = document.querySelector<HTMLDivElement>("[data-biab-contact]");
+	const mount = document.querySelector<HTMLDivElement>("[data-bd-contact]");
 	if (mount) {
-		const form = document.createElement("biab-form");
+		const form = document.createElement("bd-form");
 		form.setAttribute("slug", mount.dataset.slug ?? "general-inquiry");
 		form.setAttribute("submit-label", "Send message");
 		form.setAttribute("auto-complete", "true");

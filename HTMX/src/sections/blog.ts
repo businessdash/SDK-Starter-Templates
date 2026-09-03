@@ -1,4 +1,4 @@
-import { getBiab } from "../biab";
+import { getBd } from "../bd";
 import { html, render } from "../html";
 
 type Post = {
@@ -10,10 +10,10 @@ type Post = {
 
 export async function renderBlog(): Promise<string> {
 	let posts: Post[] = [];
-	const biab = getBiab();
-	if (biab) {
+	const bd = getBd();
+	if (bd) {
 		try {
-			const list = await biab.blog.listPosts({ limit: 4 });
+			const list = await bd.blog.listPosts({ limit: 4 });
 			if (Array.isArray(list?.items)) {
 				posts = list.items.map((p) => ({
 					slug: p.slug,
@@ -27,7 +27,7 @@ export async function renderBlog(): Promise<string> {
 		}
 	}
 	const empty = html`<p class="muted">
-		No posts yet — author them in BIAB and they appear here.
+		No posts yet — author them in BD and they appear here.
 	</p>`;
 	const list = html`
 		<ul class="post-list">

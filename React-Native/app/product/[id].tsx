@@ -2,9 +2,9 @@ import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Button, ScrollView, StyleSheet, Text } from 'react-native'
 
-import { getBiab } from '@/biab/client'
-import { cents } from '@/biab/money'
-import { useLoad, useVisitorToken } from '@/biab/useBiab'
+import { getBd } from '@/bd/client'
+import { cents } from '@/bd/money'
+import { useLoad, useVisitorToken } from '@/bd/useBd'
 import { LoadState } from '@/components/LoadState'
 
 export default function ProductScreen() {
@@ -13,17 +13,17 @@ export default function ProductScreen() {
   const [message, setMessage] = useState<string | null>(null)
 
   const state = useLoad(async () => {
-    const biab = getBiab()
-    if (!biab || !id) return null
-    return biab.storefront.getProduct(id)
+    const bd = getBd()
+    if (!bd || !id) return null
+    return bd.storefront.getProduct(id)
   }, [id])
 
   async function addToCart() {
-    const biab = getBiab()
-    if (!biab || !id || !visitorToken) return
+    const bd = getBd()
+    if (!bd || !id || !visitorToken) return
 
     try {
-      await biab.cart.forVisitor(visitorToken).addItem({ productId: id, quantity: 1 })
+      await bd.cart.forVisitor(visitorToken).addItem({ productId: id, quantity: 1 })
       setMessage('Added to cart.')
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Could not add to cart.')

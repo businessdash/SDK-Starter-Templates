@@ -1,6 +1,6 @@
 ---
-import { biab } from "../lib/biab";
-// Newsletter signup wired to BIAB followers — the same shared component used in
+import { bd } from "../lib/bd";
+// Newsletter signup wired to BD followers — the same shared component used in
 // the footer. Vanilla `.astro` island by default; after `npx astro add react`,
 // swap to the React drop-in: `import Subscribe from "./Subscribe.tsx"` + `client:load`.
 import Subscribe from "./Subscribe.astro";
@@ -10,9 +10,9 @@ const fallback =
 
 let body = fallback;
 
-if (biab) {
+if (bd) {
 	try {
-		const bundle = await biab.marketing.getPageBundle({
+		const bundle = await bd.marketing.getPageBundle({
 			pageKey: "home",
 			locale: "en",
 		});
@@ -33,10 +33,10 @@ if (biab) {
 }
 ---
 
-<section class="biab-section biab-section--narrow" id="about">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">About</span>
-		<h2 class="biab-section__title">Built around how you actually work.</h2>
+<section class="bd-section bd-section--narrow" id="about">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">About</span>
+		<h2 class="bd-section__title">Built around how you actually work.</h2>
 	</div>
 	<p style="color: var(--text); font-size: 1.05rem; text-align: center;">
 		{body}

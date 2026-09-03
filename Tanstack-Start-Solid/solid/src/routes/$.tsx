@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { Show } from "solid-js";
 
-import { getLegalPage } from "../lib/biab-server-fns";
+import { getLegalPage } from "../lib/bd-server-fns";
 
 /**
  * The splat route — legal pages, and everything else's 404.
@@ -32,11 +32,11 @@ function CatchAll() {
 		<Show
 			when={data().found ? data() : null}
 			fallback={
-				<main class="biab-section biab-section--narrow">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">404</span>
-						<h1 class="biab-section__title">We couldn't find that page</h1>
-						<p class="biab-section__sub">
+				<main class="bd-section bd-section--narrow">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">404</span>
+						<h1 class="bd-section__title">We couldn't find that page</h1>
+						<p class="bd-section__sub">
 							The link may be out of date, or the page may have moved.
 						</p>
 					</div>
@@ -47,12 +47,12 @@ function CatchAll() {
 			}
 		>
 			{(page) => (
-				<main class="biab-section biab-section--narrow">
+				<main class="bd-section bd-section--narrow">
 					{/*
 					 * `html` is sanitised server-side when the org saves it, and
 					 * the title and logo URL are escaped by
 					 * `renderLegalPageHtml`. Style it via the
-					 * `data-biab-legal-*` hooks — the markup ships unstyled so
+					 * `data-bd-legal-*` hooks — the markup ships unstyled so
 					 * it inherits your site rather than fighting it.
 					 */}
 					<div innerHTML={page().html} />

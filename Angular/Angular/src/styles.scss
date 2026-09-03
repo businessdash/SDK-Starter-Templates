@@ -65,7 +65,7 @@ body {
 	margin: 0 0 1.5rem;
 }
 
-.biab-badge {
+.bd-badge {
 	display: inline-block;
 	font-size: 0.8rem;
 	background: #ecfdf5;
@@ -74,7 +74,7 @@ body {
 	border-radius: 999px;
 }
 
-.biab-btn {
+.bd-btn {
 	display: inline-block;
 	background: #111827;
 	color: #fff;
@@ -87,22 +87,22 @@ body {
 	font: inherit;
 }
 
-.biab-btn:hover {
+.bd-btn:hover {
 	background: #1f2937;
 }
 
-.biab-btn:disabled {
+.bd-btn:disabled {
 	opacity: 0.6;
 	cursor: default;
 }
 
-.biab-btn--ghost {
+.bd-btn--ghost {
 	background: #fff;
 	color: #111827;
 	border: 1px solid #d1d5db;
 }
 
-.biab-btn--ghost:hover {
+.bd-btn--ghost:hover {
 	background: #f3f4f6;
 }
 
@@ -454,7 +454,7 @@ form {
 	font-size: 0.9rem;
 }
 
-.store-sort .biab-input {
+.store-sort .bd-input {
 	width: auto;
 }
 
@@ -646,17 +646,17 @@ form {
 	color: #374151;
 }
 
-/* ── <biab-form> drop-in (@businessdash/sdk/angular) ──────────────────────────
- * The component renders light-DOM with the `biab-*` class convention and ships
+/* ── <bd-form> drop-in (@businessdash/sdk/angular) ──────────────────────────
+ * The component renders light-DOM with the `bd-*` class convention and ships
  * NO styles of its own, so these defaults are yours to override. They reuse the
  * same neutral palette as the rest of this starter. */
 
-.biab-form {
+.bd-form {
 	position: relative;
 	display: block;
 }
 
-.biab-form__org-icon {
+.bd-form__org-icon {
 	position: absolute;
 	top: 0;
 	right: 0;
@@ -667,77 +667,77 @@ form {
 	object-fit: cover;
 }
 
-.biab-form__body,
-.biab-form__fields {
+.bd-form__body,
+.bd-form__fields {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 }
 
-.biab-form__fields {
+.bd-form__fields {
 	margin-bottom: 1.25rem;
 }
 
-.biab-field {
+.bd-field {
 	display: flex;
 	flex-direction: column;
 	gap: 0.375rem;
 }
 
-.biab-field--error {
+.bd-field--error {
 	border: 1px solid #fca5a5;
 	background: #fef2f2;
 	border-radius: 0.5rem;
 	padding: 0.75rem;
 }
 
-.biab-field__label {
+.bd-field__label {
 	font-size: 0.875rem;
 	font-weight: 600;
 	color: #111827;
 }
 
-.biab-field__required {
+.bd-field__required {
 	color: #dc2626;
 	margin-left: 0.125rem;
 }
 
-.biab-field__error {
+.bd-field__error {
 	font-size: 0.8rem;
 	color: #dc2626;
 	margin: 0;
 }
 
-.biab-field__help {
+.bd-field__help {
 	font-size: 0.8rem;
 	color: #6b7280;
 	margin: 0;
 }
 
-.biab-field__title {
+.bd-field__title {
 	font-size: 1.5rem;
 	font-weight: 700;
 	margin: 0;
 }
 
-.biab-field__subtitle {
+.bd-field__subtitle {
 	font-size: 1.05rem;
 	color: #6b7280;
 	margin: 0;
 }
 
-.biab-field__separator {
+.bd-field__separator {
 	border: 0;
 	border-top: 1px solid #e5e7eb;
 	margin: 0.25rem 0;
 }
 
-.biab-field__image {
+.bd-field__image {
 	max-width: 100%;
 	border-radius: 0.5rem;
 }
 
-.biab-input {
+.bd-input {
 	width: 100%;
 	padding: 0.5rem 0.625rem;
 	border: 1px solid #d1d5db;
@@ -749,16 +749,16 @@ form {
 	box-sizing: border-box;
 }
 
-.biab-input--textarea {
+.bd-input--textarea {
 	resize: vertical;
 	min-height: 5rem;
 }
 
-.biab-input--radio,
-.biab-input--checkbox,
-.biab-input--colors,
-.biab-input--stars,
-.biab-input--happiness {
+.bd-input--radio,
+.bd-input--checkbox,
+.bd-input--colors,
+.bd-input--stars,
+.bd-input--happiness {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
@@ -766,15 +766,15 @@ form {
 	padding: 0;
 }
 
-.biab-input--radio,
-.biab-input--checkbox {
+.bd-input--radio,
+.bd-input--checkbox {
 	flex-direction: column;
 	align-items: flex-start;
 }
 
-.biab-radio__item,
-.biab-checkbox__item,
-.biab-input--boolean {
+.bd-radio__item,
+.bd-checkbox__item,
+.bd-input--boolean {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
@@ -784,10 +784,10 @@ form {
 	padding: 0;
 }
 
-.biab-input--date-range,
-.biab-input--time-block,
-.biab-input--appointment,
-.biab-input--address {
+.bd-input--date-range,
+.bd-input--time-block,
+.bd-input--appointment,
+.bd-input--address {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 0.75rem;
@@ -795,7 +795,7 @@ form {
 	padding: 0;
 }
 
-.biab-subfield {
+.bd-subfield {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
@@ -803,19 +803,19 @@ form {
 	color: #6b7280;
 }
 
-.biab-subfield--full {
+.bd-subfield--full {
 	grid-column: 1 / -1;
 }
 
-.biab-subfield input {
+.bd-subfield input {
 	padding: 0.5rem 0.625rem;
 	border: 1px solid #d1d5db;
 	border-radius: 0.375rem;
 	font: inherit;
 }
 
-.biab-input--stepper,
-.biab-input--slider {
+.bd-input--stepper,
+.bd-input--slider {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -823,26 +823,26 @@ form {
 	padding: 0;
 }
 
-.biab-input--stepper {
+.bd-input--stepper {
 	flex-direction: row;
 	align-items: center;
 }
 
-.biab-stepper__value {
+.bd-stepper__value {
 	min-width: 2.5rem;
 	text-align: center;
 	font-variant-numeric: tabular-nums;
 }
 
-.biab-slider__readout {
+.bd-slider__readout {
 	display: flex;
 	justify-content: space-between;
 	font-size: 0.75rem;
 	color: #6b7280;
 }
 
-.biab-star,
-.biab-happiness__face {
+.bd-star,
+.bd-happiness__face {
 	border: 0;
 	background: none;
 	cursor: pointer;
@@ -852,20 +852,20 @@ form {
 	padding: 0.125rem;
 }
 
-.biab-star--on {
+.bd-star--on {
 	color: #f59e0b;
 }
 
-.biab-happiness__face {
+.bd-happiness__face {
 	opacity: 0.45;
 }
 
-.biab-happiness__face--on {
+.bd-happiness__face--on {
 	opacity: 1;
 	transform: scale(1.2);
 }
 
-.biab-color {
+.bd-color {
 	width: 2rem;
 	height: 2rem;
 	border-radius: 999px;
@@ -873,12 +873,12 @@ form {
 	cursor: pointer;
 }
 
-.biab-color--on {
+.bd-color--on {
 	border-color: #111827;
 	transform: scale(1.1);
 }
 
-.biab-group {
+.bd-group {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
@@ -887,7 +887,7 @@ form {
 	padding: 1rem;
 }
 
-.biab-group__label {
+.bd-group__label {
 	font-size: 0.75rem;
 	font-weight: 700;
 	letter-spacing: 0.04em;
@@ -895,7 +895,7 @@ form {
 	color: #6b7280;
 }
 
-.biab-or {
+.bd-or {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
@@ -905,51 +905,51 @@ form {
 	padding: 1rem;
 }
 
-.biab-or--error {
+.bd-or--error {
 	border-color: #fca5a5;
 	background: #fef2f2;
 }
 
-.biab-or__grid {
+.bd-or__grid {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
 	gap: 0.75rem;
 	align-items: center;
 }
 
-.biab-or__divider span {
+.bd-or__divider span {
 	font-size: 0.7rem;
 	font-weight: 800;
 	letter-spacing: 0.1em;
 	color: #b45309;
 }
 
-.biab-or__side-label,
-.biab-or__hint {
+.bd-or__side-label,
+.bd-or__hint {
 	font-size: 0.7rem;
 	text-transform: uppercase;
 	letter-spacing: 0.06em;
 	color: #6b7280;
 }
 
-.biab-flex-row {
+.bd-flex-row {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.75rem;
 }
 
-.biab-flex-row__cell {
+.bd-flex-row__cell {
 	flex: 1;
 	min-width: 11rem;
 }
 
-.biab-progress {
+.bd-progress {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
 }
 
-.biab-progress--bar {
+.bd-progress--bar {
 	flex-direction: row;
 	align-items: center;
 	gap: 0.75rem;
@@ -957,7 +957,7 @@ form {
 	color: #6b7280;
 }
 
-.biab-progress__track {
+.bd-progress__track {
 	flex: 1;
 	height: 0.375rem;
 	background: #e5e7eb;
@@ -965,13 +965,13 @@ form {
 	overflow: hidden;
 }
 
-.biab-progress__fill {
+.bd-progress__fill {
 	height: 100%;
 	background: #111827;
 	transition: width 0.3s ease;
 }
 
-.biab-progress__list {
+.bd-progress__list {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 1rem;
@@ -980,7 +980,7 @@ form {
 	padding: 0;
 }
 
-.biab-progress__step {
+.bd-progress__step {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
@@ -988,12 +988,12 @@ form {
 	font-size: 0.8rem;
 }
 
-.biab-progress__step--current,
-.biab-progress__step--done {
+.bd-progress__step--current,
+.bd-progress__step--done {
 	color: #111827;
 }
 
-.biab-progress__index {
+.bd-progress__index {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -1005,7 +1005,7 @@ form {
 	font-weight: 700;
 }
 
-.biab-form__errors {
+.bd-form__errors {
 	border: 1px solid #fca5a5;
 	background: #fef2f2;
 	border-radius: 0.5rem;
@@ -1014,12 +1014,12 @@ form {
 	color: #b91c1c;
 }
 
-.biab-form__errors-list {
+.bd-form__errors-list {
 	opacity: 0.85;
 	margin-top: 0.25rem;
 }
 
-.biab-nav {
+.bd-nav {
 	display: flex;
 	justify-content: space-between;
 	gap: 0.75rem;
@@ -1027,11 +1027,11 @@ form {
 	border-top: 1px solid #e5e7eb;
 }
 
-.biab-nav .biab-btn--back {
+.bd-nav .bd-btn--back {
 	margin-right: auto;
 }
 
-.biab-form__success {
+.bd-form__success {
 	padding: 1rem;
 	border: 1px solid #6ee7b7;
 	background: #ecfdf5;
@@ -1039,13 +1039,13 @@ form {
 	color: #047857;
 }
 
-.biab-form__loading,
-.biab-form__load-error {
+.bd-form__loading,
+.bd-form__load-error {
 	padding: 1rem;
 	color: #6b7280;
 }
 
-.biab-form__submit-error {
+.bd-form__submit-error {
 	color: #dc2626;
 	font-size: 0.85rem;
 }
@@ -1053,48 +1053,48 @@ form {
 /* Honor the form's configured entrance animations (schema.settings.animation),
  * mapped from the host data-attribute the component sets. */
 @media (prefers-reduced-motion: no-preference) {
-	.biab-form[data-biab-animation="fade"] .biab-form__fields,
-	.biab-form[data-biab-animation="scale"] .biab-form__fields,
-	.biab-form[data-biab-animation="slide"] .biab-form__fields {
-		animation: biab-fade-in 0.45s ease both;
+	.bd-form[data-bd-animation="fade"] .bd-form__fields,
+	.bd-form[data-bd-animation="scale"] .bd-form__fields,
+	.bd-form[data-bd-animation="slide"] .bd-form__fields {
+		animation: bd-fade-in 0.45s ease both;
 	}
 
-	.biab-form[data-biab-animation="scale"] .biab-form__fields {
-		animation-name: biab-zoom-in;
+	.bd-form[data-bd-animation="scale"] .bd-form__fields {
+		animation-name: bd-zoom-in;
 	}
 
-	.biab-form[data-biab-animation="slide"]
-		.biab-form__fields[data-biab-direction="forward"] {
-		animation-name: biab-slide-from-right;
+	.bd-form[data-bd-animation="slide"]
+		.bd-form__fields[data-bd-direction="forward"] {
+		animation-name: bd-slide-from-right;
 	}
 
-	.biab-form[data-biab-animation="slide"]
-		.biab-form__fields[data-biab-direction="back"] {
-		animation-name: biab-slide-from-left;
+	.bd-form[data-bd-animation="slide"]
+		.bd-form__fields[data-bd-direction="back"] {
+		animation-name: bd-slide-from-left;
 	}
 }
 
-@keyframes biab-fade-in {
+@keyframes bd-fade-in {
 	from {
 		opacity: 0;
 	}
 }
 
-@keyframes biab-zoom-in {
+@keyframes bd-zoom-in {
 	from {
 		opacity: 0;
 		transform: scale(0.97);
 	}
 }
 
-@keyframes biab-slide-from-right {
+@keyframes bd-slide-from-right {
 	from {
 		opacity: 0;
 		transform: translateX(1.5rem);
 	}
 }
 
-@keyframes biab-slide-from-left {
+@keyframes bd-slide-from-left {
 	from {
 		opacity: 0;
 		transform: translateX(-1.5rem);

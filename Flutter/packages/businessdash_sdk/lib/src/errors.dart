@@ -1,6 +1,6 @@
-/// Why a BIAB call failed.
-sealed class BiabException implements Exception {
-  const BiabException();
+/// Why a BD call failed.
+sealed class BdException implements Exception {
+  const BdException();
 
   /// True when the org's site is lapsed or suspended, as opposed to a
   /// transient blip. Screens that want a specific notice branch on this;
@@ -9,8 +9,8 @@ sealed class BiabException implements Exception {
 }
 
 /// A non-2xx response.
-class BiabHttpException extends BiabException {
-  const BiabHttpException({
+class BdHttpException extends BdException {
+  const BdHttpException({
     required this.status,
     required this.path,
     this.message,
@@ -22,7 +22,7 @@ class BiabHttpException extends BiabException {
 
   @override
   String toString() =>
-      message ?? 'BIAB request to $path failed with status $status.';
+      message ?? 'BD request to $path failed with status $status.';
 }
 
 /// The org's billing / entitlement gate refused to serve.
@@ -30,8 +30,8 @@ class BiabHttpException extends BiabException {
 /// The platform signals this two ways and the client normalises both: a 402
 /// on writes, and a **200** whose body carries
 /// `{ available: false, reason, upgradeUrl, message }` on reads.
-class BiabAccessRejectedException extends BiabException {
-  const BiabAccessRejectedException({
+class BdAccessRejectedException extends BdException {
+  const BdAccessRejectedException({
     required this.reason,
     required this.message,
     this.upgradeUrl,
@@ -50,23 +50,23 @@ class BiabAccessRejectedException extends BiabException {
   String toString() => message;
 }
 
-class BiabDecodingException extends BiabException {
-  const BiabDecodingException(this.path, this.underlying);
+class BdDecodingException extends BdException {
+  const BdDecodingException(this.path, this.underlying);
 
   final String path;
   final Object underlying;
 
   @override
-  String toString() => 'Could not decode the BIAB response for $path.';
+  String toString() => 'Could not decode the BD response for $path.';
 }
 
-class BiabTransportException extends BiabException {
-  const BiabTransportException(this.underlying);
+class BdTransportException extends BdException {
+  const BdTransportException(this.underlying);
 
   final Object underlying;
 
   @override
-  String toString() => 'Could not reach BIAB: $underlying';
+  String toString() => 'Could not reach BD: $underlying';
 }
 
 enum AccessRejectionReason {

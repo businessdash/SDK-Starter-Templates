@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:businessdash_sdk/businessdash_sdk.dart';
-import 'biab_scope.dart';
+import 'bd_scope.dart';
 import 'load_state.dart';
 import 'product_page.dart';
 
@@ -23,7 +23,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
   }
 
   void _load() {
-    final client = BiabScope.of(context).client;
+    final client = BdScope.of(context).client;
     setState(() {
       _products = client?.productGrid(search: _search);
     });
@@ -49,7 +49,7 @@ class _StorefrontPageState extends State<StorefrontPage> {
             ),
           ),
           Expanded(
-            child: BiabBuilder<List<Product>>(
+            child: BdBuilder<List<Product>>(
               future: _products,
               builder: (context, products) {
                 if (products.isEmpty) {

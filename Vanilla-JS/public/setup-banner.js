@@ -1,22 +1,22 @@
 /**
- * Setup banner — a dismissable "not connected to BIAB yet" bar (fixed bottom).
+ * Setup banner — a dismissable "not connected to BD yet" bar (fixed bottom).
  *
  * This is NOT the news banner (`banner.js`, which renders `bundle.banner`). This
- * one only appears until the site is wired to BIAB and tells you how to connect
- * it. It reads `window.__BIAB_PUBLIC__` (the publishable config the Bun server
- * injects) and stays hidden once BIAB_SITE_ID + BIAB_PK
+ * one only appears until the site is wired to BD and tells you how to connect
+ * it. It reads `window.__BD_PUBLIC__` (the publishable config the Bun server
+ * injects) and stays hidden once BD_SITE_ID + BD_PK
  * are set. Dismiss persists to the localStorage key
- * "biab-sdk-setup-banner-dismissed".
+ * "bd-sdk-setup-banner-dismissed".
  */
 
-import { el } from "/biab.js";
+import { el } from "/bd.js";
 
-const DISMISS_KEY = "biab-sdk-setup-banner-dismissed";
+const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 
 /** Mount the setup banner into `root` (defaults to <body>). No-op when the site
  *  is configured or the banner was already dismissed this browser. */
 export function mountSetupBanner(root = document.body) {
-	const cfg = (typeof window !== "undefined" && window.__BIAB_PUBLIC__) || null;
+	const cfg = (typeof window !== "undefined" && window.__BD_PUBLIC__) || null;
 	if (cfg && cfg.siteId && cfg.pk) return; // connected — nothing to show
 	try {
 		if (localStorage.getItem(DISMISS_KEY) === "1") return;
@@ -34,9 +34,9 @@ export function mountSetupBanner(root = document.body) {
 	const bar = el(
 		"div",
 		{
-			class: "biab-setup-banner",
+			class: "bd-setup-banner",
 			role: "region",
-			"aria-label": "BIAB setup",
+			"aria-label": "BD setup",
 			style:
 				"position:fixed;inset-inline:0;bottom:0;z-index:9999;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:#08060d;color:#fff;border-top:1px solid var(--accent,#6033b8);font-size:0.875rem;",
 		},
@@ -44,7 +44,7 @@ export function mountSetupBanner(root = document.body) {
 			el("span", {
 				style: "flex:1 1 260px;min-width:0;",
 				html:
-					'<strong style="color:#c4b5fd;">Not connected to BIAB yet.</strong> Add your <code>.env.local</code> to render live content — grab every variable from the guided wizard.',
+					'<strong style="color:#c4b5fd;">Not connected to BD yet.</strong> Add your <code>.env.local</code> to render live content — grab every variable from the guided wizard.',
 			}),
 			el(
 				"a",

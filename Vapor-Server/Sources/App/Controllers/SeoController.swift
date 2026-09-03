@@ -1,6 +1,6 @@
 import Vapor
 
-/// SEO / AEO files, proxied from BIAB.
+/// SEO / AEO files, proxied from BD.
 ///
 /// Two different upstreams, easy to get wrong:
 ///
@@ -21,7 +21,7 @@ enum SeoController {
     }
 
     static func robots(req: Request) async throws -> Response {
-        let origin = Environment.get("BIAB_SITE_ORIGIN") ?? "http://localhost:8080"
+        let origin = Environment.get("BD_SITE_ORIGIN") ?? "http://localhost:8080"
         let fallback = "User-agent: *\nAllow: /\nSitemap: \(origin)/sitemap.xml\n"
         let body = await relayPackage(req, suffix: "robots.txt", fallback: fallback)
         return response(body, contentType: "text/plain; charset=utf-8")
@@ -33,11 +33,11 @@ enum SeoController {
     static func llmsTxt(req: Request) async throws -> Response {
         let fallback = "# llms.txt is not configured for this site.\n"
 
-        guard let siteID = Environment.get("BIAB_SITE_ID") else {
+        guard let siteID = Environment.get("BD_SITE_ID") else {
             return response(fallback, contentType: "text/plain; charset=utf-8")
         }
 
-        let host = (Environment.get("BIAB_HOST") ?? "https://www.biab.app").trimmingSuffix("/")
+        let host = (Environment.get("BD_HOST") ?? "https://www.biab.app").trimmingSuffix("/")
         let uri = URI(string: "\(host)/api/public/ai-feed/\(siteID.pathEscaped)/llms.txt")
 
         let body: String
@@ -54,12 +54,12 @@ enum SeoController {
 
     private static func relayPackage(_ req: Request, suffix: String, fallback: String) async -> String {
         guard
-            let siteID = Environment.get("BIAB_SITE_ID"),
-            let key = Environment.get("BIAB_API_KEY")
+            let siteID = Environment.get("BD_SITE_ID"),
+            let key = Environment.get("BD_API_KEY")
         else { return fallback }
 
-        let host = (Environment.get("BIAB_HOST") ?? "https://www.biab.app").trimmingSuffix("/")
-        let origin = (Environment.get("BIAB_SITE_ORIGIN") ?? "").trimmingSuffix("/")
+        let host = (Environment.get("BD_HOST") ?? "https://www.biab.app").trimmingSuffix("/")
+        let origin = (Environment.get("BD_SITE_ORIGIN") ?? "").trimmingSuffix("/")
         let uri = URI(string: "\(host)/api/package/v1/sites/\(siteID.pathEscaped)/\(suffix)")
 
         var headers = HTTPHeaders()

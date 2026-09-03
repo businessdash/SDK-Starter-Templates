@@ -1,7 +1,7 @@
 import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 
 import { env } from "@/env";
-import { getBiab } from "@/server/lib/biab";
+import { getBd } from "@/server/lib/bd";
 
 /**
  * The sitemap, assembled from three sources.
@@ -32,7 +32,7 @@ function siteOrigin(): string {
 
 export async function GET() {
 	const baseUrl = siteOrigin();
-	const client = getBiab();
+	const client = getBd();
 
 	// Unconfigured: one honest URL rather than an empty <urlset>, which would
 	// affirmatively tell crawlers the site has no pages.
@@ -44,7 +44,7 @@ export async function GET() {
 
 	const xml = await buildSitemap({
 		client,
-		siteId: env.NEXT_PUBLIC_BIAB_SITE_ID ?? env.BIAB_SITE_ID ?? "",
+		siteId: env.NEXT_PUBLIC_BD_SITE_ID ?? env.BD_SITE_ID ?? "",
 		baseUrl,
 		staticPaths: STATIC_PATHS,
 		routes: {

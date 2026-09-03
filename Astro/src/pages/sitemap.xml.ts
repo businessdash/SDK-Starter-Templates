@@ -1,7 +1,7 @@
 import type { APIRoute } from "astro";
 import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 
-import { biab, getBiabEnv } from "../lib/biab";
+import { bd, getBdEnv } from "../lib/bd";
 
 export const prerender = false;
 
@@ -46,7 +46,7 @@ export const GET: APIRoute = async ({ site }) => {
 
 	// Unconfigured: one honest URL rather than an empty <urlset>, which would
 	// affirmatively tell crawlers the site has no pages.
-	if (!biab) {
+	if (!bd) {
 		return new Response(minimalSitemapXml(baseUrl), {
 			status: 200,
 			headers: { "Content-Type": "application/xml; charset=utf-8" },
@@ -54,8 +54,8 @@ export const GET: APIRoute = async ({ site }) => {
 	}
 
 	const xml = await buildSitemap({
-		client: biab,
-		siteId: getBiabEnv()?.siteId ?? "",
+		client: bd,
+		siteId: getBdEnv()?.siteId ?? "",
 		baseUrl,
 		staticPaths: STATIC_PATHS,
 		routes: {

@@ -1,10 +1,10 @@
 /**
- * Proxy the auto-generated robots.txt from BIAB. The platform endpoint
+ * Proxy the auto-generated robots.txt from BD. The platform endpoint
  * switches to `Disallow: /` automatically when the org's billing is fully
  * suspended (60+ days) so search engines treat the outage as temporary — that
  * SEO-rescue lives entirely on the platform side.
  *
- * Falls back to an "allow all" body when BIAB env isn't configured.
+ * Falls back to an "allow all" body when BD env isn't configured.
  */
 export const revalidate = 60;
 
@@ -17,9 +17,9 @@ function normalizeBaseUrl(input: string): string {
 }
 
 export async function GET() {
-	const apiKey = process.env.BIAB_API_KEY;
-	const siteId = process.env.BIAB_SITE_ID;
-	const baseUrl = process.env.BIAB_PACKAGE_API_BASE_URL;
+	const apiKey = process.env.BD_API_KEY;
+	const siteId = process.env.BD_SITE_ID;
+	const baseUrl = process.env.BD_PACKAGE_API_BASE_URL;
 	if (!apiKey || !siteId || !baseUrl) {
 		return new Response(ALLOW_ALL, {
 			status: 200,
@@ -31,7 +31,7 @@ export async function GET() {
 		headers: { Authorization: `Bearer ${apiKey}` },
 		next: {
 			revalidate: 60,
-			tags: ["biab:robots", "biab:billing-state", "biab:parallel-pages"],
+			tags: ["bd:robots", "bd:billing-state", "bd:parallel-pages"],
 		},
 	});
 	if (!response.ok) {

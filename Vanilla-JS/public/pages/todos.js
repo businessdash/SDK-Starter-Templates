@@ -1,18 +1,18 @@
 /**
- * /todos — the relational custom-collections demo (`biab.data-model.config.ts`).
+ * /todos — the relational custom-collections demo (`bd.data-model.config.ts`).
  *
- * READ: `biab.todos.list()` → `GET /api/biab/todos`, which lists both
+ * READ: `bd.todos.list()` → `GET /api/bd/todos`, which lists both
  * collections via the SDK's `dataModel.listRecords({ object })` and joins
  * images to todos through the `todo` RELATION field.
- * WRITE: `biab.forms.submit("todo-form", …)` — submitting the generated
+ * WRITE: `bd.forms.submit("todo-form", …)` — submitting the generated
  * "Todo Form" is the SDK's documented create path for custom collections;
  * there is no direct row-write surface.
  */
-import { biab, el, empty } from "/biab.js";
+import { bd, el, empty } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 /** Slug of the generated create form — see TODO_FORM_SLUG in
- *  `biab.data-model.config.ts` (kept as a literal here; the schema config is
+ *  `bd.data-model.config.ts` (kept as a literal here; the schema config is
  *  server/CLI code and never ships to the browser). */
 const TODO_FORM_SLUG = "todo-form";
 
@@ -20,7 +20,7 @@ export default async function render(root) {
 	root.replaceChildren(
 		pageHead(
 			"Todos",
-			"A relational custom-collections demo — todos and their images live in your BIAB custom database.",
+			"A relational custom-collections demo — todos and their images live in your BD custom database.",
 		),
 	);
 
@@ -58,7 +58,7 @@ function createForm(listRegion) {
 					// `validateFormSubmission` accepts output keys (preferred)
 					// or legacy field ids.
 					const notes = notesInput.value.trim();
-					const result = await biab.forms.submit(TODO_FORM_SLUG, {
+					const result = await bd.forms.submit(TODO_FORM_SLUG, {
 						title,
 						...(notes ? { notes } : {}),
 					});
@@ -96,12 +96,12 @@ function createForm(listRegion) {
 async function renderList(region) {
 	region.replaceChildren();
 	try {
-		const payload = await biab.todos.list();
+		const payload = await bd.todos.list();
 		if (!payload.available) {
 			region.append(
 				empty(
 					payload.reason ||
-						"Todos aren't readable yet — sync + promote biab.data-model.config.ts and check your key's scopes.",
+						"Todos aren't readable yet — sync + promote bd.data-model.config.ts and check your key's scopes.",
 				),
 			);
 			return;

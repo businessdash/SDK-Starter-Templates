@@ -5,10 +5,10 @@ import {
 	routeLoader$,
 } from "@builder.io/qwik-city";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
-import { getBiab } from "../../lib/biab";
-import { getCustomerSession } from "../../lib/biab-portal";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
+import { getBd } from "../../lib/bd";
+import { getCustomerSession } from "../../lib/bd-portal";
 
 /**
  * Index for the programmatic (service × area) parallel pages. Lists every
@@ -16,13 +16,13 @@ import { getCustomerSession } from "../../lib/biab-portal";
  * and links into the per-variant SSR render route.
  */
 export const useVariants = routeLoader$(async ({ cookie }) => {
-	const biab = getBiab();
+	const bd = getBd();
 	const session = await getCustomerSession(cookie);
-	if (!biab) {
+	if (!bd) {
 		return { configured: false, variants: [], signedIn: !!session };
 	}
 	try {
-		const { variants } = await biab.parallelPages.listVariants("service-area");
+		const { variants } = await bd.parallelPages.listVariants("service-area");
 		return {
 			configured: true,
 			variants: variants.map((v) => ({
@@ -43,31 +43,31 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} />
 			<main>
-				<section class="biab-section">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">Programmatic SEO</span>
-						<h2 class="biab-section__title">Service areas</h2>
-						<p class="biab-section__sub">
+				<section class="bd-section">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Programmatic SEO</span>
+						<h2 class="bd-section__title">Service areas</h2>
+						<p class="bd-section__sub">
 							One page per (service × area), fanned out from
-							<code> biab.config.ts</code> and rendered with tokens resolved
-							server-side by BIAB.
+							<code> bd.config.ts</code> and rendered with tokens resolved
+							server-side by BD.
 						</p>
 					</div>
 
 					{!data.value.configured ? (
-						<div class="biab-empty">
-							Parallel pages aren't connected yet. Set the BIAB env vars and run
+						<div class="bd-empty">
+							Parallel pages aren't connected yet. Set the BD env vars and run
 							<code> sync-schema</code>.
 						</div>
 					) : data.value.variants.length === 0 ? (
-						<div class="biab-empty">
-							No variants yet. Add services + service areas in BIAB, then publish.
+						<div class="bd-empty">
+							No variants yet. Add services + service areas in BD, then publish.
 						</div>
 					) : (
-						<div class="biab-grid-3">
+						<div class="bd-grid-3">
 							{data.value.variants.map((v) => (
 								<Link
-									class="biab-card service-card"
+									class="bd-card service-card"
 									href={`/services/${v.service}/${v.area}`}
 									key={`${v.service}/${v.area}`}
 								>
@@ -93,7 +93,7 @@ export const head: DocumentHead = {
 	meta: [
 		{
 			name: "description",
-			content: "Programmatic service-area pages powered by BIAB parallel pages.",
+			content: "Programmatic service-area pages powered by BD parallel pages.",
 		},
 	],
 };

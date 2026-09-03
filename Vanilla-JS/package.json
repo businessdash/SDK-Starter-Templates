@@ -1,16 +1,16 @@
 {
-	"name": "biab-vanilla-js",
+	"name": "bd-vanilla-js",
 	"private": true,
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
 		"dev": "bun --watch run server.ts",
 		"start": "bun run server.ts",
-		"sync-schema": "bun node_modules/@businessdash/sdk/dist/cli.js sync-schema --config biab.config.ts",
-		"sync-content": "bun node_modules/@businessdash/sdk/dist/cli.js sync-content --config biab.config.ts",
-		"print-schema": "bun node_modules/@businessdash/sdk/dist/cli.js print-schema --config biab.config.ts",
-		"sync-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config biab.data-model.config.ts",
-		"print-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts"
+		"sync-schema": "bun node_modules/@businessdash/sdk/dist/cli.js sync-schema --config bd.config.ts",
+		"sync-content": "bun node_modules/@businessdash/sdk/dist/cli.js sync-content --config bd.config.ts",
+		"print-schema": "bun node_modules/@businessdash/sdk/dist/cli.js print-schema --config bd.config.ts",
+		"sync-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config bd.data-model.config.ts",
+		"print-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
 	},
 	"dependencies": {
 		"@businessdash/sdk": "^0.9.81",

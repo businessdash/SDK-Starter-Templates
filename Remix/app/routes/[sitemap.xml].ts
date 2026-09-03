@@ -1,7 +1,7 @@
 import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 import type { LoaderFunctionArgs } from "react-router";
 
-import { getBiab } from "~/lib/biab.server";
+import { getBd } from "~/lib/bd.server";
 
 /**
  * The sitemap, assembled from three sources: your own pages, what BusinessDash
@@ -19,12 +19,12 @@ const STATIC_PATHS = ["/", "/services", "/reviews", "/store", "/book"];
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const baseUrl = new URL(request.url).origin;
-	const client = getBiab();
+	const client = getBd();
 
 	const xml = client
 		? await buildSitemap({
 				client,
-				siteId: process.env.BIAB_SITE_ID ?? "",
+				siteId: process.env.BD_SITE_ID ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
 				routes: { product: "/store" },

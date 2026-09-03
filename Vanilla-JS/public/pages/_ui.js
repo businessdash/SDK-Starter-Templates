@@ -1,5 +1,5 @@
 /** Shared bits for the feature page modules. */
-import { el } from "/biab.js";
+import { el } from "/bd.js";
 
 /** A friendly error/unavailable box. Detects the suspension 503 shape. */
 export function errBox(err) {
@@ -10,7 +10,7 @@ export function errBox(err) {
 		unavailable
 			? "This site is temporarily unavailable. Please check back soon."
 			: notConfigured
-				? "BIAB isn't configured on this server yet — set the env vars in .env.local (see .env.example)."
+				? "BD isn't configured on this server yet — set the env vars in .env.local (see .env.example)."
 				: "Couldn't load this section.",
 	]);
 }

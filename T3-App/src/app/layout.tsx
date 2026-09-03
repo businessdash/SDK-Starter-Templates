@@ -2,26 +2,26 @@ import "@/styles/globals.css";
 // SDK form styles — file-upload box, multi-step progress header, and
 // availability/choice chips are unstyled without this. The container
 // background is intentionally transparent; the template owns it.
-import "@businessdash/sdk/biab-forms.css";
+import "@businessdash/sdk/bd-forms.css";
 
-import { BIABAnalytics } from "@businessdash/sdk/react-analytics";
+import { BDAnalytics } from "@businessdash/sdk/react-analytics";
 import { type Metadata } from "next";
 import { Geist } from "next/font/google";
 
-import { SdkSetupBanner } from "@/app/_components/biab/SdkSetupBanner";
+import { SdkSetupBanner } from "@/app/_components/bd/SdkSetupBanner";
 import { TRPCReactProvider } from "@/trpc/react";
 
 // SITE_ID + base URL aren't secret — prefer the canonical NEXT_PUBLIC_ vars,
 // falling back to the legacy names so older setups keep working.
-const BIAB_SITE_ID =
-  process.env.NEXT_PUBLIC_BIAB_SITE_ID ?? process.env.BIAB_SITE_ID;
-const BIAB_BASE_URL =
-  process.env.NEXT_PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
-  process.env.BIAB_PACKAGE_API_BASE_URL;
+const BD_SITE_ID =
+  process.env.NEXT_PUBLIC_BD_SITE_ID ?? process.env.BD_SITE_ID;
+const BD_BASE_URL =
+  process.env.NEXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
+  process.env.BD_PACKAGE_API_BASE_URL;
 // Analytics runs in the browser, so it uses the publishable token
-// (NEXT_PUBLIC_BIAB_PK). Fall back to the old NEXT_PUBLIC_BIAB_PUBLIC_KEY name.
-const BIAB_PUBLIC_KEY =
-  process.env.NEXT_PUBLIC_BIAB_PK ?? process.env.NEXT_PUBLIC_BIAB_PUBLIC_KEY;
+// (NEXT_PUBLIC_BD_PK). Fall back to the old NEXT_PUBLIC_BD_PUBLIC_KEY name.
+const BD_PUBLIC_KEY =
+  process.env.NEXT_PUBLIC_BD_PK ?? process.env.NEXT_PUBLIC_BD_PUBLIC_KEY;
 
 export const metadata: Metadata = {
   title: "Create T3 App",
@@ -42,11 +42,11 @@ export default function RootLayout({
       <body>
         <TRPCReactProvider>{children}</TRPCReactProvider>
         <SdkSetupBanner />
-        {BIAB_SITE_ID && BIAB_BASE_URL && BIAB_PUBLIC_KEY ? (
-          <BIABAnalytics
-            siteId={BIAB_SITE_ID}
-            baseUrl={BIAB_BASE_URL}
-            apiKey={BIAB_PUBLIC_KEY}
+        {BD_SITE_ID && BD_BASE_URL && BD_PUBLIC_KEY ? (
+          <BDAnalytics
+            siteId={BD_SITE_ID}
+            baseUrl={BD_BASE_URL}
+            apiKey={BD_PUBLIC_KEY}
           />
         ) : null}
       </body>

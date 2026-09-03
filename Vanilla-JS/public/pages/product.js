@@ -5,7 +5,7 @@
  * Each enrichment loads independently and degrades to nothing if unavailable, so
  * the detail page always renders the core product even when an extra 404s.
  */
-import { biab, dollars, el, money } from "/biab.js";
+import { bd, dollars, el, money } from "/bd.js";
 import { errBox } from "./_ui.js";
 
 export default async function render(root) {
@@ -17,7 +17,7 @@ export default async function render(root) {
 	}
 	let product;
 	try {
-		product = await biab.storefront.getProduct(id);
+		product = await bd.storefront.getProduct(id);
 	} catch (err) {
 		root.replaceChildren(errBox(err));
 		return;
@@ -48,7 +48,7 @@ export default async function render(root) {
 				status.textContent = "Adding…";
 				try {
 					const variantId = select ? select.value || null : null;
-					const snap = await biab.cart.add({ productId: id, variantId, quantity: 1 });
+					const snap = await bd.cart.add({ productId: id, variantId, quantity: 1 });
 					status.textContent = `Added — cart has ${snap.itemCount ?? "?"} item(s). `;
 					status.append(el("a", { href: "/cart" }, ["View cart →"]));
 				} catch (err) {
@@ -96,7 +96,7 @@ export default async function render(root) {
 async function loadReviews(id, block) {
 	let res;
 	try {
-		res = await biab.storefront.getProductReviews(id, { limit: 10 });
+		res = await bd.storefront.getProductReviews(id, { limit: 10 });
 	} catch {
 		return; // endpoint unavailable → no reviews section
 	}
@@ -132,7 +132,7 @@ async function loadReviews(id, block) {
 async function loadAddons(id, block) {
 	let res;
 	try {
-		res = await biab.storefront.getProductAddons(id);
+		res = await bd.storefront.getProductAddons(id);
 	} catch {
 		return;
 	}
@@ -174,7 +174,7 @@ async function loadAddons(id, block) {
 async function loadRelated(id, block) {
 	let res;
 	try {
-		res = await biab.storefront.getRelatedProducts(id, { limit: 6 });
+		res = await bd.storefront.getRelatedProducts(id, { limit: 6 });
 	} catch {
 		return;
 	}

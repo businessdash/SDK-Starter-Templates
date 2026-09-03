@@ -2,7 +2,7 @@ import { Link, useLoaderData } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
 import { SiteHeader } from "~/components/SiteHeader";
-import { listServiceAreaVariants } from "~/lib/biab-pages.server";
+import { listServiceAreaVariants } from "~/lib/bd-pages.server";
 
 export const meta: MetaFunction = () => [
 	{ title: "Service areas — Your Business" },
@@ -13,7 +13,7 @@ export const meta: MetaFunction = () => [
 ];
 
 /** Index for the programmatic /services/[service]/[area] pages: lists every
- *  (service × area) variant BIAB has materialised, each linking to its
+ *  (service × area) variant BD has materialised, each linking to its
  *  server-rendered page. */
 export async function loader(_: LoaderFunctionArgs) {
 	const variants = await listServiceAreaVariants();
@@ -31,7 +31,7 @@ export default function ServicesIndex() {
 					{variants.length === 0 ? (
 						<p className="muted">
 							No programmatic pages yet — define services and service areas in
-							BIAB, then publish to generate them.
+							BD, then publish to generate them.
 						</p>
 					) : (
 						<ul className="link-grid">

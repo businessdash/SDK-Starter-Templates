@@ -6,8 +6,8 @@ import type {
 } from "react-router";
 
 import { SiteHeader } from "~/components/SiteHeader";
-import { confirmBooking, listEventTypes, listSlots } from "~/lib/biab-booking.server";
-import { isServiceSuspended } from "~/lib/biab.server";
+import { confirmBooking, listEventTypes, listSlots } from "~/lib/bd-booking.server";
+import { isServiceSuspended } from "~/lib/bd.server";
 
 export const meta: MetaFunction = () => [{ title: "Book — Your Business" }];
 
@@ -81,7 +81,7 @@ export default function BookPage() {
 					<h1 className="section__title">Book an appointment</h1>
 					{!connected ? (
 						<p className="muted">
-							Scheduling isn't connected yet. Create an event type in BIAB to
+							Scheduling isn't connected yet. Create an event type in BD to
 							take bookings here.
 						</p>
 					) : actionData?.ok ? (
@@ -136,7 +136,7 @@ export default function BookPage() {
 									<textarea name="notes" rows={2} />
 								</label>
 								<button
-									className="biab-btn"
+									className="bd-btn"
 									type="submit"
 									disabled={submitting || slots.length === 0}
 								>

@@ -1,5 +1,5 @@
 import "./App.css";
-import { BIABAnalytics } from "@businessdash/sdk/react-analytics";
+import { BDAnalytics } from "@businessdash/sdk/react-analytics";
 import { About } from "./components/About";
 import { Banner } from "./components/Banner";
 import { Blog } from "./components/Blog";
@@ -24,13 +24,13 @@ import { Todos } from "./pages/Todos";
 import { Updates } from "./pages/Updates";
 
 /**
- * Generic business website wired against the BIAB SDK, now at full feature
+ * Generic business website wired against the BD SDK, now at full feature
  * parity with the production reference consumer. The home page composes the
  * marketing sections; a tiny client router (src/lib/router) switches in the
  * feature pages (store, cart, subscriptions, reviews, updates, my-account,
  * programmatic-SEO service pages).
  *
- * The pattern is unchanged: browser → same-origin `/api/biab/*` proxy → BIAB
+ * The pattern is unchanged: browser → same-origin `/api/bd/*` proxy → BD
  * Package API. The Bun server (server.ts) holds the bearer key.
  */
 function Home() {
@@ -66,15 +66,15 @@ function App() {
 	// Canonical VITE_ names (exposed to the browser via envPrefix in
 	// vite.config.ts), falling back to the legacy VITE_ twins so existing
 	// setups keep working.
-	const biabSiteId =
-		import.meta.env.VITE_BIAB_SITE_ID ??
-		import.meta.env.VITE_BIAB_SITE_ID;
-	const biabBaseUrl =
-		import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL ??
-		import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL;
-	const biabPublicKey =
-		import.meta.env.VITE_BIAB_PK ??
-		import.meta.env.VITE_BIAB_PUBLIC_KEY;
+	const bdSiteId =
+		import.meta.env.VITE_BD_SITE_ID ??
+		import.meta.env.VITE_BD_SITE_ID;
+	const bdBaseUrl =
+		import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
+		import.meta.env.VITE_BD_PACKAGE_API_BASE_URL;
+	const bdPublicKey =
+		import.meta.env.VITE_BD_PK ??
+		import.meta.env.VITE_BD_PUBLIC_KEY;
 	return (
 		<RouterProvider>
 			<Banner />
@@ -82,8 +82,8 @@ function App() {
 			<Routed />
 			<Footer />
 			<SdkSetupBanner />
-			{biabSiteId && biabBaseUrl && biabPublicKey ? (
-				<BIABAnalytics siteId={biabSiteId} baseUrl={biabBaseUrl} apiKey={biabPublicKey} />
+			{bdSiteId && bdBaseUrl && bdPublicKey ? (
+				<BDAnalytics siteId={bdSiteId} baseUrl={bdBaseUrl} apiKey={bdPublicKey} />
 			) : null}
 		</RouterProvider>
 	);

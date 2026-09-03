@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:businessdash_sdk/businessdash_sdk.dart';
-import 'ui/biab_scope.dart';
+import 'ui/bd_scope.dart';
 import 'ui/cart_page.dart';
 import 'ui/chat_page.dart';
 import 'ui/storefront_page.dart';
@@ -11,16 +11,16 @@ import 'ui/storefront_page.dart';
 /// what an app credential is.
 ///
 ///     flutter run \
-///       --dart-define=BIAB_SITE_ID=… \
-///       --dart-define=BIAB_PK=pk_…
-const _host = String.fromEnvironment('BIAB_HOST', defaultValue: 'https://www.biab.app');
-const _siteId = String.fromEnvironment('BIAB_SITE_ID');
-const _publishableKey = String.fromEnvironment('BIAB_PK');
+///       --dart-define=BD_SITE_ID=… \
+///       --dart-define=BD_PK=pk_…
+const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://www.biab.app');
+const _siteId = String.fromEnvironment('BD_SITE_ID');
+const _publishableKey = String.fromEnvironment('BD_PK');
 
-void main() => runApp(const BiabStarterApp());
+void main() => runApp(const BdStarterApp());
 
-class BiabStarterApp extends StatelessWidget {
-  const BiabStarterApp({super.key});
+class BdStarterApp extends StatelessWidget {
+  const BdStarterApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,16 +28,16 @@ class BiabStarterApp extends StatelessWidget {
     // `flutter run` on a fresh clone should still launch.
     final client = (_siteId.isEmpty || _publishableKey.isEmpty)
         ? null
-        : BiabClient(
+        : BdClient(
             host: Uri.parse(_host),
             publishableKey: _publishableKey,
             siteId: _siteId,
           );
 
     return MaterialApp(
-      title: 'BIAB Flutter starter',
+      title: 'BD Flutter starter',
       theme: ThemeData(colorSchemeSeed: Colors.indigo, useMaterial3: true),
-      home: BiabScope(
+      home: BdScope(
         client: client,
         // A real app persists this (shared_preferences) so a cart survives a
         // relaunch. It is an opaque id, not a secret.
@@ -62,7 +62,7 @@ class _HomeState extends State<_Home> {
 
   @override
   Widget build(BuildContext context) {
-    final configured = BiabScope.of(context).isConfigured;
+    final configured = BdScope.of(context).isConfigured;
 
     return Scaffold(
       body: Column(
@@ -73,7 +73,7 @@ class _HomeState extends State<_Home> {
               color: Colors.amber.withValues(alpha: 0.25),
               padding: const EdgeInsets.all(8),
               child: const Text(
-                'Not connected to BIAB — pass --dart-define=BIAB_SITE_ID and BIAB_PK.',
+                'Not connected to BD — pass --dart-define=BD_SITE_ID and BD_PK.',
                 style: TextStyle(fontSize: 12),
               ),
             ),

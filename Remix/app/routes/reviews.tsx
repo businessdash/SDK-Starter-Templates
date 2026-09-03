@@ -6,8 +6,8 @@ import { SiteHeader } from "~/components/SiteHeader";
 import {
 	getMarketingBundle,
 	getReviewsFromBundle,
-} from "~/lib/biab-bundle.server";
-import { isServiceSuspended } from "~/lib/biab.server";
+} from "~/lib/bd-bundle.server";
+import { isServiceSuspended } from "~/lib/bd.server";
 
 export const meta: MetaFunction = () => [{ title: "Reviews — Your Business" }];
 
@@ -115,7 +115,7 @@ export default function ReviewsPage() {
 					</ul>
 					{nextOffset != null && items.length < count ? (
 						<button
-							className="biab-btn"
+							className="bd-btn"
 							onClick={loadMore}
 							disabled={fetcher.state !== "idle"}
 						>

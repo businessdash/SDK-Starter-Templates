@@ -1,9 +1,9 @@
-defmodule BiabStarter.MixProject do
+defmodule BdStarter.MixProject do
   use Mix.Project
 
   def project do
     [
-      app: :biab_starter,
+      app: :bd_starter,
       version: "0.1.0",
       elixir: "~> 1.15",
       elixirc_paths: elixirc_paths(Mix.env()),
@@ -14,7 +14,7 @@ defmodule BiabStarter.MixProject do
 
   def application do
     [
-      mod: {BiabStarter.Application, []},
+      mod: {BdStarter.Application, []},
       extra_applications: [:logger, :crypto]
     ]
   end
@@ -29,7 +29,7 @@ defmodule BiabStarter.MixProject do
       {:phoenix_live_view, "~> 1.0"},
       {:jason, "~> 1.4"},
       {:bandit, "~> 1.5"},
-      # The only client dependency. There is no Elixir BIAB package — the
+      # The only client dependency. There is no Elixir BD package — the
       # Package API is plain REST with a bearer key.
       {:req, "~> 0.5"},
       # For Ecto.UUID.generate/0 only (cart visitor + chat session ids). No

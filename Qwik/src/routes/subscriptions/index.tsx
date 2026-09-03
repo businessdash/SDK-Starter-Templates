@@ -2,26 +2,26 @@ import { $, component$, useSignal } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city";
 
 import {
-	BiabPaymentLapsedError,
-	BiabServiceSuspendedError,
+	BdPaymentLapsedError,
+	BdServiceSuspendedError,
 } from "@businessdash/sdk";
 import type { SubscriptionOffering } from "@businessdash/sdk/contracts";
 
-import { Footer } from "../../components/biab/Footer";
-import { SiteHeader } from "../../components/biab/SiteHeader";
-import { getBiab } from "../../lib/biab";
-import { formatMoney } from "../../lib/biab-store";
-import { getCustomerSession } from "../../lib/biab-portal";
+import { Footer } from "../../components/bd/Footer";
+import { SiteHeader } from "../../components/bd/SiteHeader";
+import { getBd } from "../../lib/bd";
+import { formatMoney } from "../../lib/bd-store";
+import { getCustomerSession } from "../../lib/bd-portal";
 
 /** Subscription offerings list. Each plan starts its own Stripe checkout. */
 export const useSubscriptions = routeLoader$(async ({ cookie }) => {
-	const biab = getBiab();
-	if (!biab) {
+	const bd = getBd();
+	if (!bd) {
 		return { configured: false, suspended: false, items: [], signedIn: false } as const;
 	}
 	try {
 		const [res, session] = await Promise.all([
-			biab.subscriptions.list(),
+			bd.subscriptions.list(),
 			getCustomerSession(cookie),
 		]);
 		return {
@@ -32,8 +32,8 @@ export const useSubscriptions = routeLoader$(async ({ cookie }) => {
 		} as const;
 	} catch (err) {
 		if (
-			err instanceof BiabServiceSuspendedError ||
-			err instanceof BiabPaymentLapsedError
+			err instanceof BdServiceSuspendedError ||
+			err instanceof BdPaymentLapsedError
 		) {
 			return { configured: true, suspended: true, items: [], signedIn: false } as const;
 		}
@@ -42,10 +42,10 @@ export const useSubscriptions = routeLoader$(async ({ cookie }) => {
 });
 
 const startSubscriptionRpc = server$(async function (this, id: string) {
-	const biab = getBiab();
-	if (!biab) return { ok: false as const, error: "Plans aren't connected." };
+	const bd = getBd();
+	if (!bd) return { ok: false as const, error: "Plans aren't connected." };
 	try {
-		const res = await biab.subscriptions.startCheckout(id, {
+		const res = await bd.subscriptions.startCheckout(id, {
 			successUrl: `${this.url.origin}/store/order?session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${this.url.origin}/subscriptions`,
 		});
@@ -78,30 +78,30 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} />
 			<main>
-				<section class="biab-section">
-					<div class="biab-section__lead">
-						<span class="biab-section__eyebrow">Memberships</span>
-						<h2 class="biab-section__title">Plans</h2>
-						<p class="biab-section__sub">
-							Recurring offerings from the BIAB subscriptions surface. Each
+				<section class="bd-section">
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Memberships</span>
+						<h2 class="bd-section__title">Plans</h2>
+						<p class="bd-section__sub">
+							Recurring offerings from the BD subscriptions surface. Each
 							subscribe button opens Stripe-hosted checkout.
 						</p>
 					</div>
 
 					{data.value.suspended ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Plans are temporarily unavailable. Please check back soon.
 						</div>
 					) : items.length === 0 ? (
-						<div class="biab-empty">
-							No subscription plans yet. Add some in BIAB at Dashboard →
+						<div class="bd-empty">
+							No subscription plans yet. Add some in BD at Dashboard →
 							Products → Subscriptions.
 						</div>
 					) : (
-						<div class="biab-grid-3">
+						<div class="bd-grid-3">
 							{items.map((plan) => (
 								<div
-									class="biab-card service-card"
+									class="bd-card service-card"
 									key={plan.id}
 								>
 									{plan.imageUrl ? (
@@ -117,7 +117,7 @@ export default component$(() => {
 										{formatMoney(plan.amountCents, "usd")} / {plan.interval}
 									</div>
 									<button
-										class="biab-btn"
+										class="bd-btn"
 										disabled={busy.value === plan.id}
 										onClick$={() => subscribe(plan.id)}
 										style="align-self: flex-start; margin-top: 0.5rem;"

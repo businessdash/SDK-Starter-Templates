@@ -1,6 +1,6 @@
 import Config
 
-config :biab_starter, BiabStarterWeb.Endpoint,
+config :bd_starter, BdStarterWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("PORT") || "4000")],
   check_origin: false,
   code_reloader: true,
@@ -10,7 +10,7 @@ config :biab_starter, BiabStarterWeb.Endpoint,
   live_reload: [
     patterns: [
       ~r"priv/static/(?!uploads/).*(js|css|png|jpeg|jpg|gif|svg)$",
-      ~r"lib/biab_starter_web/(controllers|live|components)/.*(ex|heex)$"
+      ~r"lib/bd_starter_web/(controllers|live|components)/.*(ex|heex)$"
     ]
   ]
 

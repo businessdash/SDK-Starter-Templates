@@ -1,19 +1,19 @@
 import { useState } from "react";
 
-import { BiabForm } from "@businessdash/sdk/react";
+import { BdForm } from "@businessdash/sdk/react";
 
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 /**
  * `/todos` — the relational custom-collections demo. Two collections declared
- * in `biab.data-model.config.ts` — `todos`, and `todoImages` pointing at a
+ * in `bd.data-model.config.ts` — `todos`, and `todoImages` pointing at a
  * todo via a required RELATION field. This page:
  *
- *   - LISTS todos (with any images joined on) via `biab.todos.list()` → the
+ *   - LISTS todos (with any images joined on) via `bd.todos.list()` → the
  *     Bun server's `dataModel.listRecords` join — the documented read path.
  *   - CREATES a todo by submitting the generated `todo-form` through the
- *     existing forms proxy (`client={biab}`) — the documented write path
+ *     existing forms proxy (`client={bd}`) — the documented write path
  *     (there is no direct row-write API for consumers).
  *
  * Until the model is synced + promoted (and the form set Live) the page shows
@@ -22,7 +22,7 @@ import { ErrorBox, PageHead, useApi } from "./ui";
 export function Todos() {
 	// Bumped on every successful create so `useApi` re-reads the list.
 	const [refreshKey, setRefreshKey] = useState(0);
-	const { data, error, loading } = useApi(() => biab.todos.list(), [refreshKey]);
+	const { data, error, loading } = useApi(() => bd.todos.list(), [refreshKey]);
 
 	return (
 		<main className="page">
@@ -35,14 +35,14 @@ export function Todos() {
 
 			{data?.status === "unconfigured" ? (
 				<p className="muted">
-					BIAB isn't configured — set the env vars in <code>.env.local</code>{" "}
+					BD isn't configured — set the env vars in <code>.env.local</code>{" "}
 					(see <code>.env.example</code>) to run this demo.
 				</p>
 			) : null}
 			{data?.status === "unavailable" ? (
 				<p className="muted">
 					The todos model isn't readable yet. Run{" "}
-					<code>bun run sync-data-model</code>, promote it in the BIAB
+					<code>bun run sync-data-model</code>, promote it in the BD
 					dashboard, and make sure your secret key carries the{" "}
 					<code>metadata:read_records</code> scope (custom objects are a
 					plan-gated surface).
@@ -63,7 +63,7 @@ export function Todos() {
 						}}
 					>
 						{data.todos.map((todo) => (
-							<li className="biab-card" key={todo.id}>
+							<li className="bd-card" key={todo.id}>
 								<div
 									style={{
 										alignItems: "center",
@@ -71,7 +71,7 @@ export function Todos() {
 										gap: "0.5rem",
 									}}
 								>
-									<span className="biab-badge">
+									<span className="bd-badge">
 										{todo.done ? "Done" : "Open"}
 									</span>
 									<h3 style={{ margin: 0 }}>{todo.title}</h3>
@@ -117,19 +117,19 @@ export function Todos() {
 			) : null}
 
 			{data && data.status !== "unconfigured" ? (
-				<section className="biab-section biab-section--narrow" id="add-todo">
-					<h2 className="biab-section__title">Add a todo</h2>
+				<section className="bd-section bd-section--narrow" id="add-todo">
+					<h2 className="bd-section__title">Add a todo</h2>
 					{/* The generated `todo-form` is a normal published form once it's
 					    set Live — same client proxy as the contact form. */}
-					<BiabForm
+					<BdForm
 						slug="todo-form"
-						client={biab}
+						client={bd}
 						submitLabel="Add todo"
 						onSuccess={() => setRefreshKey((k) => k + 1)}
 						successFallback={() => (
 							<p>
 								Added.{" "}
-								<span className="biab-badge">Saved to your custom DB</span>
+								<span className="bd-badge">Saved to your custom DB</span>
 							</p>
 						)}
 						errorFallback={() => (

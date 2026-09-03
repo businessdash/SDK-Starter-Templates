@@ -1,14 +1,14 @@
 import { env } from "$env/dynamic/private";
 
-import { robotsProxyUrl, seoProxyConfig } from "$lib/server/biab-parallel";
+import { robotsProxyUrl, seoProxyConfig } from "$lib/server/bd-parallel";
 
 import type { RequestHandler } from "./$types";
 
 /**
- * Proxy the auto-generated robots.txt from BIAB. The platform endpoint
+ * Proxy the auto-generated robots.txt from BD. The platform endpoint
  * flips to `Disallow: /` automatically when the org's billing is fully
  * suspended (60+ days) so search engines treat the outage as temporary —
- * that SEO-rescue lives entirely on the platform side. When BIAB isn't
+ * that SEO-rescue lives entirely on the platform side. When BD isn't
  * configured we serve a permissive default.
  */
 const DEFAULT_ROBOTS = "User-agent: *\nAllow: /\n";
@@ -43,7 +43,7 @@ export const GET: RequestHandler = async () => {
 	} catch (err) {
 		if (env.NODE_ENV === "development") {
 			console.warn(
-				`[biab] robots proxy failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[bd] robots proxy failed: ${err instanceof Error ? err.message : String(err)}`,
 			);
 		}
 		return new Response(DEFAULT_ROBOTS, {

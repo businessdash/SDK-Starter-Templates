@@ -1,4 +1,4 @@
-# BIAB SDK — React Native (Expo) starter
+# BD SDK — React Native (Expo) starter
 
 The one mobile starter that **reuses `@businessdash/sdk` directly**. Laravel, Phoenix, Swift, Flutter, Kotlin and Vapor all hand-write a client because the SDK is TypeScript; React Native *is* JavaScript, so it imports the real thing.
 
@@ -24,7 +24,7 @@ Recent Expo SDKs default this to true. It's set anyway — "the default changed"
 
 ## The token rule
 
-`EXPO_PUBLIC_` vars are inlined into the JS bundle at build time, so anything here ships in the app. This app can only hold a **publishable `pk_…` token**, and `getBiab()` throws on an `sk_…` key rather than letting a secret reach the store.
+`EXPO_PUBLIC_` vars are inlined into the JS bundle at build time, so anything here ships in the app. This app can only hold a **publishable `pk_…` token**, and `getBd()` throws on an `sk_…` key rather than letting a secret reach the store.
 
 Barely limiting: the publishable scope set covers the entire customer-facing surface — storefront, cart, checkout, blog, marketing content, chat, forms, **the whole customer portal**, sign-in, and public custom-object reads. **No backend-for-frontend is needed.**
 
@@ -34,7 +34,7 @@ Expo is also the only mobile target with a real public-prefix convention. That p
 
 ```sh
 cp .env.example .env
-# Fill EXPO_PUBLIC_BIAB_SITE_ID and EXPO_PUBLIC_BIAB_PK
+# Fill EXPO_PUBLIC_BD_SITE_ID and EXPO_PUBLIC_BD_PK
 
 npm install
 npx expo start
@@ -45,10 +45,10 @@ npx expo start
 For the schema + custom-database flows:
 
 ```sh
-npm run sync-schema          # push biab.config.ts to BIAB's draft slot
+npm run sync-schema          # push bd.config.ts to BD's draft slot
 npm run sync-data-model      # push the todos data model (+ generated form)
-npm run seed                 # upsert the rows in ./biab-records
-npm run view-data-model      # what's LIVE in BIAB right now
+npm run seed                 # upsert the rows in ./bd-records
+npm run view-data-model      # what's LIVE in BD right now
 ```
 
 The CLI is Node, and it is the **only** part of any starter that needs Node.
@@ -57,7 +57,7 @@ Node version — the schema artifact carries a canonical checksum the platform
 verifies, and reimplementing that in another language would mean matching the
 canonicalisation byte for byte.
 
-Seeding is language-neutral: `biab-records/` is plain JSON, identical across
+Seeding is language-neutral: `bd-records/` is plain JSON, identical across
 every starter. Only the *schema* files are TypeScript.
 
 Unlike the other non-web starters, the SDK here is a **real runtime
@@ -73,12 +73,12 @@ app/                       expo-router
   (tabs)/chat.tsx          Front Desk
   (tabs)/account.tsx       sign-in + portal
   product/[id].tsx
-src/biab/
+src/bd/
   client.ts    the two clients + the pk_ guard
   session.ts   session token → SecureStore, visitor id → AsyncStorage
   auth.ts      hosted sign-in via openAuthSessionAsync
   useChat.ts   the polling chat loop
-  useBiab.ts   useLoad / useVisitorToken
+  useBd.ts   useLoad / useVisitorToken
   money.ts     cents vs decimal
 ```
 
@@ -92,13 +92,13 @@ src/biab/
 
 **4. Checkout returns `stripeUrl`, not `url`.** Open it with `expo-web-browser`; no card data touches this process, which keeps the app out of PCI scope.
 
-**5. Two clients, different surfaces.** `createBiabClient` is content + commerce. `createBiabDevClient` is where `chatbot`, `auth` and the site-scoped `dataModel` live. Both are exposed rather than papered over, because reaching for the wrong one fails as "property is undefined".
+**5. Two clients, different surfaces.** `createBdClient` is content + commerce. `createBdApiClient` is where `chatbot`, `auth` and the site-scoped `dataModel` live. Both are exposed rather than papered over, because reaching for the wrong one fails as "property is undefined".
 
 ## Sign-in is nicer here than on native
 
 `WebBrowser.openAuthSessionAsync` opens the hosted page, closes itself when the redirect fires, and **returns the callback URL to the calling function**. No deep-link listener, no state stashed across an app restart, no race between the browser dismissing and the app reading the URL — all of which the Swift and Kotlin starters have to handle.
 
-The redirect URI still has to be registered on the BIAB site, or `auth/start` refuses. `Linking.createURL('auth/callback')` builds it from the `scheme` in `app.json`.
+The redirect URI still has to be registered on the BD site, or `auth/start` refuses. `Linking.createURL('auth/callback')` builds it from the `scheme` in `app.json`.
 
 ## Chat is polling, and that's the API
 
@@ -106,13 +106,13 @@ There is no SSE or WebSocket anywhere in the Package API. `useChat` runs `create
 
 ## What this starter does not do
 
-- **The form renderer isn't built.** `<biab-form>` is a DOM custom element with no RN counterpart — the one surface an app genuinely reimplements. `biab.forms.schema()` gives you a typed schema.
+- **The form renderer isn't built.** `<bd-form>` is a DOM custom element with no RN counterpart — the one surface an app genuinely reimplements. `bd.forms.schema()` gives you a typed schema.
 - **No portal detail screens.** Sign-in works and the scopes allow the whole portal; only the session check is wired.
 - **No tests.** The SDK's own suite covers the client; what's here is app glue.
 
 ## ⚠️ Verification
 
-**This has not been run.** No Expo toolchain or `node_modules` install was available. What *was* verified: every SDK call in this starter typechecks against the real published types (`createBiabClient`, `createBiabDevClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. The screens themselves are reviewed, not built.
+**This has not been run.** No Expo toolchain or `node_modules` install was available. What *was* verified: every SDK call in this starter typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. The screens themselves are reviewed, not built.
 
 ## Data: environment, schema, seeding, CRUD
 
@@ -125,9 +125,9 @@ Three, from **Dashboard → Developers → API keys**:
 
 | Variable | What it is |
 |---|---|
-| `BIAB_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
-| `BIAB_SITE_ID` | Which site this app is. |
-| `BIAB_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
+| `BD_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
+| `BD_SITE_ID` | Which site this app is. |
+| `BD_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
 
 > A **secret** key must never reach the browser. If this starter renders on the
 > client, use a publishable key — it carries a narrower scope set on purpose, so
@@ -204,7 +204,7 @@ npx tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema
 **Reads** are on the site client:
 
 ```ts
-const site = client.site(process.env.BIAB_SITE_ID!)
+const site = client.site(process.env.BD_SITE_ID!)
 
 const page = await site.dataModel.listRecords({ object: 'projects' })
 const everything = await site.dataModel.listAllRecords({ object: 'projects' })

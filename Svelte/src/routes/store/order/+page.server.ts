@@ -1,7 +1,7 @@
 import type { PageServerLoad } from "./$types";
 
-import { biab } from "$lib/server/biab";
-import { isStoreConfigured } from "$lib/server/biab-store";
+import { bd } from "$lib/server/bd";
+import { isStoreConfigured } from "$lib/server/bd-store";
 
 /**
  * Post-checkout "thank you" page. Stripe redirects here with
@@ -11,11 +11,11 @@ import { isStoreConfigured } from "$lib/server/biab-store";
  */
 export const load: PageServerLoad = async ({ url }) => {
 	const sessionId = url.searchParams.get("session_id");
-	if (!isStoreConfigured() || !biab || !sessionId) {
+	if (!isStoreConfigured() || !bd || !sessionId) {
 		return { status: null };
 	}
 	try {
-		const status = await biab.checkout.getStatus(sessionId);
+		const status = await bd.checkout.getStatus(sessionId);
 		return { status };
 	} catch {
 		return { status: null };

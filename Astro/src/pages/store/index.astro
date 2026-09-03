@@ -10,15 +10,15 @@
  *
  * Suspension-aware: if the org's billing has lapsed / service is suspended,
  * the SDK throws and we return a 503 "site unavailable" document. Unconfigured
- * BIAB shows a friendly "store not connected" empty state instead.
+ * BD shows a friendly "store not connected" empty state instead.
  */
-import { biab } from "../../lib/biab";
+import { bd } from "../../lib/bd";
 import {
 	isStoreConfigured,
 	listStoreCategories,
 	listStoreProductsWithMeta,
-} from "../../lib/biab-store";
-import { isSuspensionError, suspendedResponse } from "../../lib/biab-suspension";
+} from "../../lib/bd-store";
+import { isSuspensionError, suspendedResponse } from "../../lib/bd-suspension";
 import Layout from "../../layouts/Layout.astro";
 
 export const prerender = false;
@@ -76,7 +76,7 @@ let categories: Array<{ id: string; name: string }> = [];
 let loadError = false;
 let suspended = false;
 
-if (biab) {
+if (bd) {
 	try {
 		const [meta, cats] = await Promise.all([
 			listStoreProductsWithMeta({
@@ -145,36 +145,36 @@ const hasFilters = Boolean(
 
 <Layout
 	title="Store — Your Business"
-	description="Browse products and check out securely. Catalog + cart powered by the BIAB SDK."
+	description="Browse products and check out securely. Catalog + cart powered by the BD SDK."
 >
-	<section class="biab-section" id="store">
-		<div class="biab-section__lead">
-			<span class="biab-section__eyebrow">Shop</span>
-			<h2 class="biab-section__title">Store</h2>
-			<p class="biab-section__sub">
-				Live catalog from BIAB. Filter, add to cart, and check out with Stripe.
+	<section class="bd-section" id="store">
+		<div class="bd-section__lead">
+			<span class="bd-section__eyebrow">Shop</span>
+			<h2 class="bd-section__title">Store</h2>
+			<p class="bd-section__sub">
+				Live catalog from BD. Filter, add to cart, and check out with Stripe.
 			</p>
 		</div>
 
 		{
 			!isStoreConfigured() ? (
-				<div class="biab-empty">
-					Store isn't connected. Add your BIAB keys (see <code>.env.example</code>)
+				<div class="bd-empty">
+					Store isn't connected. Add your BD keys (see <code>.env.example</code>)
 					and products from the dashboard will appear here.
 				</div>
 			) : loadError ? (
-				<div class="biab-empty">Couldn't load the catalog right now.</div>
+				<div class="bd-empty">Couldn't load the catalog right now.</div>
 			) : (
 				<div class="store-layout">
 					{/* ── Sidebar facets (plain GET form, JS-free) ── */}
 					<aside class="store-facets">
 						<form class="store-facets__form" method="get" action="/store">
 							<div class="store-facet">
-								<label class="biab-label" for="facet-q">
+								<label class="bd-label" for="facet-q">
 									Search
 								</label>
 								<input
-									class="biab-input"
+									class="bd-input"
 									id="facet-q"
 									type="search"
 									name="q"
@@ -185,7 +185,7 @@ const hasFilters = Boolean(
 
 							{facetCategories.length > 0 ? (
 								<div class="store-facet">
-									<span class="biab-label">Category</span>
+									<span class="bd-label">Category</span>
 									<ul class="store-facet__list">
 										<li>
 											<a
@@ -219,13 +219,13 @@ const hasFilters = Boolean(
 							) : null}
 
 							<div class="store-facet">
-								<span class="biab-label">
+								<span class="bd-label">
 									Price ({money(priceRange.minDollars * 100)} –{" "}
 									{money(priceRange.maxDollars * 100)})
 								</span>
 								<div class="store-facet__price">
 									<input
-										class="biab-input"
+										class="bd-input"
 										type="number"
 										name="price-min"
 										min={priceRange.minDollars}
@@ -236,7 +236,7 @@ const hasFilters = Boolean(
 									/>
 									<span>–</span>
 									<input
-										class="biab-input"
+										class="bd-input"
 										type="number"
 										name="price-max"
 										min={priceRange.minDollars}
@@ -251,11 +251,11 @@ const hasFilters = Boolean(
 							</div>
 
 							<div class="store-facet">
-								<label class="biab-label" for="facet-rating">
+								<label class="bd-label" for="facet-rating">
 									Minimum rating
 								</label>
 								<select
-									class="biab-select"
+									class="bd-select"
 									id="facet-rating"
 									name="rating"
 								>
@@ -271,10 +271,10 @@ const hasFilters = Boolean(
 							</div>
 
 							<div class="store-facet">
-								<label class="biab-label" for="facet-sort">
+								<label class="bd-label" for="facet-sort">
 									Sort by
 								</label>
-								<select class="biab-select" id="facet-sort" name="sort">
+								<select class="bd-select" id="facet-sort" name="sort">
 									{SORTS.map((s) => (
 										<option value={s.value} selected={sort === s.value}>
 											{s.label}
@@ -287,7 +287,7 @@ const hasFilters = Boolean(
 								<input type="hidden" name="category" value={categoryId} />
 							) : null}
 
-							<button class="biab-btn store-facet__apply" type="submit">
+							<button class="bd-btn store-facet__apply" type="submit">
 								Apply filters
 							</button>
 							{hasFilters ? (
@@ -301,15 +301,15 @@ const hasFilters = Boolean(
 					{/* ── Product grid ── */}
 					<div class="store-results">
 						{items.length === 0 ? (
-							<div class="biab-empty">
+							<div class="bd-empty">
 								{hasFilters
 									? "No products match these filters."
-									: "No products yet. Add some in BIAB at Dashboard → Products."}
+									: "No products yet. Add some in BD at Dashboard → Products."}
 							</div>
 						) : (
-							<div class="biab-grid-3">
+							<div class="bd-grid-3">
 								{items.map((p) => (
-									<a class="biab-card product-card" href={`/store/${p.id}`}>
+									<a class="bd-card product-card" href={`/store/${p.id}`}>
 										<div class="product-card__media">
 											{p.coverImage ? (
 												<img
@@ -323,13 +323,13 @@ const hasFilters = Boolean(
 											)}
 											<div class="product-card__badges">
 												{p.isNew ? (
-													<span class="biab-badge">New</span>
+													<span class="bd-badge">New</span>
 												) : null}
 												{p.isBestSeller ? (
-													<span class="biab-badge">Best seller</span>
+													<span class="bd-badge">Best seller</span>
 												) : null}
 												{p.isOnSale ? (
-													<span class="biab-badge product-card__badge--sale">
+													<span class="bd-badge product-card__badge--sale">
 														Sale
 													</span>
 												) : null}

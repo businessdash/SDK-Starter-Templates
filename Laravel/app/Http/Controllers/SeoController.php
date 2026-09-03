@@ -6,7 +6,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
 
 /**
- * SEO / AEO files, proxied from BIAB.
+ * SEO / AEO files, proxied from BD.
  *
  * These have to be served from THIS domain — a sitemap on biab.app says
  * nothing about your site, and `/llms.txt` is the only path answer engines
@@ -34,7 +34,7 @@ class SeoController extends Controller
 
     public function robots(): Response
     {
-        $host = rtrim(config('biab.site_origin'), '/');
+        $host = rtrim(config('bd.site_origin'), '/');
 
         return $this->relayPackage(
             'robots.txt',
@@ -51,14 +51,14 @@ class SeoController extends Controller
      */
     public function llmsTxt(): Response
     {
-        $siteId = config('biab.site_id');
+        $siteId = config('bd.site_id');
         $fallback = "# llms.txt is not configured for this site.\n";
 
         if (! $siteId) {
             return $this->text($fallback);
         }
 
-        $url = rtrim(config('biab.host'), '/')
+        $url = rtrim(config('bd.host'), '/')
             .'/api/public/ai-feed/'.rawurlencode($siteId).'/llms.txt';
 
         try {
@@ -72,19 +72,19 @@ class SeoController extends Controller
 
     private function relayPackage(string $suffix, string $fallback, string $contentType): Response
     {
-        $siteId = config('biab.site_id');
-        $key = config('biab.api_key');
+        $siteId = config('bd.site_id');
+        $key = config('bd.api_key');
 
         if (! $siteId || ! $key) {
             return response($fallback, 200)->header('Content-Type', $contentType);
         }
 
-        $url = rtrim(config('biab.host'), '/')
+        $url = rtrim(config('bd.host'), '/')
             .'/api/package/v1/sites/'.rawurlencode($siteId).'/'.$suffix;
 
         try {
             $response = Http::withToken($key)
-                ->withHeaders(['Origin' => rtrim(config('biab.site_origin'), '/')])
+                ->withHeaders(['Origin' => rtrim(config('bd.site_origin'), '/')])
                 ->timeout(10)
                 ->get($url);
 

@@ -116,10 +116,10 @@ public struct ConfirmVerificationResponse: Decodable, Sendable {
 /// flow, not an inconvenience in it. Without it, anyone with a session could
 /// point an org's notifications at an address they do not control.
 public struct VerificationResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
     let sessionToken: String
 
-    private var headers: [String: String] { ["X-Biab-Customer-Session": sessionToken] }
+    private var headers: [String: String] { ["X-Bd-Customer-Session": sessionToken] }
 
     /// Send a verification link (email, 15-minute TTL) or a 6-digit OTP
     /// (phone, 5-minute TTL) to `destination`.
@@ -153,7 +153,7 @@ public struct VerificationResource: Sendable {
     }
 }
 
-extension BiabClient {
+extension BdClient {
     public func verification(sessionToken: String) -> VerificationResource {
         VerificationResource(client: self, sessionToken: sessionToken)
     }

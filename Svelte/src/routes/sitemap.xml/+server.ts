@@ -2,7 +2,7 @@ import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 import { env } from "$env/dynamic/private";
 import { env as publicEnv } from "$env/dynamic/public";
 
-import { biab } from "$lib/server/biab";
+import { bd } from "$lib/server/bd";
 import type { RequestHandler } from "./$types";
 
 /**
@@ -22,15 +22,15 @@ const STATIC_PATHS = ["/", "/services", "/reviews", "/updates", "/store", "/todo
 export const GET: RequestHandler = async ({ url }) => {
 	const baseUrl = url.origin;
 
-	if (!biab) {
+	if (!bd) {
 		return new Response(minimalSitemapXml(baseUrl), {
 			headers: { "Content-Type": "application/xml; charset=utf-8" },
 		});
 	}
 
 	const xml = await buildSitemap({
-		client: biab,
-		siteId: publicEnv.PUBLIC_BIAB_SITE_ID ?? env.BIAB_SITE_ID ?? "",
+		client: bd,
+		siteId: publicEnv.PUBLIC_BD_SITE_ID ?? env.BD_SITE_ID ?? "",
 		baseUrl,
 		staticPaths: STATIC_PATHS,
 		routes: { blog: "/updates", product: "/store" },

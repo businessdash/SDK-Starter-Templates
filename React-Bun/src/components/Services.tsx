@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 
 type Service = {
 	id: string;
@@ -49,7 +49,7 @@ export function Services() {
 	const [items, setItems] = useState<Service[]>(FALLBACK);
 
 	useEffect(() => {
-		biab.marketing
+		bd.marketing
 			.getPageBundle({ pageKey: "home" })
 			.then((bundle) => {
 				const raw = (bundle as { sections?: Record<string, unknown> })?.sections
@@ -70,17 +70,17 @@ export function Services() {
 	}, []);
 
 	return (
-		<section className="biab-section" id="services">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">What we do</span>
-				<h2 className="biab-section__title">Services</h2>
-				<p className="biab-section__sub">
+		<section className="bd-section" id="services">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">What we do</span>
+				<h2 className="bd-section__title">Services</h2>
+				<p className="bd-section__sub">
 					Clear scope, clear price. Add-ons quoted before any work starts.
 				</p>
 			</div>
-			<div className="biab-grid-3">
+			<div className="bd-grid-3">
 				{items.map((service) => (
-					<article className="biab-card service-card" key={service.id}>
+					<article className="bd-card service-card" key={service.id}>
 						<h3>{service.title}</h3>
 						<p>{service.description}</p>
 						<div className="service-card__price">{formatPrice(service)}</div>

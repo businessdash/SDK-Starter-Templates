@@ -37,7 +37,7 @@ export function ErrorBox({ error }: { error: unknown }) {
 		<div className="page__error">
 			{unavailable
 				? "This site is temporarily unavailable. Please check back soon."
-				: "Couldn't load this — is BIAB configured on the server? (see .env.example)"}
+				: "Couldn't load this — is BD configured on the server? (see .env.example)"}
 		</div>
 	);
 }

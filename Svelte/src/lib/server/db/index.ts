@@ -4,9 +4,9 @@ import { env } from '$env/dynamic/private';
 import * as schema from './schema';
 
 /**
- * The BIAB Web Content SDK needs NO database. This template ships example
+ * The BD Web Content SDK needs NO database. This template ships example
  * Drizzle/libSQL bits behind `DATABASE_URL`, which is now optional — so an
- * unconfigured clone boots and renders BIAB content instead of crashing.
+ * unconfigured clone boots and renders BD content instead of crashing.
  *
  * When `DATABASE_URL` is unset, `db` is a proxy that throws only if you actually
  * touch it (use those example DB features), with a message telling you what to
@@ -17,7 +17,7 @@ function createDb(): LibSQLDatabase<typeof schema> {
 		return new Proxy({} as LibSQLDatabase<typeof schema>, {
 			get() {
 				throw new Error(
-					'DATABASE_URL is not set. The BIAB Web Content SDK needs no database; ' +
+					'DATABASE_URL is not set. The BD Web Content SDK needs no database; ' +
 						"set it only if you use this starter's example DB features."
 				);
 			}

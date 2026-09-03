@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
 	import type { ReviewWallItem } from '@businessdash/sdk/contracts';
 	import type { PageData } from './$types';
 
@@ -30,7 +30,7 @@
 		if (nextOffset == null) return;
 		loading = true;
 		try {
-			const res = await fetch(`/api/biab/reviews?limit=10&offset=${nextOffset}`);
+			const res = await fetch(`/api/bd/reviews?limit=10&offset=${nextOffset}`);
 			const body = (await res.json()) as {
 				items: ReviewWallItem[];
 				nextOffset: number | null;
@@ -47,12 +47,12 @@
 
 <Header />
 
-<main class="biab-section biab-section--narrow">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">What customers say</span>
-		<h1 class="biab-section__title">Reviews</h1>
+<main class="bd-section bd-section--narrow">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">What customers say</span>
+		<h1 class="bd-section__title">Reviews</h1>
 		{#if data.average != null}
-			<p class="biab-section__sub">
+			<p class="bd-section__sub">
 				<strong>{data.average.toFixed(1)}</strong>
 				average across {data.totalCount} reviews.
 			</p>
@@ -60,16 +60,16 @@
 	</div>
 
 	{#if !data.configured}
-		<div class="biab-empty">
-			Reviews aren't connected. Once BIAB is configured, your aggregate rating
+		<div class="bd-empty">
+			Reviews aren't connected. Once BD is configured, your aggregate rating
 			and reviews appear here.
 		</div>
 	{:else if items.length === 0}
-		<div class="biab-empty">No reviews yet.</div>
+		<div class="bd-empty">No reviews yet.</div>
 	{:else}
 		<div class="reviews-wall">
 			{#each items as review (review.id)}
-				<article class="biab-card review-card">
+				<article class="bd-card review-card">
 					<div class="review-card__head">
 						<strong>{review.reviewerName}</strong>
 						<span class="review-card__stars" aria-label={`${review.rating} out of 5`}>
@@ -79,7 +79,7 @@
 					<p class="review-card__body">{review.text}</p>
 					<div class="review-card__meta">
 						<span>{formatDate(review.timeCreated)}</span>
-						<span class="biab-badge">{review.source}</span>
+						<span class="bd-badge">{review.source}</span>
 						{#if review.verified}<span class="review-card__verified">Verified</span>{/if}
 					</div>
 				</article>
@@ -88,7 +88,7 @@
 
 		{#if nextOffset != null}
 			<div style="text-align: center; margin-top: 2rem;">
-				<button class="biab-btn biab-btn--ghost" onclick={loadMore} disabled={loading}>
+				<button class="bd-btn bd-btn--ghost" onclick={loadMore} disabled={loading}>
 					{loading ? 'Loading…' : 'Load more reviews'}
 				</button>
 			</div>

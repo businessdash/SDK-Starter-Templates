@@ -1,11 +1,11 @@
 ---
 /**
- * Dismissable "not connected to BIAB yet" bar (fixed bottom).
+ * Dismissable "not connected to BD yet" bar (fixed bottom).
  *
  * Rendered server-side ONLY when the site isn't wired up — i.e. when
- * PUBLIC_BIAB_SITE_ID or PUBLIC_BIAB_PK is missing. Astro only inlines
+ * PUBLIC_BD_SITE_ID or PUBLIC_BD_PK is missing. Astro only inlines
  * `PUBLIC_`-prefixed env into the client, so we also accept the `PUBLIC_` twins
- * (what the browser islands read) and the legacy plain `BIAB_SITE_ID`.
+ * (what the browser islands read) and the legacy plain `BD_SITE_ID`.
  *
  * The template renders local fallbacks when unconfigured, so this only tells you
  * how to connect it. Dismiss persists per-browser to localStorage; because the
@@ -13,15 +13,15 @@
  * nothing at all.
  */
 const siteId =
-	import.meta.env.PUBLIC_BIAB_SITE_ID ??
-	import.meta.env.PUBLIC_BIAB_SITE_ID ??
-	import.meta.env.BIAB_SITE_ID;
-const pk = import.meta.env.PUBLIC_BIAB_PK ?? import.meta.env.PUBLIC_BIAB_PK;
+	import.meta.env.PUBLIC_BD_SITE_ID ??
+	import.meta.env.PUBLIC_BD_SITE_ID ??
+	import.meta.env.BD_SITE_ID;
+const pk = import.meta.env.PUBLIC_BD_PK ?? import.meta.env.PUBLIC_BD_PK;
 const configured = Boolean(siteId && pk);
 
 const baseUrl =
-	import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
-	import.meta.env.PUBLIC_BIAB_PACKAGE_API_BASE_URL ??
+	import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL ??
+	import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL ??
 	"https://www.biab.app";
 const wizardUrl = `${String(baseUrl).replace(/\/+$/, "")}/login?returnTo=/dashboard/settings/web-content`;
 ---
@@ -30,12 +30,12 @@ const wizardUrl = `${String(baseUrl).replace(/\/+$/, "")}/login?returnTo=/dashbo
 	configured ? null : (
 		<Fragment>
 			<div
-				id="biab-setup-banner"
+				id="bd-setup-banner"
 				hidden
 				style="position:fixed;inset-inline:0;bottom:0;z-index:9999;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:#08060d;color:#fff;border-top:1px solid var(--accent, #6033b8);font-size:0.875rem;"
 			>
 				<span style="flex:1 1 260px;min-width:0;">
-					<strong style="color:#c4b5fd;">Not connected to BIAB yet.</strong> Add your
+					<strong style="color:#c4b5fd;">Not connected to BD yet.</strong> Add your
 					<code>.env</code> to render live content — grab every variable (site ID,
 					keys, revalidation secret) from the guided wizard.
 				</span>
@@ -48,7 +48,7 @@ const wizardUrl = `${String(baseUrl).replace(/\/+$/, "")}/login?returnTo=/dashbo
 					Open setup wizard ↗
 				</a>
 				<button
-					id="biab-setup-banner-dismiss"
+					id="bd-setup-banner-dismiss"
 					type="button"
 					aria-label="Dismiss"
 					style="flex-shrink:0;border:none;background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:1.1rem;line-height:1;padding:0.25rem;"
@@ -58,8 +58,8 @@ const wizardUrl = `${String(baseUrl).replace(/\/+$/, "")}/login?returnTo=/dashbo
 			</div>
 			<script is:inline>
 				(function () {
-					var KEY = "biab-sdk-setup-banner-dismissed";
-					var el = document.getElementById("biab-setup-banner");
+					var KEY = "bd-sdk-setup-banner-dismissed";
+					var el = document.getElementById("bd-setup-banner");
 					if (!el) return;
 					try {
 						if (localStorage.getItem(KEY) === "1") {
@@ -68,7 +68,7 @@ const wizardUrl = `${String(baseUrl).replace(/\/+$/, "")}/login?returnTo=/dashbo
 						}
 					} catch (e) {}
 					el.hidden = false;
-					var btn = document.getElementById("biab-setup-banner-dismiss");
+					var btn = document.getElementById("bd-setup-banner-dismiss");
 					if (btn)
 						btn.addEventListener("click", function () {
 							try {

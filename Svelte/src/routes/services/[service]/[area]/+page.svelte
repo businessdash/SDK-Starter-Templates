@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -23,20 +23,20 @@
 
 <Header />
 
-<main class="biab-section biab-section--narrow">
+<main class="bd-section bd-section--narrow">
 	<header class="service-area__head">
 		<h1>{heading}</h1>
 		<p>{data.meta.description}</p>
 	</header>
 	{#if data.body?.PageTitle}
-		<section class="service-area__body biab-card">
+		<section class="service-area__body bd-card">
 			<h2>{data.body.PageTitle}</h2>
 			{#if data.body.PageHeadline}
 				<p>{data.body.PageHeadline}</p>
 			{/if}
 		</section>
 	{/if}
-	<a class="biab-btn biab-btn--ghost" href="/services">← All service areas</a>
+	<a class="bd-btn bd-btn--ghost" href="/services">← All service areas</a>
 </main>
 
 <Footer />

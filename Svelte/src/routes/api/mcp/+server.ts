@@ -1,13 +1,13 @@
 import { mcpHandler } from "@businessdash/sdk/mcp";
 
-import { aiSurfaceConfig } from "$lib/server/biab-ai";
+import { aiSurfaceConfig } from "$lib/server/bd-ai";
 
 import type { RequestHandler } from "./$types";
 
 /**
  * /api/mcp — the site's MCP connector, served from THIS domain.
  *
- * The SDK handler proxies JSON-RPC verbatim to BIAB's public per-site
+ * The SDK handler proxies JSON-RPC verbatim to BD's public per-site
  * connector, so the URL an org hands to Claude / ChatGPT / Gemini is their
  * own site. Thin by design: the platform still enforces the org's MCP
  * opt-in and per-tool write gates — a proxy can't widen anything. An
@@ -26,7 +26,7 @@ function getHandlers() {
 
 const NOT_CONFIGURED = () =>
 	Response.json(
-		{ error: "MCP is not configured (set the BIAB env vars)." },
+		{ error: "MCP is not configured (set the BD env vars)." },
 		{ status: 503 },
 	);
 

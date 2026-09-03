@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import BiabHeader from "~/components/biab/BiabHeader.vue";
-import BiabFooter from "~/components/biab/BiabFooter.vue";
-import type { ParallelRenderResult } from "../../../../server/api/biab/parallel/render.get";
+import BdHeader from "~/components/bd/BdHeader.vue";
+import BdFooter from "~/components/bd/BdFooter.vue";
+import type { ParallelRenderResult } from "../../../../server/api/bd/parallel/render.get";
 
 /**
  * A single (service × area) parallel page, rendered server-side from
- * BIAB via `parallelPages.render("service-area", { service, area })`.
- * BIAB resolves the brand/service/area tokens, so `meta` + `body` come
+ * BD via `parallelPages.render("service-area", { service, area })`.
+ * BD resolves the brand/service/area tokens, so `meta` + `body` come
  * back fully expanded — crawlers see finished HTML.
  *
  * Failure modes mirror DGP: unknown slug → 404; billing suspended → a
@@ -19,7 +19,7 @@ const service = route.params.service as string;
 const area = route.params.area as string;
 
 const { data } = await useFetch<ParallelRenderResult>(
-	"/api/biab/parallel/render",
+	"/api/bd/parallel/render",
 	{ query: { key: "service-area", service, area } },
 );
 
@@ -28,7 +28,7 @@ const variant = computed(() =>
 );
 const suspended = computed(() => data.value?.state === "suspended");
 
-// Loose-shaped body (BIAB template output). Pull the common fields.
+// Loose-shaped body (BD template output). Pull the common fields.
 const body = computed(
 	() =>
 		(variant.value?.body as
@@ -55,22 +55,22 @@ useHead(() => {
 
 <template>
 	<div>
-		<BiabHeader />
+		<BdHeader />
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div v-if="suspended" class="biab-empty">
+			<section class="bd-section bd-section--narrow">
+				<div v-if="suspended" class="bd-empty">
 					This page is temporarily unavailable. Please check back soon.
 				</div>
 				<template v-else-if="variant">
-					<div class="biab-section__lead" style="text-align: left">
-						<h1 class="biab-section__title">
+					<div class="bd-section__lead" style="text-align: left">
+						<h1 class="bd-section__title">
 							{{ variant.meta.title.split(" | ")[0] }}
 						</h1>
-						<p class="biab-section__sub" style="margin: 0">
+						<p class="bd-section__sub" style="margin: 0">
 							{{ variant.meta.description }}
 						</p>
 					</div>
-					<div v-if="body?.PageTitle" class="biab-card service-area-body">
+					<div v-if="body?.PageTitle" class="bd-card service-area-body">
 						<h2>{{ body.PageTitle }}</h2>
 						<p v-if="body.PageHeadline">{{ body.PageHeadline }}</p>
 					</div>
@@ -80,6 +80,6 @@ useHead(() => {
 				</template>
 			</section>
 		</main>
-		<BiabFooter />
+		<BdFooter />
 	</div>
 </template>

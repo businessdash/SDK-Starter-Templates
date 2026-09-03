@@ -1,21 +1,21 @@
 import type { CustomerJobSummary } from "@businessdash/sdk/contracts";
 import type { Metadata } from "next";
 
-import { AuthButtons, SignOutLink } from "@/app/_components/biab/AuthButtons";
-import { BiabFooter } from "@/app/_components/biab/Footer";
-import { ReviewForm } from "@/app/_components/biab/ReviewForm";
+import { AuthButtons, SignOutLink } from "@/app/_components/bd/AuthButtons";
+import { BdFooter } from "@/app/_components/bd/Footer";
+import { ReviewForm } from "@/app/_components/bd/ReviewForm";
 import {
 	getCustomerSession,
 	getCustomerWork,
 	isCustomerPortalConfigured,
-} from "@/server/lib/biab-portal";
+} from "@/server/lib/bd-portal";
 
 export const metadata: Metadata = {
 	title: "My Account",
 	description: "Your jobs, quotes, and invoices.",
 };
 
-// Per-customer + reads the `biab_session` cookie — never statically cache.
+// Per-customer + reads the `bd_session` cookie — never statically cache.
 export const dynamic = "force-dynamic";
 
 function formatDate(iso: string | null): string | null {
@@ -44,7 +44,7 @@ function JobCard({
 	const due = formatDate(job.dueDate);
 	const done = formatDate(job.statusCompletedAt);
 	return (
-		<li className="biab-card account-job">
+		<li className="bd-card account-job">
 			<div className="account-job__head">
 				<div>
 					<h3>{job.name?.trim() || "Service job"}</h3>
@@ -58,7 +58,7 @@ function JobCard({
 						{!completed && due ? ` · Due ${due}` : ""}
 					</p>
 				</div>
-				<span className={`biab-badge ${completed ? "" : "biab-badge--active"}`}>
+				<span className={`bd-badge ${completed ? "" : "bd-badge--active"}`}>
 					{completed ? "Completed" : "In progress"}
 				</span>
 			</div>
@@ -79,12 +79,12 @@ export default async function MyAccountPage() {
 
 	return (
 		<>
-			<main className="biab-section biab-section--narrow account">
+			<main className="bd-section bd-section--narrow account">
 				<div className="account__head">
 					<div>
-						<span className="biab-section__eyebrow">Account</span>
-						<h1 className="biab-section__title">My account</h1>
-						<p className="biab-section__sub">
+						<span className="bd-section__eyebrow">Account</span>
+						<h1 className="bd-section__title">My account</h1>
+						<p className="bd-section__sub">
 							{session?.user.firstName
 								? `Welcome back, ${session.user.firstName}.`
 								: "Your jobs, quotes, and invoices live here."}
@@ -94,13 +94,13 @@ export default async function MyAccountPage() {
 				</div>
 
 				{!configured ? (
-					<div className="biab-empty">
+					<div className="bd-empty">
 						Accounts aren&apos;t available right now — set
-						BIAB_AUTH_CALLBACK_URL (and the BIAB API key + base URL) to enable
+						BD_AUTH_CALLBACK_URL (and the BD API key + base URL) to enable
 						customer sign-in.
 					</div>
 				) : !session ? (
-					<div className="biab-card account__signedout">
+					<div className="bd-card account__signedout">
 						<p>Sign in to see your jobs, quotes, and invoices.</p>
 						<AuthButtons />
 					</div>
@@ -108,7 +108,7 @@ export default async function MyAccountPage() {
 					<AccountWork />
 				)}
 			</main>
-			<BiabFooter />
+			<BdFooter />
 		</>
 	);
 }
@@ -121,7 +121,7 @@ async function AccountWork() {
 
 	if (work?.unlinked) {
 		return (
-			<div className="biab-empty">
+			<div className="bd-empty">
 				We couldn&apos;t find any jobs linked to your account yet. Once
 				we&apos;ve started work for you, it&apos;ll show up here.
 			</div>
@@ -129,7 +129,7 @@ async function AccountWork() {
 	}
 
 	if (jobs.length === 0) {
-		return <div className="biab-empty">You don&apos;t have any jobs yet.</div>;
+		return <div className="bd-empty">You don&apos;t have any jobs yet.</div>;
 	}
 
 	return (

@@ -1,15 +1,15 @@
-# BIAB SDK — Flutter starter
+# BD SDK — Flutter starter
 
 Two packages:
 
-- **`packages/biab`** — the client. **Pure Dart**: it imports nothing from Flutter, so it analyzes, tests and runs anywhere Dart does — a server, a CLI, a test runner with no Flutter toolchain installed. Its only dependency is `http`.
+- **`packages/bd`** — the client. **Pure Dart**: it imports nothing from Flutter, so it analyzes, tests and runs anywhere Dart does — a server, a CLI, a test runner with no Flutter toolchain installed. Its only dependency is `http`.
 - **the root package** — the Flutter app built on it: shop, product detail, cart, and Front Desk chat.
 
 The split is not tidiness. It means the part most likely to be wrong — decoding, error mapping, the access gate — is testable without an emulator, and stays reusable if you later want the same client in a Dart backend.
 
 ## The one rule that shapes everything here
 
-**A mobile app ships its credential inside the artifact.** `strings` on an APK or IPA finds anything you bundle, so `BiabClient` asserts on an `sk_…` key and takes a **publishable `pk_…` token** only.
+**A mobile app ships its credential inside the artifact.** `strings` on an APK or IPA finds anything you bundle, so `BdClient` asserts on an `sk_…` key and takes a **publishable `pk_…` token** only.
 
 That turns out to be barely limiting. The publishable scope set covers the entire customer-facing surface:
 
@@ -22,7 +22,7 @@ So **this app needs no backend-for-frontend.** Only operator/admin writes need a
 The client verifies on its own, with no Flutter installed:
 
 ```sh
-cd packages/biab
+cd packages/bd
 dart pub get
 dart analyze
 dart test
@@ -33,8 +33,8 @@ The app:
 ```sh
 flutter pub get
 flutter run \
-  --dart-define=BIAB_SITE_ID=… \
-  --dart-define=BIAB_PK=pk_…
+  --dart-define=BD_SITE_ID=… \
+  --dart-define=BD_PK=pk_…
 ```
 
 Configuration comes from `--dart-define`, not a `.env` file. There is no env in an APK, and dart-defines are compiled in — which is exactly what an app credential is. **With no defines at all the app still launches**, showing a setup banner and empty states.
@@ -43,10 +43,10 @@ For the schema + custom-database flows:
 
 ```sh
 npm install                  # dev-only, for the CLI
-npm run sync-schema          # push biab.config.ts to BIAB's draft slot
+npm run sync-schema          # push bd.config.ts to BD's draft slot
 npm run sync-data-model      # push the todos data model (+ generated form)
-npm run seed                 # upsert the rows in ./biab-records
-npm run view-data-model      # what's LIVE in BIAB right now
+npm run seed                 # upsert the rows in ./bd-records
+npm run view-data-model      # what's LIVE in BD right now
 ```
 
 The CLI is Node, and it is the **only** part of any starter that needs Node.
@@ -55,14 +55,14 @@ Node version — the schema artifact carries a canonical checksum the platform
 verifies, and reimplementing that in another language would mean matching the
 canonicalisation byte for byte.
 
-Seeding is language-neutral: `biab-records/` is plain JSON, identical across
+Seeding is language-neutral: `bd-records/` is plain JSON, identical across
 every starter. Only the *schema* files are TypeScript.
 
 
 ## What's in the client
 
 ```
-packages/biab/lib/src/
+packages/bd/lib/src/
   client.dart      transport, bearer, the access gate, the pk_ assert
   errors.dart      sealed exception hierarchy + isUnavailable
   models.dart      typed models for every fixed-shape surface
@@ -97,14 +97,14 @@ Cancelling the subscription stops the network work through `onCancel`. The loop 
 
 ## What this starter does not do
 
-- **The form renderer isn't built.** `<biab-form>` is a DOM web component with no Flutter counterpart, so this is the one surface an app genuinely reimplements. `formSchema()` returns a typed `FormSchema`; rendering it with Flutter widgets is left to you.
+- **The form renderer isn't built.** `<bd-form>` is a DOM web component with no Flutter counterpart, so this is the one surface an app genuinely reimplements. `formSchema()` returns a typed `FormSchema`; rendering it with Flutter widgets is left to you.
 - **No sign-in / customer portal UI.** The scopes allow it (`tenant_auth:public`, `customer_portal:self`); the hosted auth flow needs a deep-link callback the way the Swift starter does.
 - **The visitor token isn't persisted.** See above — one line with `shared_preferences`.
 - **No widget tests.** Flutter isn't installed in the environment this was built in, so only the pure-Dart client is covered.
 
 ## Verification
 
-`dart analyze` reports no issues and **14 tests pass** in `packages/biab`, covering the parts most likely to break silently: the 200-with-`available:false` gate, a real 4xx, `stripeUrl`, nil-query dropping, the bearer + site path, the cart header, both relation shapes, cents-vs-decimal, and empty-string-as-missing.
+`dart analyze` reports no issues and **14 tests pass** in `packages/bd`, covering the parts most likely to break silently: the 200-with-`available:false` gate, a real 4xx, `stripeUrl`, nil-query dropping, the bearer + site path, the cart header, both relation shapes, cents-vs-decimal, and empty-string-as-missing.
 
 **The Flutter app itself has not been compiled** — no Flutter toolchain was available. Treat `lib/` as reviewed-but-unbuilt.
 
@@ -119,9 +119,9 @@ Three, from **Dashboard → Developers → API keys**:
 
 | Variable | What it is |
 |---|---|
-| `BIAB_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
-| `BIAB_SITE_ID` | Which site this app is. |
-| `BIAB_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
+| `BD_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
+| `BD_SITE_ID` | Which site this app is. |
+| `BD_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
 
 > A **secret** key must never reach the browser. If this starter renders on the
 > client, use a publishable key — it carries a narrower scope set on purpose, so

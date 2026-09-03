@@ -18,7 +18,7 @@ export function useCart() {
 	const busy = ref(false);
 
 	async function load() {
-		const res = await $fetch<{ cart: CartSnapshot | null }>("/api/biab/cart");
+		const res = await $fetch<{ cart: CartSnapshot | null }>("/api/bd/cart");
 		cart.value = res.cart;
 	}
 
@@ -48,15 +48,15 @@ export function useCart() {
 		productId: string;
 		variantId?: string | null;
 		quantity?: number;
-	}) => mutate("/api/biab/cart/add", input);
+	}) => mutate("/api/bd/cart/add", input);
 	const updateItem = (itemId: string, quantity: number) =>
-		mutate("/api/biab/cart/update", { itemId, quantity });
+		mutate("/api/bd/cart/update", { itemId, quantity });
 	const removeItem = (itemId: string) =>
-		mutate("/api/biab/cart/remove", { itemId });
+		mutate("/api/bd/cart/remove", { itemId });
 	const applyCoupon = (code: string) =>
-		mutate("/api/biab/cart/coupon", { code });
-	const removeCoupon = () => mutate("/api/biab/cart/coupon", { code: "" });
-	const clear = () => mutate("/api/biab/cart/clear", {});
+		mutate("/api/bd/cart/coupon", { code });
+	const removeCoupon = () => mutate("/api/bd/cart/coupon", { code: "" });
+	const clear = () => mutate("/api/bd/cart/clear", {});
 
 	return {
 		cart,

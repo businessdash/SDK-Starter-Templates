@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, Show } from "solid-js";
 
-import { getMyAccount, submitCustomerReview } from "../lib/biab-server-fns";
+import { getMyAccount, submitCustomerReview } from "../lib/bd-server-fns";
 
 /**
- * Customer portal home. The loader reads the `biab_session` cookie via
+ * Customer portal home. The loader reads the `bd_session` cookie via
  * `getTenantSession` and, when signed in, pulls the customer's work
  * bundle (`getWork()`). Sign-in / sign-up / sign-out are plain links to
- * the `/api/biab-auth/*` catch-all handler — no client SDK needed. A
+ * the `/api/bd-auth/*` catch-all handler — no client SDK needed. A
  * signed-in customer can submit a review (lands pending for moderation).
  */
 export const Route = createFileRoute("/my-account")({
@@ -22,18 +22,18 @@ function MyAccount() {
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Account</span>
-					<h1 class="biab-section__title">My account</h1>
+			<section class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Account</span>
+					<h1 class="bd-section__title">My account</h1>
 				</div>
 
 				<Show
 					when={data().configured}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Customer accounts aren't connected yet. Set{" "}
-							<code>BIAB_AUTH_CALLBACK_URL</code> (plus the BIAB API key + base
+							<code>BD_AUTH_CALLBACK_URL</code> (plus the BD API key + base
 							URL) in <code>.env</code>.
 						</div>
 					}
@@ -42,17 +42,17 @@ function MyAccount() {
 						when={session()}
 						fallback={
 							<div
-								class="biab-card"
+								class="bd-card"
 								style="padding: 2rem; text-align: center; display: flex; flex-direction: column; gap: 1rem; align-items: center;"
 							>
 								<p>Sign in to view your jobs, quotes, and invoices.</p>
 								<div style="display: flex; gap: 0.75rem;">
-									<a class="biab-btn" href="/api/biab-auth/sign-in">
+									<a class="bd-btn" href="/api/bd-auth/sign-in">
 										Sign in
 									</a>
 									<a
-										class="biab-btn biab-btn--ghost"
-										href="/api/biab-auth/sign-up"
+										class="bd-btn bd-btn--ghost"
+										href="/api/bd-auth/sign-up"
 									>
 										Create account
 									</a>
@@ -61,7 +61,7 @@ function MyAccount() {
 						}
 					>
 						<div
-							class="biab-card"
+							class="bd-card"
 							style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem;"
 						>
 							<div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap;">
@@ -80,8 +80,8 @@ function MyAccount() {
 									</Show>
 								</div>
 								<a
-									class="biab-btn biab-btn--ghost"
-									href="/api/biab-auth/sign-out"
+									class="bd-btn bd-btn--ghost"
+									href="/api/bd-auth/sign-out"
 								>
 									Sign out
 								</a>
@@ -112,12 +112,12 @@ function WorkSummary(props: { work: unknown }) {
 		<Show
 			when={w && !w.unlinked}
 			fallback={
-				<div class="biab-empty" style="margin: 0;">
+				<div class="bd-empty" style="margin: 0;">
 					No work records are linked to this account yet.
 				</div>
 			}
 		>
-			<div class="biab-grid-4">
+			<div class="bd-grid-4">
 				<Stat label="Open jobs" value={w?.summary?.openJobCount ?? 0} />
 				<Stat
 					label="Pending quotes"
@@ -138,7 +138,7 @@ function WorkSummary(props: { work: unknown }) {
 
 function Stat(props: { label: string; value: number }) {
 	return (
-		<div class="biab-card" style="padding: 1rem; text-align: center;">
+		<div class="bd-card" style="padding: 1rem; text-align: center;">
 			<div style="font-size: 1.6rem; font-weight: 800; color: var(--accent);">
 				{props.value}
 			</div>
@@ -181,7 +181,7 @@ function ReviewForm() {
 	}
 
 	return (
-		<div class="biab-card" style="padding: 1.5rem; margin-top: 1.5rem;">
+		<div class="bd-card" style="padding: 1.5rem; margin-top: 1.5rem;">
 			<h2 style="font-size: 1.15rem; margin-bottom: 1rem;">Leave a review</h2>
 			<Show
 				when={!done()}
@@ -196,12 +196,12 @@ function ReviewForm() {
 					style="display: flex; flex-direction: column; gap: 1rem;"
 				>
 					<div>
-						<label class="biab-label" for="rating">
+						<label class="bd-label" for="rating">
 							Rating
 						</label>
 						<select
 							id="rating"
-							class="biab-select"
+							class="bd-select"
 							value={String(rating())}
 							onChange={(e) => setRating(Number(e.currentTarget.value))}
 						>
@@ -213,28 +213,28 @@ function ReviewForm() {
 						</select>
 					</div>
 					<div>
-						<label class="biab-label" for="review-title">
+						<label class="bd-label" for="review-title">
 							Title (optional)
 						</label>
 						<input
 							id="review-title"
-							class="biab-input"
+							class="bd-input"
 							value={title()}
 							onInput={(e) => setTitle(e.currentTarget.value)}
 						/>
 					</div>
 					<div>
-						<label class="biab-label" for="review-body">
+						<label class="bd-label" for="review-body">
 							Your review
 						</label>
 						<textarea
 							id="review-body"
-							class="biab-textarea"
+							class="bd-textarea"
 							value={body()}
 							onInput={(e) => setBody(e.currentTarget.value)}
 						/>
 					</div>
-					<button type="submit" class="biab-btn" disabled={busy()}>
+					<button type="submit" class="bd-btn" disabled={busy()}>
 						{busy() ? "Submitting…" : "Submit review"}
 					</button>
 					<Show when={error()}>

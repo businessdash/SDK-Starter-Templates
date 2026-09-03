@@ -7,7 +7,7 @@ import {
 	resolveLegalPage,
 } from "@businessdash/sdk/legal";
 
-import { getBiab } from "@/server/lib/biab";
+import { getBd } from "@/server/lib/bd";
 
 /**
  * The catch-all — legal pages, and everything else's 404.
@@ -35,7 +35,7 @@ export const revalidate = 3600;
 type Props = { params: Promise<{ slug: string[] }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-	const client = getBiab();
+	const client = getBd();
 	if (!client) return {};
 	const { slug } = await params;
 	const document = await resolveLegalPage({ client, slug });
@@ -50,17 +50,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CatchAllPage({ params }: Props) {
-	const client = getBiab();
+	const client = getBd();
 	const { slug } = await params;
 	const document = client ? await resolveLegalPage({ client, slug }) : null;
 	if (!document) notFound();
 
 	return (
-		<main className="biab-section biab-section--narrow">
+		<main className="bd-section bd-section--narrow">
 			{/*
 			 * `contentHtml` is sanitised server-side when the org saves it, and
 			 * the title and logo URL are escaped by `renderLegalPageHtml`. Style
-			 * it through the `data-biab-legal-*` hooks it emits — the markup
+			 * it through the `data-bd-legal-*` hooks it emits — the markup
 			 * ships unstyled so it inherits your site rather than fighting it.
 			 */}
 			<div

@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // HMAC over the raw body, not by session — there is no CSRF token to
         // present, and requiring one would reject every legitimate event.
         $middleware->validateCsrfTokens(except: [
-            'api/biab/revalidate',
+            'api/bd/revalidate',
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

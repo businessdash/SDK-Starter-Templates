@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, DOCUMENT, OnInit, inject, signal } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { Title, Meta } from "@angular/platform-browser";
-import { biabApi, type ParallelPageRender } from "../lib/biab-api.client";
+import { bdApi, type ParallelPageRender } from "../lib/bd-api.client";
 
 /**
  * Programmatic SEO page: /services/:service/:area. Calls the server, which
  * runs `client.parallelPages.render("service-area", { service, area })`.
- * BIAB resolves brand/service/area tokens server-side, so `meta.title`,
+ * BD resolves brand/service/area tokens server-side, so `meta.title`,
  * `meta.description`, `meta.canonical` and the rendered body come back ready.
  * We set the document title + meta tags from the render result.
  */
 @Component({
-	selector: "biab-service-area-page",
+	selector: "bd-service-area-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -47,7 +47,7 @@ export class ServiceAreaPage implements OnInit {
 			this.state.set("missing");
 			return;
 		}
-		const res = await biabApi.servicePage(service, area);
+		const res = await bdApi.servicePage(service, area);
 		if (!res) {
 			this.state.set("missing");
 			return;

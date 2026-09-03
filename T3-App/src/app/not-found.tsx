@@ -10,11 +10,11 @@ import Link from "next/link";
  */
 export default function NotFound() {
 	return (
-		<main className="biab-section biab-section--narrow">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">404</span>
-				<h1 className="biab-section__title">We couldn&apos;t find that page</h1>
-				<p className="biab-section__sub">
+		<main className="bd-section bd-section--narrow">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">404</span>
+				<h1 className="bd-section__title">We couldn&apos;t find that page</h1>
+				<p className="bd-section__sub">
 					The link may be out of date, or the page may have moved.
 				</p>
 			</div>

@@ -2,13 +2,13 @@ import type { StorefrontSort } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
 
-import { formatMoney } from "../components/biab/money";
-import { Stars } from "../components/biab/Stars";
+import { formatMoney } from "../components/bd/money";
+import { Stars } from "../components/bd/Stars";
 import {
 	getStoreListing,
 	type StoreFilters,
 	type StoreListingResult,
-} from "../lib/biab-server-fns";
+} from "../lib/bd-server-fns";
 
 /**
  * Storefront listing — `storefront.listProductsWithMeta` powers an enriched,
@@ -18,7 +18,7 @@ import {
  * The loader fetches the unfiltered first page server-side; facet changes drive
  * a `createResource` that refetches through the same `getStoreListing` server fn
  * (the secret key stays on the server). Degrades to a "not connected" /
- * "unavailable" state when BIAB env is unset or the org is suspended.
+ * "unavailable" state when BD env is unset or the org is suspended.
  */
 export const Route = createFileRoute("/store/")({
 	component: StoreIndex,
@@ -100,12 +100,12 @@ function StoreIndex() {
 
 	return (
 		<main>
-			<section class="biab-section">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Shop</span>
-					<h1 class="biab-section__title">Store</h1>
-					<p class="biab-section__sub">
-						Products synced live from BIAB. Filter, add to cart, apply a coupon,
+			<section class="bd-section">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Shop</span>
+					<h1 class="bd-section__title">Store</h1>
+					<p class="bd-section__sub">
+						Products synced live from BD. Filter, add to cart, apply a coupon,
 						and check out through Stripe.
 					</p>
 				</div>
@@ -113,14 +113,14 @@ function StoreIndex() {
 				<Show
 					when={data()}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							<Show
 								when={reason() === "suspended"}
 								fallback={
 									<>
-										Store isn't connected yet. Set <code>BIAB_API_KEY</code>,{" "}
-										<code>BIAB_SITE_ID</code>, and{" "}
-										<code>BIAB_PACKAGE_API_BASE_URL</code> in <code>.env</code>.
+										Store isn't connected yet. Set <code>BD_API_KEY</code>,{" "}
+										<code>BD_SITE_ID</code>, and{" "}
+										<code>BD_PACKAGE_API_BASE_URL</code> in <code>.env</code>.
 									</>
 								}
 							>
@@ -136,7 +136,7 @@ function StoreIndex() {
 								<form onSubmit={onSearch}>
 									<div class="store-facet__title">Search</div>
 									<input
-										class="biab-input"
+										class="bd-input"
 										name="q"
 										placeholder="Search products…"
 										type="search"
@@ -194,21 +194,21 @@ function StoreIndex() {
 									<div class="store-facet__title">Price</div>
 									<div class="store-facet__price">
 										<input
-											class="biab-input"
+											class="bd-input"
 											inputmode="numeric"
 											name="min"
 											placeholder={`$${Math.floor(d().priceRange.minDollars)}`}
 										/>
 										<span>–</span>
 										<input
-											class="biab-input"
+											class="bd-input"
 											inputmode="numeric"
 											name="max"
 											placeholder={`$${Math.ceil(d().priceRange.maxDollars)}`}
 										/>
 									</div>
 									<button
-										class="biab-btn biab-btn--ghost"
+										class="bd-btn bd-btn--ghost"
 										style="margin-top: 0.5rem; width: 100%;"
 										type="submit"
 									>
@@ -267,7 +267,7 @@ function StoreIndex() {
 									<label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
 										<span>Sort</span>
 										<select
-											class="biab-input biab-select"
+											class="bd-input bd-select"
 											onChange={(e) =>
 												patch({
 													sort:
@@ -291,17 +291,17 @@ function StoreIndex() {
 								<Show
 									when={d().items.length > 0}
 									fallback={
-										<div class="biab-empty">
+										<div class="bd-empty">
 											No products match these filters. Try clearing one or
 											broadening your search.
 										</div>
 									}
 								>
-									<div class="biab-grid-3">
+									<div class="bd-grid-3">
 										<For each={d().items}>
 											{(p) => (
 												<Link
-													class="biab-card store-card"
+													class="bd-card store-card"
 													params={{ id: p.id }}
 													style="text-decoration: none; border-bottom: none;"
 													to="/store/$id"
@@ -368,10 +368,10 @@ function StoreIndex() {
 				</Show>
 
 				<div style="margin-top: 2rem; display: flex; gap: 0.75rem;">
-					<Link class="biab-btn biab-btn--ghost" to="/store/cart">
+					<Link class="bd-btn bd-btn--ghost" to="/store/cart">
 						View cart
 					</Link>
-					<Link class="biab-btn biab-btn--ghost" to="/subscriptions">
+					<Link class="bd-btn bd-btn--ghost" to="/subscriptions">
 						Subscriptions
 					</Link>
 				</div>

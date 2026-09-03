@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useRouter } from "next/navigation";
 
-import { BiabForm, type BiabFormsClient } from "@businessdash/sdk/react";
+import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
 import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
 import { api } from "@/trpc/react";
@@ -13,7 +13,7 @@ import { api } from "@/trpc/react";
  *
  * Custom-collection rows are created by submitting the model's auto-generated
  * create form (`todo-form`), not by a direct row-write API — the form carries
- * the `create_records` action that inserts the row server-side. `<BiabForm>`
+ * the `create_records` action that inserts the row server-side. `<BdForm>`
  * renders the generated schema exactly like the contact form, and the submit
  * rides the existing tRPC `submitForm` mutation so the bearer key stays
  * server-side. On success we `router.refresh()` so the RSC list re-reads.
@@ -26,9 +26,9 @@ export function TodoCreateForm({
 	slug: string;
 }) {
 	const router = useRouter();
-	const submit = api.biab.submitForm.useMutation();
+	const submit = api.bd.submitForm.useMutation();
 
-	const client = useMemo<BiabFormsClient>(
+	const client = useMemo<BdFormsClient>(
 		() => ({
 			forms: {
 				async schema() {
@@ -49,9 +49,9 @@ export function TodoCreateForm({
 	);
 
 	return (
-		<div className="biab-card">
-			<h2 className="biab-section__title">Add a todo</h2>
-			<BiabForm
+		<div className="bd-card">
+			<h2 className="bd-section__title">Add a todo</h2>
+			<BdForm
 				slug={slug}
 				schema={schema}
 				client={client}
@@ -59,7 +59,7 @@ export function TodoCreateForm({
 				onSuccess={() => router.refresh()}
 				successFallback={() => (
 					<p>
-						Added. <span className="biab-badge">Saved to your custom DB</span>
+						Added. <span className="bd-badge">Saved to your custom DB</span>
 					</p>
 				)}
 			/>

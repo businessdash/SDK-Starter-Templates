@@ -38,7 +38,7 @@
                 No todos yet. Run <code>npm run sync-data-model</code>, promote the
                 model in the dashboard, then set the generated "Todo Form" Live.
             @else
-                Connect this app to a BIAB site to see live records.
+                Connect this app to a BD site to see live records.
             @endif
         </p>
     @endforelse

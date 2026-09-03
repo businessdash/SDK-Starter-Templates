@@ -1,14 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { biabApi, type Subscription } from "../lib/biab-api.client";
+import { bdApi, type Subscription } from "../lib/bd-api.client";
 
 /**
- * Recurring offerings (memberships / monthly plans) from the BIAB
+ * Recurring offerings (memberships / monthly plans) from the BD
  * subscriptions surface. Read-only list here; the actual subscribe-checkout
  * handoff is an org/Stripe step left as a next iteration.
  */
 @Component({
-	selector: "biab-subscriptions-page",
+	selector: "bd-subscriptions-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -17,7 +17,7 @@ import { biabApi, type Subscription } from "../lib/biab-api.client";
 			@if (state() === "loading") {
 				<p class="muted">Loading…</p>
 			} @else if (items().length === 0) {
-				<p class="muted">No subscription plans yet — add them in BIAB to list them here.</p>
+				<p class="muted">No subscription plans yet — add them in BD to list them here.</p>
 			} @else {
 				<div class="grid">
 					@for (s of items(); track s.id) {
@@ -40,7 +40,7 @@ export class SubscriptionsPage implements OnInit {
 	readonly state = signal<"loading" | "ready">("loading");
 
 	async ngOnInit() {
-		const res = await biabApi.subscriptions();
+		const res = await bdApi.subscriptions();
 		this.items.set(res?.items ?? []);
 		this.state.set("ready");
 	}

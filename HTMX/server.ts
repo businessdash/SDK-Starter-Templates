@@ -3,9 +3,9 @@
  * fully server-rendered feature pages. The browser loads `public/index.html`,
  * HTMX fires `hx-get` against `/sections/*` on body load, and `/store`,
  * `/cart`, `/my-account`, etc. are whole documents rendered server-side with
- * the BIAB SDK. No client JS framework.
+ * the BD SDK. No client JS framework.
  *
- * Feature parity with the reference consumer (BIAB SDK 0.9.5): storefront,
+ * Feature parity with the reference consumer (BD SDK 0.9.5): storefront,
  * visitor-token cart + checkout, subscriptions, customer portal + auth,
  * reviews wall, news banner + updates, programmatic-SEO parallel pages,
  * sitemap/robots, JSON-LD, and a cache-backed revalidation webhook.
@@ -19,10 +19,10 @@ import {
 	API_KEY,
 	SITE_ID,
 	authHandler,
-	getBiab,
+	getBd,
 	hostBase,
 	revalidateHandler,
-} from "./src/biab";
+} from "./src/bd";
 import { VISITOR_COOKIE, SESSION_COOKIE, getCookie, renderBanner, setupBannerHtml } from "./src/layout";
 import {
 	cartPage,
@@ -51,8 +51,8 @@ const PORT = Number(process.env["PORT"] ?? 3000);
 
 if (!ANALYTICS_PUBLIC.siteId) {
 	console.warn(
-		"\n[biab] Missing one of BIAB_API_KEY / BIAB_SITE_ID / BIAB_PACKAGE_API_BASE_URL.",
-		"\n[biab] Set them in .env.local — sections render local fallbacks until then.\n",
+		"\n[bd] Missing one of BD_API_KEY / BD_SITE_ID / BD_PACKAGE_API_BASE_URL.",
+		"\n[bd] Set them in .env.local — sections render local fallbacks until then.\n",
 	);
 }
 
@@ -88,11 +88,11 @@ function injectAnalyticsConfig(shell: string): string {
 		baseUrl: ANALYTICS_PUBLIC.baseUrl,
 		apiKey: ANALYTICS_PUBLIC.apiKey,
 	});
-	return shell.replace("</body>", `<script>window.__BIAB_ANALYTICS__=${config};</script></body>`);
+	return shell.replace("</body>", `<script>window.__BD_ANALYTICS__=${config};</script></body>`);
 }
 
 /** Inject the dismissable "not connected" setup banner into the static home
- *  shell (feature pages get it via `page()`). No-op once BIAB is configured. */
+ *  shell (feature pages get it via `page()`). No-op once BD is configured. */
 function injectSetupBanner(shell: string): string {
 	const banner = setupBannerHtml();
 	if (!banner) return shell;
@@ -120,12 +120,12 @@ async function proxySitemap(): Promise<Response> {
 }
 
 // ── SDK forms stylesheet ───────────────────────────────────────────
-// The SDK ships `biab-forms.css` (file-upload box, multi-step progress header,
+// The SDK ships `bd-forms.css` (file-upload box, multi-step progress header,
 // availability/choice chips). HTMX has no bundler, so we serve the file straight
 // from node_modules and `<link>` it on form-bearing pages (see ./src/layout
 // `page()` head + public/index.html). Graceful empty-string fallback so the
 // template still boots before the SDK is installed.
-const FORMS_CSS_FILE = Bun.file("./node_modules/@businessdash/sdk/dist/biab-forms.css");
+const FORMS_CSS_FILE = Bun.file("./node_modules/@businessdash/sdk/dist/bd-forms.css");
 
 async function serveFormsCss(): Promise<Response> {
 	const body = (await FORMS_CSS_FILE.exists()) ? await FORMS_CSS_FILE.text() : "";
@@ -137,11 +137,11 @@ async function serveFormsCss(): Promise<Response> {
 // ── AI surfaces: llms.txt + MCP connector (SDK 0.9.53) ─────────────
 // AEO (answer-engine optimization): `/llms.txt` serves the org-curated
 // artifact from THIS domain's root — the only place AI crawlers look for it —
-// while the source of truth stays on BIAB (Dashboard → Marketing → AI
+// while the source of truth stays on BD (Dashboard → Marketing → AI
 // Distribution). `/api/mcp` + `/.well-known/mcp.json` give this domain the
 // site's MCP connector: JSON-RPC proxied verbatim, with the platform still
 // enforcing the org's MCP opt-in + per-tool write gates. All three take the
-// BIAB app ORIGIN (`hostBase`), not the package API base. The companion
+// BD app ORIGIN (`hostBase`), not the package API base. The companion
 // PRODUCT FEED needs no proxy — build its URL with `productFeedUrl` from
 // `@businessdash/sdk/distribution` and submit it to merchant/feed programs.
 
@@ -182,13 +182,13 @@ const server = Bun.serve({
 		const method = req.method;
 
 		// WorkOS auth — pass the web Request straight through (redirects + cookies).
-		if (pathname === "/api/biab-auth" || pathname.startsWith("/api/biab-auth/")) {
+		if (pathname === "/api/bd-auth" || pathname.startsWith("/api/bd-auth/")) {
 			if (!authHandler) return htmlResponse(`<p class="error">Auth isn't configured.</p>`, 503);
 			return method === "POST" ? authHandler.POST(req) : authHandler.GET(req);
 		}
 
 		// Publish webhook → busts the in-memory tag cache.
-		if (method === "POST" && pathname === "/api/biab/revalidate") {
+		if (method === "POST" && pathname === "/api/bd/revalidate") {
 			if (!revalidateHandler) return htmlResponse("revalidation secret not set", 503);
 			return revalidateHandler(req);
 		}
@@ -212,20 +212,20 @@ const server = Bun.serve({
 		}
 
 		// SDK forms stylesheet (served from node_modules; <link>ed on form pages).
-		if (method === "GET" && pathname === "/biab-forms.css") return serveFormsCss();
+		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
 
-		// Same-origin proxy for the <biab-form> web component (the contact form).
+		// Same-origin proxy for the <bd-form> web component (the contact form).
 		// The browser never sees the bearer key — these run server-side. GET the
 		// schema, POST the submission (mirrors the Vanilla-JS starter).
-		if (method === "GET" && pathname === "/api/biab/forms/schema") {
-			const biab = getBiab();
-			if (!biab)
+		if (method === "GET" && pathname === "/api/bd/forms/schema") {
+			const bd = getBd();
+			if (!bd)
 				return Response.json({ error: "Not configured." }, { status: 503 });
 			const slug = url.searchParams.get("slug");
 			if (!slug)
 				return Response.json({ error: "slug required" }, { status: 400 });
 			try {
-				return Response.json(await biab.forms.schema(slug));
+				return Response.json(await bd.forms.schema(slug));
 			} catch (err) {
 				return Response.json(
 					{ error: err instanceof Error ? err.message : "Couldn't load form." },
@@ -233,9 +233,9 @@ const server = Bun.serve({
 				);
 			}
 		}
-		if (method === "POST" && pathname === "/api/biab/forms/submit") {
-			const biab = getBiab();
-			if (!biab)
+		if (method === "POST" && pathname === "/api/bd/forms/submit") {
+			const bd = getBd();
+			if (!bd)
 				return Response.json({ error: "Not configured." }, { status: 503 });
 			try {
 				const body = (await req.json()) as {
@@ -244,7 +244,7 @@ const server = Bun.serve({
 					submitterEmail?: string;
 					submitterName?: string;
 				};
-				const result = await biab.forms.submit(body.slug, body.data, {
+				const result = await bd.forms.submit(body.slug, body.data, {
 					submitterEmail: body.submitterEmail,
 					submitterName: body.submitterName,
 				});
@@ -263,7 +263,7 @@ const server = Bun.serve({
 			try {
 				return htmlResponse(await sectionHandler(req));
 			} catch (err) {
-				console.error(`[biab] ${method} ${pathname} failed:`, err);
+				console.error(`[bd] ${method} ${pathname} failed:`, err);
 				return htmlResponse(`<p class="error">Couldn't load this section.</p>`, 500);
 			}
 		}
@@ -284,12 +284,12 @@ const server = Bun.serve({
 
 		// Checkout → Stripe redirect.
 		if (method === "POST" && pathname === "/cart/checkout") {
-			const biab = getBiab();
-			if (!biab) return htmlResponse(`<p class="error">Store not configured.</p>`, 503);
+			const bd = getBd();
+			if (!bd) return htmlResponse(`<p class="error">Store not configured.</p>`, 503);
 			const token = getCookie(req, VISITOR_COOKIE);
 			if (!token) return Response.redirect(`${url.origin}/cart`, 303);
 			try {
-				const res = await biab.checkout.forVisitor(token).start({
+				const res = await bd.checkout.forVisitor(token).start({
 					successUrl: `${url.origin}/store?session_id={CHECKOUT_SESSION_ID}`,
 					cancelUrl: `${url.origin}/cart`,
 				});
@@ -354,4 +354,4 @@ const server = Bun.serve({
 	},
 });
 
-console.log(`[biab] HTMX starter listening on http://localhost:${server.port}`);
+console.log(`[bd] HTMX starter listening on http://localhost:${server.port}`);

@@ -4,10 +4,10 @@ import 'package:businessdash_sdk/businessdash_sdk.dart';
 
 /// Renders a future with a consistent spinner / message / content shape, and
 /// keeps the "unavailable" case (lapsed plan, suspended site) visually
-/// distinct from a network blip — a distinction `BiabException` already
+/// distinct from a network blip — a distinction `BdException` already
 /// draws, and one a customer reads very differently.
-class BiabBuilder<T> extends StatelessWidget {
-  const BiabBuilder({
+class BdBuilder<T> extends StatelessWidget {
+  const BdBuilder({
     super.key,
     required this.future,
     required this.builder,
@@ -21,7 +21,7 @@ class BiabBuilder<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (future == null) {
-      return empty ?? const _Notice('Not connected to BIAB.');
+      return empty ?? const _Notice('Not connected to BD.');
     }
 
     return FutureBuilder<T>(
@@ -33,7 +33,7 @@ class BiabBuilder<T> extends StatelessWidget {
 
         final error = snapshot.error;
         if (error != null) {
-          final unavailable = error is BiabException && error.isUnavailable;
+          final unavailable = error is BdException && error.isUnavailable;
           return _Notice(
             unavailable
                 ? 'Temporarily unavailable.\n$error'

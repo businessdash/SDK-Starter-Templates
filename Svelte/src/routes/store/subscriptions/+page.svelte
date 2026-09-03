@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
-	import StoreNav from '$lib/components/biab/StoreNav.svelte';
-	import { formatCents } from '$lib/biab/cart-client';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
+	import StoreNav from '$lib/components/bd/StoreNav.svelte';
+	import { formatCents } from '$lib/bd/cart-client';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -19,7 +19,7 @@
 		error = null;
 		try {
 			const res = await fetch(
-				`/api/biab/subscriptions/${encodeURIComponent(id)}/checkout`,
+				`/api/bd/subscriptions/${encodeURIComponent(id)}/checkout`,
 				{ method: 'POST' },
 			);
 			const body = (await res.json()) as
@@ -43,27 +43,27 @@
 <Header />
 <StoreNav cartCount={data.cartCount} />
 
-<main class="biab-section">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">Memberships</span>
-		<h1 class="biab-section__title">Subscriptions</h1>
-		<p class="biab-section__sub">
-			Recurring plans from the BIAB subscriptions surface. Checkout hands off to
+<main class="bd-section">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">Memberships</span>
+		<h1 class="bd-section__title">Subscriptions</h1>
+		<p class="bd-section__sub">
+			Recurring plans from the BD subscriptions surface. Checkout hands off to
 			Stripe in subscription mode.
 		</p>
 	</div>
 
 	{#if !data.configured}
-		<div class="biab-empty">Store isn't connected.</div>
+		<div class="bd-empty">Store isn't connected.</div>
 	{:else if data.subscriptions.length === 0}
-		<div class="biab-empty">
-			No subscription offerings yet. Create one in the BIAB dashboard and sync it
+		<div class="bd-empty">
+			No subscription offerings yet. Create one in the BD dashboard and sync it
 			to Stripe.
 		</div>
 	{:else}
-		<div class="biab-grid-3">
+		<div class="bd-grid-3">
 			{#each data.subscriptions as sub (sub.id)}
-				<article class="biab-card sub-card">
+				<article class="bd-card sub-card">
 					{#if sub.imageUrl}
 						<img class="sub-card__img" src={sub.imageUrl} alt={sub.name} loading="lazy" />
 					{/if}
@@ -76,7 +76,7 @@
 							{formatCents(sub.amountCents)}<span> / {intervalLabel(sub.interval)}</span>
 						</div>
 						<button
-							class="biab-btn"
+							class="bd-btn"
 							onclick={() => subscribe(sub.id)}
 							disabled={busyId === sub.id}
 						>

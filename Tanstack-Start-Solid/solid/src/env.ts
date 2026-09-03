@@ -14,15 +14,15 @@ export const env = createEnv({
 
 	client: {
 		VITE_APP_TITLE: z.string().min(1).optional(),
-		// Browser-safe BIAB config. All optional so the template still boots
+		// Browser-safe BD config. All optional so the template still boots
 		// unconfigured. NOTE: this schema's `clientPrefix` is "VITE_", so the
-		// canonical `VITE_BIAB_*` names the BIAB wizard emits can't be
+		// canonical `VITE_BD_*` names the BD wizard emits can't be
 		// declared here — they're read directly via `import.meta.env` (exposed
 		// to the browser by `envPrefix` in vite.config.ts), with these VITE_
 		// twins kept as fallbacks for existing setups.
-		VITE_BIAB_SITE_ID: z.string().optional(),
-		VITE_BIAB_PACKAGE_API_BASE_URL: z.string().optional(),
-		VITE_BIAB_PUBLIC_KEY: z.string().optional(),
+		VITE_BD_SITE_ID: z.string().optional(),
+		VITE_BD_PACKAGE_API_BASE_URL: z.string().optional(),
+		VITE_BD_PUBLIC_KEY: z.string().optional(),
 	},
 
 	/**

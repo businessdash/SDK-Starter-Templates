@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:businessdash_sdk/businessdash_sdk.dart';
-import 'biab_scope.dart';
+import 'bd_scope.dart';
 import 'load_state.dart';
 
 class ProductPage extends StatefulWidget {
@@ -20,18 +20,18 @@ class _ProductPageState extends State<ProductPage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _product ??= BiabScope.of(context).client?.product(widget.productId);
+    _product ??= BdScope.of(context).client?.product(widget.productId);
   }
 
   Future<void> _addToCart(Product product) async {
-    final scope = BiabScope.of(context);
+    final scope = BdScope.of(context);
     final client = scope.client;
     if (client == null) return;
 
     try {
       await client.cartAdd(scope.visitorToken, productId: product.id);
       if (mounted) setState(() => _message = 'Added to cart.');
-    } on BiabException catch (error) {
+    } on BdException catch (error) {
       if (mounted) setState(() => _message = '$error');
     }
   }
@@ -40,7 +40,7 @@ class _ProductPageState extends State<ProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Product')),
-      body: BiabBuilder<Product>(
+      body: BdBuilder<Product>(
         future: _product,
         builder: (context, product) => ListView(
           padding: const EdgeInsets.all(16),

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,25 +18,25 @@
 
 <Header />
 
-<main class="biab-section biab-section--narrow">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">News</span>
-		<h1 class="biab-section__title">Updates</h1>
-		<p class="biab-section__sub">
-			Recent posts, syncing from the business profile via BIAB.
+<main class="bd-section bd-section--narrow">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">News</span>
+		<h1 class="bd-section__title">Updates</h1>
+		<p class="bd-section__sub">
+			Recent posts, syncing from the business profile via BD.
 		</p>
 	</div>
 
 	{#if data.unavailable}
-		<div class="biab-empty">Updates are temporarily unavailable.</div>
+		<div class="bd-empty">Updates are temporarily unavailable.</div>
 	{:else if data.updates.length === 0}
-		<div class="biab-empty">
+		<div class="bd-empty">
 			No updates yet. Posts from the connected business profile will appear here.
 		</div>
 	{:else}
 		<div class="updates-list">
 			{#each data.updates as update (update.id)}
-				<article class="biab-card update-card">
+				<article class="bd-card update-card">
 					{#if update.imageUrl}
 						<img class="update-card__img" src={update.imageUrl} alt={update.title ?? 'Update'} loading="lazy" />
 					{/if}
@@ -45,7 +45,7 @@
 						<p>{update.body}</p>
 						<div class="update-card__meta">
 							{#if update.postedAt}<span>{formatDate(update.postedAt)}</span>{/if}
-							{#if update.kind}<span class="biab-badge">{update.kind}</span>{/if}
+							{#if update.kind}<span class="bd-badge">{update.kind}</span>{/if}
 							{#if update.link}<a href={update.link} target="_blank" rel="noreferrer">Learn more →</a>{/if}
 						</div>
 					</div>

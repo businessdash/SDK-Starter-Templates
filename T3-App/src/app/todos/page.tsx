@@ -13,7 +13,7 @@ export const dynamic = "force-dynamic";
 
 /**
  * The relational custom-collections demo. Two collections declared in
- * `biab.data-model.config.ts` — `todos`, and `todoImages` pointing at a todo
+ * `bd.data-model.config.ts` — `todos`, and `todoImages` pointing at a todo
  * via a required RELATION field. This page:
  *
  *   - LISTS todos (with any images joined on) via the tRPC `todos` procedure
@@ -25,37 +25,37 @@ export const dynamic = "force-dynamic";
  * setup notices instead of failing.
  */
 export default async function TodosPage() {
-	const { result, formSchema, formSlug } = await api.biab.todos();
+	const { result, formSchema, formSlug } = await api.bd.todos();
 
 	return (
-		<main className="biab-section biab-section--narrow">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">Custom collections</span>
-				<h1 className="biab-section__title">Todos</h1>
-				<p className="biab-section__sub">
+		<main className="bd-section bd-section--narrow">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">Custom collections</span>
+				<h1 className="bd-section__title">Todos</h1>
+				<p className="bd-section__sub">
 					Rows live in your org&apos;s custom database — two related
 					collections (<code>todos</code> + <code>todoImages</code>) declared in{" "}
-					<code>biab.data-model.config.ts</code>, read via{" "}
+					<code>bd.data-model.config.ts</code>, read via{" "}
 					<code>dataModel.listRecords</code>, created through the generated{" "}
 					<code>todo-form</code>.
 				</p>
 			</div>
 
 			{result.status === "unconfigured" ? (
-				<div className="biab-empty">
-					BIAB isn&apos;t configured — set the env vars in <code>.env</code>{" "}
+				<div className="bd-empty">
+					BD isn&apos;t configured — set the env vars in <code>.env</code>{" "}
 					(see <code>.env.example</code>) to run this demo.
 				</div>
 			) : result.status === "unavailable" ? (
-				<div className="biab-empty">
+				<div className="bd-empty">
 					The todos model isn&apos;t readable yet. Run{" "}
-					<code>pnpm sync-data-model</code>, promote it in the BIAB dashboard,
+					<code>pnpm sync-data-model</code>, promote it in the BD dashboard,
 					and make sure your secret key carries the{" "}
 					<code>metadata:read_records</code> scope (custom objects are a
 					plan-gated surface).
 				</div>
 			) : result.todos.length === 0 ? (
-				<div className="biab-empty">No todos yet — add the first one below.</div>
+				<div className="bd-empty">No todos yet — add the first one below.</div>
 			) : (
 				<ul
 					style={{
@@ -67,13 +67,13 @@ export default async function TodosPage() {
 					}}
 				>
 					{result.todos.map((todo) => (
-						<li className="biab-card" key={todo.id}>
+						<li className="bd-card" key={todo.id}>
 							<div
 								style={{ alignItems: "center", display: "flex", gap: "0.5rem" }}
 							>
 								<span
 									className={
-										todo.done ? "biab-badge biab-badge--active" : "biab-badge"
+										todo.done ? "bd-badge bd-badge--active" : "bd-badge"
 									}
 								>
 									{todo.done ? "Done" : "Open"}
@@ -122,7 +122,7 @@ export default async function TodosPage() {
 				formSchema ? (
 					<TodoCreateForm schema={formSchema} slug={formSlug} />
 				) : (
-					<div className="biab-empty">
+					<div className="bd-empty">
 						The create form isn&apos;t live yet — promote the data model and
 						activate &quot;Todo Form&quot; (slug <code>todo-form</code>) in the
 						dashboard&apos;s Forms surface.

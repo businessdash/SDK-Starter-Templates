@@ -7,23 +7,23 @@ import {
 } from "@angular/core";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import {
-	biabApi,
+	bdApi,
 	type Product,
 	type ProductAddon,
 	type ProductReview,
 	type ProductReviewsPayload,
 	type RelatedProduct,
-} from "../lib/biab-api.client";
+} from "../lib/bd-api.client";
 
 /**
- * Product detail. Pulls a single product from `/api/biab/store/products/:id`
+ * Product detail. Pulls a single product from `/api/bd/store/products/:id`
  * and offers "Add to cart". Enriched with approved reviews (avg + count), a
  * companion-addons rail, and a "you may also like" related grid — each pulled
  * from its own server endpoint and gracefully hidden when empty. Shows a
- * not-found state when the product isn't live or BIAB is unconfigured.
+ * not-found state when the product isn't live or BD is unconfigured.
  */
 @Component({
-	selector: "biab-product-detail-page",
+	selector: "bd-product-detail-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -52,7 +52,7 @@ import {
 				@if (description(p); as d) {
 					<p>{{ d }}</p>
 				}
-				<button class="biab-btn" type="button" (click)="add(p.id)" [disabled]="adding()">
+				<button class="bd-btn" type="button" (click)="add(p.id)" [disabled]="adding()">
 					{{ adding() ? "Adding…" : "Add to cart" }}
 				</button>
 
@@ -78,7 +78,7 @@ import {
 									</p>
 								}
 								<button
-									class="biab-btn biab-btn--ghost addon-card__add"
+									class="bd-btn bd-btn--ghost addon-card__add"
 									type="button"
 									(click)="add(a.addonProductId)"
 									[disabled]="adding()"
@@ -158,7 +158,7 @@ export class ProductDetailPage implements OnInit {
 			this.state.set("missing");
 			return;
 		}
-		const p = await biabApi.product(id);
+		const p = await bdApi.product(id);
 		if (!p) {
 			this.state.set("missing");
 			return;
@@ -170,9 +170,9 @@ export class ProductDetailPage implements OnInit {
 		// independently, so a missing reviews/addons/related endpoint never blocks
 		// the core product view.
 		const [rv, ad, rel] = await Promise.all([
-			biabApi.productReviews(id, 20),
-			biabApi.productAddons(id),
-			biabApi.relatedProducts(id, 6),
+			bdApi.productReviews(id, 20),
+			bdApi.productAddons(id),
+			bdApi.relatedProducts(id, 6),
 		]);
 		if (rv) {
 			this.reviews.set(rv);
@@ -210,7 +210,7 @@ export class ProductDetailPage implements OnInit {
 
 	async add(id: string) {
 		this.adding.set(true);
-		await biabApi.addToCart(id, 1);
+		await bdApi.addToCart(id, 1);
 		this.adding.set(false);
 	}
 }

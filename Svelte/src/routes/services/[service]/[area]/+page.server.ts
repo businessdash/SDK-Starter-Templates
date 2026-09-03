@@ -2,12 +2,12 @@ import { error } from "@sveltejs/kit";
 
 import type { PageServerLoad } from "./$types";
 
-import { renderServiceArea } from "$lib/server/biab-parallel";
+import { renderServiceArea } from "$lib/server/bd-parallel";
 
 /**
  * One programmatic (service × area) page, rendered server-side via
  * `parallelPages.render("service-area", { service, area })`. Token
- * resolution (`{service.type}`, `{area.name}`, …) happens inside BIAB so
+ * resolution (`{service.type}`, `{area.name}`, …) happens inside BD so
  * crawlers receive fully-resolved HTML.
  *
  * Billing-suspension errors become a 503 (temporary outage — SEO-safe);

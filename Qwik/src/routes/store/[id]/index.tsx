@@ -8,8 +8,8 @@ import {
 } from "@builder.io/qwik-city";
 
 import {
-	BiabPaymentLapsedError,
-	BiabServiceSuspendedError,
+	BdPaymentLapsedError,
+	BdServiceSuspendedError,
 } from "@businessdash/sdk";
 import type {
 	StorefrontAddon,
@@ -18,10 +18,10 @@ import type {
 	StorefrontReview,
 } from "@businessdash/sdk/contracts";
 
-import { Footer } from "../../../components/biab/Footer";
-import { SiteHeader } from "../../../components/biab/SiteHeader";
-import { Stars } from "../../../components/biab/Stars";
-import { getBiab } from "../../../lib/biab";
+import { Footer } from "../../../components/bd/Footer";
+import { SiteHeader } from "../../../components/bd/SiteHeader";
+import { Stars } from "../../../components/bd/Stars";
+import { getBd } from "../../../lib/bd";
 import {
 	addToCart,
 	formatMoney,
@@ -29,8 +29,8 @@ import {
 	getStoreProductAddons,
 	getStoreProductReviews,
 	getStoreRelatedProducts,
-} from "../../../lib/biab-store";
-import { getCustomerSession } from "../../../lib/biab-portal";
+} from "../../../lib/bd-store";
+import { getCustomerSession } from "../../../lib/bd-portal";
 
 /** A variant row is an untyped passthrough record; pull the fields we render. */
 type Variant = {
@@ -42,7 +42,7 @@ type Variant = {
 };
 
 export const useProduct = routeLoader$(async ({ params, cookie, status }) => {
-	const biab = getBiab();
+	const bd = getBd();
 	const empty = {
 		configured: false,
 		suspended: false,
@@ -54,11 +54,11 @@ export const useProduct = routeLoader$(async ({ params, cookie, status }) => {
 		signedIn: false,
 	} as const;
 
-	if (!biab) return empty;
+	if (!bd) return empty;
 	try {
 		const [product, reviews, addons, related, cart, session] =
 			await Promise.all([
-				biab.storefront.getProduct(params.id),
+				bd.storefront.getProduct(params.id),
 				getStoreProductReviews(params.id, { limit: 20 }),
 				getStoreProductAddons(params.id),
 				getStoreRelatedProducts(params.id, { limit: 6 }),
@@ -83,8 +83,8 @@ export const useProduct = routeLoader$(async ({ params, cookie, status }) => {
 		} as const;
 	} catch (err) {
 		if (
-			err instanceof BiabServiceSuspendedError ||
-			err instanceof BiabPaymentLapsedError
+			err instanceof BdServiceSuspendedError ||
+			err instanceof BdPaymentLapsedError
 		) {
 			return { ...empty, configured: true, suspended: true } as const;
 		}
@@ -95,7 +95,7 @@ export const useProduct = routeLoader$(async ({ params, cookie, status }) => {
 
 /**
  * Server RPC: add a (product, variant) to the visitor cart. `this` is the
- * RequestEvent, so we read/write the `biab_cart_visitor` cookie through it.
+ * RequestEvent, so we read/write the `bd_cart_visitor` cookie through it.
  * Mutations mint the cookie on first use inside `addToCart`.
  */
 const addToCartRpc = server$(async function (
@@ -146,17 +146,17 @@ export default component$(() => {
 		<>
 			<SiteHeader signedIn={data.value.signedIn} cartCount={data.value.cartCount} />
 			<main>
-				<section class="biab-section biab-section--narrow">
+				<section class="bd-section bd-section--narrow">
 					{data.value.suspended ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							The store is temporarily unavailable. Please check back soon.
 						</div>
 					) : !product ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Product not found, or the store isn't connected yet.
 						</div>
 					) : (
-						<div class="biab-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
+						<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
 							{image ? (
 								<img
 									alt={product.name}
@@ -164,7 +164,7 @@ export default component$(() => {
 									style="border-radius: 1rem; aspect-ratio: 4/3; object-fit: cover;"
 								/>
 							) : null}
-							<h1 class="biab-section__title">{product.name}</h1>
+							<h1 class="bd-section__title">{product.name}</h1>
 
 							{reviews.totalCount > 0 ? (
 								<div class="store-card__rating">
@@ -178,12 +178,12 @@ export default component$(() => {
 
 							{variants.length > 1 ? (
 								<div>
-									<label class="biab-label" for="variant">
+									<label class="bd-label" for="variant">
 										Option
 									</label>
 									<select
 										bind:value={selectedVariant}
-										class="biab-select"
+										class="bd-select"
 										id="variant"
 									>
 										{variants.map((v, i) => (
@@ -207,7 +207,7 @@ export default component$(() => {
 							) : null}
 
 							<button
-								class="biab-btn"
+								class="bd-btn"
 								disabled={adding.value}
 								onClick$={handleAdd}
 								style="align-self: flex-start;"
@@ -230,7 +230,7 @@ export default component$(() => {
 							<h2 class="store-detail__heading">Complete your purchase</h2>
 							<div class="store-addons">
 								{addons.map((a) => (
-									<div class="biab-card store-addon" key={a.id}>
+									<div class="bd-card store-addon" key={a.id}>
 										{a.imageUrl ? (
 											<img
 												alt={a.addonName}
@@ -242,7 +242,7 @@ export default component$(() => {
 										) : null}
 										<div class="store-addon__body">
 											{a.groupLabel ? (
-												<span class="biab-badge">{a.groupLabel}</span>
+												<span class="bd-badge">{a.groupLabel}</span>
 											) : null}
 											<h3 class="store-addon__name">{a.addonName}</h3>
 											{a.addonDescription ? (
@@ -263,7 +263,7 @@ export default component$(() => {
 												) : null}
 											</div>
 											<button
-												class="biab-btn biab-btn--ghost"
+												class="bd-btn bd-btn--ghost"
 												onClick$={() => addToCartProduct(a.addonProductId)}
 												style="align-self: flex-start;"
 												type="button"
@@ -289,7 +289,7 @@ export default component$(() => {
 							</h2>
 							<div class="store-reviews">
 								{reviews.items.map((r) => (
-									<div class="biab-card store-review" key={r.id}>
+									<div class="bd-card store-review" key={r.id}>
 										<div class="store-review__head">
 											<Stars rating={r.rating} />
 											{r.reviewerName ? (
@@ -314,10 +314,10 @@ export default component$(() => {
 					{product && related.length > 0 ? (
 						<div class="store-detail__block">
 							<h2 class="store-detail__heading">You may also like</h2>
-							<div class="biab-grid-3">
+							<div class="bd-grid-3">
 								{related.map((p) => (
 									<Link
-										class="biab-card service-card store-card"
+										class="bd-card service-card store-card"
 										href={`/store/${p.id}`}
 										key={p.id}
 									>

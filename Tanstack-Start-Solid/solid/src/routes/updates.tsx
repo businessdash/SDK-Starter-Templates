@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/solid-router";
 import { For, Show } from "solid-js";
 
-import { getSiteContentExtras } from "../lib/biab-server-fns";
+import { getSiteContentExtras } from "../lib/bd-server-fns";
 
 /**
  * News / updates feed. Google-Business-style posts ride the marketing
@@ -30,11 +30,11 @@ function Updates() {
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Latest</span>
-					<h1 class="biab-section__title">Updates</h1>
-					<p class="biab-section__sub">
+			<section class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Latest</span>
+					<h1 class="bd-section__title">Updates</h1>
+					<p class="bd-section__sub">
 						News and announcements, synced from the business's Google profile.
 					</p>
 				</div>
@@ -42,7 +42,7 @@ function Updates() {
 				<Show
 					when={updates().length > 0}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							No updates posted yet. Check back soon.
 						</div>
 					}
@@ -51,7 +51,7 @@ function Updates() {
 						<For each={updates()}>
 							{(post) => (
 								<article
-									class="biab-card"
+									class="bd-card"
 									style="padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem;"
 								>
 									<Show when={post.imageUrl}>
@@ -75,7 +75,7 @@ function Updates() {
 											href={post.link ?? "#"}
 											target="_blank"
 											rel="noreferrer"
-											class="biab-btn biab-btn--ghost"
+											class="bd-btn bd-btn--ghost"
 											style="align-self: flex-start; margin-top: 0.5rem;"
 										>
 											Learn more

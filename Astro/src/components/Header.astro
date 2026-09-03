@@ -3,12 +3,12 @@
  * Server-rendered nav. Reads the customer session + cart count server-side so
  * the header reflects signed-in state and cart contents without client JS.
  *
- * Auth uses plain `<a href="/api/biab-auth/*">` links (the handler is mounted
+ * Auth uses plain `<a href="/api/bd-auth/*">` links (the handler is mounted
  * at that catch-all). Sign-out points at the same handler, which clears the
- * `biab_session` cookie and redirects home.
+ * `bd_session` cookie and redirects home.
  */
-import { getCartCount } from "../lib/biab-store";
-import { getCustomerSession } from "../lib/biab-portal";
+import { getCartCount } from "../lib/bd-store";
+import { getCustomerSession } from "../lib/bd-portal";
 
 const cartCount = await getCartCount(Astro.cookies);
 const session = await getCustomerSession(Astro.cookies).catch(() => null);
@@ -36,14 +36,14 @@ const firstName = session?.user.firstName ?? null;
 				session ? (
 					<>
 						<a href="/my-account">{firstName ? `Hi, ${firstName}` : "My account"}</a>
-						<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-out">
+						<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-out">
 							Sign out
 						</a>
 					</>
 				) : (
 					<>
-						<a href="/api/biab-auth/sign-in">Sign in</a>
-						<a class="biab-btn" href="/api/biab-auth/sign-up">
+						<a href="/api/bd-auth/sign-in">Sign in</a>
+						<a class="bd-btn" href="/api/bd-auth/sign-up">
 							Sign up
 						</a>
 					</>

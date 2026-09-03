@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 
 type HeroData = {
 	title: string;
@@ -18,7 +18,7 @@ export function Hero() {
 	const [hero, setHero] = useState<HeroData>(null);
 
 	useEffect(() => {
-		biab.marketing
+		bd.marketing
 			.getPageBundle({ pageKey: "home" })
 			.then((bundle) => {
 				const raw = (bundle as { sections?: Record<string, unknown> })?.sections
@@ -54,10 +54,10 @@ export function Hero() {
 
 	return (
 		<section className="hero">
-			<span className="biab-badge">Open · Mon–Sat</span>
+			<span className="bd-badge">Open · Mon–Sat</span>
 			<h1 className="hero__title">{display.title}</h1>
 			<p className="hero__sub">{display.tagline}</p>
-			<a className="biab-btn" href={display.ctaHref}>
+			<a className="bd-btn" href={display.ctaHref}>
 				{display.ctaLabel}
 			</a>
 		</section>

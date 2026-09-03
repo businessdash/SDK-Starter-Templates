@@ -2,18 +2,18 @@
 /**
  * Cart view. Server-renders the current `CartSnapshot` (read-only, no token
  * minting), then small inline islands drive the mutations against the Astro
- * cart endpoints under `/api/biab/cart/*`:
- *   - quantity stepper       → /api/biab/cart/update
- *   - remove line item       → /api/biab/cart/remove
- *   - apply / remove coupon  → /api/biab/cart/coupon
- *   - clear cart             → /api/biab/cart/clear
- *   - checkout               → /api/biab/checkout/start  (→ Stripe redirect)
+ * cart endpoints under `/api/bd/cart/*`:
+ *   - quantity stepper       → /api/bd/cart/update
+ *   - remove line item       → /api/bd/cart/remove
+ *   - apply / remove coupon  → /api/bd/cart/coupon
+ *   - clear cart             → /api/bd/cart/clear
+ *   - checkout               → /api/bd/checkout/start  (→ Stripe redirect)
  *
  * Each mutation returns the fresh snapshot; the island re-renders the totals
  * + line items from it without a full reload. `?status=success|cancelled`
  * (set by the Stripe return URLs) shows a small banner.
  */
-import { getCartSnapshot, isStoreConfigured } from "../../lib/biab-store";
+import { getCartSnapshot, isStoreConfigured } from "../../lib/bd-store";
 import Layout from "../../layouts/Layout.astro";
 
 export const prerender = false;
@@ -37,10 +37,10 @@ const currency = cart?.currency ?? "USD";
 	description="Review your cart and check out."
 	hideBanner
 >
-	<section class="biab-section biab-section--narrow" id="cart">
-		<div class="biab-section__lead" style="text-align: left;">
-			<span class="biab-section__eyebrow">Checkout</span>
-			<h2 class="biab-section__title">Your cart</h2>
+	<section class="bd-section bd-section--narrow" id="cart">
+		<div class="bd-section__lead" style="text-align: left;">
+			<span class="bd-section__eyebrow">Checkout</span>
+			<h2 class="bd-section__title">Your cart</h2>
 		</div>
 
 		{
@@ -55,7 +55,7 @@ const currency = cart?.currency ?? "USD";
 
 		{
 			!isStoreConfigured() ? (
-				<div class="biab-empty">Store isn't connected.</div>
+				<div class="bd-empty">Store isn't connected.</div>
 			) : (
 				<div
 					class="cart"
@@ -63,14 +63,14 @@ const currency = cart?.currency ?? "USD";
 					data-empty={items.length === 0 ? "true" : "false"}
 					data-currency={currency}
 				>
-					<div class="biab-empty" data-cart-empty hidden={items.length > 0}>
+					<div class="bd-empty" data-cart-empty hidden={items.length > 0}>
 						Your cart is empty. <a href="/store">Browse the store →</a>
 					</div>
 
 					<div data-cart-body hidden={items.length === 0}>
 						<ul class="cart-items" data-cart-items>
 							{items.map((it) => (
-								<li class="biab-card cart-item" data-item-id={it.id}>
+								<li class="bd-card cart-item" data-item-id={it.id}>
 									{it.productImage ? (
 										<img
 											class="cart-item__img"
@@ -93,7 +93,7 @@ const currency = cart?.currency ?? "USD";
 									</div>
 									<div class="cart-item__controls">
 										<input
-											class="biab-input cart-item__qty"
+											class="bd-input cart-item__qty"
 											type="number"
 											min="0"
 											value={String(it.quantity)}
@@ -116,16 +116,16 @@ const currency = cart?.currency ?? "USD";
 							))}
 						</ul>
 
-						<div class="cart-summary biab-card">
+						<div class="cart-summary bd-card">
 							<div class="cart-coupon">
 								<input
-									class="biab-input"
+									class="bd-input"
 									data-coupon-input
 									placeholder="Coupon code"
 									value={cart?.couponCode ?? ""}
 								/>
 								<button
-									class="biab-btn biab-btn--ghost"
+									class="bd-btn bd-btn--ghost"
 									data-coupon-apply
 									type="button"
 								>
@@ -157,7 +157,7 @@ const currency = cart?.currency ?? "USD";
 								>
 									Clear cart
 								</button>
-								<button class="biab-btn" data-checkout type="button">
+								<button class="bd-btn" data-checkout type="button">
 									Checkout
 								</button>
 							</div>
@@ -370,7 +370,7 @@ const currency = cart?.currency ?? "USD";
 					if (!itemId) return;
 					const quantity = Math.max(0, Number(input.value) || 0);
 					try {
-						render(await post("/api/biab/cart/update", { itemId, quantity }));
+						render(await post("/api/bd/cart/update", { itemId, quantity }));
 					} catch (err) {
 						showError(err instanceof Error ? err.message : "Update failed.");
 					}
@@ -386,7 +386,7 @@ const currency = cart?.currency ?? "USD";
 					const itemId = li?.dataset.itemId;
 					if (!itemId) return;
 					try {
-						render(await post("/api/biab/cart/remove", { itemId }));
+						render(await post("/api/bd/cart/remove", { itemId }));
 					} catch (err) {
 						showError(err instanceof Error ? err.message : "Remove failed.");
 					}
@@ -401,7 +401,7 @@ const currency = cart?.currency ?? "USD";
 					.querySelector<HTMLInputElement>("[data-coupon-input]")
 					?.value.trim();
 				try {
-					render(await post("/api/biab/cart/coupon", { code }));
+					render(await post("/api/bd/cart/coupon", { code }));
 					window.location.reload();
 				} catch (err) {
 					showError(err instanceof Error ? err.message : "Coupon failed.");
@@ -411,7 +411,7 @@ const currency = cart?.currency ?? "USD";
 			.querySelector<HTMLButtonElement>("[data-coupon-remove]")
 			?.addEventListener("click", async () => {
 				try {
-					await post("/api/biab/cart/coupon", {});
+					await post("/api/bd/cart/coupon", {});
 					window.location.reload();
 				} catch (err) {
 					showError(err instanceof Error ? err.message : "Couldn't remove.");
@@ -423,7 +423,7 @@ const currency = cart?.currency ?? "USD";
 			.querySelector<HTMLButtonElement>("[data-clear]")
 			?.addEventListener("click", async () => {
 				try {
-					await post("/api/biab/cart/clear");
+					await post("/api/bd/cart/clear");
 					window.location.reload();
 				} catch (err) {
 					showError(err instanceof Error ? err.message : "Clear failed.");
@@ -439,7 +439,7 @@ const currency = cart?.currency ?? "USD";
 				btn.textContent = "Redirecting…";
 				if (errorBox) errorBox.hidden = true;
 				try {
-					const res = await fetch("/api/biab/checkout/start", {
+					const res = await fetch("/api/bd/checkout/start", {
 						method: "POST",
 					});
 					const data = (await res.json()) as { url?: string; error?: string };

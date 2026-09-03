@@ -1,5 +1,5 @@
 {
-  "name": "biab-expo-starter",
+  "name": "bd-expo-starter",
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
@@ -8,13 +8,13 @@
     "ios": "expo start --ios",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
-    "sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config biab.config.ts",
-    "sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config biab.config.ts",
-    "print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config biab.config.ts",
-    "sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config biab.data-model.config.ts",
-    "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts",
+    "sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config bd.config.ts",
+    "sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config bd.config.ts",
+    "print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config bd.config.ts",
+    "sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config bd.data-model.config.ts",
+    "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts",
     "view-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js view-data-model",
-    "seed": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-records --records-dir ./biab-records"
+    "seed": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-records --records-dir ./bd-records"
   },
   "dependencies": {
     "@businessdash/sdk": "^0.9.81",

@@ -6,13 +6,13 @@
  *
  * This is the SSR-friendly substitute for `getStaticPaths` under
  * `output: "server"` — the platform owns the cartesian fan-out; we just list
- * what it returns. Degrades to an empty state when BIAB is unconfigured.
+ * what it returns. Degrades to an empty state when BD is unconfigured.
  */
-import { biab } from "../../lib/biab";
+import { bd } from "../../lib/bd";
 import {
 	isSuspensionError,
 	suspendedResponse,
-} from "../../lib/biab-suspension";
+} from "../../lib/bd-suspension";
 import Layout from "../../layouts/Layout.astro";
 
 export const prerender = false;
@@ -22,9 +22,9 @@ type Variant = Record<string, string>;
 let variants: Variant[] = [];
 let suspended = false;
 
-if (biab) {
+if (bd) {
 	try {
-		const res = await biab.parallelPages.listVariants("service-area");
+		const res = await bd.parallelPages.listVariants("service-area");
 		variants = res?.variants ?? [];
 	} catch (err) {
 		if (isSuspensionError(err)) suspended = true;
@@ -44,29 +44,29 @@ function label(slug: string): string {
 
 <Layout
 	title="Service areas — Your Business"
-	description="Every service we offer, in every area we serve. Programmatic pages generated from BIAB."
+	description="Every service we offer, in every area we serve. Programmatic pages generated from BD."
 >
-	<section class="biab-section" id="service-areas">
-		<div class="biab-section__lead">
-			<span class="biab-section__eyebrow">Where we work</span>
-			<h2 class="biab-section__title">Service areas</h2>
-			<p class="biab-section__sub">
+	<section class="bd-section" id="service-areas">
+		<div class="bd-section__lead">
+			<span class="bd-section__eyebrow">Where we work</span>
+			<h2 class="bd-section__title">Service areas</h2>
+			<p class="bd-section__sub">
 				Each link is a programmatic page generated from the
-				<code>service-area</code> parallel page in <code>biab.config.ts</code>.
+				<code>service-area</code> parallel page in <code>bd.config.ts</code>.
 			</p>
 		</div>
 
 		{
 			variants.length === 0 ? (
-				<div class="biab-empty">
-					No service-area pages yet. Add services + service areas in BIAB, then
+				<div class="bd-empty">
+					No service-area pages yet. Add services + service areas in BD, then
 					run <code>npm run sync-schema</code> so the platform fans them out.
 				</div>
 			) : (
-				<div class="biab-grid-3">
+				<div class="bd-grid-3">
 					{variants.map((v) => (
 						<a
-							class="biab-card service-area-link"
+							class="bd-card service-area-link"
 							href={`/services/${v.service}/${v.area}`}
 						>
 							<h3>{label(v.service ?? "")}</h3>

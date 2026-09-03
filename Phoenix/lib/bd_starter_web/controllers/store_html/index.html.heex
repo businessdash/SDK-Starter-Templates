@@ -1,0 +1,31 @@
+<h1>Store</h1>
+
+<form method="get" class="filters">
+  <input type="search" name="search" value={@search} placeholder="Search products" />
+  <select name="sort">
+    <option value="">Featured</option>
+    <option value="newest">Newest</option>
+    <option value="price-asc">Price, low to high</option>
+    <option value="price-desc">Price, high to low</option>
+    <option value="rating-desc">Best rated</option>
+  </select>
+  <button type="submit">Filter</button>
+</form>
+
+<ul :if={@products != []} class="grid">
+  <li :for={product <- @products} class="card">
+    <a href={~p"/store/#{product["id"]}"}>
+      <h2>{product["name"]}</h2>
+      <p class="price">{cents(product["cheapestPriceCents"])}</p>
+    </a>
+    <form method="post" action={~p"/cart/items"}>
+      <input type="hidden" name="_csrf_token" value={get_csrf_token()} />
+      <input type="hidden" name="productId" value={product["id"]} />
+      <button type="submit">Add to cart</button>
+    </form>
+  </li>
+</ul>
+
+<p :if={@products == []} class="muted">
+  No products yet. Add some in the BD dashboard, or connect this app to a site.
+</p>

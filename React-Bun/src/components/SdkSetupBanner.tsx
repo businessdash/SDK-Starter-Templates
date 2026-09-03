@@ -2,26 +2,26 @@ import { useEffect, useState } from "react";
 
 /**
  * Dismissable "not connected yet" banner. The template renders all its content
- * with local fallbacks when BIAB env is missing (so it runs unconfigured) —
+ * with local fallbacks when BD env is missing (so it runs unconfigured) —
  * this just tells you how to connect it. It disappears automatically once the
- * browser-safe BIAB config (site id + publishable token) is set, and can be
+ * browser-safe BD config (site id + publishable token) is set, and can be
  * dismissed for this browser in the meantime.
  *
- * Reads the canonical `VITE_BIAB_*` names (exposed to the browser via
- * `envPrefix` in vite.config.ts), falling back to the legacy `VITE_BIAB_*`
+ * Reads the canonical `VITE_BD_*` names (exposed to the browser via
+ * `envPrefix` in vite.config.ts), falling back to the legacy `VITE_BD_*`
  * twins so existing setups keep working.
  */
 
 // Inlined at build time. When unset, the site is running unconfigured.
 const SITE_ID =
-	import.meta.env.VITE_BIAB_SITE_ID ?? import.meta.env.VITE_BIAB_SITE_ID;
-const PK = import.meta.env.VITE_BIAB_PK ?? import.meta.env.VITE_BIAB_PK;
+	import.meta.env.VITE_BD_SITE_ID ?? import.meta.env.VITE_BD_SITE_ID;
+const PK = import.meta.env.VITE_BD_PK ?? import.meta.env.VITE_BD_PK;
 const BASE_URL =
-	import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL ??
-	import.meta.env.VITE_BIAB_PACKAGE_API_BASE_URL ??
+	import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
+	import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
 	"https://www.biab.app";
 
-const DISMISS_KEY = "biab-sdk-setup-banner-dismissed";
+const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 
 export function SdkSetupBanner() {
 	const [hidden, setHidden] = useState(true);
@@ -55,7 +55,7 @@ export function SdkSetupBanner() {
 		>
 			<span style={{ flex: "1 1 260px", minWidth: 0 }}>
 				<strong style={{ color: "rgb(94, 234, 212)" }}>
-					Not connected to BIAB yet.
+					Not connected to BD yet.
 				</strong>{" "}
 				Add your <code>.env.local</code> to render live content — grab every
 				variable (site ID, keys, revalidation secret) from the guided wizard.

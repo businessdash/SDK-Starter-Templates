@@ -9,7 +9,7 @@
  *
  * Renders nothing when no banner is enabled — safe to drop into any layout.
  */
-import { getBannerFromBundle, type MarketingBundle } from "../lib/biab-bundle";
+import { getBannerFromBundle, type MarketingBundle } from "../lib/bd-bundle";
 
 interface Props {
 	bundle: MarketingBundle | null;
@@ -23,7 +23,7 @@ const message = banner?.messages[0] ?? null;
 {
 	message ? (
 		<div
-			class:list={["biab-banner", message.urgent && "biab-banner--urgent"]}
+			class:list={["bd-banner", message.urgent && "bd-banner--urgent"]}
 			data-banner
 			data-banner-id={message.id}
 			data-banner-dismissible={
@@ -32,12 +32,12 @@ const message = banner?.messages[0] ?? null;
 			role="region"
 			aria-label="Site announcement"
 		>
-			<span class="biab-banner__text">{message.text}</span>
+			<span class="bd-banner__text">{message.text}</span>
 			{message.linkUrl && message.buttonText ? (
 				<a
 					class:list={[
-						"biab-banner__cta",
-						message.linkStyle === "button" && "biab-btn",
+						"bd-banner__cta",
+						message.linkStyle === "button" && "bd-btn",
 					]}
 					href={message.linkUrl}
 					target={message.openInNewTab ? "_blank" : undefined}
@@ -47,7 +47,7 @@ const message = banner?.messages[0] ?? null;
 				</a>
 			) : null}
 			<button
-				class="biab-banner__close"
+				class="bd-banner__close"
 				data-banner-close
 				type="button"
 				aria-label="Dismiss announcement"
@@ -62,7 +62,7 @@ const message = banner?.messages[0] ?? null;
 	const banner = document.querySelector<HTMLDivElement>("[data-banner]");
 	if (banner) {
 		const id = banner.dataset.bannerId ?? "";
-		const key = `biab_banner_dismissed:${id}`;
+		const key = `bd_banner_dismissed:${id}`;
 		const dismissible = banner.dataset.bannerDismissible === "true";
 		if (dismissible && sessionStorage.getItem(key) === "1") {
 			banner.remove();

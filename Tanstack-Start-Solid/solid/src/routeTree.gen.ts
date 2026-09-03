@@ -8,31 +8,31 @@
 // You should NOT make any changes in this file as it will be overwritten.
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
-import { Route as rootRouteImport } from './routes/__root.tsx'
-import { Route as UpdatesRouteImport } from './routes/updates.tsx'
-import { Route as TodosRouteImport } from './routes/todos.tsx'
-import { Route as SubscriptionsRouteImport } from './routes/subscriptions.tsx'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml.tsx'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt.tsx'
-import { Route as ReviewsRouteImport } from './routes/reviews.tsx'
-import { Route as MyAccountRouteImport } from './routes/my-account.tsx'
-import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt.tsx'
-import { Route as AboutRouteImport } from './routes/about.tsx'
-import { Route as SplatRouteImport } from './routes/$.tsx'
+import { Route as rootRouteImport } from './routes/__root'
+import { Route as UpdatesRouteImport } from './routes/updates'
+import { Route as TodosRouteImport } from './routes/todos'
+import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as ReviewsRouteImport } from './routes/reviews'
+import { Route as MyAccountRouteImport } from './routes/my-account'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StoreIndexRouteImport } from './routes/store.index.tsx'
-import { Route as ServicesIndexRouteImport } from './routes/services.index.tsx'
-import { Route as StoreCartRouteImport } from './routes/store.cart.tsx'
-import { Route as StoreIdRouteImport } from './routes/store.$id.tsx'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query.tsx'
-import { Route as DemoStoreRouteImport } from './routes/demo.store.tsx'
-import { Route as DemoFormRouteImport } from './routes/demo.form.tsx'
-import { Route as ApiMcpRouteImport } from './routes/api/mcp.tsx'
-import { Route as AiProductFeedRouteImport } from './routes/ai.product-feed.tsx'
-import { Route as DotwellKnownMcpDotjsonRouteImport } from './routes/[.]well-known.mcp[.]json.tsx'
-import { Route as ServicesServiceAreaRouteImport } from './routes/services.$service.$area.tsx'
-import { Route as ApiBiabRevalidateRouteImport } from './routes/api/biab/revalidate.tsx'
-import { Route as ApiBiabAuthSplatRouteImport } from './routes/api/biab-auth.$.tsx'
+import { Route as StoreIndexRouteImport } from './routes/store.index'
+import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as StoreCartRouteImport } from './routes/store.cart'
+import { Route as StoreIdRouteImport } from './routes/store.$id'
+import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
+import { Route as DemoStoreRouteImport } from './routes/demo.store'
+import { Route as DemoFormRouteImport } from './routes/demo.form'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as AiProductFeedRouteImport } from './routes/ai.product-feed'
+import { Route as DotwellKnownMcpDotjsonRouteImport } from './routes/[.]well-known.mcp[.]json'
+import { Route as ServicesServiceAreaRouteImport } from './routes/services.$service.$area'
+import { Route as ApiBdRevalidateRouteImport } from './routes/api/bd/revalidate'
+import { Route as ApiBdAuthSplatRouteImport } from './routes/api/bd-auth.$'
 
 const UpdatesRoute = UpdatesRouteImport.update({
   id: '/updates',
@@ -144,14 +144,14 @@ const ServicesServiceAreaRoute = ServicesServiceAreaRouteImport.update({
   path: '/services/$service/$area',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBiabRevalidateRoute = ApiBiabRevalidateRouteImport.update({
-  id: '/api/biab/revalidate',
-  path: '/api/biab/revalidate',
+const ApiBdRevalidateRoute = ApiBdRevalidateRouteImport.update({
+  id: '/api/bd/revalidate',
+  path: '/api/bd/revalidate',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBiabAuthSplatRoute = ApiBiabAuthSplatRouteImport.update({
-  id: '/api/biab-auth/$',
-  path: '/api/biab-auth/$',
+const ApiBdAuthSplatRoute = ApiBdAuthSplatRouteImport.update({
+  id: '/api/bd-auth/$',
+  path: '/api/bd-auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -177,8 +177,8 @@ export interface FileRoutesByFullPath {
   '/store/cart': typeof StoreCartRoute
   '/services/': typeof ServicesIndexRoute
   '/store/': typeof StoreIndexRoute
-  '/api/biab-auth/$': typeof ApiBiabAuthSplatRoute
-  '/api/biab/revalidate': typeof ApiBiabRevalidateRoute
+  '/api/bd-auth/$': typeof ApiBdAuthSplatRoute
+  '/api/bd/revalidate': typeof ApiBdRevalidateRoute
   '/services/$service/$area': typeof ServicesServiceAreaRoute
 }
 export interface FileRoutesByTo {
@@ -203,8 +203,8 @@ export interface FileRoutesByTo {
   '/store/cart': typeof StoreCartRoute
   '/services': typeof ServicesIndexRoute
   '/store': typeof StoreIndexRoute
-  '/api/biab-auth/$': typeof ApiBiabAuthSplatRoute
-  '/api/biab/revalidate': typeof ApiBiabRevalidateRoute
+  '/api/bd-auth/$': typeof ApiBdAuthSplatRoute
+  '/api/bd/revalidate': typeof ApiBdRevalidateRoute
   '/services/$service/$area': typeof ServicesServiceAreaRoute
 }
 export interface FileRoutesById {
@@ -230,8 +230,8 @@ export interface FileRoutesById {
   '/store/cart': typeof StoreCartRoute
   '/services/': typeof ServicesIndexRoute
   '/store/': typeof StoreIndexRoute
-  '/api/biab-auth/$': typeof ApiBiabAuthSplatRoute
-  '/api/biab/revalidate': typeof ApiBiabRevalidateRoute
+  '/api/bd-auth/$': typeof ApiBdAuthSplatRoute
+  '/api/bd/revalidate': typeof ApiBdRevalidateRoute
   '/services/$service/$area': typeof ServicesServiceAreaRoute
 }
 export interface FileRouteTypes {
@@ -258,8 +258,8 @@ export interface FileRouteTypes {
     | '/store/cart'
     | '/services/'
     | '/store/'
-    | '/api/biab-auth/$'
-    | '/api/biab/revalidate'
+    | '/api/bd-auth/$'
+    | '/api/bd/revalidate'
     | '/services/$service/$area'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -284,8 +284,8 @@ export interface FileRouteTypes {
     | '/store/cart'
     | '/services'
     | '/store'
-    | '/api/biab-auth/$'
-    | '/api/biab/revalidate'
+    | '/api/bd-auth/$'
+    | '/api/bd/revalidate'
     | '/services/$service/$area'
   id:
     | '__root__'
@@ -310,8 +310,8 @@ export interface FileRouteTypes {
     | '/store/cart'
     | '/services/'
     | '/store/'
-    | '/api/biab-auth/$'
-    | '/api/biab/revalidate'
+    | '/api/bd-auth/$'
+    | '/api/bd/revalidate'
     | '/services/$service/$area'
   fileRoutesById: FileRoutesById
 }
@@ -337,8 +337,8 @@ export interface RootRouteChildren {
   StoreCartRoute: typeof StoreCartRoute
   ServicesIndexRoute: typeof ServicesIndexRoute
   StoreIndexRoute: typeof StoreIndexRoute
-  ApiBiabAuthSplatRoute: typeof ApiBiabAuthSplatRoute
-  ApiBiabRevalidateRoute: typeof ApiBiabRevalidateRoute
+  ApiBdAuthSplatRoute: typeof ApiBdAuthSplatRoute
+  ApiBdRevalidateRoute: typeof ApiBdRevalidateRoute
   ServicesServiceAreaRoute: typeof ServicesServiceAreaRoute
 }
 
@@ -498,18 +498,18 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof ServicesServiceAreaRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/biab/revalidate': {
-      id: '/api/biab/revalidate'
-      path: '/api/biab/revalidate'
-      fullPath: '/api/biab/revalidate'
-      preLoaderRoute: typeof ApiBiabRevalidateRouteImport
+    '/api/bd/revalidate': {
+      id: '/api/bd/revalidate'
+      path: '/api/bd/revalidate'
+      fullPath: '/api/bd/revalidate'
+      preLoaderRoute: typeof ApiBdRevalidateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/biab-auth/$': {
-      id: '/api/biab-auth/$'
-      path: '/api/biab-auth/$'
-      fullPath: '/api/biab-auth/$'
-      preLoaderRoute: typeof ApiBiabAuthSplatRouteImport
+    '/api/bd-auth/$': {
+      id: '/api/bd-auth/$'
+      path: '/api/bd-auth/$'
+      fullPath: '/api/bd-auth/$'
+      preLoaderRoute: typeof ApiBdAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -537,8 +537,8 @@ const rootRouteChildren: RootRouteChildren = {
   StoreCartRoute: StoreCartRoute,
   ServicesIndexRoute: ServicesIndexRoute,
   StoreIndexRoute: StoreIndexRoute,
-  ApiBiabAuthSplatRoute: ApiBiabAuthSplatRoute,
-  ApiBiabRevalidateRoute: ApiBiabRevalidateRoute,
+  ApiBdAuthSplatRoute: ApiBdAuthSplatRoute,
+  ApiBdRevalidateRoute: ApiBdRevalidateRoute,
   ServicesServiceAreaRoute: ServicesServiceAreaRoute,
 }
 export const routeTree = rootRouteImport

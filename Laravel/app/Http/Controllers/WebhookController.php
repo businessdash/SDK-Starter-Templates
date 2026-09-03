@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Webhook;
+use App\Bd\Bd;
+use App\Bd\Webhook;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 /**
- * `POST /api/biab/revalidate` — BIAB tells this site content changed, and
+ * `POST /api/bd/revalidate` — BD tells this site content changed, and
  * the site drops exactly the cache tags named in the payload. No polling,
  * and edits go live immediately.
  *
@@ -21,12 +21,12 @@ class WebhookController extends Controller
     {
         $result = Webhook::verify(
             $request->getContent(),
-            $request->header('X-BIAB-Signature'),
+            $request->header('X-BD-Signature'),
         );
 
         if (! $result['ok']) {
             // 400, not 500 — a bad signature is the caller's problem, and a
-            // 5xx would make BIAB retry a request that can never succeed.
+            // 5xx would make BD retry a request that can never succeed.
             return response()->json(['error' => $result['reason']], 400);
         }
 
@@ -36,7 +36,7 @@ class WebhookController extends Controller
         ));
 
         if ($tags) {
-            Biab::forget($tags);
+            Bd::forget($tags);
         }
 
         return response()->json(['ok' => true, 'purged' => count($tags)]);

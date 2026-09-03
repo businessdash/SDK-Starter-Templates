@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { biabApi } from "../lib/biab-api.client";
+import { bdApi } from "../lib/bd-api.client";
 
 type Variant = { service?: string; area?: string };
 
@@ -10,7 +10,7 @@ type Variant = { service?: string; area?: string };
  * via the server, linking each to its rendered page.
  */
 @Component({
-	selector: "biab-services-index-page",
+	selector: "bd-services-index-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -18,7 +18,7 @@ type Variant = { service?: string; area?: string };
 			<h1 class="section__title">Service areas</h1>
 			@if (variants().length === 0) {
 				<p class="muted">
-					No programmatic pages yet — define services + service areas in BIAB and publish the
+					No programmatic pages yet — define services + service areas in BD and publish the
 					schema (<code>pnpm sync-schema</code>) to generate them.
 				</p>
 			} @else {
@@ -39,7 +39,7 @@ export class ServicesIndexPage implements OnInit {
 	readonly variants = signal<Variant[]>([]);
 
 	async ngOnInit() {
-		const res = await biabApi.serviceVariants();
+		const res = await bdApi.serviceVariants();
 		this.variants.set((res?.variants ?? []) as Variant[]);
 	}
 

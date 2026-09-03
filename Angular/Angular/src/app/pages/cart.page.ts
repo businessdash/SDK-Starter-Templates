@@ -1,16 +1,16 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import { biabApi, type CartSnapshot } from "../lib/biab-api.client";
+import { bdApi, type CartSnapshot } from "../lib/bd-api.client";
 
 /**
  * Cart view: line items with quantity controls, coupon apply/remove
  * (reactive form), clear, and "Checkout" → Stripe. All mutations go through
- * the server `/api/biab/cart/*` endpoints which carry the httpOnly visitor
+ * the server `/api/bd/cart/*` endpoints which carry the httpOnly visitor
  * cookie. ?status=success|cancel (from the Stripe return) shows a banner.
  */
 @Component({
-	selector: "biab-cart-page",
+	selector: "bd-cart-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ReactiveFormsModule, RouterLink],
 	template: `
@@ -47,9 +47,9 @@ import { biabApi, type CartSnapshot } from "../lib/biab-api.client";
 							Coupon
 							<input formControlName="code" placeholder="Code" />
 						</label>
-						<button class="biab-btn biab-btn--ghost" type="submit" [disabled]="couponForm.invalid">Apply</button>
+						<button class="bd-btn bd-btn--ghost" type="submit" [disabled]="couponForm.invalid">Apply</button>
 						@if (c.couponCode) {
-							<button class="biab-btn biab-btn--ghost" type="button" (click)="removeCoupon()">
+							<button class="bd-btn bd-btn--ghost" type="button" (click)="removeCoupon()">
 								Remove “{{ c.couponCode }}”
 							</button>
 						}
@@ -58,10 +58,10 @@ import { biabApi, type CartSnapshot } from "../lib/biab-api.client";
 					<p class="cart-total">Subtotal: <strong>{{ money(c.subtotal, c.currency) }}</strong></p>
 
 					<div class="cart-actions">
-						<button class="biab-btn" type="button" (click)="checkout()" [disabled]="busy()">
+						<button class="bd-btn" type="button" (click)="checkout()" [disabled]="busy()">
 							{{ busy() ? "Starting…" : "Checkout" }}
 						</button>
-						<button class="biab-btn biab-btn--ghost" type="button" (click)="clear()">Clear cart</button>
+						<button class="bd-btn bd-btn--ghost" type="button" (click)="clear()">Clear cart</button>
 					</div>
 				}
 			} @else {
@@ -82,7 +82,7 @@ export class CartPage implements OnInit {
 
 	async ngOnInit() {
 		this.status.set(this.route.snapshot.queryParamMap.get("status"));
-		this.cart.set(await biabApi.cart());
+		this.cart.set(await bdApi.cart());
 	}
 
 	money(cents: number, currency: string): string {
@@ -95,35 +95,35 @@ export class CartPage implements OnInit {
 	}
 
 	async setQty(itemId: string, quantity: number) {
-		const next = await biabApi.updateCartItem(itemId, Math.max(0, quantity));
+		const next = await bdApi.updateCartItem(itemId, Math.max(0, quantity));
 		if (next !== null) this.cart.set(next);
 	}
 
 	async remove(itemId: string) {
-		const next = await biabApi.removeCartItem(itemId);
+		const next = await bdApi.removeCartItem(itemId);
 		if (next !== null) this.cart.set(next);
 	}
 
 	async applyCoupon() {
 		const code = this.couponForm.controls.code.value.trim();
 		if (!code) return;
-		const next = await biabApi.applyCoupon(code);
+		const next = await bdApi.applyCoupon(code);
 		if (next !== null) this.cart.set(next);
 	}
 
 	async removeCoupon() {
-		const next = await biabApi.removeCoupon();
+		const next = await bdApi.removeCoupon();
 		if (next !== null) this.cart.set(next);
 	}
 
 	async clear() {
-		const next = await biabApi.clearCart();
+		const next = await bdApi.clearCart();
 		if (next !== null) this.cart.set(next);
 	}
 
 	async checkout() {
 		this.busy.set(true);
-		const res = await biabApi.startCheckout();
+		const res = await bdApi.startCheckout();
 		this.busy.set(false);
 		if (res?.url) window.location.href = res.url;
 	}

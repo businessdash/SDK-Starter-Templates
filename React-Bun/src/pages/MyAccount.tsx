@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { biab } from "../lib/biab";
-import type { Loose } from "../lib/biab";
+import { bd } from "../lib/bd";
+import type { Loose } from "../lib/bd";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 export function MyAccount() {
-	const { data, error, loading } = useApi(() => biab.portal.work());
+	const { data, error, loading } = useApi(() => bd.portal.work());
 	const [rating, setRating] = useState("5");
 	const [body, setBody] = useState("");
 	const [msg, setMsg] = useState("");
@@ -18,7 +18,7 @@ export function MyAccount() {
 		setSubmitting(true);
 		setMsg("Submitting…");
 		try {
-			const res: Loose = await biab.portal.submitReview({ rating: Number(rating), body: body.trim() });
+			const res: Loose = await bd.portal.submitReview({ rating: Number(rating), body: body.trim() });
 			setMsg(res?.status === "pending" ? "Thanks! Your review is pending moderation." : "Thanks for your review!");
 			setBody("");
 		} catch (e: any) {
@@ -50,10 +50,10 @@ export function MyAccount() {
 				<div className="signin-card">
 					<p>You're not signed in.</p>
 					<div className="signin-card__actions">
-						<a className="btn btn--primary" href="/api/biab-auth/sign-in">
+						<a className="btn btn--primary" href="/api/bd-auth/sign-in">
 							Sign in
 						</a>
-						<a className="btn btn--ghost" href="/api/biab-auth/sign-up">
+						<a className="btn btn--ghost" href="/api/bd-auth/sign-up">
 							Create account
 						</a>
 					</div>
@@ -73,7 +73,7 @@ export function MyAccount() {
 				<p>
 					Signed in as <strong>{u.firstName || u.email || "customer"}</strong>
 				</p>
-				<a className="btn btn--ghost btn--sm" href="/api/biab-auth/sign-out">
+				<a className="btn btn--ghost btn--sm" href="/api/bd-auth/sign-out">
 					Sign out
 				</a>
 			</div>

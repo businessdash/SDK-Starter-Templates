@@ -1,6 +1,6 @@
 import Config
 
-config :biab_starter, BiabStarterWeb.Endpoint,
+config :bd_starter, BdStarterWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "testonlytestonlytestonlytestonlytestonlytestonlytestonlytestonly64",
   server: false

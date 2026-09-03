@@ -1,6 +1,6 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 
-import type { Load } from '@/biab/useBiab'
+import type { Load } from '@/bd/useBd'
 
 /**
  * Renders a `Load` with a consistent spinner / message / content shape, and
@@ -37,8 +37,8 @@ export function SetupBanner() {
   return (
     <View style={styles.banner}>
       <Text style={styles.bannerText}>
-        Not connected to BIAB — set EXPO_PUBLIC_BIAB_SITE_ID and
-        EXPO_PUBLIC_BIAB_PK in .env, then restart the dev server.
+        Not connected to BD — set EXPO_PUBLIC_BD_SITE_ID and
+        EXPO_PUBLIC_BD_PK in .env, then restart the dev server.
       </Text>
     </View>
   )

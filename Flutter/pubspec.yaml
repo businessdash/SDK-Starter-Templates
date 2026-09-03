@@ -1,6 +1,6 @@
-name: biab_starter
+name: bd_starter
 description: >-
-  BIAB SDK — Flutter starter. The client lives in `packages/businessdash_sdk` as a PURE
+  BD SDK — Flutter starter. The client lives in `packages/businessdash_sdk` as a PURE
   DART package so it can be analyzed and tested without a Flutter toolchain;
   this package is the Flutter app built on top of it.
 publish_to: none

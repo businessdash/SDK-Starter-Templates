@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,7 +12,7 @@ use Illuminate\View\View;
  * Cart + checkout hand-off.
  *
  * The visitor token lives in an httpOnly cookie on this domain; the cart
- * itself lives at BIAB. Nothing about the cart is in the session or the DB,
+ * itself lives at BD. Nothing about the cart is in the session or the DB,
  * which is why this works unchanged behind a load balancer with no sticky
  * sessions.
  */
@@ -23,7 +23,7 @@ class CartController extends Controller
         $token = $this->visitorToken($request);
 
         $cart = $token
-            ? Biab::attempt(static fn (Client $c) => $c->cart($token)->get(), default: null)
+            ? Bd::attempt(static fn (Client $c) => $c->cart($token)->get(), default: null)
             : null;
 
         return view('pages.cart', ['cart' => $cart]);
@@ -41,7 +41,7 @@ class CartController extends Controller
             return back()->with('cart_error', 'Store is not configured.');
         }
 
-        Biab::attempt(static fn (Client $c) => $c->cart($token)->addItem([
+        Bd::attempt(static fn (Client $c) => $c->cart($token)->addItem([
             'productId' => $validated['productId'],
             'quantity' => $validated['quantity'] ?? 1,
         ]));
@@ -59,7 +59,7 @@ class CartController extends Controller
 
         $token = $this->visitorToken($request);
         if ($token) {
-            Biab::attempt(static fn (Client $c) => $c->cart($token)
+            Bd::attempt(static fn (Client $c) => $c->cart($token)
                 ->updateItem($itemId, ['quantity' => $validated['quantity']]));
         }
 
@@ -70,7 +70,7 @@ class CartController extends Controller
     {
         $token = $this->visitorToken($request);
         if ($token) {
-            Biab::attempt(static fn (Client $c) => $c->cart($token)->removeItem($itemId));
+            Bd::attempt(static fn (Client $c) => $c->cart($token)->removeItem($itemId));
         }
 
         return redirect()->route('cart');
@@ -82,7 +82,7 @@ class CartController extends Controller
         $token = $this->visitorToken($request);
 
         if ($token) {
-            $result = Biab::attempt(
+            $result = Bd::attempt(
                 static fn (Client $c) => $c->cart($token)->applyCoupon($validated['code'])
             );
             if (! $result) {
@@ -97,7 +97,7 @@ class CartController extends Controller
     {
         $token = $this->visitorToken($request);
         if ($token) {
-            Biab::attempt(static fn (Client $c) => $c->cart($token)->removeCoupon());
+            Bd::attempt(static fn (Client $c) => $c->cart($token)->removeCoupon());
         }
 
         return redirect()->route('cart');
@@ -107,7 +107,7 @@ class CartController extends Controller
     {
         $token = $this->visitorToken($request);
         if ($token) {
-            Biab::attempt(static fn (Client $c) => $c->cart($token)->clear());
+            Bd::attempt(static fn (Client $c) => $c->cart($token)->clear());
         }
 
         return redirect()->route('cart');
@@ -124,7 +124,7 @@ class CartController extends Controller
             return redirect()->route('cart');
         }
 
-        $session = Biab::attempt(static fn (Client $c) => $c->checkout($token)->start([
+        $session = Bd::attempt(static fn (Client $c) => $c->checkout($token)->start([
             // Stripe substitutes the real id for the placeholder on success.
             'successUrl' => route('store').'?session_id={CHECKOUT_SESSION_ID}',
             'cancelUrl' => route('cart'),
@@ -140,7 +140,7 @@ class CartController extends Controller
 
     private function visitorToken(Request $request): ?string
     {
-        $token = $request->cookie(config('biab.cart_cookie'));
+        $token = $request->cookie(config('bd.cart_cookie'));
 
         return is_string($token) && $token !== '' ? $token : null;
     }
@@ -151,7 +151,7 @@ class CartController extends Controller
      *
      * The token is just an opaque id WE generate — there is no round trip to
      * mint one. The platform keys the cart on whatever arrives in
-     * `X-BIAB-Cart-Visitor`. (`cart/session` exists but mints a tokenized
+     * `X-BD-Cart-Visitor`. (`cart/session` exists but mints a tokenized
      * iframe-embed URL, which is a different feature.)
      *
      * @return array{0: ?string, 1: ?\Symfony\Component\HttpFoundation\Cookie}
@@ -167,7 +167,7 @@ class CartController extends Controller
 
         // 30 days, httpOnly — the browser never needs to read this.
         $cookie = cookie(
-            name: config('biab.cart_cookie'),
+            name: config('bd.cart_cookie'),
             value: $token,
             minutes: 60 * 24 * 30,
             path: '/',

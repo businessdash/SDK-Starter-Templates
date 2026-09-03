@@ -12,7 +12,7 @@ import {
 	getCartSnapshot,
 	listStoreSubscriptions,
 	startSubscriptionCheckout,
-} from "~/lib/biab-store.server";
+} from "~/lib/bd-store.server";
 
 export const meta: MetaFunction = () => [
 	{ title: "Subscriptions — Your Business" },
@@ -73,7 +73,7 @@ export default function SubscriptionsPage() {
 									<span className="price">{o.priceLabel}</span>
 									<Form method="post">
 										<input type="hidden" name="offeringId" value={o.id} />
-										<button className="biab-btn" type="submit">
+										<button className="bd-btn" type="submit">
 											Subscribe
 										</button>
 									</Form>

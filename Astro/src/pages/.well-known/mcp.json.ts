@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 
 import { mcpManifestHandler } from "@businessdash/sdk/mcp";
 
-import { getDistributionConfig } from "../../lib/biab-distribution";
+import { getDistributionConfig } from "../../lib/bd-distribution";
 
 export const prerender = false;
 

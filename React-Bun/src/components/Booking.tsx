@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 
 import {
-	biab,
+	bd,
 	type SchedulingEventType,
 	type SchedulingSlot,
-} from "../lib/biab";
+} from "../lib/bd";
 
 /**
  * Calendly-shape end-to-end booking through the SDK:
@@ -15,7 +15,7 @@ import {
  *      authoritative state including the signed manage/reschedule/
  *      cancel tokens for the consumer to hand to the booker)
  *
- * No external scheduling vendor. Everything's BIAB-side via the
+ * No external scheduling vendor. Everything's BD-side via the
  * `client.scheduling` resource.
  */
 
@@ -59,7 +59,7 @@ export function Booking() {
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
-		biab.scheduling
+		bd.scheduling
 			.listEventTypes()
 			.then((items) => {
 				setEventTypes(items);
@@ -74,7 +74,7 @@ export function Booking() {
 		const to = endOfTomorrowWeek(from);
 		setSlots(null);
 		setPickedSlot(null);
-		biab.scheduling
+		bd.scheduling
 			.getAvailableSlots(selectedSlug, { from, to })
 			.then(setSlots)
 			.catch((err) => setError(err.message));
@@ -85,7 +85,7 @@ export function Booking() {
 		setConfirming(true);
 		setError(null);
 		try {
-			const result = await biab.scheduling.confirmBooking({
+			const result = await bd.scheduling.confirmBooking({
 				eventTypeSlug: selectedSlug,
 				startAt: new Date(pickedSlot),
 				invitee: {
@@ -108,12 +108,12 @@ export function Booking() {
 
 	if (confirmation) {
 		return (
-			<section className="biab-section biab-section--narrow" id="booking">
-				<div className="biab-card booking">
-					<span className="biab-badge" style={{ alignSelf: "flex-start" }}>
+			<section className="bd-section bd-section--narrow" id="booking">
+				<div className="bd-card booking">
+					<span className="bd-badge" style={{ alignSelf: "flex-start" }}>
 						Booked
 					</span>
-					<h2 className="biab-section__title">You're on the calendar.</h2>
+					<h2 className="bd-section__title">You're on the calendar.</h2>
 					<p style={{ color: "var(--text)" }}>{confirmation}</p>
 				</div>
 			</section>
@@ -121,28 +121,28 @@ export function Booking() {
 	}
 
 	return (
-		<section className="biab-section biab-section--narrow" id="booking">
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">Schedule</span>
-				<h2 className="biab-section__title">Book a time</h2>
-				<p className="biab-section__sub">
+		<section className="bd-section bd-section--narrow" id="booking">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">Schedule</span>
+				<h2 className="bd-section__title">Book a time</h2>
+				<p className="bd-section__sub">
 					Pick a slot and we'll send confirmation + a calendar invite.
 				</p>
 			</div>
-			<div className="biab-card booking">
+			<div className="bd-card booking">
 				{eventTypes.length === 0 ? (
-					<div className="biab-empty">
-						No event types configured yet. Add one in BIAB at Dashboard →
+					<div className="bd-empty">
+						No event types configured yet. Add one in BD at Dashboard →
 						Scheduling → Event Types.
 					</div>
 				) : (
 					<>
 						<div>
-							<label className="biab-label" htmlFor="event-type">
+							<label className="bd-label" htmlFor="event-type">
 								What for?
 							</label>
 							<select
-								className="biab-select"
+								className="bd-select"
 								id="event-type"
 								onChange={(e) => setSelectedSlug(e.target.value)}
 								value={selectedSlug ?? ""}
@@ -156,11 +156,11 @@ export function Booking() {
 						</div>
 
 						<div>
-							<div className="biab-label">Next available slots</div>
+							<div className="bd-label">Next available slots</div>
 							{slots === null ? (
-								<div className="biab-loading">Computing availability…</div>
+								<div className="bd-loading">Computing availability…</div>
 							) : slots.length === 0 ? (
-								<div className="biab-empty">
+								<div className="bd-empty">
 									No availability in the next week. Try another event type.
 								</div>
 							) : (
@@ -184,11 +184,11 @@ export function Booking() {
 							<>
 								<div className="field-row field-row--cols">
 									<div>
-										<label className="biab-label" htmlFor="booking-name">
+										<label className="bd-label" htmlFor="booking-name">
 											Your name
 										</label>
 										<input
-											className="biab-input"
+											className="bd-input"
 											id="booking-name"
 											onChange={(e) =>
 												setInvitee((s) => ({ ...s, name: e.target.value }))
@@ -198,11 +198,11 @@ export function Booking() {
 										/>
 									</div>
 									<div>
-										<label className="biab-label" htmlFor="booking-email">
+										<label className="bd-label" htmlFor="booking-email">
 											Email
 										</label>
 										<input
-											className="biab-input"
+											className="bd-input"
 											id="booking-email"
 											onChange={(e) =>
 												setInvitee((s) => ({ ...s, email: e.target.value }))
@@ -214,11 +214,11 @@ export function Booking() {
 									</div>
 								</div>
 								<div>
-									<label className="biab-label" htmlFor="booking-phone">
+									<label className="bd-label" htmlFor="booking-phone">
 										Phone (optional)
 									</label>
 									<input
-										className="biab-input"
+										className="bd-input"
 										id="booking-phone"
 										onChange={(e) =>
 											setInvitee((s) => ({ ...s, phone: e.target.value }))
@@ -229,11 +229,11 @@ export function Booking() {
 									/>
 								</div>
 								<div>
-									<label className="biab-label" htmlFor="booking-notes">
+									<label className="bd-label" htmlFor="booking-notes">
 										Anything we should know?
 									</label>
 									<textarea
-										className="biab-textarea"
+										className="bd-textarea"
 										id="booking-notes"
 										onChange={(e) =>
 											setInvitee((s) => ({ ...s, notes: e.target.value }))
@@ -243,7 +243,7 @@ export function Booking() {
 									/>
 								</div>
 								<button
-									className="biab-btn"
+									className="bd-btn"
 									disabled={
 										confirming || !invitee.email || !invitee.name
 									}

@@ -1,17 +1,17 @@
-# BIAB SDK — React + Bun starter
+# BD SDK — React + Bun starter
 
-A generic business website wired against the **BIAB SDK** (`@businessdash/sdk`). Use it as a reference for how to consume BIAB data from a pure React SPA. The same canonical site ships across the other framework starters (Astro, Nuxt, Qwik, Svelte, T3-App, Tanstack-Start) — only the **transport** changes per framework.
+A generic business website wired against the **BD SDK** (`@businessdash/sdk`). Use it as a reference for how to consume BD data from a pure React SPA. The same canonical site ships across the other framework starters (Astro, Nuxt, Qwik, Svelte, T3-App, Tanstack-Start) — only the **transport** changes per framework.
 
 ## The pattern
 
 A pure React SPA has no server, which means there's no safe place to hide an API key from the browser bundle. This template adds a tiny **Bun HTTP proxy** that:
 
-1. Holds `BIAB_API_KEY` server-side and instantiates `createBiabClient` from `@businessdash/sdk`.
-2. Exposes a small set of `/api/biab/*` endpoints — each one is a one-liner wrapper around a single SDK call.
-3. In production, serves the Vite-built `dist/` directory; in dev, Vite serves the SPA and forwards `/api/biab/*` to the Bun proxy via `vite.config.ts`.
+1. Holds `BD_API_KEY` server-side and instantiates `createBdClient` from `@businessdash/sdk`.
+2. Exposes a small set of `/api/bd/*` endpoints — each one is a one-liner wrapper around a single SDK call.
+3. In production, serves the Vite-built `dist/` directory; in dev, Vite serves the SPA and forwards `/api/bd/*` to the Bun proxy via `vite.config.ts`.
 
 ```
-browser → /api/biab/<route> → Bun (server.ts) → BIAB Package API
+browser → /api/bd/<route> → Bun (server.ts) → BD Package API
 ```
 
 The browser bundle imports types from `@businessdash/sdk`, but never the runtime — it just hits same-origin paths. The bearer key stays in the Bun process.
@@ -20,16 +20,16 @@ The browser bundle imports types from `@businessdash/sdk`, but never the runtime
 
 Three additions, mirrored across every starter — all served by the Bun proxy (the key-holder), with the dev-server forwards already wired in `vite.config.ts`:
 
-- **AEO / llms.txt** — the Bun server serves `/llms.txt` (the answer-engine index the org curates at BIAB → Marketing → AI Distribution) from this site's own root via `llmsTxtHandler` from `@businessdash/sdk/distribution`. The product feed needs no proxy — submit its BIAB URL (built by `productFeedUrl`) to merchant programs directly; `/ai/product-feed` is a convenience redirect to it.
-- **MCP connector proxy** — `/api/mcp` (JSON-RPC) + `/.well-known/mcp.json` (discovery manifest) give this self-hosted domain the same per-site MCP connector the platform serves natively, via `mcpHandler` + `mcpManifestHandler` from `@businessdash/sdk/mcp`. The URL an org hands to Claude / ChatGPT / Gemini is their own site; BIAB still enforces the org's MCP opt-in and per-tool write gates.
-- **Relational custom collections (`/todos`)** — `biab.data-model.config.ts` declares two related collections (`todos`, and `todoImages` with a required RELATION to `todos`) with the 0.9.50+ `collection()` + `bd` builders. Push with `bun run sync-data-model`, promote in the dashboard, set the generated "Todo Form" live, then open `/todos` — the SPA reads `GET /api/biab/todos` (the Bun server joins images onto their todo via `dataModel.listRecords`), and creates go through the generated `todo-form` over the existing forms proxy. Reads go through the data-model client, writes go through forms; there is no direct row-write API for consumers.
+- **AEO / llms.txt** — the Bun server serves `/llms.txt` (the answer-engine index the org curates at BD → Marketing → AI Distribution) from this site's own root via `llmsTxtHandler` from `@businessdash/sdk/distribution`. The product feed needs no proxy — submit its BD URL (built by `productFeedUrl`) to merchant programs directly; `/ai/product-feed` is a convenience redirect to it.
+- **MCP connector proxy** — `/api/mcp` (JSON-RPC) + `/.well-known/mcp.json` (discovery manifest) give this self-hosted domain the same per-site MCP connector the platform serves natively, via `mcpHandler` + `mcpManifestHandler` from `@businessdash/sdk/mcp`. The URL an org hands to Claude / ChatGPT / Gemini is their own site; BD still enforces the org's MCP opt-in and per-tool write gates.
+- **Relational custom collections (`/todos`)** — `bd.data-model.config.ts` declares two related collections (`todos`, and `todoImages` with a required RELATION to `todos`) with the 0.9.50+ `collection()` + `bd` builders. Push with `bun run sync-data-model`, promote in the dashboard, set the generated "Todo Form" live, then open `/todos` — the SPA reads `GET /api/bd/todos` (the Bun server joins images onto their todo via `dataModel.listRecords`), and creates go through the generated `todo-form` over the existing forms proxy. Reads go through the data-model client, writes go through forms; there is no direct row-write API for consumers.
 
 ## Setup
 
 ```sh
 bun install
 cp .env.example .env.local
-# Fill BIAB_API_KEY, BIAB_SITE_ID, BIAB_PACKAGE_API_BASE_URL
+# Fill BD_API_KEY, BD_SITE_ID, BD_PACKAGE_API_BASE_URL
 
 bun run dev
 ```
@@ -37,7 +37,7 @@ bun run dev
 `bun run dev` starts both processes via `concurrently`:
 
 - **Vite** on http://localhost:5173 (the SPA, with HMR)
-- **Bun proxy** on http://localhost:3000 (`/api/biab/*` handler)
+- **Bun proxy** on http://localhost:3000 (`/api/bd/*` handler)
 
 Open http://localhost:5173. Vite proxies API calls to the Bun server.
 
@@ -45,7 +45,7 @@ For production:
 
 ```sh
 bun run build      # tsc + vite build → dist/
-bun run preview    # bun server.ts serves dist/ + /api/biab/* on the same port
+bun run preview    # bun server.ts serves dist/ + /api/bd/* on the same port
 ```
 
 ## What's in each section
@@ -54,46 +54,46 @@ Every section under `src/components/` exercises one SDK surface:
 
 | Section | SDK call | What it shows |
 | --- | --- | --- |
-| **Hero / About / Services** | `biab.marketing.getPageBundle({ pageKey: "home" })` | Class A — admin-published marketing content with local fallbacks |
-| **Gallery** | `biab.gallery.list({ limit: 12, fields: ["id", "src", "title", "category", "blurDataURL"] as const })` | **Typed field selection** — const-generic narrowing means the server SELECTs only the columns you asked for, and TS types `.map((item) => …)` accordingly |
-| **Blog** | `biab.blog.listPosts({ limit: 6 })` | Class A — webhook-invalidated; new posts appear within seconds of publish |
-| **Booking** | `biab.scheduling.listEventTypes()` → `getAvailableSlots(slug, { from, to })` → `confirmBooking(...)` | Full Calendly-shape flow end-to-end |
-| **Contact form** | `biab.forms.schema(slug)` → render fields dynamically → `biab.forms.submit(slug, data, ...)` | Schema-driven form rendering + client-side validation against the same shape BIAB enforces server-side |
+| **Hero / About / Services** | `bd.marketing.getPageBundle({ pageKey: "home" })` | Class A — admin-published marketing content with local fallbacks |
+| **Gallery** | `bd.gallery.list({ limit: 12, fields: ["id", "src", "title", "category", "blurDataURL"] as const })` | **Typed field selection** — const-generic narrowing means the server SELECTs only the columns you asked for, and TS types `.map((item) => …)` accordingly |
+| **Blog** | `bd.blog.listPosts({ limit: 6 })` | Class A — webhook-invalidated; new posts appear within seconds of publish |
+| **Booking** | `bd.scheduling.listEventTypes()` → `getAvailableSlots(slug, { from, to })` → `confirmBooking(...)` | Full Calendly-shape flow end-to-end |
+| **Contact form** | `bd.forms.schema(slug)` → render fields dynamically → `bd.forms.submit(slug, data, ...)` | Schema-driven form rendering + client-side validation against the same shape BD enforces server-side |
 
-## Feature parity (BIAB SDK 0.9.5)
+## Feature parity (BD SDK 0.9.5)
 
 This starter is aligned, surface-for-surface, with the production reference
 consumer. A tiny client router (`src/lib/router.tsx`) switches between the home
-sections and the feature pages; every surface degrades gracefully when BIAB env
+sections and the feature pages; every surface degrades gracefully when BD env
 is unset.
 
 | Surface | Route / page | SDK calls (proxied) |
 | --- | --- | --- |
 | **Home sections** | `/` | `marketing.getPageBundle`, `gallery.list`, `blog.listPosts`, `scheduling.*`, `forms.*` |
 | **Storefront** | `/store`, `/store/:id` | `storefront.listProducts`, `storefront.getProduct` |
-| **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `biab_cart_visitor` httpOnly cookie minted by the proxy |
+| **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie minted by the proxy |
 | **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` |
 | **Subscriptions** | `/subscriptions` | `subscriptions.list` |
 | **Reviews wall** | `/reviews` | `reviews.list({ limit, offset })` with "load more" |
 | **News banner + updates** | banner on every page, `/updates` | `bundle.banner`, `bundle.updates` |
-| **Auth + portal** | `/api/biab-auth/*`, `/my-account` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
+| **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelPages.listVariants`, `parallelPages.render` |
-| **SEO files** | `/sitemap.xml`, `/robots.txt` | proxied from BIAB; JSON-LD injected into the served index.html in prod |
-| **Revalidation webhook** | `POST /api/biab/revalidate` | `createGenericRevalidateHandler` → busts the proxy's in-memory tag cache |
+| **SEO files** | `/sitemap.xml`, `/robots.txt` | proxied from BD; JSON-LD injected into the served index.html in prod |
+| **Revalidation webhook** | `POST /api/bd/revalidate` | `createGenericRevalidateHandler` → busts the proxy's in-memory tag cache |
 
 ### Environment
 
 | Var | Required | Purpose |
 | --- | --- | --- |
-| `BIAB_API_KEY` / `BIAB_SITE_ID` / `BIAB_PACKAGE_API_BASE_URL` | for live data | Server-side SDK credentials (proxy only) |
-| `BIAB_REVALIDATION_SECRET` | for webhook | HMAC secret verifying publish events |
-| `BIAB_AUTH_CALLBACK_URL` | for auth/portal | The proxy's `/api/biab-auth/callback` URL (register in WorkOS) |
-| `VITE_BIAB_SITE_ID` / `VITE_BIAB_PACKAGE_API_BASE_URL` / `VITE_BIAB_PUBLIC_KEY` | optional | Client-side analytics (`<BIABAnalytics />`) — the public analytics key only |
+| `BD_API_KEY` / `BD_SITE_ID` / `BD_PACKAGE_API_BASE_URL` | for live data | Server-side SDK credentials (proxy only) |
+| `BD_REVALIDATION_SECRET` | for webhook | HMAC secret verifying publish events |
+| `BD_AUTH_CALLBACK_URL` | for auth/portal | The proxy's `/api/bd-auth/callback` URL (register in WorkOS) |
+| `VITE_BD_SITE_ID` / `VITE_BD_PACKAGE_API_BASE_URL` / `VITE_BD_PUBLIC_KEY` | optional | Client-side analytics (`<BDAnalytics />`) — the public analytics key only |
 
 ### Schema CLI
 
 ```sh
-bun run sync-schema     # publish biab.config.ts schema to BIAB's draft slot
+bun run sync-schema     # publish bd.config.ts schema to BD's draft slot
 bun run sync-content    # (optional) push a local content tree
 bun run print-schema    # print the resolved schema JSON
 ```
@@ -102,32 +102,32 @@ bun run print-schema    # print the resolved schema JSON
 
 The pattern is uniform: one entry in the server route table + one method on the browser client.
 
-1. In `server.ts`, add a key like `"GET /api/biab/<your-route>"` with a handler that calls one SDK method and returns its JSON.
-2. In `src/lib/biab.ts`, add a method that hits that same path.
+1. In `server.ts`, add a key like `"GET /api/bd/<your-route>"` with a handler that calls one SDK method and returns its JSON.
+2. In `src/lib/bd.ts`, add a method that hits that same path.
 3. In a component, import and use it.
 
 That's the whole loop.
 
 ## Live updates (webhook revalidation)
 
-BIAB POSTs to `/api/biab/revalidate` on every publish. The Bun proxy wraps its
+BD POSTs to `/api/bd/revalidate` on every publish. The Bun proxy wraps its
 SDK reads in a small in-memory **tag cache**, and the webhook
 (`createGenericRevalidateHandler` from `@businessdash/sdk/adapters/revalidate`)
 verifies the HMAC signature and evicts the matching cache entries — so the next
 fetch returns fresh data within seconds of a publish, no redeploy. Set
-`BIAB_REVALIDATION_SECRET` to enable it.
+`BD_REVALIDATION_SECRET` to enable it.
 
 ## Project layout
 
 ```
 .
 ├── server.ts                 # Bun proxy — key holder, auth, webhook+cache, SEO, JSON-LD
-├── biab.config.ts            # Marketing schema + brand tokens + parallel page
+├── bd.config.ts            # Marketing schema + brand tokens + parallel page
 ├── vite.config.ts            # Vite dev proxy → Bun server (api, auth, sitemap, robots)
 ├── src/
 │   ├── App.tsx               # Router: home sections + feature pages
 │   ├── lib/
-│   │   ├── biab.ts           # Browser-side typed fetcher (no key) + money/dollars
+│   │   ├── bd.ts           # Browser-side typed fetcher (no key) + money/dollars
 │   │   └── router.tsx        # Tiny dependency-free client router
 │   ├── components/
 │   │   ├── Header.tsx  Footer.tsx  Banner.tsx
@@ -145,13 +145,13 @@ fetch returns fresh data within seconds of a publish, no redeploy. Set
 
 ## Where your content comes from
 
-Nothing business-specific is hardcoded in this template — it all comes from BIAB,
+Nothing business-specific is hardcoded in this template — it all comes from BD,
 through **two distinct sources**. Keep them straight:
 
 ### 1. Company Profile — managed in the dashboard
 
 Your **service hours, service areas, payment options, warranties, social links,
-and phone number** are edited in your BIAB dashboard under
+and phone number** are edited in your BD dashboard under
 **Settings → Company Profile**, and arrive on the marketing bundle. Read them off
 the bundle — never hardcode them in this template:
 
@@ -171,16 +171,16 @@ content sync below.
 ### 2. Marketing content — schema + content sync
 
 Your page copy (hero, about, services, …) is declared as a schema in
-`biab.config.ts` and seeded from `src/content/<locale>/…`. Push both with the
+`bd.config.ts` and seeded from `src/content/<locale>/…`. Push both with the
 package scripts:
 
 ```sh
-sync-schema    # push the content SCHEMA to BIAB's draft slot, then promote it in the dashboard
+sync-schema    # push the content SCHEMA to BD's draft slot, then promote it in the dashboard
 sync-content   # seed the section VALUES from src/content/**
 ```
 
 Put one JSON file per section under `src/content/<locale>/<page>/<section>.json`
-(matching `biab.config.ts`), then run `sync-content`. Edit and re-run any time.
+(matching `bd.config.ts`), then run `sync-content`. Edit and re-run any time.
 
 ## Data: environment, schema, seeding, CRUD
 
@@ -193,9 +193,9 @@ Three, from **Dashboard → Developers → API keys**:
 
 | Variable | What it is |
 |---|---|
-| `BIAB_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
-| `BIAB_SITE_ID` | Which site this app is. |
-| `BIAB_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
+| `BD_API_KEY` | The key. **Server-side only** unless it is a publishable key. |
+| `BD_SITE_ID` | Which site this app is. |
+| `BD_PACKAGE_API_BASE_URL` | e.g. `https://businessdash.us/api/package/v1` |
 
 > A **secret** key must never reach the browser. If this starter renders on the
 > client, use a publishable key — it carries a narrower scope set on purpose, so
@@ -272,7 +272,7 @@ npx tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema
 **Reads** are on the site client:
 
 ```ts
-const site = client.site(process.env.BIAB_SITE_ID!)
+const site = client.site(process.env.BD_SITE_ID!)
 
 const page = await site.dataModel.listRecords({ object: 'projects' })
 const everything = await site.dataModel.listAllRecords({ object: 'projects' })

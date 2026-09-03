@@ -1,23 +1,23 @@
 import { Injectable, PLATFORM_ID, inject } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
-import { createBiabClient } from "@businessdash/sdk";
-import type { BiabClient } from "@businessdash/sdk";
+import { createBdClient } from "@businessdash/sdk";
+import type { BdClient } from "@businessdash/sdk";
 
 import { environment } from "../../environments/environment";
 
 /**
  * Browser-side followers / newsletter-subscribe service.
  *
- * Unlike the rest of this starter (which proxies BIAB through the SSR server so
+ * Unlike the rest of this starter (which proxies BD through the SSR server so
  * the powerful API key never reaches the browser), followers run on a
  * BROWSER-SAFE publishable token (`pk_…`, origin-locked, rate-limited, scoped to
  * `followers:self`). That token is shippable, so we create the core
- * `createBiabClient(...)` directly in the browser — no backend needed.
+ * `createBdClient(...)` directly in the browser — no backend needed.
  *
  * This mirrors what `@businessdash/sdk/react`'s `useFollowers` hook does internally:
  *   - `join`/`leave`/`me`/`edit` go through `client.followers.*`, and
  *   - an anonymous "already subscribed?" hint is persisted per-browser in
- *     `localStorage` under `biab.followers.<siteId>` so a visitor who already
+ *     `localStorage` under `bd.followers.<siteId>` so a visitor who already
  *     subscribed isn't shown the form forever.
  *
  * Source of truth for "is this visitor subscribed":
@@ -27,11 +27,11 @@ import { environment } from "../../environments/environment";
 
 type LocalFollow = { email: string; at: number };
 
-const FOLLOWER_STORE_PREFIX = "biab.followers.";
+const FOLLOWER_STORE_PREFIX = "bd.followers.";
 
 /** True when the browser-safe publishable credentials are present. */
-export const BIAB_FOLLOWERS_ENABLED = Boolean(
-	environment.biabPk && environment.biabSiteId,
+export const BD_FOLLOWERS_ENABLED = Boolean(
+	environment.bdPk && environment.bdSiteId,
 );
 
 @Injectable({ providedIn: "root" })
@@ -39,24 +39,24 @@ export class FollowersService {
 	private readonly platformId = inject(PLATFORM_ID);
 	private readonly isBrowser = isPlatformBrowser(this.platformId);
 
-	/** Lazily-built core client (browser-only — `createBiabClient` needs fetch
+	/** Lazily-built core client (browser-only — `createBdClient` needs fetch
 	 *  and the publishable token, neither of which we run during SSR). */
-	private client: BiabClient | null = null;
+	private client: BdClient | null = null;
 
-	private readonly storeKey = `${FOLLOWER_STORE_PREFIX}${environment.biabSiteId}`;
+	private readonly storeKey = `${FOLLOWER_STORE_PREFIX}${environment.bdSiteId}`;
 
 	/** Whether followers are wired up (publishable token + site id present). */
 	get enabled(): boolean {
-		return BIAB_FOLLOWERS_ENABLED;
+		return BD_FOLLOWERS_ENABLED;
 	}
 
-	private getClient(): BiabClient | null {
+	private getClient(): BdClient | null {
 		if (!this.isBrowser || !this.enabled) return null;
 		if (!this.client) {
-			this.client = createBiabClient({
-				apiKey: environment.biabPk,
-				siteId: environment.biabSiteId,
-				...(environment.biabBaseUrl ? { baseUrl: environment.biabBaseUrl } : {}),
+			this.client = createBdClient({
+				apiKey: environment.bdPk,
+				siteId: environment.bdSiteId,
+				...(environment.bdBaseUrl ? { baseUrl: environment.bdBaseUrl } : {}),
 			});
 		}
 		return this.client;

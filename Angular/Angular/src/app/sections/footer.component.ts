@@ -1,11 +1,11 @@
 import { ChangeDetectionStrategy, Component } from "@angular/core";
 
 @Component({
-	selector: "biab-footer",
+	selector: "bd-footer",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	template: `
 		<footer class="footer">
-			<p>© {{ year }} Your Business — built on BIAB.</p>
+			<p>© {{ year }} Your Business — built on BD.</p>
 		</footer>
 	`,
 })

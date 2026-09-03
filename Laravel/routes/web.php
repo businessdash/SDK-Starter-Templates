@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\BiabAuthController;
+use App\Http\Controllers\BdAuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\FormProxyController;
@@ -15,7 +15,7 @@ use App\Http\Controllers\WebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
- * BIAB Laravel starter — the same generic business site the other starters
+ * BD Laravel starter — the same generic business site the other starters
  * render, server-side in Blade.
  *
  * Route groups, top to bottom: pages, store + cart, portal, custom data,
@@ -56,9 +56,9 @@ Route::get('/todos', [TodosController::class, 'index'])->name('todos');
 Route::post('/todos', [TodosController::class, 'store'])->name('todos.store');
 
 // ── Auth + customer portal ─────────────────────────────────────────────────
-Route::match(['get', 'post'], '/api/biab-auth/{action}', BiabAuthController::class)
+Route::match(['get', 'post'], '/api/bd-auth/{action}', BdAuthController::class)
     ->where('action', 'sign-in|sign-up|callback|sign-out')
-    ->name('biab.auth');
+    ->name('bd.auth');
 
 Route::get('/my-account', [PortalController::class, 'index'])->name('portal');
 Route::post('/my-account/review', [PortalController::class, 'submitReview'])->name('portal.review');
@@ -67,18 +67,18 @@ Route::post('/my-account/review', [PortalController::class, 'submitReview'])->na
 Route::post('/subscribe', [HomeController::class, 'subscribe'])->name('subscribe');
 
 // ── SEO / AEO ──────────────────────────────────────────────────────────────
-// Proxied from BIAB so the org edits them in the dashboard, but they are
+// Proxied from BD so the org edits them in the dashboard, but they are
 // served from THIS domain — the only place crawlers look.
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap']);
 Route::get('/robots.txt', [SeoController::class, 'robots']);
 Route::get('/llms.txt', [SeoController::class, 'llmsTxt']);
 
 // ── Machine endpoints ──────────────────────────────────────────────────────
-// Same-origin proxy for the <biab-form> web component: the browser gets the
+// Same-origin proxy for the <bd-form> web component: the browser gets the
 // schema and posts submissions without ever seeing the bearer key.
-Route::get('/api/biab/forms/{slug}', [FormProxyController::class, 'schema']);
-Route::post('/api/biab/forms/{slug}', [FormProxyController::class, 'submit']);
+Route::get('/api/bd/forms/{slug}', [FormProxyController::class, 'schema']);
+Route::post('/api/bd/forms/{slug}', [FormProxyController::class, 'submit']);
 
 // Publish webhook. CSRF is exempted in bootstrap/app.php — this is a
 // server-to-server call authenticated by HMAC, not by session.
-Route::post('/api/biab/revalidate', WebhookController::class);
+Route::post('/api/bd/revalidate', WebhookController::class);

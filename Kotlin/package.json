@@ -1,16 +1,16 @@
 {
-  "name": "biab-kotlin-starter",
+  "name": "bd-kotlin-starter",
   "private": true,
   "type": "module",
   "description": "Node is NOT a runtime dependency \u2014 the app is Kotlin and Android. The SDK is here only for its CLI, which resolves the TypeScript config files and computes the canonical checksum the platform verifies. Porting that checksum to Swift would mean matching the canonicalisation byte for byte; running the real CLI keeps one source of truth.",
   "scripts": {
-    "sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config biab.config.ts",
-    "sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config biab.config.ts",
-    "print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config biab.config.ts",
-    "sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config biab.data-model.config.ts",
-    "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config biab.data-model.config.ts",
+    "sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config bd.config.ts",
+    "sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config bd.config.ts",
+    "print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config bd.config.ts",
+    "sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config bd.data-model.config.ts",
+    "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts",
     "view-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js view-data-model",
-    "seed": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-records --records-dir ./biab-records"
+    "seed": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-records --records-dir ./bd-records"
   },
   "devDependencies": {
     "@businessdash/sdk": "^0.9.81",

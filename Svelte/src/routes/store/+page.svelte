@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
-	import StoreNav from '$lib/components/biab/StoreNav.svelte';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
+	import StoreNav from '$lib/components/bd/StoreNav.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -86,30 +86,30 @@
 <Header />
 <StoreNav cartCount={data.cartCount} />
 
-<main class="biab-section">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">Shop</span>
-		<h1 class="biab-section__title">Products</h1>
-		<p class="biab-section__sub">
-			Live catalog from the BIAB storefront surface. Filter, sort, and click a
+<main class="bd-section">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">Shop</span>
+		<h1 class="bd-section__title">Products</h1>
+		<p class="bd-section__sub">
+			Live catalog from the BD storefront surface. Filter, sort, and click a
 			product to choose a variant and add it to your cart.
 		</p>
 	</div>
 
 	{#if !data.configured}
-		<div class="biab-empty">
-			Store isn't connected yet. Set <code>BIAB_API_KEY</code>,
-			<code>BIAB_SITE_ID</code> and <code>BIAB_PACKAGE_API_BASE_URL</code> in your
-			environment, then add products in the BIAB dashboard.
+		<div class="bd-empty">
+			Store isn't connected yet. Set <code>BD_API_KEY</code>,
+			<code>BD_SITE_ID</code> and <code>BD_PACKAGE_API_BASE_URL</code> in your
+			environment, then add products in the BD dashboard.
 		</div>
 	{:else}
 		<div class="store-layout">
 			<aside class="store-sidebar">
 				<form onsubmit={onSearch}>
-					<label class="biab-label" for="store-search">Search</label>
+					<label class="bd-label" for="store-search">Search</label>
 					<input
 						id="store-search"
-						class="biab-input"
+						class="bd-input"
 						type="search"
 						name="q"
 						placeholder="Search products…"
@@ -154,7 +154,7 @@
 					<p class="store-facet__title">Price</p>
 					<div class="store-price">
 						<input
-							class="biab-input"
+							class="bd-input"
 							inputmode="numeric"
 							name="min"
 							placeholder={`$${data.meta.priceRange.minDollars}`}
@@ -162,14 +162,14 @@
 						/>
 						<span class="store-price__sep">–</span>
 						<input
-							class="biab-input"
+							class="bd-input"
 							inputmode="numeric"
 							name="max"
 							placeholder={`$${data.meta.priceRange.maxDollars}`}
 							value={data.filters.maxDollars ?? ''}
 						/>
 					</div>
-					<button type="submit" class="biab-btn biab-btn--ghost store-price__apply">
+					<button type="submit" class="bd-btn bd-btn--ghost store-price__apply">
 						Apply
 					</button>
 				</form>
@@ -203,14 +203,14 @@
 
 			<div class="store-results">
 				<div class="store-results__bar">
-					<p class="biab-loading">
+					<p class="bd-loading">
 						{data.meta.items.length}
 						{data.meta.items.length === 1 ? 'product' : 'products'}
 					</p>
 					<label class="store-sort">
 						<span>Sort</span>
 						<select
-							class="biab-select"
+							class="bd-select"
 							value={data.filters.sort ?? 'featured'}
 							onchange={(e) =>
 								setParam(
@@ -226,15 +226,15 @@
 				</div>
 
 				{#if data.meta.items.length === 0}
-					<div class="biab-empty">
+					<div class="bd-empty">
 						{hasFilters
 							? 'No products match these filters. Try clearing a filter or broadening your search.'
-							: "No live products yet. Add and publish products in the BIAB dashboard and they'll appear here."}
+							: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
 					</div>
 				{:else}
-					<div class="biab-grid-3">
+					<div class="bd-grid-3">
 						{#each data.meta.items as product (product.id)}
-							<a class="biab-card product-card" href={`/store/${product.id}`}>
+							<a class="bd-card product-card" href={`/store/${product.id}`}>
 								<div class="product-card__media">
 									{#if product.coverImage}
 										<img
@@ -249,13 +249,13 @@
 									{/if}
 									<div class="product-card__badges">
 										{#if product.isBestSeller}
-											<span class="biab-badge">Best seller</span>
+											<span class="bd-badge">Best seller</span>
 										{/if}
 										{#if product.isNew}
-											<span class="biab-badge">New</span>
+											<span class="bd-badge">New</span>
 										{/if}
 										{#if product.isOnSale}
-											<span class="biab-badge product-card__badge--sale">Sale</span>
+											<span class="bd-badge product-card__badge--sale">Sale</span>
 										{/if}
 									</div>
 								</div>
@@ -410,7 +410,7 @@
 		font-size: 0.9rem;
 		color: var(--text-muted);
 	}
-	.store-sort .biab-select {
+	.store-sort .bd-select {
 		width: auto;
 	}
 

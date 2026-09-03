@@ -1,22 +1,22 @@
 import Vapor
 
 /// The visitor token lives in an httpOnly cookie on this domain; the cart
-/// lives at BIAB. Nothing about the cart is in a session or a database, which
+/// lives at BD. Nothing about the cart is in a session or a database, which
 /// is why this works unchanged behind a load balancer with no sticky sessions.
 enum CartController {
-    private static let cookieName = "biab_cart_visitor"
+    private static let cookieName = "bd_cart_visitor"
 
     static func show(req: Request) async throws -> View {
-        guard let biab = req.biab, let token = visitorToken(req) else {
+        guard let bd = req.bd, let token = visitorToken(req) else {
             return try await req.view.render("cart", CartContext(
-                configured: req.application.biabConfigured, lines: [], subtotal: "", isEmpty: true
+                configured: req.application.bdConfigured, lines: [], subtotal: "", isEmpty: true
             ))
         }
 
         // Per-visitor: never cached, or one customer's cart would be served to
         // the next.
-        let snapshot = (try? await biab.cart(visitor: token)) ?? .empty
-        return try await req.view.render("cart", context(snapshot, configured: req.application.biabConfigured))
+        let snapshot = (try? await bd.cart(visitor: token)) ?? .empty
+        return try await req.view.render("cart", context(snapshot, configured: req.application.bdConfigured))
     }
 
     struct AddItemForm: Content {
@@ -28,8 +28,8 @@ enum CartController {
         let form = try req.content.decode(AddItemForm.self)
         let (token, cookie) = ensureVisitorToken(req)
 
-        if let biab = req.biab {
-            _ = try? await biab.cartAdd(visitor: token, productID: form.productId, quantity: form.quantity ?? 1)
+        if let bd = req.bd {
+            _ = try? await bd.cartAdd(visitor: token, productID: form.productId, quantity: form.quantity ?? 1)
         }
 
         let response = req.redirect(to: "/cart")
@@ -38,8 +38,8 @@ enum CartController {
     }
 
     static func clear(req: Request) async throws -> Response {
-        if let biab = req.biab, let token = visitorToken(req) {
-            _ = try? await biab.cartClear(visitor: token)
+        if let bd = req.bd, let token = visitorToken(req) {
+            _ = try? await bd.cartClear(visitor: token)
         }
         return req.redirect(to: "/cart")
     }
@@ -47,18 +47,18 @@ enum CartController {
     /// Hand off to Stripe. The URL comes back as **`stripeUrl`**, not `url`,
     /// and the redirect is a 303 so the browser re-issues it as GET.
     static func checkout(req: Request) async throws -> Response {
-        guard let biab = req.biab, let token = visitorToken(req) else {
+        guard let bd = req.bd, let token = visitorToken(req) else {
             return req.redirect(to: "/cart")
         }
 
-        let origin = Environment.get("BIAB_SITE_ORIGIN") ?? "http://localhost:8080"
+        let origin = Environment.get("BD_SITE_ORIGIN") ?? "http://localhost:8080"
         let urls = CheckoutURLs(
             // Stripe substitutes the real id for the placeholder.
             successUrl: "\(origin)/store?session_id={CHECKOUT_SESSION_ID}",
             cancelUrl: "\(origin)/cart"
         )
 
-        guard let session = try? await biab.startCheckout(visitor: token, urls: urls) else {
+        guard let session = try? await bd.startCheckout(visitor: token, urls: urls) else {
             return req.redirect(to: "/cart")
         }
 

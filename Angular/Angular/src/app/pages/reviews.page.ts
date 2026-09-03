@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { biabApi, type ReviewWallPage } from "../lib/biab-api.client";
-import { BiabService } from "../lib/biab.service";
+import { bdApi, type ReviewWallPage } from "../lib/bd-api.client";
+import { BdService } from "../lib/bd.service";
 
 type WallItem = ReviewWallPage["items"][number];
 
 /**
  * Reviews wall. Aggregate (average + count) comes from the marketing bundle
- * (loaded by BiabService); the review bodies paginate via `/api/biab/reviews`
+ * (loaded by BdService); the review bodies paginate via `/api/bd/reviews`
  * with a "Load more" button that walks the `nextOffset` cursor.
  */
 @Component({
-	selector: "biab-reviews-page",
+	selector: "bd-reviews-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -40,7 +40,7 @@ type WallItem = ReviewWallPage["items"][number];
 			</ul>
 
 			@if (nextOffset() != null) {
-				<button class="biab-btn biab-btn--ghost" type="button" (click)="loadMore()" [disabled]="loading()">
+				<button class="bd-btn bd-btn--ghost" type="button" (click)="loadMore()" [disabled]="loading()">
 					{{ loading() ? "Loading…" : "Load more" }}
 				</button>
 			}
@@ -50,7 +50,7 @@ type WallItem = ReviewWallPage["items"][number];
 	`,
 })
 export class ReviewsPage implements OnInit {
-	readonly svc = inject(BiabService);
+	readonly svc = inject(BdService);
 	readonly items = signal<WallItem[]>([]);
 	readonly nextOffset = signal<number | null>(0);
 	readonly loading = signal(false);
@@ -71,7 +71,7 @@ export class ReviewsPage implements OnInit {
 		const offset = this.nextOffset();
 		if (offset == null) return;
 		this.loading.set(true);
-		const page = await biabApi.reviews(offset, 10);
+		const page = await bdApi.reviews(offset, 10);
 		this.loading.set(false);
 		this.state.set("ready");
 		if (!page) {

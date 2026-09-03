@@ -1,11 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 
-import { formatMoney, intervalLabel } from "../components/biab/money";
+import { formatMoney, intervalLabel } from "../components/bd/money";
 import {
 	getSubscriptions,
 	startSubscriptionCheckout,
-} from "../lib/biab-server-fns";
+} from "../lib/bd-server-fns";
 
 /**
  * Recurring plans. The loader lists offerings via `subscriptions.list`.
@@ -42,11 +42,11 @@ function Subscriptions() {
 
 	return (
 		<main>
-			<section class="biab-section">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Plans</span>
-					<h1 class="biab-section__title">Subscriptions</h1>
-					<p class="biab-section__sub">
+			<section class="bd-section">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Plans</span>
+					<h1 class="bd-section__title">Subscriptions</h1>
+					<p class="bd-section__sub">
 						Recurring plans billed through Stripe. Cancel anytime.
 					</p>
 				</div>
@@ -54,7 +54,7 @@ function Subscriptions() {
 				<Show
 					when={result().ok && items().length > 0}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							<Show
 								when={reason() === "suspended"}
 								fallback={
@@ -62,7 +62,7 @@ function Subscriptions() {
 										when={reason() === "unconfigured"}
 										fallback={<>No subscription plans published yet.</>}
 									>
-										Subscriptions aren't connected yet (missing BIAB env).
+										Subscriptions aren't connected yet (missing BD env).
 									</Show>
 								}
 							>
@@ -71,10 +71,10 @@ function Subscriptions() {
 						</div>
 					}
 				>
-					<div class="biab-grid-3">
+					<div class="bd-grid-3">
 						<For each={items()}>
 							{(plan) => (
-								<article class="biab-card service-card">
+								<article class="bd-card service-card">
 									<Show when={plan.imageUrl}>
 										<img
 											src={plan.imageUrl ?? ""}
@@ -92,7 +92,7 @@ function Subscriptions() {
 									</div>
 									<button
 										type="button"
-										class="biab-btn"
+										class="bd-btn"
 										style="margin-top: 0.5rem;"
 										disabled={busyId() === plan.id}
 										onClick={() => subscribe(plan.id)}
@@ -112,7 +112,7 @@ function Subscriptions() {
 				</Show>
 
 				<div style="margin-top: 2rem;">
-					<Link to="/store" class="biab-btn biab-btn--ghost">
+					<Link to="/store" class="bd-btn bd-btn--ghost">
 						← Back to store
 					</Link>
 				</div>

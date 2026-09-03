@@ -2,38 +2,38 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
  * Home, reviews wall, updates feed, newsletter.
  *
- * Every read goes through `Biab::remember()` with a local fallback, so this
- * renders a complete page with no BIAB credentials at all.
+ * Every read goes through `Bd::remember()` with a local fallback, so this
+ * renders a complete page with no BD credentials at all.
  */
 class HomeController extends Controller
 {
     public function index(): View
     {
-        $bundle = Biab::remember(
+        $bundle = Bd::remember(
             'marketing:home',
-            ['biab:marketing'],
+            ['bd:marketing'],
             static fn (Client $c) => $c->marketing()->getPageBundle('home'),
             default: [],
         );
 
-        $products = Biab::remember(
+        $products = Bd::remember(
             'storefront:featured',
-            ['biab:storefront'],
+            ['bd:storefront'],
             static fn (Client $c) => $c->storefront()->listProducts(limit: 6),
             default: ['items' => []],
         );
 
-        $posts = Biab::remember(
+        $posts = Bd::remember(
             'blog:recent',
-            ['biab:blog'],
+            ['bd:blog'],
             static fn (Client $c) => $c->blog()->listPosts(limit: 3),
             default: ['items' => []],
         );
@@ -49,9 +49,9 @@ class HomeController extends Controller
     {
         $offset = max(0, (int) $request->query('offset', 0));
 
-        $reviews = Biab::remember(
+        $reviews = Bd::remember(
             "reviews:{$offset}",
-            ['biab:reviews'],
+            ['bd:reviews'],
             static fn (Client $c) => $c->reviews()->list(limit: 10, offset: $offset),
             default: ['items' => []],
         );
@@ -64,9 +64,9 @@ class HomeController extends Controller
 
     public function updates(): View
     {
-        $bundle = Biab::remember(
+        $bundle = Bd::remember(
             'marketing:home',
-            ['biab:marketing'],
+            ['bd:marketing'],
             static fn (Client $c) => $c->marketing()->getPageBundle('home'),
             default: [],
         );
@@ -88,7 +88,7 @@ class HomeController extends Controller
             'name' => ['nullable', 'string', 'max:200'],
         ]);
 
-        $result = Biab::attempt(
+        $result = Bd::attempt(
             static fn (Client $c) => $c->followers()->join(
                 $validated['email'],
                 $validated['name'] ?? null,

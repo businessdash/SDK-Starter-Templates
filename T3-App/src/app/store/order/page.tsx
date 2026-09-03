@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { getCheckoutStatus } from "@/server/lib/biab-store";
+import { getCheckoutStatus } from "@/server/lib/bd-store";
 
 import { Notice } from "../_components/Notice";
 import { usd } from "../_components/store-utils";
@@ -44,13 +44,13 @@ export default async function OrderPage({
 		status.paymentStatus === "no_payment_required";
 
 	return (
-		<div className="biab-section--narrow">
-			<div className="biab-card order">
-				<span className="biab-badge">{paid ? "Paid" : "Pending"}</span>
-				<h1 className="biab-section__title">
+		<div className="bd-section--narrow">
+			<div className="bd-card order">
+				<span className="bd-badge">{paid ? "Paid" : "Pending"}</span>
+				<h1 className="bd-section__title">
 					{paid ? "Thanks for your order!" : "Payment pending"}
 				</h1>
-				<p className="biab-section__sub">
+				<p className="bd-section__sub">
 					{paid
 						? "Your payment went through. A receipt is on its way to your email."
 						: "We haven't confirmed payment yet. Check back shortly."}
@@ -71,7 +71,7 @@ export default async function OrderPage({
 						</div>
 					) : null}
 				</dl>
-				<Link className="biab-btn biab-btn--ghost" href="/store">
+				<Link className="bd-btn bd-btn--ghost" href="/store">
 					Back to store
 				</Link>
 			</div>

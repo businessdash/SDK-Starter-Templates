@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { biab, dollars, money } from "../lib/biab";
+import { bd, dollars, money } from "../lib/bd";
 import { Link } from "../lib/router";
 import { ErrorBox, useApi } from "./ui";
 
@@ -18,11 +18,11 @@ function Stars({ rating }: { rating: number }) {
 
 export function Product() {
 	const id = decodeURIComponent(window.location.pathname.split("/")[2] ?? "");
-	const { data, error, loading } = useApi(() => biab.storefront.getProduct(id), [id]);
+	const { data, error, loading } = useApi(() => bd.storefront.getProduct(id), [id]);
 	// Companion surfaces — each is independent + graceful (null/empty on failure).
-	const { data: reviewsData } = useApi(() => biab.storefront.getProductReviews(id, { limit: 10 }), [id]);
-	const { data: relatedData } = useApi(() => biab.storefront.getRelatedProducts(id, { limit: 6 }), [id]);
-	const { data: addonsData } = useApi(() => biab.storefront.getProductAddons(id), [id]);
+	const { data: reviewsData } = useApi(() => bd.storefront.getProductReviews(id, { limit: 10 }), [id]);
+	const { data: relatedData } = useApi(() => bd.storefront.getRelatedProducts(id, { limit: 6 }), [id]);
+	const { data: addonsData } = useApi(() => bd.storefront.getProductAddons(id), [id]);
 	const [variant, setVariant] = useState("");
 	const [status, setStatus] = useState("");
 	const [adding, setAdding] = useState(false);
@@ -54,7 +54,7 @@ export function Product() {
 		setAdding(true);
 		setStatus("Adding…");
 		try {
-			const snap = await biab.cart.add({ productId: id, variantId: variant || null, quantity: 1 });
+			const snap = await bd.cart.add({ productId: id, variantId: variant || null, quantity: 1 });
 			setStatus(`Added — cart has ${snap.itemCount ?? "?"} item(s).`);
 		} catch (e: any) {
 			setStatus(`Couldn't add: ${e?.message ?? e}`);
@@ -67,7 +67,7 @@ export function Product() {
 		setAdding(true);
 		setStatus("Adding…");
 		try {
-			const snap = await biab.cart.add({ productId: addonProductId, quantity: 1 });
+			const snap = await bd.cart.add({ productId: addonProductId, quantity: 1 });
 			setStatus(`Added — cart has ${snap.itemCount ?? "?"} item(s).`);
 		} catch (e: any) {
 			setStatus(`Couldn't add: ${e?.message ?? e}`);

@@ -1,8 +1,8 @@
-import { biab, el } from "../biab.js";
+import { bd, el } from "../bd.js";
 
 /**
  * Renders the hero into `target`. Reads the marketing bundle's
- * `hero` section if BIAB is configured; otherwise the local defaults
+ * `hero` section if BD is configured; otherwise the local defaults
  * keep the page looking real.
  *
  * @param {HTMLElement} target
@@ -17,17 +17,17 @@ export async function renderHero(target) {
 
 	function paint(data) {
 		target.replaceChildren(
-			el("span", { class: "biab-badge" }, ["Open · Mon–Sat"]),
+			el("span", { class: "bd-badge" }, ["Open · Mon–Sat"]),
 			el("h1", { class: "hero__title" }, [data.title]),
 			el("p", { class: "hero__sub" }, [data.tagline]),
-			el("a", { class: "biab-btn", href: data.ctaHref }, [data.ctaLabel]),
+			el("a", { class: "bd-btn", href: data.ctaHref }, [data.ctaLabel]),
 		);
 	}
 
 	paint(defaults);
 
 	try {
-		const bundle = await biab.marketing.getPageBundle({ pageKey: "home" });
+		const bundle = await bd.marketing.getPageBundle({ pageKey: "home" });
 		const raw = bundle?.sections?.hero;
 		if (raw?.ok && raw.data) {
 			paint({

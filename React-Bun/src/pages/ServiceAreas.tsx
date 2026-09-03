@@ -1,9 +1,9 @@
-import { biab } from "../lib/biab";
+import { bd } from "../lib/bd";
 import { Link } from "../lib/router";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 export function ServiceAreas() {
-	const { data, error, loading } = useApi(() => biab.parallelPages.listVariants("service-area"));
+	const { data, error, loading } = useApi(() => bd.parallelPages.listVariants("service-area"));
 	const variants: Record<string, any>[] = data?.variants ?? data?.items ?? [];
 	return (
 		<main className="page">

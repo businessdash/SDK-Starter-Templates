@@ -1,6 +1,6 @@
 import { mcpManifestHandler } from "@businessdash/sdk/mcp";
 
-import { aiSurfaceConfig } from "$lib/server/biab-ai";
+import { aiSurfaceConfig } from "$lib/server/bd-ai";
 
 import type { RequestHandler } from "./$types";
 
@@ -26,7 +26,7 @@ export const GET: RequestHandler = async ({ request }) => {
 	const manifest = getHandler();
 	if (!manifest) {
 		return Response.json(
-			{ error: "MCP is not configured (set the BIAB env vars)." },
+			{ error: "MCP is not configured (set the BD env vars)." },
 			{ status: 503 },
 		);
 	}

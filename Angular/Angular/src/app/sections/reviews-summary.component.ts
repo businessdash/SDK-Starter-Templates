@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, OnInit } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { BiabService } from "../lib/biab.service";
+import { BdService } from "../lib/bd.service";
 
 /**
  * Home-page reviews teaser: aggregate (average + count) plus a link to the
@@ -8,7 +8,7 @@ import { BiabService } from "../lib/biab.service";
  * `reviews` block (no extra request). Hidden when there are no reviews.
  */
 @Component({
-	selector: "biab-reviews-summary",
+	selector: "bd-reviews-summary",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [RouterLink],
 	template: `
@@ -18,13 +18,13 @@ import { BiabService } from "../lib/biab.service";
 				<p class="reviews-agg">
 					<strong>{{ agg.rating }}</strong> average · {{ agg.count }} reviews
 				</p>
-				<a class="biab-btn" routerLink="/reviews">Read all reviews</a>
+				<a class="bd-btn" routerLink="/reviews">Read all reviews</a>
 			</section>
 		}
 	`,
 })
 export class ReviewsSummaryComponent implements OnInit {
-	readonly svc = inject(BiabService);
+	readonly svc = inject(BdService);
 
 	readonly aggregate = computed(() => {
 		const agg = this.svc.reviewsAggregate();

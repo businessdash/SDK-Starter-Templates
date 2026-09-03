@@ -2,7 +2,7 @@ import type { CartSnapshot } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 
-import { formatMoney } from "../components/biab/money";
+import { formatMoney } from "../components/bd/money";
 import {
 	applyCartCoupon,
 	type CartResult,
@@ -12,7 +12,7 @@ import {
 	removeCartItem,
 	startCheckout,
 	updateCartItem,
-} from "../lib/biab-server-fns";
+} from "../lib/bd-server-fns";
 
 /**
  * Cart. The loader reads the current snapshot via the visitor token
@@ -81,22 +81,22 @@ function CartView() {
 
 	return (
 		<main>
-			<section class="biab-section biab-section--narrow">
-				<div class="biab-section__lead">
-					<span class="biab-section__eyebrow">Checkout</span>
-					<h1 class="biab-section__title">Your cart</h1>
+			<section class="bd-section bd-section--narrow">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Checkout</span>
+					<h1 class="bd-section__title">Your cart</h1>
 				</div>
 
 				<Show
 					when={!isEmpty()}
 					fallback={
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Your cart is empty. <Link to="/store">Browse the store →</Link>
 						</div>
 					}
 				>
 					<div
-						class="biab-card"
+						class="bd-card"
 						style="padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem;"
 					>
 						<For each={cart()?.items ?? []}>
@@ -151,7 +151,7 @@ function CartView() {
 									</div>
 									<button
 										type="button"
-										class="biab-btn biab-btn--ghost"
+										class="bd-btn bd-btn--ghost"
 										disabled={busy()}
 										onClick={() => remove(item.id)}
 									>
@@ -163,12 +163,12 @@ function CartView() {
 
 						<div style="display: flex; gap: 0.5rem; align-items: flex-end;">
 							<div style="flex: 1;">
-								<label class="biab-label" for="coupon">
+								<label class="bd-label" for="coupon">
 									Coupon code
 								</label>
 								<input
 									id="coupon"
-									class="biab-input"
+									class="bd-input"
 									placeholder="SAVE10"
 									value={coupon()}
 									onInput={(e) => setCoupon(e.currentTarget.value)}
@@ -179,7 +179,7 @@ function CartView() {
 								fallback={
 									<button
 										type="button"
-										class="biab-btn biab-btn--ghost"
+										class="bd-btn bd-btn--ghost"
 										disabled={busy()}
 										onClick={addCoupon}
 									>
@@ -189,7 +189,7 @@ function CartView() {
 							>
 								<button
 									type="button"
-									class="biab-btn biab-btn--ghost"
+									class="bd-btn bd-btn--ghost"
 									disabled={busy()}
 									onClick={dropCoupon}
 								>
@@ -211,7 +211,7 @@ function CartView() {
 						<div style="display: flex; gap: 0.75rem;">
 							<button
 								type="button"
-								class="biab-btn"
+								class="bd-btn"
 								style="flex: 1;"
 								disabled={busy()}
 								onClick={checkout}
@@ -220,7 +220,7 @@ function CartView() {
 							</button>
 							<button
 								type="button"
-								class="biab-btn biab-btn--ghost"
+								class="bd-btn bd-btn--ghost"
 								disabled={busy()}
 								onClick={empty}
 							>

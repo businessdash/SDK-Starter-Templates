@@ -1,5 +1,5 @@
 /** /reviews — public review wall with "load more" (offset pagination). */
-import { biab, el } from "/biab.js";
+import { bd, el } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
 
 const PAGE = 10;
@@ -15,7 +15,7 @@ export default async function render(root) {
 	async function load() {
 		moreWrap.replaceChildren(el("span", { class: "muted" }, ["Loading…"]));
 		try {
-			const res = await biab.reviews.list({ limit: PAGE, offset });
+			const res = await bd.reviews.list({ limit: PAGE, offset });
 			for (const r of res?.items ?? []) list.append(reviewCard(r));
 			if (typeof res?.totalCount === "number") {
 				count.textContent = `${res.totalCount} review${res.totalCount === 1 ? "" : "s"}`;

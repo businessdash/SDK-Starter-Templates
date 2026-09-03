@@ -1,9 +1,9 @@
 /**
- * Tiny in-memory, tag-keyed TTL cache for the server's BIAB reads.
+ * Tiny in-memory, tag-keyed TTL cache for the server's BD reads.
  *
  * A plain Bun server has no `revalidateTag`, so this is the real cache the
  * revalidation webhook busts. Each cached read stores a value under a key with
- * a set of tags; when BIAB POSTs `/api/biab/revalidate` with the affected tags,
+ * a set of tags; when BD POSTs `/api/bd/revalidate` with the affected tags,
  * `invalidateTags()` drops the matching entries so the next render refetches.
  */
 

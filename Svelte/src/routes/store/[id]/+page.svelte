@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import Header from '$lib/components/biab/Header.svelte';
-	import Footer from '$lib/components/biab/Footer.svelte';
-	import StoreNav from '$lib/components/biab/StoreNav.svelte';
-	import { addToCart, formatDollars, formatCents } from '$lib/biab/cart-client';
+	import Header from '$lib/components/bd/Header.svelte';
+	import Footer from '$lib/components/bd/Footer.svelte';
+	import StoreNav from '$lib/components/bd/StoreNav.svelte';
+	import { addToCart, formatDollars, formatCents } from '$lib/bd/cart-client';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -112,9 +112,9 @@
 <Header />
 <StoreNav {cartCount} />
 
-<main class="biab-section">
+<main class="bd-section">
 	{#if !data.configured}
-		<div class="biab-empty">Store isn't connected.</div>
+		<div class="bd-empty">Store isn't connected.</div>
 	{:else if data.product}
 		<a href="/store" style="font-size: 0.9rem;">← Back to products</a>
 		<div class="product-detail">
@@ -125,7 +125,7 @@
 					<div class="product-detail__placeholder">No image</div>
 				{/if}
 			</div>
-			<div class="product-detail__info biab-card">
+			<div class="product-detail__info bd-card">
 				<h1>{asString(data.product.name) || 'Untitled'}</h1>
 
 				{#if data.reviews && data.reviews.totalCount > 0}
@@ -143,8 +143,8 @@
 
 				{#if variants.length > 0}
 					<div>
-						<label class="biab-label" for="variant">Option</label>
-						<select id="variant" class="biab-select" bind:value={selectedVariant}>
+						<label class="bd-label" for="variant">Option</label>
+						<select id="variant" class="bd-select" bind:value={selectedVariant}>
 							{#each variants as v (v.id)}
 								<option value={v.id} disabled={!v.isLive}>
 									{v.name}{v.price != null ? ` — ${formatDollars(v.price)}` : ''}
@@ -156,10 +156,10 @@
 				{/if}
 
 				<div>
-					<label class="biab-label" for="qty">Quantity</label>
+					<label class="bd-label" for="qty">Quantity</label>
 					<input
 						id="qty"
-						class="biab-input"
+						class="bd-input"
 						type="number"
 						min="1"
 						max="999"
@@ -168,7 +168,7 @@
 					/>
 				</div>
 
-				<button class="biab-btn" onclick={handleAdd} disabled={busy}>
+				<button class="bd-btn" onclick={handleAdd} disabled={busy}>
 					{busy ? 'Adding…' : 'Add to cart'}
 				</button>
 
@@ -179,7 +179,7 @@
 					>
 						{message}
 						{#if messageKind === 'ok'}
-							<button class="biab-btn biab-btn--ghost" onclick={() => goto('/store/cart')}>
+							<button class="bd-btn bd-btn--ghost" onclick={() => goto('/store/cart')}>
 								View cart
 							</button>
 						{/if}
@@ -193,7 +193,7 @@
 				<h2 class="product-section__title">Complete your purchase</h2>
 				<div class="addon-grid">
 					{#each data.addons as addon (addon.id)}
-						<div class="addon-card biab-card">
+						<div class="addon-card bd-card">
 							<div class="addon-card__media">
 								{#if addon.imageUrl}
 									<img src={addon.imageUrl} alt={addon.addonName} loading="lazy" referrerpolicy="no-referrer" />
@@ -211,7 +211,7 @@
 								{/if}
 							</div>
 							<button
-								class="biab-btn biab-btn--ghost addon-card__add"
+								class="bd-btn bd-btn--ghost addon-card__add"
 								onclick={() => handleAddAddon(addon)}
 								disabled={addingAddon === addon.id || addedAddons[addon.id]}
 							>
@@ -255,9 +255,9 @@
 		{#if data.related.length > 0}
 			<section class="product-section">
 				<h2 class="product-section__title">You may also like</h2>
-				<div class="biab-grid-4">
+				<div class="bd-grid-4">
 					{#each data.related as rp (rp.id)}
-						<a class="biab-card related-card" href={`/store/${rp.id}`}>
+						<a class="bd-card related-card" href={`/store/${rp.id}`}>
 							<div class="related-card__media">
 								{#if rp.coverImageUrl}
 									<img src={rp.coverImageUrl} alt={rp.name} loading="lazy" referrerpolicy="no-referrer" />

@@ -6,12 +6,12 @@
 
 import { localBusiness, renderJsonLdToHtml, website } from "@businessdash/sdk/seo";
 
-import { ANALYTICS_PUBLIC, BIAB_CONFIGURED, BIAB_HOST, getBiab } from "./biab";
+import { ANALYTICS_PUBLIC, BD_CONFIGURED, BD_HOST, getBd } from "./bd";
 import { cached } from "./cache";
 import { html, raw, render, type Raw } from "./html";
 
-export const VISITOR_COOKIE = "biab_cart_visitor";
-export const SESSION_COOKIE = "biab_session";
+export const VISITOR_COOKIE = "bd_cart_visitor";
+export const SESSION_COOKIE = "bd_session";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
 
 export function getCookie(req: Request, name: string): string | null {
@@ -60,7 +60,7 @@ export function errBlock(err: unknown): Raw {
 		unavailable
 			? "This site is temporarily unavailable. Please check back soon."
 			: notConfigured
-				? "BIAB isn't configured on this server — set the env vars in .env.local (see .env.example)."
+				? "BD isn't configured on this server — set the env vars in .env.local (see .env.example)."
 				: "Couldn't load this section."
 	}</div>`;
 }
@@ -68,12 +68,12 @@ export function errBlock(err: unknown): Raw {
 // ── JSON-LD + banner ───────────────────────────────────────────────
 
 async function homeBundle(): Promise<Record<string, any> | null> {
-	const biab = getBiab();
-	if (!biab) return null;
+	const bd = getBd();
+	if (!bd) return null;
 	try {
 		// biome-ignore lint: bundle shape is an untyped passthrough at 0.9.5
-		return (await cached("bundle:home:en", ["biab:marketing"], () =>
-			biab.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
+		return (await cached("bundle:home:en", ["bd:marketing"], () =>
+			bd.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
 		)) as Record<string, any>;
 	} catch {
 		return null;
@@ -86,7 +86,7 @@ async function siteJsonLd(origin: string): Promise<string> {
 	try {
 		const company = (bundle.company as any)?.profile ?? {};
 		const info = (bundle.sections as any)?.companyInfo?.data ?? (bundle.sections as any)?.companyInfo ?? {};
-		const name: string = company.name ?? info.name ?? "BIAB Starter Site";
+		const name: string = company.name ?? info.name ?? "BD Starter Site";
 		return renderJsonLdToHtml([
 			localBusiness({
 				siteUrl: origin,
@@ -147,28 +147,28 @@ function navBar(): Raw {
 			<a href="/my-account">Account</a>
 		</nav>
 		<span class="docnav__auth">
-			<a href="/api/biab-auth/sign-in">Sign in</a>
-			<a href="/api/biab-auth/sign-up" class="docnav__cta">Sign up</a>
+			<a href="/api/bd-auth/sign-in">Sign in</a>
+			<a href="/api/bd-auth/sign-up" class="docnav__cta">Sign up</a>
 		</span>
 	</header>`;
 }
 
 /**
- * Dismissable "not connected to BIAB yet" bar (fixed bottom). Rendered only
+ * Dismissable "not connected to BD yet" bar (fixed bottom). Rendered only
  * when the site isn't wired up (no resolved site id); dismiss persists to the
- * localStorage key "biab-sdk-setup-banner-dismissed". Injected into the static
+ * localStorage key "bd-sdk-setup-banner-dismissed". Injected into the static
  * home shell (server.ts) and every server-rendered feature page (`page()`).
- * Returns "" (nothing shipped) once BIAB is configured.
+ * Returns "" (nothing shipped) once BD is configured.
  */
 export function setupBannerHtml(): string {
-	if (BIAB_CONFIGURED) return "";
-	const wizard = `${BIAB_HOST}/login?returnTo=/dashboard/settings/web-content`;
-	return `<div id="biab-setup-banner" hidden style="position:fixed;inset-inline:0;bottom:0;z-index:9999;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:#111827;color:#fff;border-top:1px solid var(--accent,#047857);font-size:0.875rem;">
-	<span style="flex:1 1 260px;min-width:0;"><strong style="color:#6ee7b7;">Not connected to BIAB yet.</strong> Add your <code>.env.local</code> to render live content — grab every variable from the guided wizard.</span>
+	if (BD_CONFIGURED) return "";
+	const wizard = `${BD_HOST}/login?returnTo=/dashboard/settings/web-content`;
+	return `<div id="bd-setup-banner" hidden style="position:fixed;inset-inline:0;bottom:0;z-index:9999;display:flex;flex-wrap:wrap;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:#111827;color:#fff;border-top:1px solid var(--accent,#047857);font-size:0.875rem;">
+	<span style="flex:1 1 260px;min-width:0;"><strong style="color:#6ee7b7;">Not connected to BD yet.</strong> Add your <code>.env.local</code> to render live content — grab every variable from the guided wizard.</span>
 	<a href="${wizard}" target="_blank" rel="noreferrer" style="flex-shrink:0;border-radius:0.5rem;border:1px solid var(--accent,#047857);background:rgba(4,120,87,0.18);padding:0.4rem 0.8rem;color:#a7f3d0;font-weight:600;text-decoration:none;">Open setup wizard ↗</a>
-	<button id="biab-setup-banner-dismiss" type="button" aria-label="Dismiss" style="flex-shrink:0;border:none;background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:1.1rem;line-height:1;padding:0.25rem;">✕</button>
+	<button id="bd-setup-banner-dismiss" type="button" aria-label="Dismiss" style="flex-shrink:0;border:none;background:transparent;color:rgba(255,255,255,0.6);cursor:pointer;font-size:1.1rem;line-height:1;padding:0.25rem;">✕</button>
 </div>
-<script>(function(){var K="biab-sdk-setup-banner-dismissed",e=document.getElementById("biab-setup-banner");if(!e)return;try{if(localStorage.getItem(K)==="1"){e.remove();return;}}catch(x){}e.hidden=false;var b=document.getElementById("biab-setup-banner-dismiss");if(b)b.addEventListener("click",function(){try{localStorage.setItem(K,"1");}catch(x){}e.remove();});})();</script>`;
+<script>(function(){var K="bd-sdk-setup-banner-dismissed",e=document.getElementById("bd-setup-banner");if(!e)return;try{if(localStorage.getItem(K)==="1"){e.remove();return;}}catch(x){}e.hidden=false;var b=document.getElementById("bd-setup-banner-dismiss");if(b)b.addEventListener("click",function(){try{localStorage.setItem(K,"1");}catch(x){}e.remove();});})();</script>`;
 }
 
 function analyticsScript(): Raw {
@@ -178,7 +178,7 @@ function analyticsScript(): Raw {
 		baseUrl: ANALYTICS_PUBLIC.baseUrl,
 		apiKey: ANALYTICS_PUBLIC.apiKey,
 	});
-	return raw(`<script>window.__BIAB_ANALYTICS__=${config};</script>`);
+	return raw(`<script>window.__BD_ANALYTICS__=${config};</script>`);
 }
 
 /** Render a full feature-page document. `body` is trusted HTML (a Raw or a
@@ -201,7 +201,7 @@ export async function page(opts: {
 	${opts.description ? html`<meta name="description" content="${opts.description}" />` : ""}
 	<link rel="stylesheet" href="/styles.css" />
 	<!-- SDK forms stylesheet (file-upload box, multi-step header, choice chips). -->
-	<link rel="stylesheet" href="/biab-forms.css" />
+	<link rel="stylesheet" href="/bd-forms.css" />
 	${raw(jsonLd)}
 </head>
 <body>

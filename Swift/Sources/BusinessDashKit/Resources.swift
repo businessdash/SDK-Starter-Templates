@@ -1,13 +1,13 @@
 import Foundation
 
 // The read/write surface, grouped the way the other starters group it. Each
-// namespace is a lightweight view over the same `BiabClient` value, so they
+// namespace is a lightweight view over the same `BdClient` value, so they
 // are free to create and safe to pass across actors.
 
 // MARK: - Storefront
 
 public struct StorefrontResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func list(limit: Int? = nil, categoryID: String? = nil) async throws -> ProductListResponse {
         try await client.get(
@@ -43,19 +43,19 @@ public struct StorefrontResource: Sendable {
     }
 
     public func product(_ id: String) async throws -> Product {
-        try await client.get("storefront/products/\(BiabClient.escape(id))")
+        try await client.get("storefront/products/\(BdClient.escape(id))")
     }
 
     public func related(_ id: String, limit: Int = 4) async throws -> ProductListResponse {
         try await client.get(
-            "storefront/products/\(BiabClient.escape(id))/related",
+            "storefront/products/\(BdClient.escape(id))/related",
             query: ["limit": String(limit)]
         )
     }
 
     public func reviews(_ id: String, limit: Int = 5) async throws -> ReviewListResponse {
         try await client.get(
-            "storefront/products/\(BiabClient.escape(id))/reviews",
+            "storefront/products/\(BdClient.escape(id))/reviews",
             query: ["limit": String(limit)]
         )
     }
@@ -63,18 +63,18 @@ public struct StorefrontResource: Sendable {
 
 // MARK: - Cart
 
-/// Server-side cart. All state lives at BIAB; the app only holds the visitor
+/// Server-side cart. All state lives at BD; the app only holds the visitor
 /// token.
 ///
 /// That token is an opaque id the **app generates** — there is no round trip
 /// to mint one, and `cart/session` is a different feature (it mints a
 /// tokenized iframe-embed URL). The platform keys the cart on whatever arrives
-/// in `X-BIAB-Cart-Visitor`.
+/// in `X-BD-Cart-Visitor`.
 public struct CartResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
     let visitorToken: String
 
-    private var headers: [String: String] { ["X-BIAB-Cart-Visitor": visitorToken] }
+    private var headers: [String: String] { ["X-BD-Cart-Visitor": visitorToken] }
 
     public func snapshot() async throws -> CartSnapshot {
         try await client.get("cart", headers: headers)
@@ -86,14 +86,14 @@ public struct CartResource: Sendable {
 
     public func setQuantity(itemID: String, quantity: Int) async throws -> CartSnapshot {
         try await client.patch(
-            "cart/items/\(BiabClient.escape(itemID))",
+            "cart/items/\(BdClient.escape(itemID))",
             body: CartQuantityInput(quantity: quantity),
             headers: headers
         )
     }
 
     public func remove(itemID: String) async throws -> CartSnapshot {
-        try await client.delete("cart/items/\(BiabClient.escape(itemID))", headers: headers)
+        try await client.delete("cart/items/\(BdClient.escape(itemID))", headers: headers)
     }
 
     public func applyCoupon(_ code: String) async throws -> CartSnapshot {
@@ -119,19 +119,19 @@ public struct CartResource: Sendable {
 // MARK: - Blog
 
 public struct BlogResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func posts(limit: Int = 20) async throws -> BlogListResponse {
         try await client.get("blog/posts", query: ["limit": String(limit)])
     }
 
     public func post(slug: String) async throws -> BlogPostDetail {
-        try await client.get("blog/posts/\(BiabClient.escape(slug))")
+        try await client.get("blog/posts/\(BdClient.escape(slug))")
     }
 
     public func comments(slug: String, limit: Int = 50) async throws -> BlogCommentListResponse {
         try await client.get(
-            "blog/posts/\(BiabClient.escape(slug))/comments",
+            "blog/posts/\(BdClient.escape(slug))/comments",
             query: ["limit": String(limit)]
         )
     }
@@ -140,7 +140,7 @@ public struct BlogResource: Sendable {
 // MARK: - Reviews
 
 public struct ReviewsResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func list(limit: Int = 10, offset: Int = 0) async throws -> ReviewListResponse {
         try await client.get("reviews", query: ["limit": String(limit), "offset": String(offset)])
@@ -150,24 +150,24 @@ public struct ReviewsResource: Sendable {
 // MARK: - Subscriptions
 
 public struct SubscriptionsResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func list() async throws -> SubscriptionListResponse {
         try await client.get("subscriptions")
     }
 
     public func startCheckout(id: String, urls: CheckoutURLs) async throws -> CheckoutSession {
-        try await client.post("subscriptions/\(BiabClient.escape(id))/checkout", body: urls)
+        try await client.post("subscriptions/\(BdClient.escape(id))/checkout", body: urls)
     }
 }
 
 // MARK: - Marketing
 
 public struct MarketingResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     /// Schema-driven, so the return type is ``JSONValue`` rather than a struct:
-    /// the shape is whatever `biab.config.ts` declared and the dashboard
+    /// the shape is whatever `bd.config.ts` declared and the dashboard
     /// filled in. Read it with the key-path subscript and always supply a
     /// local fallback.
     public func pageBundle(_ pageKey: String = "home", locale: String? = nil) async throws -> JSONValue {
@@ -185,15 +185,15 @@ public struct MarketingResource: Sendable {
 // MARK: - Parallel pages
 
 public struct ParallelPagesResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func variants(_ key: String) async throws -> JSONValue {
-        try await client.get(client.sitePath("parallel-pages/\(BiabClient.escape(key))/variants"))
+        try await client.get(client.sitePath("parallel-pages/\(BdClient.escape(key))/variants"))
     }
 
     public func render(_ key: String, params: [String: String]) async throws -> JSONValue {
         try await client.get(
-            client.sitePath("parallel-pages/\(BiabClient.escape(key))/render"),
+            client.sitePath("parallel-pages/\(BdClient.escape(key))/render"),
             query: params.mapValues { Optional($0) }
         )
     }
@@ -203,32 +203,32 @@ public struct ParallelPagesResource: Sendable {
 
 /// Org-defined forms.
 ///
-/// This is the one surface a native app genuinely reimplements: `<biab-form>`
+/// This is the one surface a native app genuinely reimplements: `<bd-form>`
 /// is a DOM web component with no native counterpart, so the app fetches the
-/// schema and renders it with its own SwiftUI field views. `BiabFormView` in
-/// `BiabStarterApp` is a working minimal renderer.
+/// schema and renders it with its own SwiftUI field views. `BdFormView` in
+/// `BdStarterApp` is a working minimal renderer.
 ///
 /// ``submit(slug:input:)`` is also the documented CREATE path for a custom
 /// collection — point a form's output at the collection and post here. There
 /// is deliberately no direct row-insert API, which keeps validation on the
 /// platform.
 public struct FormsResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func schema(slug: String) async throws -> FormSchema {
-        try await client.get("forms/\(BiabClient.escape(slug))")
+        try await client.get("forms/\(BdClient.escape(slug))")
     }
 
     @discardableResult
     public func submit(slug: String, input: FormSubmitInput) async throws -> FormSubmitResult {
-        try await client.post("forms/\(BiabClient.escape(slug))", body: input)
+        try await client.post("forms/\(BdClient.escape(slug))", body: input)
     }
 }
 
 // MARK: - Custom database
 
 /// The org's custom database — the tables declared in
-/// `biab.data-model.config.ts`.
+/// `bd.data-model.config.ts`.
 ///
 /// Reads need `metadata:read_records` on the key, and a publishable token only
 /// ever sees objects marked `public` (the per-object visibility gate lives on
@@ -237,7 +237,7 @@ public struct FormsResource: Sendable {
 /// `object` is the object's `universalIdentifier`, NOT its display name: the
 /// name can be renamed in the dashboard without breaking this code.
 public struct DataModelResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
 
     public func records(
         object: String,
@@ -274,18 +274,18 @@ public struct DataModelResource: Sendable {
 
 /// Everything scoped to the signed-in customer's session token.
 ///
-/// Note the header: portal routes take **`X-BIAB-Session-Token`**, while
-/// `auth/me` takes a lowercase **`x-biab-session`**. They are not
+/// Note the header: portal routes take **`X-BD-Session-Token`**, while
+/// `auth/me` takes a lowercase **`x-bd-session`**. They are not
 /// interchangeable — sending the wrong one reads as "not signed in" rather
 /// than as an error, which is a slow bug to find.
 public struct PortalResource: Sendable {
-    let client: BiabClient
+    let client: BdClient
     let sessionToken: String
     let organizationID: String?
 
     private var headers: [String: String] {
-        var out = ["X-BIAB-Session-Token": sessionToken]
-        if let organizationID { out["X-BIAB-Customer-Portal-Org"] = organizationID }
+        var out = ["X-BD-Session-Token": sessionToken]
+        if let organizationID { out["X-BD-Customer-Portal-Org"] = organizationID }
         return out
     }
 
@@ -305,7 +305,7 @@ public struct PortalResource: Sendable {
     @discardableResult
     public func acceptQuote(id: String) async throws -> JSONValue {
         try await client.post(
-            "customer-portal/quotes/\(BiabClient.escape(id))/accept",
+            "customer-portal/quotes/\(BdClient.escape(id))/accept",
             headers: headers
         )
     }
@@ -313,7 +313,7 @@ public struct PortalResource: Sendable {
     @discardableResult
     public func rejectQuote(id: String) async throws -> JSONValue {
         try await client.post(
-            "customer-portal/quotes/\(BiabClient.escape(id))/reject",
+            "customer-portal/quotes/\(BdClient.escape(id))/reject",
             headers: headers
         )
     }
@@ -321,7 +321,7 @@ public struct PortalResource: Sendable {
 
 // MARK: - Namespaces
 
-extension BiabClient {
+extension BdClient {
     public var storefront: StorefrontResource { StorefrontResource(client: self) }
     public var blog: BlogResource { BlogResource(client: self) }
     public var reviews: ReviewsResource { ReviewsResource(client: self) }
@@ -366,7 +366,7 @@ extension PortalResource {
         var body: [String: Int] = [:]
         if let expiresInDays { body["expiresInDays"] = expiresInDays }
         return try await client.post(
-            "customer-invites/\(BiabClient.escape(inviteId))/resend",
+            "customer-invites/\(BdClient.escape(inviteId))/resend",
             body: body,
             headers: headers
         )
@@ -384,7 +384,7 @@ extension PortalResource {
     /// who declined, how many were asked. That is staff-internal.
     func dispatchStatus(_ jobId: String) async throws -> JSONValue {
         try await client.get(
-            "customer-portal/jobs/\(BiabClient.escape(jobId))/eta",
+            "customer-portal/jobs/\(BdClient.escape(jobId))/eta",
             headers: headers
         )
     }

@@ -3,15 +3,15 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Your Business — built on BIAB</title>
+		<title>Your Business — built on BD</title>
 		<meta
 			name="description"
-			content="HTMX starter showing how to consume the BIAB SDK server-side and stream HTML fragments per section."
+			content="HTMX starter showing how to consume the BD SDK server-side and stream HTML fragments per section."
 		/>
 		<link rel="stylesheet" href="/styles.css" />
 		<!-- SDK forms stylesheet (file-upload box, multi-step header, choice chips).
 		     Served by the Bun server from node_modules; see server.ts → serveFormsCss. -->
-		<link rel="stylesheet" href="/biab-forms.css" />
+		<link rel="stylesheet" href="/bd-forms.css" />
 		<!-- HTMX from a CDN; pin the version in production. -->
 		<script
 			src="https://unpkg.com/htmx.org@2.0.4"
@@ -34,52 +34,52 @@
 			<div hx-get="/sections/about" hx-trigger="load" hx-swap="outerHTML"></div>
 			<div hx-get="/sections/services" hx-trigger="load" hx-swap="outerHTML"></div>
 			<div hx-get="/sections/blog" hx-trigger="load" hx-swap="outerHTML"></div>
-			<!-- Contact form: the SDK's `<biab-form>` web component, mounted by the
+			<!-- Contact form: the SDK's `<bd-form>` web component, mounted by the
 			     module script below. It renders the full schema (flex rows, the
 			     conditional preferred-method block, the availability picker) — more
 			     than a hand-rolled server fragment can. The bearer key stays server
-			     side via the same-origin /api/biab/forms proxy. -->
-			<section class="section biab-form" id="contact">
-				<div data-biab-contact></div>
+			     side via the same-origin /api/bd/forms proxy. -->
+			<section class="section bd-form" id="contact">
+				<div data-bd-contact></div>
 			</section>
 		</main>
 		<div hx-get="/sections/footer" hx-trigger="load" hx-swap="outerHTML"></div>
-		<!-- BIAB analytics. Config is injected by the Bun server (see
-		     server.ts → injectAnalyticsConfig) as `window.__BIAB_ANALYTICS__`
+		<!-- BD analytics. Config is injected by the Bun server (see
+		     server.ts → injectAnalyticsConfig) as `window.__BD_ANALYTICS__`
 		     so the public key never lives in this static file. -->
 		<script type="module">
-			const cfg = window.__BIAB_ANALYTICS__;
+			const cfg = window.__BD_ANALYTICS__;
 			if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
-				const { initBiabAnalytics } = await import(
+				const { initBdAnalytics } = await import(
 					"https://esm.sh/@businessdash/sdk@0.9.81/analytics-core"
 				);
-				initBiabAnalytics({
+				initBdAnalytics({
 					siteId: cfg.siteId,
 					baseUrl: cfg.baseUrl,
 					apiKey: cfg.apiKey,
 				});
 			}
 		</script>
-		<!-- Contact form. The `<biab-form>` web component (loaded from the CDN —
+		<!-- Contact form. The `<bd-form>` web component (loaded from the CDN —
 		     this server-rendered starter has no bundler) renders the full schema
-		     client-side and submits through the same-origin /api/biab/forms proxy,
+		     client-side and submits through the same-origin /api/bd/forms proxy,
 		     so the bearer key never reaches the browser. We create the element
 		     AFTER registering the proxy client so it never upgrades clientless. -->
 		<script type="module">
-			const { setBiabFormClient } = await import(
+			const { setBdFormClient } = await import(
 				"https://esm.sh/@businessdash/sdk@0.9.81/element"
 			);
-			setBiabFormClient({
+			setBdFormClient({
 				forms: {
 					async schema(slug) {
 						const res = await fetch(
-							`/api/biab/forms/schema?slug=${encodeURIComponent(slug)}`,
+							`/api/bd/forms/schema?slug=${encodeURIComponent(slug)}`,
 						);
 						if (!res.ok) throw new Error(`forms.schema ${res.status}`);
 						return await res.json();
 					},
 					async submit(slug, data, opts = {}) {
-						const res = await fetch("/api/biab/forms/submit", {
+						const res = await fetch("/api/bd/forms/submit", {
 							method: "POST",
 							headers: { "Content-Type": "application/json" },
 							body: JSON.stringify({
@@ -101,13 +101,13 @@
 					},
 				},
 			});
-			const mount = document.querySelector("[data-biab-contact]");
+			const mount = document.querySelector("[data-bd-contact]");
 			if (mount) {
-				const form = document.createElement("biab-form");
+				const form = document.createElement("bd-form");
 				form.setAttribute("slug", "general-inquiry");
 				form.setAttribute("submit-label", "Send message");
 				form.setAttribute("auto-complete", "true");
-				form.className = "biab-card contact";
+				form.className = "bd-card contact";
 				mount.replaceWith(form);
 			}
 		</script>

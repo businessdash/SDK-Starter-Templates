@@ -1,7 +1,7 @@
 import {
 	isStoreConfigured,
 	listStoreSubscriptions,
-} from "@/server/lib/biab-store";
+} from "@/server/lib/bd-store";
 
 import { Notice } from "../_components/Notice";
 
@@ -19,7 +19,7 @@ export default async function SubscriptionsPage() {
 	if (!isStoreConfigured()) {
 		return (
 			<Notice
-				body="BIAB env (BIAB_API_KEY / BIAB_SITE_ID / base URL) isn't set, so the SDK client can't initialise."
+				body="BD env (BD_API_KEY / BD_SITE_ID / base URL) isn't set, so the SDK client can't initialise."
 				title="Store isn't connected"
 			/>
 		);
@@ -39,7 +39,7 @@ export default async function SubscriptionsPage() {
 	if (data.items.length === 0) {
 		return (
 			<Notice
-				body="No live subscription offerings yet. Add them in the BIAB dashboard (Store → Subscriptions)."
+				body="No live subscription offerings yet. Add them in the BD dashboard (Store → Subscriptions)."
 				title="No live subscriptions"
 			/>
 		);
@@ -47,18 +47,18 @@ export default async function SubscriptionsPage() {
 
 	return (
 		<div>
-			<div className="biab-section__lead">
-				<span className="biab-section__eyebrow">Recurring</span>
-				<h1 className="biab-section__title">Subscriptions</h1>
-				<p className="biab-section__sub">
+			<div className="bd-section__lead">
+				<span className="bd-section__eyebrow">Recurring</span>
+				<h1 className="bd-section__title">Subscriptions</h1>
+				<p className="bd-section__sub">
 					{data.items.length} subscription
 					{data.items.length === 1 ? "" : "s"} via{" "}
-					<code className="biab-code">subscriptions.list()</code>
+					<code className="bd-code">subscriptions.list()</code>
 				</p>
 			</div>
-			<div className="biab-grid-3">
+			<div className="bd-grid-3">
 				{data.items.map((sub) => (
-					<article className="biab-card store-card" key={sub.id}>
+					<article className="bd-card store-card" key={sub.id}>
 						<div className="store-card__media">
 							{sub.imageUrl ? (
 								// eslint-disable-next-line @next/next/no-img-element

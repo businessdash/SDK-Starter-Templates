@@ -25,7 +25,7 @@ export default function StoreLayout({
 					</nav>
 				</div>
 			</header>
-			<main className="biab-section">{children}</main>
+			<main className="bd-section">{children}</main>
 		</>
 	);
 }

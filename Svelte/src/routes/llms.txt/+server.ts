@@ -1,6 +1,6 @@
 import { llmsTxtHandler } from "@businessdash/sdk/distribution";
 
-import { aiSurfaceConfig } from "$lib/server/biab-ai";
+import { aiSurfaceConfig } from "$lib/server/bd-ai";
 
 import type { RequestHandler } from "./$types";
 
@@ -9,12 +9,12 @@ import type { RequestHandler } from "./$types";
  *
  * AEO (answer-engine optimization): serve the org-curated llms.txt from THIS
  * domain's root — the only place AI crawlers look for it — while the source
- * of truth stays on BIAB (Dashboard → Marketing → AI Distribution). The SDK
+ * of truth stays on BD (Dashboard → Marketing → AI Distribution). The SDK
  * handler proxies the platform artifact, passes an upstream 404 through
  * untouched (feed disabled or entitlement lapsed), and answers 503 on
  * network failure without throwing into SvelteKit.
  *
- * The companion PRODUCT FEED needs no proxy — you submit its BIAB URL
+ * The companion PRODUCT FEED needs no proxy — you submit its BD URL
  * directly to merchant/feed programs. Build it with:
  *
  *   import { productFeedUrl } from "@businessdash/sdk/distribution";
@@ -33,7 +33,7 @@ function getHandler() {
 export const GET: RequestHandler = async () => {
 	const proxy = getHandler();
 	if (!proxy) {
-		return new Response("llms.txt is not configured (set the BIAB env vars).\n", {
+		return new Response("llms.txt is not configured (set the BD env vars).\n", {
 			status: 404,
 			headers: { "Content-Type": "text/plain; charset=utf-8" },
 		});

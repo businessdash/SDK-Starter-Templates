@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component, OnInit, signal } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { RouterLink } from "@angular/router";
-import { biabApi, type EventType, type Slot } from "../lib/biab-api.client";
+import { bdApi, type EventType, type Slot } from "../lib/bd-api.client";
 
 /**
  * Booking / scheduling. Lists the org's event types, fetches available slots
  * for the chosen one, and confirms a booking (reactive form) through the
- * server `/api/biab/scheduling/*` endpoints. Times are handled as ISO strings
+ * server `/api/bd/scheduling/*` endpoints. Times are handled as ISO strings
  * across the wire; the visitor's timezone is sent so the server books in the
  * right zone.
  */
 @Component({
-	selector: "biab-booking-page",
+	selector: "bd-booking-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
 	imports: [ReactiveFormsModule, RouterLink],
 	template: `
@@ -21,7 +21,7 @@ import { biabApi, type EventType, type Slot } from "../lib/biab-api.client";
 			@if (state() === "loading") {
 				<p class="muted">Loading…</p>
 			} @else if (eventTypes().length === 0) {
-				<p class="muted">No bookable services yet — set up scheduling in BIAB to enable booking.</p>
+				<p class="muted">No bookable services yet — set up scheduling in BD to enable booking.</p>
 			} @else if (confirmed()) {
 				<p class="muted">You're booked! We'll email you the details.</p>
 			} @else {
@@ -60,7 +60,7 @@ import { biabApi, type EventType, type Slot } from "../lib/biab-api.client";
 						<label>Name<input formControlName="name" autocomplete="name" /></label>
 						<label>Email<input formControlName="email" type="email" autocomplete="email" /></label>
 						<label>Phone (optional)<input formControlName="phone" autocomplete="tel" /></label>
-						<button class="biab-btn" type="submit" [disabled]="form.invalid || booking()">
+						<button class="bd-btn" type="submit" [disabled]="form.invalid || booking()">
 							{{ booking() ? "Booking…" : "Confirm booking" }}
 						</button>
 						@if (errorMsg()) {
@@ -90,7 +90,7 @@ export class BookingPage implements OnInit {
 	});
 
 	async ngOnInit() {
-		const res = await biabApi.eventTypes();
+		const res = await bdApi.eventTypes();
 		this.eventTypes.set(res?.items ?? []);
 		this.state.set("ready");
 	}
@@ -102,7 +102,7 @@ export class BookingPage implements OnInit {
 		if (!slug) return;
 		const from = new Date().toISOString();
 		const to = new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString();
-		const res = await biabApi.slots(slug, from, to);
+		const res = await bdApi.slots(slug, from, to);
 		this.slots.set(res?.slots ?? []);
 	}
 
@@ -128,7 +128,7 @@ export class BookingPage implements OnInit {
 		this.booking.set(true);
 		this.errorMsg.set(null);
 		const { name, email, phone } = this.form.getRawValue();
-		const res = await biabApi.book(slug, {
+		const res = await bdApi.book(slug, {
 			startAt: start,
 			name,
 			email,

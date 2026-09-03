@@ -1,6 +1,6 @@
 import type { PageServerLoad } from "./$types";
 
-import { listServiceAreaVariants } from "$lib/server/biab-parallel";
+import { listServiceAreaVariants } from "$lib/server/bd-parallel";
 
 /**
  * Index of every programmatic (service × area) page. SvelteKit doesn't do

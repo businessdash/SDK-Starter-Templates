@@ -1,22 +1,22 @@
 import type { MetaFunction } from "react-router";
 import { useLoaderData, useRevalidator } from "react-router";
 
-import { BiabForm, type BiabFormsClient } from "@businessdash/sdk/react";
+import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
 import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
-import { TODO_FORM_SLUG } from "../../biab.data-model.config";
+import { TODO_FORM_SLUG } from "../../bd.data-model.config";
 import { SiteHeader } from "~/components/SiteHeader";
-import { listTodosWithImages } from "~/lib/biab-todos.server";
+import { listTodosWithImages } from "~/lib/bd-todos.server";
 
 /**
  * `/todos` — the relational custom-collections demo. Two collections declared
- * in `biab.data-model.config.ts` — `todos`, and `todoImages` pointing at a
+ * in `bd.data-model.config.ts` — `todos`, and `todoImages` pointing at a
  * todo via a required RELATION field. This page:
  *
  *   - LISTS todos (with any images joined on) in the loader via
  *     `dataModel.listRecords` — the documented read path.
  *   - CREATES a todo by submitting the generated `todo-form` through the
- *     existing `/api/biab/forms` proxy — the documented write path (there is
+ *     existing `/api/bd/forms` proxy — the documented write path (there is
  *     no direct row-write API for consumers).
  *
  * Until the model is synced + promoted (and the form set Live) the page shows
@@ -30,12 +30,12 @@ export async function loader() {
 }
 
 // Same-origin forms proxy — identical to the contact form's client, so the
-// BIAB bearer key never reaches the browser.
-const biabFormsProxy: BiabFormsClient = {
+// BD bearer key never reaches the browser.
+const bdFormsProxy: BdFormsClient = {
 	forms: {
 		async schema(slug: string): Promise<FormSchema> {
 			const res = await fetch(
-				`/api/biab/forms?slug=${encodeURIComponent(slug)}`,
+				`/api/bd/forms?slug=${encodeURIComponent(slug)}`,
 			);
 			if (!res.ok) throw new Error(`Failed to load form (${res.status}).`);
 			return (await res.json()) as FormSchema;
@@ -45,7 +45,7 @@ const biabFormsProxy: BiabFormsClient = {
 			data: Record<string, unknown>,
 			opts?: Record<string, unknown>,
 		): Promise<FormSubmitResult> {
-			const res = await fetch("/api/biab/forms", {
+			const res = await fetch("/api/bd/forms", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ slug, data, ...opts }),
@@ -68,20 +68,20 @@ export default function TodosPage() {
 					<p className="muted">
 						Rows live in your org's custom database — two related collections
 						(<code>todos</code> + <code>todoImages</code>) declared in{" "}
-						<code>biab.data-model.config.ts</code>, read via{" "}
+						<code>bd.data-model.config.ts</code>, read via{" "}
 						<code>dataModel.listRecords</code>, created through the generated{" "}
 						<code>todo-form</code>.
 					</p>
 
 					{result.status === "unconfigured" ? (
 						<p className="muted">
-							BIAB isn't configured — set the env vars in <code>.env.local</code>{" "}
+							BD isn't configured — set the env vars in <code>.env.local</code>{" "}
 							(see <code>.env.example</code>) to run this demo.
 						</p>
 					) : result.status === "unavailable" ? (
 						<p className="muted">
 							The todos model isn't readable yet. Run{" "}
-							<code>pnpm sync-data-model</code>, promote it in the BIAB
+							<code>pnpm sync-data-model</code>, promote it in the BD
 							dashboard, and make sure your secret key carries the{" "}
 							<code>metadata:read_records</code> scope (custom objects are a
 							plan-gated surface).
@@ -92,7 +92,7 @@ export default function TodosPage() {
 						<ul className="post-list">
 							{result.todos.map((todo) => (
 								<li key={todo.id}>
-									<span className="biab-badge">
+									<span className="bd-badge">
 										{todo.done ? "Done" : "Open"}
 									</span>{" "}
 									<strong>{todo.title}</strong>
@@ -139,9 +139,9 @@ export default function TodosPage() {
 						    the model's auto-generated create form (`todo-form`) — the form
 						    carries the `create_records` action that inserts the row
 						    server-side. On success we revalidate so the loader re-reads. */}
-						<BiabForm
+						<BdForm
 							slug={formSlug}
-							client={biabFormsProxy}
+							client={bdFormsProxy}
 							submitLabel="Add todo"
 							onSuccess={() => revalidator.revalidate()}
 							successFallback={() => (

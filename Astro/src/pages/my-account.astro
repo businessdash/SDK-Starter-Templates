@@ -2,19 +2,19 @@
 /**
  * Customer portal — "My account".
  *
- * Reads the `biab_session` cookie server-side (via `getCustomerSession`) and,
+ * Reads the `bd_session` cookie server-side (via `getCustomerSession`) and,
  * when signed in, shows the user + their work bundle (`getWork()` → jobs /
  * quotes / invoices) + a review-submission form. The form posts to
- * `/api/biab/portal/submit-review`, which calls the portal submit as the
+ * `/api/bd/portal/submit-review`, which calls the portal submit as the
  * signed-in customer.
  *
- * When signed out, prompts a sign-in. When BIAB auth is unconfigured, says so.
+ * When signed out, prompts a sign-in. When BD auth is unconfigured, says so.
  */
 import {
 	getCustomerSession,
 	getCustomerWork,
 	isCustomerPortalConfigured,
-} from "../lib/biab-portal";
+} from "../lib/bd-portal";
 import Layout from "../layouts/Layout.astro";
 
 export const prerender = false;
@@ -42,70 +42,70 @@ function money(n: number): string {
 	description="Your jobs, quotes, invoices, and a place to leave a review."
 	hideBanner
 >
-	<section class="biab-section biab-section--narrow" id="account">
+	<section class="bd-section bd-section--narrow" id="account">
 		{
 			!configured ? (
-				<div class="biab-card account-card">
-					<h2 class="biab-section__title">Accounts aren't connected yet</h2>
+				<div class="bd-card account-card">
+					<h2 class="bd-section__title">Accounts aren't connected yet</h2>
 					<p>
-						Set <code>BIAB_AUTH_CALLBACK_URL</code> (plus the BIAB keys) and
+						Set <code>BD_AUTH_CALLBACK_URL</code> (plus the BD keys) and
 						register the callback as a WorkOS redirect URI. See{" "}
 						<code>.env.example</code>.
 					</p>
 				</div>
 			) : !session ? (
-				<div class="biab-card account-card">
-					<span class="biab-badge">Customer portal</span>
-					<h2 class="biab-section__title">Sign in to your account</h2>
+				<div class="bd-card account-card">
+					<span class="bd-badge">Customer portal</span>
+					<h2 class="bd-section__title">Sign in to your account</h2>
 					<p>
 						See your jobs, quotes, and invoices — and leave a review for work
 						we've done.
 					</p>
 					<div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
-						<a class="biab-btn" href="/api/biab-auth/sign-in">
+						<a class="bd-btn" href="/api/bd-auth/sign-in">
 							Sign in
 						</a>
-						<a class="biab-btn biab-btn--ghost" href="/api/biab-auth/sign-up">
+						<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">
 							Create account
 						</a>
 					</div>
 				</div>
 			) : (
 				<>
-					<div class="biab-section__lead" style="text-align: left;">
-						<span class="biab-section__eyebrow">My account</span>
-						<h2 class="biab-section__title">Welcome back, {fullName}.</h2>
+					<div class="bd-section__lead" style="text-align: left;">
+						<span class="bd-section__eyebrow">My account</span>
+						<h2 class="bd-section__title">Welcome back, {fullName}.</h2>
 						{session.user.email ? (
-							<p class="biab-section__sub" style="margin: 0;">
+							<p class="bd-section__sub" style="margin: 0;">
 								{session.user.email}
 							</p>
 						) : null}
 					</div>
 
 					{work?.unlinked ? (
-						<div class="biab-empty">
+						<div class="bd-empty">
 							Your account isn't linked to a customer record yet. Once we add
 							you, your jobs and invoices will appear here.
 						</div>
 					) : work ? (
 						<div class="account-grid">
-							<div class="biab-card account-stat">
+							<div class="bd-card account-stat">
 								<span class="account-stat__n">{work.summary.openJobCount}</span>
 								<span class="account-stat__l">Open jobs</span>
 							</div>
-							<div class="biab-card account-stat">
+							<div class="bd-card account-stat">
 								<span class="account-stat__n">
 									{work.summary.pendingQuoteCount}
 								</span>
 								<span class="account-stat__l">Pending quotes</span>
 							</div>
-							<div class="biab-card account-stat">
+							<div class="bd-card account-stat">
 								<span class="account-stat__n">
 									{work.summary.unpaidInvoiceCount}
 								</span>
 								<span class="account-stat__l">Unpaid invoices</span>
 							</div>
-							<div class="biab-card account-stat">
+							<div class="bd-card account-stat">
 								<span class="account-stat__n">
 									{money(work.summary.unpaidBalance)}
 								</span>
@@ -119,9 +119,9 @@ function money(n: number): string {
 							<h3>Recent jobs</h3>
 							<ul class="account-list">
 								{work.jobs.slice(0, 5).map((j) => (
-									<li class="biab-card account-row">
+									<li class="bd-card account-row">
 										<span>{j.name ?? "Job"}</span>
-										<span class="biab-badge">{j.status}</span>
+										<span class="bd-badge">{j.status}</span>
 									</li>
 								))}
 							</ul>
@@ -130,12 +130,12 @@ function money(n: number): string {
 
 					<div class="account-section">
 						<h3>Leave a review</h3>
-						<form class="biab-card account-card" data-review-form>
+						<form class="bd-card account-card" data-review-form>
 							<div>
-								<label class="biab-label" for="review-rating">
+								<label class="bd-label" for="review-rating">
 									Rating
 								</label>
-								<select class="biab-select" id="review-rating" name="rating">
+								<select class="bd-select" id="review-rating" name="rating">
 									<option value="5">★★★★★ — 5</option>
 									<option value="4">★★★★ — 4</option>
 									<option value="3">★★★ — 3</option>
@@ -144,22 +144,22 @@ function money(n: number): string {
 								</select>
 							</div>
 							<div>
-								<label class="biab-label" for="review-title">
+								<label class="bd-label" for="review-title">
 									Title (optional)
 								</label>
 								<input
-									class="biab-input"
+									class="bd-input"
 									id="review-title"
 									name="title"
 									placeholder="Great service"
 								/>
 							</div>
 							<div>
-								<label class="biab-label" for="review-body">
+								<label class="bd-label" for="review-body">
 									Your review
 								</label>
 								<textarea
-									class="biab-textarea"
+									class="bd-textarea"
 									id="review-body"
 									name="body"
 									placeholder="Tell us how it went…"
@@ -167,7 +167,7 @@ function money(n: number): string {
 								/>
 							</div>
 							<button
-								class="biab-btn"
+								class="bd-btn"
 								style="align-self: flex-start;"
 								type="submit"
 							>
@@ -259,7 +259,7 @@ function money(n: number): string {
 		}
 		const fd = new FormData(form);
 		try {
-			const res = await fetch("/api/biab/portal/submit-review", {
+			const res = await fetch("/api/bd/portal/submit-review", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
@@ -270,9 +270,9 @@ function money(n: number): string {
 			});
 			if (!res.ok) throw new Error(await res.text());
 			form.outerHTML = `
-				<div class="biab-card account-card">
-					<span class="biab-badge">Received</span>
-					<h2 class="biab-section__title">Thanks for the review!</h2>
+				<div class="bd-card account-card">
+					<span class="bd-badge">Received</span>
+					<h2 class="bd-section__title">Thanks for the review!</h2>
 					<p>It'll appear once it's approved.</p>
 				</div>`;
 		} catch (err) {

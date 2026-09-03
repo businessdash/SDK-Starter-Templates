@@ -3,16 +3,16 @@ import { z } from "zod";
 
 import type { Actions, PageServerLoad } from "./$types";
 
-import { SESSION_COOKIE } from "$lib/server/biab-portal";
+import { SESSION_COOKIE } from "$lib/server/bd-portal";
 import {
 	getCustomerSession,
 	getCustomerWork,
 	isCustomerPortalConfigured,
 	submitCustomerReview,
-} from "$lib/server/biab-portal";
+} from "$lib/server/bd-portal";
 
 /**
- * Customer portal. Reads + validates the `biab_session` cookie via
+ * Customer portal. Reads + validates the `bd_session` cookie via
  * `getTenantSession`, then loads the signed-in customer's work bundle
  * (`getWork()`). The review-submit form posts to the `submitReview`
  * action below. Signed-out / unconfigured states render a sign-in prompt.
@@ -56,7 +56,7 @@ const reviewSchema = z.object({
 });
 
 export const actions: Actions = {
-	/** Validate + submit a customer review via the BIAB portal. */
+	/** Validate + submit a customer review via the BD portal. */
 	submitReview: async ({ request, cookies }) => {
 		if (!isCustomerPortalConfigured()) {
 			return fail(503, {

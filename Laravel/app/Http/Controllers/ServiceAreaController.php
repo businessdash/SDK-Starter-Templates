@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Biab\Biab;
-use App\Biab\Client;
+use App\Bd\Bd;
+use App\Bd\Client;
 use Illuminate\View\View;
 
 /**
@@ -19,9 +19,9 @@ class ServiceAreaController extends Controller
 
     public function index(): View
     {
-        $variants = Biab::remember(
+        $variants = Bd::remember(
             'parallel:service-area:variants',
-            ['biab:parallel-pages'],
+            ['bd:parallel-pages'],
             static fn (Client $c) => $c->parallelPages()->listVariants(self::PAGE_KEY),
             default: ['variants' => []],
         );
@@ -35,9 +35,9 @@ class ServiceAreaController extends Controller
     {
         $key = 'parallel:service-area:'.md5($service.'|'.$area);
 
-        $page = Biab::remember(
+        $page = Bd::remember(
             $key,
-            ['biab:parallel-pages'],
+            ['bd:parallel-pages'],
             static fn (Client $c) => $c->parallelPages()->render(self::PAGE_KEY, [
                 'service' => $service,
                 'area' => $area,

@@ -1,6 +1,6 @@
 import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
 
-import { getBiab } from "../utils/biab";
+import { getBd } from "../utils/bd";
 
 /**
  * The sitemap, assembled from three sources: your own pages, what BusinessDash
@@ -32,11 +32,11 @@ export default defineEventHandler(async (event) => {
 		getRequestURL(event).origin
 	).replace(/\/+$/, "");
 
-	const client = getBiab();
+	const client = getBd();
 	const xml = client
 		? await buildSitemap({
 				client,
-				siteId: (config.biabSiteId as string | undefined) ?? "",
+				siteId: (config.bdSiteId as string | undefined) ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
 				routes: { blog: "/updates", product: "/store" },

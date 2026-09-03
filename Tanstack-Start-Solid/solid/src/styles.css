@@ -138,13 +138,13 @@ code {
 }
 
 /* ──────────────────────────────────────────────────────────────────
-   BIAB-style design tokens, additive layer over the existing
-   shadcn/oklch theme. The BIAB sections use these classes; any
+   BD-style design tokens, additive layer over the existing
+   shadcn/oklch theme. The BD sections use these classes; any
    other UI in this starter keeps the existing tokens.
    ────────────────────────────────────────────────────────────────── */
 /* ──────────────────────────────────────────────────────────────────
-   BIAB-style design tokens.
-   Mirror the variable names BIAB uses on its own admin surfaces
+   BD-style design tokens.
+   Mirror the variable names BD uses on its own admin surfaces
    (themes.css) so consumer sites can drop into the same look + feel
    without inventing a new visual language. Override these in your
    own app — the section components below only reference variables.
@@ -180,7 +180,7 @@ code {
 	--danger: #b1142e;
 	--danger-bg: rgba(177, 20, 46, 0.1);
 
-	/* Neumorphic shadows (BIAB house style) */
+	/* Neumorphic shadows (BD house style) */
 	--card-neu-top-left: rgba(255, 255, 255, 0.9);
 	--card-neu-shadow: rgba(8, 6, 13, 0.06);
 	--card-neu-halo: rgba(96, 51, 184, 0.06);
@@ -290,7 +290,7 @@ img {
 }
 
 /* Common card primitive — used by Services, Gallery tiles, Blog posts. */
-.biab-card {
+.bd-card {
 	background: var(--card);
 	border: 1px solid var(--border);
 	border-radius: 1rem;
@@ -303,7 +303,7 @@ img {
 		box-shadow 0.18s ease;
 }
 
-.biab-card:hover {
+.bd-card:hover {
 	transform: translateY(-2px);
 	box-shadow:
 		-8px -8px 18px var(--card-neu-top-left),
@@ -311,7 +311,7 @@ img {
 		0 0 0 1px var(--accent-border);
 }
 
-.biab-btn {
+.bd-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -330,28 +330,28 @@ img {
 		box-shadow 0.12s ease;
 }
 
-.biab-btn:hover {
+.bd-btn:hover {
 	background: var(--accent-strong);
 	transform: translateY(-1px);
 }
 
-.biab-btn:disabled {
+.bd-btn:disabled {
 	opacity: 0.5;
 	cursor: not-allowed;
 }
 
-.biab-btn--ghost {
+.bd-btn--ghost {
 	background: transparent;
 	color: var(--accent);
 	border-color: var(--accent-border);
 }
 
-.biab-btn--ghost:hover {
+.bd-btn--ghost:hover {
 	background: var(--accent-bg);
 	color: var(--accent);
 }
 
-.biab-badge {
+.bd-badge {
 	display: inline-block;
 	padding: 0.15rem 0.6rem;
 	background: var(--accent-bg);
@@ -364,9 +364,9 @@ img {
 	text-transform: uppercase;
 }
 
-.biab-input,
-.biab-textarea,
-.biab-select {
+.bd-input,
+.bd-textarea,
+.bd-select {
 	width: 100%;
 	padding: 0.6rem 0.85rem;
 	background: var(--sub-card);
@@ -376,21 +376,21 @@ img {
 	font-family: var(--sans);
 }
 
-.biab-input:focus,
-.biab-textarea:focus,
-.biab-select:focus {
+.bd-input:focus,
+.bd-textarea:focus,
+.bd-select:focus {
 	outline: none;
 	border-color: var(--accent);
 	background: var(--card);
 	box-shadow: 0 0 0 3px var(--accent-bg);
 }
 
-.biab-textarea {
+.bd-textarea {
 	min-height: 8rem;
 	resize: vertical;
 }
 
-.biab-label {
+.bd-label {
 	display: block;
 	font-size: 0.85rem;
 	font-weight: 600;
@@ -399,17 +399,17 @@ img {
 }
 
 /* Section spacing */
-.biab-section {
+.bd-section {
 	max-width: 72rem;
 	margin: 0 auto;
 	padding: 5rem 1.25rem;
 }
 
-.biab-section--narrow {
+.bd-section--narrow {
 	max-width: 48rem;
 }
 
-.biab-section__lead {
+.bd-section__lead {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -417,7 +417,7 @@ img {
 	text-align: center;
 }
 
-.biab-section__eyebrow {
+.bd-section__eyebrow {
 	color: var(--accent);
 	font-size: 0.78rem;
 	font-weight: 700;
@@ -425,24 +425,24 @@ img {
 	text-transform: uppercase;
 }
 
-.biab-section__title {
+.bd-section__title {
 	font-size: clamp(1.75rem, 4vw, 2.5rem);
 }
 
-.biab-section__sub {
+.bd-section__sub {
 	color: var(--text-muted);
 	font-size: 1.05rem;
 	max-width: 36rem;
 	margin: 0 auto;
 }
 
-.biab-loading {
+.bd-loading {
 	color: var(--text-muted);
 	font-size: 0.9rem;
 	font-style: italic;
 }
 
-.biab-empty {
+.bd-empty {
 	color: var(--text-muted);
 	font-size: 0.9rem;
 	padding: 2rem;
@@ -526,13 +526,13 @@ main {
 }
 
 /* Grids */
-.biab-grid-3 {
+.bd-grid-3 {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
 	gap: 1.25rem;
 }
 
-.biab-grid-4 {
+.bd-grid-4 {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
 	gap: 1rem;
@@ -670,7 +670,7 @@ main {
 	gap: 0.4rem;
 }
 
-.store-facet__price .biab-input {
+.store-facet__price .bd-input {
 	padding: 0.4rem 0.55rem;
 	font-size: 0.85rem;
 }
@@ -933,53 +933,53 @@ main {
 }
 
 /* Newsletter signup (Subscribe.tsx) — shared by the footer + about block. */
-.biab-subscribe {
+.bd-subscribe {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 	max-width: 28rem;
 }
 
-.biab-subscribe__row {
+.bd-subscribe__row {
 	display: flex;
 	gap: 0.5rem;
 }
 
-.biab-subscribe__row .biab-input {
+.bd-subscribe__row .bd-input {
 	flex: 1;
 }
 
-.biab-subscribe__row .biab-btn {
+.bd-subscribe__row .bd-btn {
 	flex-shrink: 0;
 }
 
-.biab-subscribe__note {
+.bd-subscribe__note {
 	color: var(--success);
 	font-size: 0.85rem;
 }
 
-.biab-subscribe__error {
+.bd-subscribe__error {
 	margin-top: 0.4rem;
 	color: var(--danger);
 	font-size: 0.8rem;
 }
 
 /* ───────────────────────────────────────────────────────────────────
- * <BiabForm> drop-in (from @businessdash/sdk/solid)
+ * <BdForm> drop-in (from @businessdash/sdk/solid)
  *
- * The binding renders light-DOM `biab-*` classes and ships ZERO styles of
+ * The binding renders light-DOM `bd-*` classes and ships ZERO styles of
  * its own, so this is the consumer's cascade. It reuses the same tokens as
- * the rest of the starter (.biab-input / .biab-btn are defined above).
+ * the rest of the starter (.bd-input / .bd-btn are defined above).
  * ─────────────────────────────────────────────────────────────────── */
 
-.biab-form {
+.bd-form {
 	position: relative;
 	display: flex;
 	flex-direction: column;
 	gap: 1.25rem;
 }
 
-.biab-form__org-icon {
+.bd-form__org-icon {
 	position: absolute;
 	top: 0;
 	right: 0;
@@ -990,67 +990,67 @@ main {
 	object-fit: cover;
 }
 
-.biab-form__header {
+.bd-form__header {
 	display: flex;
 	flex-direction: column;
 	gap: 0.35rem;
 }
 
-.biab-form__title {
+.bd-form__title {
 	font-size: 1.4rem;
 	font-weight: 700;
 	color: var(--heading);
 }
 
-.biab-form__description {
+.bd-form__description {
 	color: var(--text-muted);
 	font-size: 0.95rem;
 }
 
-.biab-form--loading,
-.biab-form--error {
+.bd-form--loading,
+.bd-form--error {
 	padding: 1.5rem;
 	color: var(--text-muted);
 }
 
-.biab-form--error {
+.bd-form--error {
 	color: var(--destructive);
 }
 
-.biab-tree {
+.bd-tree {
 	display: flex;
 	flex-direction: column;
 	gap: 1rem;
 }
 
-.biab-field {
+.bd-field {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 }
 
-.biab-field__label {
+.bd-field__label {
 	display: block;
 	font-size: 0.85rem;
 	font-weight: 600;
 	color: var(--subtitle);
 }
 
-.biab-field__required {
+.bd-field__required {
 	color: var(--destructive);
 }
 
-.biab-field__help {
+.bd-field__help {
 	font-size: 0.78rem;
 	color: var(--text-muted);
 }
 
-.biab-field__error {
+.bd-field__error {
 	font-size: 0.78rem;
 	color: var(--destructive);
 }
 
-.biab-field--error {
+.bd-field--error {
 	border-radius: 0.6rem;
 	padding: 0.75rem;
 	margin: 0 -0.25rem;
@@ -1058,37 +1058,37 @@ main {
 	background: color-mix(in oklab, var(--destructive) 8%, transparent);
 }
 
-.biab-field__title {
+.bd-field__title {
 	font-size: 1.3rem;
 	font-weight: 700;
 	color: var(--heading);
 }
 
-.biab-field__subtitle {
+.bd-field__subtitle {
 	font-size: 1rem;
 	color: var(--text-muted);
 }
 
-.biab-field__separator {
+.bd-field__separator {
 	border: none;
 	border-top: 1px solid var(--border);
 	margin: 0.25rem 0;
 }
 
 /* Groups & layout containers */
-.biab-group {
+.bd-group {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
 }
 
-.biab-group--bordered {
+.bd-group--bordered {
 	border: 1px solid var(--border);
 	border-radius: 0.75rem;
 	padding: 1rem;
 }
 
-.biab-group__label {
+.bd-group__label {
 	font-size: 0.75rem;
 	font-weight: 700;
 	text-transform: uppercase;
@@ -1096,72 +1096,72 @@ main {
 	color: var(--text-muted);
 }
 
-.biab-flex-row {
+.bd-flex-row {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.75rem;
 }
 
-.biab-flex-row__cell {
+.bd-flex-row__cell {
 	flex: 1 1 180px;
 	min-width: 180px;
 }
 
-.biab-subfield {
+.bd-subfield {
 	display: flex;
 	flex-direction: column;
 	gap: 0.25rem;
 }
 
-.biab-subfield__label {
+.bd-subfield__label {
 	font-size: 0.72rem;
 	color: var(--text-muted);
 }
 
-.biab-date-range,
-.biab-time-block,
-.biab-appointment {
+.bd-date-range,
+.bd-time-block,
+.bd-appointment {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 0.5rem;
 }
 
-.biab-address {
+.bd-address {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
 	gap: 0.5rem;
 }
 
-.biab-address .biab-subfield:nth-child(1),
-.biab-address .biab-subfield:nth-child(2),
-.biab-address .biab-subfield:nth-child(5) {
+.bd-address .bd-subfield:nth-child(1),
+.bd-address .bd-subfield:nth-child(2),
+.bd-address .bd-subfield:nth-child(5) {
 	grid-column: 1 / -1;
 }
 
 /* Choice inputs */
-.biab-radio-group,
-.biab-checkbox-group {
+.bd-radio-group,
+.bd-checkbox-group {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 }
 
-.biab-radio,
-.biab-checkbox,
-.biab-switch {
+.bd-radio,
+.bd-checkbox,
+.bd-switch {
 	display: inline-flex;
 	align-items: center;
 	gap: 0.5rem;
 	cursor: pointer;
 }
 
-.biab-color-group {
+.bd-color-group {
 	display: flex;
 	flex-wrap: wrap;
 	gap: 0.5rem;
 }
 
-.biab-color-swatch {
+.bd-color-swatch {
 	width: 2.25rem;
 	height: 2.25rem;
 	border-radius: 9999px;
@@ -1170,21 +1170,21 @@ main {
 	transition: transform 0.12s ease;
 }
 
-.biab-color-swatch--selected {
+.bd-color-swatch--selected {
 	transform: scale(1.1);
 	border-color: var(--accent);
 }
 
 /* Rating + stepper + slider */
-.biab-stars,
-.biab-happiness,
-.biab-stepper {
+.bd-stars,
+.bd-happiness,
+.bd-stepper {
 	display: flex;
 	align-items: center;
 	gap: 0.35rem;
 }
 
-.biab-stars__star {
+.bd-stars__star {
 	font-size: 1.4rem;
 	line-height: 1;
 	color: var(--border-strong);
@@ -1193,11 +1193,11 @@ main {
 	cursor: pointer;
 }
 
-.biab-stars__star--on {
+.bd-stars__star--on {
 	color: #f5b301;
 }
 
-.biab-happiness__face {
+.bd-happiness__face {
 	font-size: 1.6rem;
 	background: none;
 	border: none;
@@ -1206,12 +1206,12 @@ main {
 	transition: transform 0.12s ease, opacity 0.12s ease;
 }
 
-.biab-happiness__face--on {
+.bd-happiness__face--on {
 	opacity: 1;
 	transform: scale(1.2);
 }
 
-.biab-stepper__btn {
+.bd-stepper__btn {
 	width: 2rem;
 	height: 2rem;
 	border-radius: 0.5rem;
@@ -1220,35 +1220,35 @@ main {
 	cursor: pointer;
 }
 
-.biab-stepper__value {
+.bd-stepper__value {
 	min-width: 2.5rem;
 	text-align: center;
 	font-variant-numeric: tabular-nums;
 }
 
-.biab-slider {
+.bd-slider {
 	display: flex;
 	flex-direction: column;
 	gap: 0.4rem;
 }
 
-.biab-slider__scale {
+.bd-slider__scale {
 	display: flex;
 	justify-content: space-between;
 	font-size: 0.75rem;
 	color: var(--text-muted);
 }
 
-.biab-slider input[type="range"] {
+.bd-slider input[type="range"] {
 	width: 100%;
 }
 
-.biab-phone {
+.bd-phone {
 	display: flex;
 	gap: 0.5rem;
 }
 
-.biab-phone__flag {
+.bd-phone__flag {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1260,13 +1260,13 @@ main {
 }
 
 /* File upload */
-.biab-file {
+.bd-file {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
 }
 
-.biab-file__trigger {
+.bd-file__trigger {
 	width: 100%;
 	padding: 1rem;
 	border: 2px dashed var(--border-strong);
@@ -1275,12 +1275,12 @@ main {
 	cursor: pointer;
 }
 
-.biab-file__trigger:disabled {
+.bd-file__trigger:disabled {
 	opacity: 0.6;
 	cursor: not-allowed;
 }
 
-.biab-file__list {
+.bd-file__list {
 	list-style: none;
 	margin: 0;
 	padding: 0;
@@ -1289,7 +1289,7 @@ main {
 	gap: 0.35rem;
 }
 
-.biab-file__item {
+.bd-file__item {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
@@ -1299,31 +1299,31 @@ main {
 	font-size: 0.8rem;
 }
 
-.biab-file__name {
+.bd-file__name {
 	flex: 1;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
 
-.biab-file__size {
+.bd-file__size {
 	color: var(--text-muted);
 }
 
-.biab-file__remove,
-.biab-or__badge {
+.bd-file__remove,
+.bd-or__badge {
 	background: none;
 	border: none;
 	cursor: pointer;
 }
 
-.biab-file__error {
+.bd-file__error {
 	font-size: 0.78rem;
 	color: var(--destructive);
 }
 
 /* OR-condition */
-.biab-or {
+.bd-or {
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
@@ -1333,12 +1333,12 @@ main {
 	padding: 1rem;
 }
 
-.biab-or--error {
+.bd-or--error {
 	border-color: color-mix(in oklab, var(--destructive) 40%, transparent);
 	background: color-mix(in oklab, var(--destructive) 6%, transparent);
 }
 
-.biab-or__label {
+.bd-or__label {
 	font-size: 0.8rem;
 	font-weight: 700;
 	text-transform: uppercase;
@@ -1348,27 +1348,27 @@ main {
 	gap: 0.5rem;
 }
 
-.biab-or__hint {
+.bd-or__hint {
 	font-size: 0.7rem;
 	font-weight: 400;
 	text-transform: none;
 	color: var(--text-muted);
 }
 
-.biab-or__grid {
+.bd-or__grid {
 	display: grid;
 	grid-template-columns: 1fr auto 1fr;
 	align-items: stretch;
 	gap: 0.75rem;
 }
 
-.biab-or__side {
+.bd-or__side {
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
 }
 
-.biab-or__side-label {
+.bd-or__side-label {
 	font-size: 0.7rem;
 	font-weight: 700;
 	text-transform: uppercase;
@@ -1376,13 +1376,13 @@ main {
 	color: var(--text-muted);
 }
 
-.biab-or__divider {
+.bd-or__divider {
 	display: flex;
 	align-items: center;
 	justify-content: center;
 }
 
-.biab-or__badge {
+.bd-or__badge {
 	border: 1px solid color-mix(in oklab, #f5b301 40%, transparent);
 	border-radius: 9999px;
 	padding: 0.1rem 0.5rem;
@@ -1391,13 +1391,13 @@ main {
 	letter-spacing: 0.1em;
 }
 
-.biab-or__error {
+.bd-or__error {
 	font-size: 0.78rem;
 	color: var(--destructive);
 }
 
 /* Progress */
-.biab-progress--steps {
+.bd-progress--steps {
 	border: 1px solid var(--border);
 	border-radius: 0.75rem;
 	padding: 1rem;
@@ -1406,18 +1406,18 @@ main {
 	gap: 0.75rem;
 }
 
-.biab-progress__title {
+.bd-progress__title {
 	font-size: 0.85rem;
 	font-weight: 700;
 }
 
-.biab-progress__track {
+.bd-progress__track {
 	display: flex;
 	align-items: center;
 	overflow-x: auto;
 }
 
-.biab-progress__line {
+.bd-progress__line {
 	flex: 1;
 	min-width: 1.5rem;
 	height: 1px;
@@ -1425,18 +1425,18 @@ main {
 	background: var(--border);
 }
 
-.biab-progress__line--filled {
+.bd-progress__line--filled {
 	background: color-mix(in oklab, var(--accent) 40%, transparent);
 }
 
-.biab-progress__node {
+.bd-progress__node {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
 	flex-shrink: 0;
 }
 
-.biab-progress__dot {
+.bd-progress__dot {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -1450,30 +1450,30 @@ main {
 	font-weight: 700;
 }
 
-.biab-progress__dot--current {
+.bd-progress__dot--current {
 	border-color: var(--accent);
 	background: var(--accent);
 	color: white;
 }
 
-.biab-progress__dot--done {
+.bd-progress__dot--done {
 	border-color: color-mix(in oklab, var(--accent) 40%, transparent);
 	background: var(--accent-bg);
 	color: var(--accent);
 }
 
-.biab-progress__step-label {
+.bd-progress__step-label {
 	font-size: 0.75rem;
 	font-weight: 600;
 	color: var(--text-muted);
 	max-width: 7.5rem;
 }
 
-.biab-progress__step-label--current {
+.bd-progress__step-label--current {
 	color: var(--accent);
 }
 
-.biab-progress--bar {
+.bd-progress--bar {
 	display: flex;
 	align-items: center;
 	gap: 0.5rem;
@@ -1481,11 +1481,11 @@ main {
 	color: var(--text-muted);
 }
 
-.biab-progress__count {
+.bd-progress__count {
 	font-variant-numeric: tabular-nums;
 }
 
-.biab-progress__bar-track {
+.bd-progress__bar-track {
 	flex: 1;
 	height: 0.25rem;
 	border-radius: 9999px;
@@ -1493,24 +1493,24 @@ main {
 	overflow: hidden;
 }
 
-.biab-progress__bar-fill {
+.bd-progress__bar-fill {
 	height: 100%;
 	background: var(--accent);
 	transition: width 0.2s ease;
 }
 
 /* Nav + state */
-.biab-nav {
+.bd-nav {
 	padding-top: 0.5rem;
 	border-top: 1px solid var(--border);
 }
 
-.biab-nav--steps {
+.bd-nav--steps {
 	display: flex;
 	justify-content: space-between;
 }
 
-.biab-form__errors {
+.bd-form__errors {
 	border: 1px solid color-mix(in oklab, var(--destructive) 40%, transparent);
 	background: color-mix(in oklab, var(--destructive) 10%, transparent);
 	border-radius: 0.6rem;
@@ -1519,16 +1519,16 @@ main {
 	color: var(--destructive);
 }
 
-.biab-form__errors-title {
+.bd-form__errors-title {
 	font-weight: 600;
 }
 
-.biab-form__errors-list {
+.bd-form__errors-list {
 	opacity: 0.8;
 	margin-top: 0.15rem;
 }
 
-.biab-form__success {
+.bd-form__success {
 	border: 1px solid var(--accent-border);
 	background: var(--accent-bg);
 	color: var(--accent);
@@ -1539,33 +1539,33 @@ main {
 
 /* Entrance animations (respect reduced motion) */
 @media (prefers-reduced-motion: no-preference) {
-	.biab-anim--fade {
-		animation: biab-fade 0.5s ease;
+	.bd-anim--fade {
+		animation: bd-fade 0.5s ease;
 	}
-	.biab-anim--scale {
-		animation: biab-scale 0.5s ease;
+	.bd-anim--scale {
+		animation: bd-scale 0.5s ease;
 	}
-	.biab-anim--slide-forward {
-		animation: biab-slide-right 0.5s ease;
+	.bd-anim--slide-forward {
+		animation: bd-slide-right 0.5s ease;
 	}
-	.biab-anim--slide-back {
-		animation: biab-slide-left 0.5s ease;
+	.bd-anim--slide-back {
+		animation: bd-slide-left 0.5s ease;
 	}
 }
 
-@keyframes biab-fade {
+@keyframes bd-fade {
 	from { opacity: 0; }
 	to { opacity: 1; }
 }
-@keyframes biab-scale {
+@keyframes bd-scale {
 	from { opacity: 0; transform: scale(0.96); }
 	to { opacity: 1; transform: scale(1); }
 }
-@keyframes biab-slide-right {
+@keyframes bd-slide-right {
 	from { opacity: 0; transform: translateX(2rem); }
 	to { opacity: 1; transform: translateX(0); }
 }
-@keyframes biab-slide-left {
+@keyframes bd-slide-left {
 	from { opacity: 0; transform: translateX(-2rem); }
 	to { opacity: 1; transform: translateX(0); }
 }

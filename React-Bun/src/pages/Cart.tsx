@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { biab, dollars } from "../lib/biab";
-import type { Loose } from "../lib/biab";
+import { bd, dollars } from "../lib/bd";
+import type { Loose } from "../lib/bd";
 import { Link } from "../lib/router";
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 export function Cart() {
-	const { data, error, loading } = useApi<Loose>(() => biab.cart.get());
+	const { data, error, loading } = useApi<Loose>(() => bd.cart.get());
 	const [cart, setCart] = useState<Loose | null>(null);
 	const [couponMsg, setCouponMsg] = useState("");
 	const [checkoutMsg, setCheckoutMsg] = useState("");
@@ -32,7 +32,7 @@ export function Cart() {
 	const checkout = async () => {
 		setCheckoutMsg("Starting checkout…");
 		try {
-			const { url } = await biab.checkout.start({ origin: window.location.origin });
+			const { url } = await bd.checkout.start({ origin: window.location.origin });
 			window.location.href = url;
 		} catch (e: any) {
 			setCheckoutMsg(`Couldn't start checkout: ${e?.message ?? e}`);
@@ -43,7 +43,7 @@ export function Cart() {
 		if (!code) return;
 		setCouponMsg("Applying…");
 		try {
-			setCart(await biab.cart.applyCoupon(code));
+			setCart(await bd.cart.applyCoupon(code));
 			setCouponMsg("");
 		} catch (e: any) {
 			setCouponMsg(e?.message ?? "Invalid code");
@@ -73,7 +73,7 @@ export function Cart() {
 										className="qty__btn"
 										type="button"
 										aria-label="Decrease"
-										onClick={async () => setCart(await biab.cart.update(it.id, Math.max(0, it.quantity - 1)))}
+										onClick={async () => setCart(await bd.cart.update(it.id, Math.max(0, it.quantity - 1)))}
 									>
 										−
 									</button>
@@ -82,13 +82,13 @@ export function Cart() {
 										className="qty__btn"
 										type="button"
 										aria-label="Increase"
-										onClick={async () => setCart(await biab.cart.update(it.id, it.quantity + 1))}
+										onClick={async () => setCart(await bd.cart.update(it.id, it.quantity + 1))}
 									>
 										+
 									</button>
 								</div>
 								<div className="cart-item__subtotal">{dollars(it.subtotal, it.currency ?? currency)}</div>
-								<button className="cart-item__remove" type="button" onClick={async () => setCart(await biab.cart.remove(it.id))}>
+								<button className="cart-item__remove" type="button" onClick={async () => setCart(await bd.cart.remove(it.id))}>
 									Remove
 								</button>
 							</li>
@@ -98,7 +98,7 @@ export function Cart() {
 					{view?.couponCode ? (
 						<div className="coupon coupon--applied">
 							<span>Coupon {view.couponCode} applied</span>
-							<button className="btn btn--ghost btn--sm" type="button" onClick={async () => setCart(await biab.cart.removeCoupon())}>
+							<button className="btn btn--ghost btn--sm" type="button" onClick={async () => setCart(await bd.cart.removeCoupon())}>
 								Remove
 							</button>
 						</div>
@@ -128,7 +128,7 @@ export function Cart() {
 					</div>
 
 					<div className="cart-actions">
-						<button className="btn btn--ghost" type="button" onClick={async () => setCart(await biab.cart.clear())}>
+						<button className="btn btn--ghost" type="button" onClick={async () => setCart(await bd.cart.clear())}>
 							Clear cart
 						</button>
 						<button className="btn btn--primary btn--lg" type="button" onClick={checkout}>

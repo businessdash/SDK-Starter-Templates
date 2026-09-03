@@ -61,11 +61,11 @@ export function AddToCart({
 
 			{variants.length > 1 ? (
 				<div>
-					<label className="biab-label" htmlFor="variant">
+					<label className="bd-label" htmlFor="variant">
 						Variant
 					</label>
 					<select
-						className="biab-select"
+						className="bd-select"
 						id="variant"
 						onChange={(e) => setSelectedId(e.target.value)}
 						value={selectedId}
@@ -80,11 +80,11 @@ export function AddToCart({
 			) : null}
 
 			<div className="store-buy__qty">
-				<label className="biab-label" htmlFor="qty">
+				<label className="bd-label" htmlFor="qty">
 					Qty
 				</label>
 				<input
-					className="biab-input"
+					className="bd-input"
 					id="qty"
 					min={1}
 					onChange={(e) => setQty(Math.max(1, Number(e.target.value) || 1))}
@@ -94,7 +94,7 @@ export function AddToCart({
 			</div>
 
 			<button
-				className="biab-btn"
+				className="bd-btn"
 				disabled={pending || !available}
 				onClick={handleAdd}
 				type="button"

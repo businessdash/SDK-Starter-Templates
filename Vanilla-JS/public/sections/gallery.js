@@ -1,8 +1,8 @@
-import { biab, el, empty, loading } from "../biab.js";
+import { bd, el, empty, loading } from "../bd.js";
 
 /**
  * Showcases the SDK's typed field-selection feature: only the
- * columns named in `FIELDS` come back, and the BIAB server
+ * columns named in `FIELDS` come back, and the BD server
  * SELECTs only those columns. Vanilla loses the compile-time
  * narrowing the TS starters get, but the runtime payload + cost
  * shape is identical.
@@ -12,11 +12,11 @@ const FIELDS = ["id", "src", "title", "category", "blurDataURL"];
 /** @param {HTMLElement} target */
 export async function renderGallery(target) {
 	target.replaceChildren(
-		el("div", { class: "biab-section__lead" }, [
-			el("span", { class: "biab-section__eyebrow" }, ["Recent work"]),
-			el("h2", { class: "biab-section__title" }, ["Gallery"]),
-			el("p", { class: "biab-section__sub" }, [
-				"Pulled live from the BIAB gallery surface. Each tile only fetches the fields it actually displays.",
+		el("div", { class: "bd-section__lead" }, [
+			el("span", { class: "bd-section__eyebrow" }, ["Recent work"]),
+			el("h2", { class: "bd-section__title" }, ["Gallery"]),
+			el("p", { class: "bd-section__sub" }, [
+				"Pulled live from the BD gallery surface. Each tile only fetches the fields it actually displays.",
 			]),
 		]),
 		loading("Loading gallery…"),
@@ -24,7 +24,7 @@ export async function renderGallery(target) {
 
 	let items;
 	try {
-		items = await biab.gallery.list({ limit: 12, fields: FIELDS });
+		items = await bd.gallery.list({ limit: 12, fields: FIELDS });
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Unknown error";
 		target.append(empty(`Couldn't load gallery: ${message}`));
@@ -37,16 +37,16 @@ export async function renderGallery(target) {
 
 	if (items.length === 0) {
 		target.append(
-			empty("No gallery items yet. Add a few in BIAB and they'll appear here."),
+			empty("No gallery items yet. Add a few in BD and they'll appear here."),
 		);
 		return;
 	}
 
 	const grid = el(
 		"div",
-		{ class: "biab-grid-4" },
+		{ class: "bd-grid-4" },
 		items.map((item) => {
-			const tile = el("div", { class: "biab-card gallery-tile" }, [
+			const tile = el("div", { class: "bd-card gallery-tile" }, [
 				item.src
 					? el("img", {
 							alt: item.title ?? item.category ?? "Gallery item",

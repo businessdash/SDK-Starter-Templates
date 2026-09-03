@@ -7,9 +7,9 @@ import { Subscribe } from "~/components/Subscribe";
 import {
 	getBannerFromBundle,
 	getMarketingBundle,
-} from "~/lib/biab-bundle.server";
-import { buildHomeJsonLd } from "~/lib/biab-seo.server";
-import { isServiceSuspended } from "~/lib/biab.server";
+} from "~/lib/bd-bundle.server";
+import { buildHomeJsonLd } from "~/lib/bd-seo.server";
+import { isServiceSuspended } from "~/lib/bd.server";
 import {
 	loadAbout,
 	loadBlog,
@@ -19,11 +19,11 @@ import {
 } from "~/lib/sdk-sections.server";
 
 export const meta: MetaFunction = () => [
-	{ title: "Your Business — built on BIAB" },
+	{ title: "Your Business — built on BD" },
 	{
 		name: "description",
 		content:
-			"Remix starter showing how to consume the BIAB SDK in server loader functions with Form-driven actions.",
+			"Remix starter showing how to consume the BD SDK in server loader functions with Form-driven actions.",
 	},
 ];
 
@@ -117,10 +117,10 @@ export default function Index() {
 			</header>
 			<main>
 				<section className="hero" id="hero">
-					<span className="biab-badge">Open · Mon–Sat</span>
+					<span className="bd-badge">Open · Mon–Sat</span>
 					<h1 className="hero__title">{hero.title}</h1>
 					<p className="hero__sub">{hero.tagline}</p>
-					<a className="biab-btn" href={hero.ctaHref}>
+					<a className="bd-btn" href={hero.ctaHref}>
 						{hero.ctaLabel}
 					</a>
 				</section>
@@ -155,7 +155,7 @@ export default function Index() {
 					<h2 className="section__title">Recent work</h2>
 					{gallery.length === 0 ? (
 						<p className="muted">
-							Tag media items "Show in public gallery" in BIAB and they appear
+							Tag media items "Show in public gallery" in BD and they appear
 							here.
 						</p>
 					) : (
@@ -173,7 +173,7 @@ export default function Index() {
 					<h2 className="section__title">From the blog</h2>
 					{blog.length === 0 ? (
 						<p className="muted">
-							No posts yet — author them in BIAB and they appear here.
+							No posts yet — author them in BD and they appear here.
 						</p>
 					) : (
 						<ul className="post-list">
@@ -189,14 +189,14 @@ export default function Index() {
 						</ul>
 					)}
 				</section>
-				{/* Schema-driven drop-in. `<BiabForm>` (the contact island) fetches
-				    the schema and submits through the same-origin /api/biab/forms
+				{/* Schema-driven drop-in. `<BdForm>` (the contact island) fetches
+				    the schema and submits through the same-origin /api/bd/forms
 				    resource route, so the bearer key stays server-side. */}
 				<ContactForm />
 			</main>
 			<footer className="footer">
 				<Subscribe source="footer" label="Subscribe to our newsletter" />
-				<p>© {new Date().getFullYear()} Your Business — built on BIAB.</p>
+				<p>© {new Date().getFullYear()} Your Business — built on BD.</p>
 			</footer>
 		</>
 	);

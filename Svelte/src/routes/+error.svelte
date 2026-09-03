@@ -14,13 +14,13 @@
 	<title>{page.status === 404 ? 'Page not found' : 'Something went wrong'}</title>
 </svelte:head>
 
-<main class="biab-section biab-section--narrow">
-	<div class="biab-section__lead">
-		<span class="biab-section__eyebrow">{page.status}</span>
-		<h1 class="biab-section__title">
+<main class="bd-section bd-section--narrow">
+	<div class="bd-section__lead">
+		<span class="bd-section__eyebrow">{page.status}</span>
+		<h1 class="bd-section__title">
 			{page.status === 404 ? "We couldn't find that page" : 'Something went wrong'}
 		</h1>
-		<p class="biab-section__sub">
+		<p class="bd-section__sub">
 			{page.status === 404
 				? 'The link may be out of date, or the page may have moved.'
 				: 'Please try again in a moment.'}

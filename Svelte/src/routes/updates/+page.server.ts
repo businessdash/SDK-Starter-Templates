@@ -3,7 +3,7 @@ import type { PageServerLoad } from "./$types";
 import {
 	fetchBundleSafe,
 	getUpdatesFromBundle,
-} from "$lib/server/biab-bundle";
+} from "$lib/server/bd-bundle";
 
 /**
  * News / updates feed. Reads the Google-Business-style "Posts" that ride

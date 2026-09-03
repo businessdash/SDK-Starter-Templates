@@ -1,23 +1,23 @@
 ---
 /**
  * Programmatic service-area page — one URL per (service × area) combination
- * declared by the `service-area` parallel page in `biab.config.ts`.
+ * declared by the `service-area` parallel page in `bd.config.ts`.
  *
  * Under `output: "server"`, `getStaticPaths` is unidiomatic, so we SSR-render
  * per request: `parallelPages.render("service-area", { service, area })`
  * resolves the template's `{service.*}` / `{area.*}` / `{company.*}` tokens on
- * the BIAB side and returns `{ meta, body }`. We pass `meta.title` /
+ * the BD side and returns `{ meta, body }`. We pass `meta.title` /
  * `description` / `canonical` / `ogImage` to the shared Layout and render the
  * body below.
  *
  * `listVariants("service-area")` powers the link index at `/services` (see
  * `services/index.astro`). Suspension-aware (503) + unconfigured-safe (404).
  */
-import { biab } from "../../../lib/biab";
+import { bd } from "../../../lib/bd";
 import {
 	isSuspensionError,
 	suspendedResponse,
-} from "../../../lib/biab-suspension";
+} from "../../../lib/bd-suspension";
 import Layout from "../../../layouts/Layout.astro";
 
 export const prerender = false;
@@ -37,9 +37,9 @@ type RenderedVariant = {
 let variant: RenderedVariant | null = null;
 let suspended = false;
 
-if (biab && service && area) {
+if (bd && service && area) {
 	try {
-		variant = (await biab.parallelPages.render("service-area", {
+		variant = (await bd.parallelPages.render("service-area", {
 			service,
 			area,
 		})) as RenderedVariant;
@@ -73,15 +73,15 @@ const body = variant.body as
 	canonical={meta.canonical ?? null}
 	ogImage={meta.ogImage ?? null}
 >
-	<section class="biab-section biab-section--narrow" id="service-area">
+	<section class="bd-section bd-section--narrow" id="service-area">
 		<a href="/services" style="font-size: 0.9rem; color: var(--text-muted);">
 			← All service areas
 		</a>
 		<header style="margin: 1.5rem 0 2rem;">
-			<h1 class="biab-section__title">{title.split(" | ")[0]}</h1>
+			<h1 class="bd-section__title">{title.split(" | ")[0]}</h1>
 			{
 				description ? (
-					<p class="biab-section__sub" style="margin: 0.75rem 0 0;">
+					<p class="bd-section__sub" style="margin: 0.75rem 0 0;">
 						{description}
 					</p>
 				) : null
@@ -89,7 +89,7 @@ const body = variant.body as
 		</header>
 		{
 			body?.PageTitle || body?.headline ? (
-				<section class="biab-card" style="padding: 2rem;">
+				<section class="bd-card" style="padding: 2rem;">
 					<h2>{body.PageTitle ?? body.headline}</h2>
 					{body.PageHeadline || body.intro ? (
 						<p style="margin-top: 0.75rem; color: var(--text-muted);">
