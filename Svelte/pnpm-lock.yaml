@@ -13,8 +13,8 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.81
-        version: 0.9.81(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svelte@5.56.8)
+        specifier: ^0.9.90
+        version: 0.9.90(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svelte@5.56.8)
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -159,8 +159,8 @@ packages:
   '@blazediff/core@1.9.1':
     resolution: {integrity: sha512-ehg3jIkYKulZh+8om/O25vkvSsXXwC+skXmyA87FFx6A/45eqOkZsBltMw/TVteb0mloiGT8oGRTcjRAz66zaA==}
 
-  '@businessdash/sdk@0.9.81':
-    resolution: {integrity: sha512-G+sSsJ75QjzC2BHLrVaqE71FE0ZWsGKjOfsOr+RQBpw3RY2Iwm2tkWyppS62czR4ustR6d9FgSDGcD9gtKpepg==}
+  '@businessdash/sdk@0.9.90':
+    resolution: {integrity: sha512-kFQYQk6EdSqfPueSC0z/Mh4oGiyvdfCywaF6Opg0OMlU807FFTl84bBCCuSLLXjC0/5IvB0RCs0Pf1H7XkMaJQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -2396,7 +2396,7 @@ snapshots:
 
   '@blazediff/core@1.9.1': {}
 
-  '@businessdash/sdk@0.9.81(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svelte@5.56.8)':
+  '@businessdash/sdk@0.9.90(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svelte@5.56.8)':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76

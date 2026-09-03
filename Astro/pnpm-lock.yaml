@@ -20,8 +20,8 @@ importers:
         specifier: ^11.0.2
         version: 11.1.1(astro@7.2.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(tsx@4.23.12)(yaml@2.9.0))
       '@businessdash/sdk':
-        specifier: ^0.9.81
-        version: 0.9.81
+        specifier: ^0.9.90
+        version: 0.9.90
       astro:
         specifier: ^7.1.0
         version: 7.2.1(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(tsx@4.23.12)(yaml@2.9.0)
@@ -212,8 +212,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@businessdash/sdk@0.9.81':
-    resolution: {integrity: sha512-G+sSsJ75QjzC2BHLrVaqE71FE0ZWsGKjOfsOr+RQBpw3RY2Iwm2tkWyppS62czR4ustR6d9FgSDGcD9gtKpepg==}
+  '@businessdash/sdk@0.9.90':
+    resolution: {integrity: sha512-kFQYQk6EdSqfPueSC0z/Mh4oGiyvdfCywaF6Opg0OMlU807FFTl84bBCCuSLLXjC0/5IvB0RCs0Pf1H7XkMaJQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -2029,7 +2029,7 @@ snapshots:
   '@bruits/satteri-win32-x64-msvc@0.9.5':
     optional: true
 
-  '@businessdash/sdk@0.9.81':
+  '@businessdash/sdk@0.9.90':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76

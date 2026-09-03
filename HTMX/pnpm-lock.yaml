@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.81
-        version: 0.9.81
+        specifier: ^0.9.90
+        version: 0.9.90
       zod:
         specifier: ^3.25.76
         version: 3.25.76
@@ -24,8 +24,8 @@ importers:
 
 packages:
 
-  '@businessdash/sdk@0.9.81':
-    resolution: {integrity: sha512-G+sSsJ75QjzC2BHLrVaqE71FE0ZWsGKjOfsOr+RQBpw3RY2Iwm2tkWyppS62czR4ustR6d9FgSDGcD9gtKpepg==}
+  '@businessdash/sdk@0.9.90':
+    resolution: {integrity: sha512-kFQYQk6EdSqfPueSC0z/Mh4oGiyvdfCywaF6Opg0OMlU807FFTl84bBCCuSLLXjC0/5IvB0RCs0Pf1H7XkMaJQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -86,7 +86,7 @@ packages:
 
 snapshots:
 
-  '@businessdash/sdk@0.9.81':
+  '@businessdash/sdk@0.9.90':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76

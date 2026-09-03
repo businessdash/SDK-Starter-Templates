@@ -17,8 +17,8 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.81
-        version: 0.9.81(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: ^0.9.90
+        version: 0.9.90(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@react-router/node':
         specifier: ^7.18.0
         version: 7.18.2(react-router@7.18.2(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@5.9.3)
@@ -197,8 +197,8 @@ packages:
     resolution: {integrity: sha512-Vj1jF3cPfxg7OAfoI7QnVKLoILlm2JF9pnVHrX8qx7AHMiYWT+NDAA7jChlNgRS4WTLc/fD1lXLmPixluj+3Gg==}
     engines: {node: '>=6.9.0'}
 
-  '@businessdash/sdk@0.9.81':
-    resolution: {integrity: sha512-G+sSsJ75QjzC2BHLrVaqE71FE0ZWsGKjOfsOr+RQBpw3RY2Iwm2tkWyppS62czR4ustR6d9FgSDGcD9gtKpepg==}
+  '@businessdash/sdk@0.9.90':
+    resolution: {integrity: sha512-kFQYQk6EdSqfPueSC0z/Mh4oGiyvdfCywaF6Opg0OMlU807FFTl84bBCCuSLLXjC0/5IvB0RCs0Pf1H7XkMaJQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -1450,7 +1450,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.7
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@businessdash/sdk@0.9.81(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@businessdash/sdk@0.9.90(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
       zod: 3.25.76
