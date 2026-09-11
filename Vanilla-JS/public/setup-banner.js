@@ -28,7 +28,7 @@ export function mountSetupBanner(root = document.body) {
 	const base =
 		(cfg && cfg.baseUrl
 			? String(cfg.baseUrl).replace(/\/api\/package\/v1\/?$/, "")
-			: "") || "https://www.biab.app";
+			: "") || "https://www.businessdash.us";
 	const wizardUrl = `${base.replace(/\/+$/, "")}/login?returnTo=/dashboard/settings/web-content`;
 
 	const bar = el(

@@ -30,7 +30,7 @@ Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdSt
 
 | Info.plist key | What |
 | --- | --- |
-| `BDHost` | defaults to `https://www.biab.app` |
+| `BDHost` | defaults to `https://www.businessdash.us` |
 | `BDPublishableKey` | `pk_…` — never `sk_…` |
 | `BDSiteID` | the site UUID |
 | `BDAuthCallbackURL` | e.g. `bdstarter://auth/callback` |

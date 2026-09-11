@@ -22,7 +22,7 @@ export function getMcpHandlers() {
 		handlers = null;
 		return handlers;
 	}
-	// Platform ORIGIN (e.g. https://www.biab.app), not the package API base.
+	// Platform ORIGIN (e.g. https://www.businessdash.us), not the package API base.
 	handlers = mcpHandler({ siteId: cfg.siteId, baseUrl: cfg.rawBaseUrl });
 	return handlers;
 }

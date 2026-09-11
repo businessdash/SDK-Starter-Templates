@@ -15,7 +15,7 @@ const siteId = config.public.bdSiteId as string | undefined;
 const pk = config.public.bdPublicKey as string | undefined;
 const baseUrl =
 	(config.public.bdPackageApiBaseUrl as string | undefined) ||
-	"https://www.biab.app";
+	"https://www.businessdash.us";
 const wizardUrl = `${baseUrl}/login?returnTo=/dashboard/settings/web-content`;
 
 // Start hidden so SSR + first paint match; reveal on mount when unconfigured

@@ -15,7 +15,7 @@ import 'package:test/test.dart';
   final requests = <http.Request>[];
 
   final client = BdClient(
-    host: Uri.parse('https://www.biab.app'),
+    host: Uri.parse('https://www.businessdash.us'),
     publishableKey: 'pk_test',
     siteId: 'site-123',
     httpClient: MockClient((request) async {
@@ -39,7 +39,7 @@ void main() {
         'available': false,
         'reason': 'payment_required',
         'message': 'Billing lapsed.',
-        'upgradeUrl': 'https://www.biab.app/billing',
+        'upgradeUrl': 'https://www.businessdash.us/billing',
       }));
 
       await expectLater(

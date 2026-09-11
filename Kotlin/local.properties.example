@@ -6,7 +6,7 @@
 # `local.properties` is gitignored by Android convention, which is why it's
 # the right home for this. Copy this file to local.properties and fill it in.
 
-bd.host=https://www.biab.app
+bd.host=https://www.businessdash.us
 bd.siteId=
 
 # ⚠️ PUBLISHABLE TOKEN ONLY (`pk_…`).

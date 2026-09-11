@@ -34,7 +34,7 @@ function normaliseBaseUrl(input: string): string {
 	return `${next}/api/package/v1`;
 }
 
-/** Host root (e.g. https://www.biab.app) — sitemap/robots live here. */
+/** Host root (e.g. https://www.businessdash.us) — sitemap/robots live here. */
 export const hostBase = rawBaseUrl ? rawBaseUrl.trim().replace(/\/+$/, "") : null;
 /** Package API base (…/api/package/v1). */
 export const packageBase = rawBaseUrl ? normaliseBaseUrl(rawBaseUrl) : null;
@@ -45,7 +45,7 @@ export const API_KEY = apiKey ?? null;
  *  dismissable "not connected" setup banner in the page shell. */
 export const BD_CONFIGURED = Boolean(siteId);
 /** Host root for dashboard links (falls back to production). */
-export const BD_HOST = hostBase ?? "https://www.biab.app";
+export const BD_HOST = hostBase ?? "https://www.businessdash.us";
 
 let cached: BdClient | null | undefined;
 

@@ -13,7 +13,7 @@ import 'ui/storefront_page.dart';
 ///     flutter run \
 ///       --dart-define=BD_SITE_ID=… \
 ///       --dart-define=BD_PK=pk_…
-const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://www.biab.app');
+const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://www.businessdash.us');
 const _siteId = String.fromEnvironment('BD_SITE_ID');
 const _publishableKey = String.fromEnvironment('BD_PK');
 

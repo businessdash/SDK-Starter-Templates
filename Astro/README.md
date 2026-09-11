@@ -128,7 +128,7 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 | --- | --- | --- |
 | `BD_API_KEY` | everything | Server-side bearer key; never exposed to the browser |
 | `BD_SITE_ID` | everything | The site UUID this app represents |
-| `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://www.biab.app` (normalized to `…/api/package/v1`) |
+| `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://www.businessdash.us` (normalized to `…/api/package/v1`) |
 | `BD_REVALIDATION_SECRET` | revalidate webhook | `whsec_…` from Settings → Integrations |
 | `BD_AUTH_CALLBACK_URL` | auth + portal | Public `…/api/bd-auth/callback`, registered as a WorkOS redirect URI |
 | `PUBLIC_BD_SITE_ID` / `PUBLIC_BD_PACKAGE_API_BASE_URL` / `PUBLIC_BD_PUBLIC_KEY` | client analytics | Optional; boots `initBdAnalytics` in the browser |

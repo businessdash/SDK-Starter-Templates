@@ -25,7 +25,7 @@ android {
             if (file.exists()) file.inputStream().use { load(it) }
         }
 
-        buildConfigField("String", "BD_HOST", "\"${properties.getProperty("bd.host") ?: "https://www.biab.app"}\"")
+        buildConfigField("String", "BD_HOST", "\"${properties.getProperty("bd.host") ?: "https://www.businessdash.us"}\"")
         buildConfigField("String", "BD_SITE_ID", "\"${properties.getProperty("bd.siteId") ?: ""}\"")
         buildConfigField("String", "BD_PK", "\"${properties.getProperty("bd.publishableKey") ?: ""}\"")
     }

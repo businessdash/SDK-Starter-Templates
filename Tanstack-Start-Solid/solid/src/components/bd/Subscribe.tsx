@@ -37,7 +37,7 @@ type LocalFollow = { email: string; at: number };
 
 /** `createBdClient` concatenates `baseUrl` + path verbatim, so the base must
  *  already carry the `/api/package/v1` suffix. The template's
- *  `VITE_BD_PACKAGE_API_BASE_URL` is a bare host (e.g. https://www.biab.app),
+ *  `VITE_BD_PACKAGE_API_BASE_URL` is a bare host (e.g. https://www.businessdash.us),
  *  so normalize it here — mirrors `normalizeBaseUrl` in `src/lib/bd.ts`. */
 function normalizeBaseUrl(input: string): string {
 	const next = input.trim().replace(/\/+$/, "");

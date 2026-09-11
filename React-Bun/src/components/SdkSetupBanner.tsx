@@ -19,7 +19,7 @@ const PK = import.meta.env.VITE_BD_PK ?? import.meta.env.VITE_BD_PK;
 const BASE_URL =
 	import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
 	import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
-	"https://www.biab.app";
+	"https://www.businessdash.us";
 
 const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 

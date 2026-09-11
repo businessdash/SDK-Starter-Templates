@@ -49,7 +49,7 @@ Nuxt maps `NUXT_*` process env onto non-public `runtimeConfig` keys, so none of 
 | --- | --- | --- |
 | `NUXT_BD_API_KEY` | `bdApiKey` | Every SDK call (server-only). |
 | `NUXT_BD_SITE_ID` | `bdSiteId` | Site binding. |
-| `NUXT_BD_PACKAGE_API_BASE_URL` | `bdPackageApiBaseUrl` | BD host (default `https://www.biab.app`). |
+| `NUXT_BD_PACKAGE_API_BASE_URL` | `bdPackageApiBaseUrl` | BD host (default `https://www.businessdash.us`). |
 | `NUXT_BD_REVALIDATION_SECRET` | `bdRevalidationSecret` | Revalidation webhook HMAC. |
 | `NUXT_BD_AUTH_CALLBACK_URL` | `bdAuthCallbackUrl` | Auth handler `/callback` (sign-in/up + customer portal). Register it as a WorkOS redirect URI: `https://your-site.com/api/bd-auth/callback`. |
 

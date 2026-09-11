@@ -19,5 +19,5 @@ export const environment = {
 	/** The uuid of your BD site (from the dashboard URL). */
 	bdSiteId: "",
 	/** Your BD instance origin. Defaults to the platform apex when blank. */
-	bdBaseUrl: "https://www.biab.app",
+	bdBaseUrl: "https://www.businessdash.us",
 };

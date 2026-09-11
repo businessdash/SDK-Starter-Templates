@@ -37,7 +37,7 @@ public struct BdConfiguration: Sendable {
 
         // Host has a sensible default; the key and site id do not — without
         // those there is nothing to talk to.
-        let hostString = string("BDHost") ?? "https://www.biab.app"
+        let hostString = string("BDHost") ?? "https://www.businessdash.us"
 
         guard
             let host = URL(string: hostString),

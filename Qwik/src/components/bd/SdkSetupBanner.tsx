@@ -23,7 +23,7 @@ const BASE_URL =
 		| string
 		| undefined) ??
 	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined) ??
-	"https://www.biab.app";
+	"https://www.businessdash.us";
 
 const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 

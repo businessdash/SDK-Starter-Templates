@@ -33,7 +33,7 @@ defmodule BdStarter.Bd do
   def configured?, do: not is_nil(Application.get_env(:bd_starter, :bd_site_id))
 
   @doc "Host root, for dashboard deep links."
-  def host, do: Application.get_env(:bd_starter, :bd_host, "https://www.biab.app")
+  def host, do: Application.get_env(:bd_starter, :bd_host, "https://www.businessdash.us")
 
   # ── Cached reads ──────────────────────────────────────────────────────────
 

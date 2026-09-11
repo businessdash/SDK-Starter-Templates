@@ -9,5 +9,5 @@ export const environment = {
 	production: true,
 	bdPk: "",
 	bdSiteId: "",
-	bdBaseUrl: "https://www.biab.app",
+	bdBaseUrl: "https://www.businessdash.us",
 };

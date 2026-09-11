@@ -26,7 +26,7 @@ function getHandler() {
 		handler = null;
 		return handler;
 	}
-	// `baseUrl` here is the BD app ORIGIN (e.g. https://www.biab.app), not
+	// `baseUrl` here is the BD app ORIGIN (e.g. https://www.businessdash.us), not
 	// the package API base — the public ai-feed endpoints live at the host root.
 	handler = llmsTxtHandler({ siteId: cfg.siteId, baseUrl: cfg.rawBaseUrl });
 	return handler;

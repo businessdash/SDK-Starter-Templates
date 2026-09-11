@@ -22,7 +22,7 @@ private class Stub(body: String, status: HttpStatusCode = HttpStatusCode.OK) {
     val requests = mutableListOf<HttpRequestData>()
 
     val client = BdClient(
-        host = "https://www.biab.app",
+        host = "https://www.businessdash.us",
         publishableKey = "pk_test",
         siteId = "site-123",
         engine = MockEngine { request ->
@@ -47,14 +47,14 @@ class AccessGateTest {
         val stub = Stub(
             """
             {"available":false,"reason":"payment_required",
-             "message":"Billing lapsed.","upgradeUrl":"https://www.biab.app/billing"}
+             "message":"Billing lapsed.","upgradeUrl":"https://www.businessdash.us/billing"}
             """.trimIndent(),
         )
 
         val error = assertFailsWith<BdAccessRejectedException> { stub.client.products() }
 
         assertEquals(AccessRejectionReason.PAYMENT_REQUIRED, error.reason)
-        assertEquals("https://www.biab.app/billing", error.upgradeUrl)
+        assertEquals("https://www.businessdash.us/billing", error.upgradeUrl)
         assertTrue(error.isUnavailable)
     }
 
@@ -75,7 +75,7 @@ class AccessGateTest {
     @Test
     fun `a secret key is refused at construction`() {
         assertFailsWith<IllegalArgumentException> {
-            BdClient(host = "https://www.biab.app", publishableKey = "sk_live_x", siteId = "s")
+            BdClient(host = "https://www.businessdash.us", publishableKey = "sk_live_x", siteId = "s")
         }
     }
 }

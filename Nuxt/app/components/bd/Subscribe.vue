@@ -101,7 +101,7 @@ function getClient() {
 	client = createBdClient({
 		apiKey: pk as string,
 		siteId: siteId as string,
-		baseUrl: normalizeBaseUrl(rawBaseUrl || "https://www.biab.app"),
+		baseUrl: normalizeBaseUrl(rawBaseUrl || "https://www.businessdash.us"),
 	});
 	return client;
 }

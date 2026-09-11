@@ -102,7 +102,7 @@ const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 export class SdkSetupBannerComponent {
 	protected readonly visible = signal(false);
 	protected readonly wizardUrl = `${
-		environment.bdBaseUrl || "https://www.biab.app"
+		environment.bdBaseUrl || "https://www.businessdash.us"
 	}/login?returnTo=/dashboard/settings/web-content`;
 
 	constructor() {

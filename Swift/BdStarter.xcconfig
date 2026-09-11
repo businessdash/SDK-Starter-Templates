@@ -13,7 +13,7 @@
 // Keep real values out of source control — copy this to
 // BdStarter.local.xcconfig, add that to .gitignore, and `#include` it.
 
-BD_HOST = https:/$()/www.biab.app
+BD_HOST = https:/$()/www.businessdash.us
 
 // ⚠️ PUBLISHABLE TOKEN ONLY (`pk_…`).
 //

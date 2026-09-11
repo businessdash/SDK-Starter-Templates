@@ -28,7 +28,7 @@ public struct BdClient: Sendable {
     let transport: any BdTransport
 
     /// - Parameters:
-    ///   - host: BD app origin, e.g. `https://www.biab.app`. The client
+    ///   - host: BD app origin, e.g. `https://www.businessdash.us`. The client
     ///     appends `/api/package/v1` itself.
     ///   - publishableKey: a `pk_…` token. Passing `sk_…` is a programmer
     ///     error and traps.

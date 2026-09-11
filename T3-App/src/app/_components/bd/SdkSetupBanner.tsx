@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 const SITE_ID = process.env.NEXT_PUBLIC_BD_SITE_ID;
 const PK = process.env.NEXT_PUBLIC_BD_PK;
 const BASE_URL =
-  process.env.NEXT_PUBLIC_BD_PACKAGE_API_BASE_URL ?? "https://www.biab.app";
+  process.env.NEXT_PUBLIC_BD_PACKAGE_API_BASE_URL ?? "https://www.businessdash.us";
 
 const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 

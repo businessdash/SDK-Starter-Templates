@@ -48,7 +48,7 @@ All read server-side via `$env/dynamic/private` (never exposed to the client). S
 | --- | --- | --- |
 | `BD_API_KEY` | everything | Site Settings → API Keys → New Key. Bearer key — server-only. |
 | `BD_SITE_ID` | everything | The site UUID this app represents. |
-| `BD_PACKAGE_API_BASE_URL` | everything | Where BD is hosted (e.g. `https://www.biab.app`). |
+| `BD_PACKAGE_API_BASE_URL` | everything | Where BD is hosted (e.g. `https://www.businessdash.us`). |
 | `BD_REVALIDATION_SECRET` | webhook | `whsec_…` revealed at `/dashboard/settings/integrations`. |
 | `BD_AUTH_CALLBACK_URL` | auth + portal | Public URL of `/api/bd-auth/callback`; register as a WorkOS redirect URI. |
 

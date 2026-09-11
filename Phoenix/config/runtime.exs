@@ -12,7 +12,7 @@ import Config
 # ═══════════════════════════════════════════════════════════════════════════
 
 config :bd_starter,
-  bd_host: System.get_env("BD_HOST", "https://www.biab.app"),
+  bd_host: System.get_env("BD_HOST", "https://www.businessdash.us"),
   bd_site_id: System.get_env("BD_SITE_ID"),
   bd_api_key: System.get_env("BD_API_KEY"),
   bd_publishable_key: System.get_env("BD_PK"),

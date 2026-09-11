@@ -37,7 +37,7 @@ enum SeoController {
             return response(fallback, contentType: "text/plain; charset=utf-8")
         }
 
-        let host = (Environment.get("BD_HOST") ?? "https://www.biab.app").trimmingSuffix("/")
+        let host = (Environment.get("BD_HOST") ?? "https://www.businessdash.us").trimmingSuffix("/")
         let uri = URI(string: "\(host)/api/public/ai-feed/\(siteID.pathEscaped)/llms.txt")
 
         let body: String
@@ -58,7 +58,7 @@ enum SeoController {
             let key = Environment.get("BD_API_KEY")
         else { return fallback }
 
-        let host = (Environment.get("BD_HOST") ?? "https://www.biab.app").trimmingSuffix("/")
+        let host = (Environment.get("BD_HOST") ?? "https://www.businessdash.us").trimmingSuffix("/")
         let origin = (Environment.get("BD_SITE_ORIGIN") ?? "").trimmingSuffix("/")
         let uri = URI(string: "\(host)/api/package/v1/sites/\(siteID.pathEscaped)/\(suffix)")
 

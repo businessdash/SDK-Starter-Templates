@@ -15,7 +15,7 @@ return [
      * Where BD is hosted. The host root — the client appends
      * `/api/package/v1` itself, and the SEO/AEO routes need the bare root.
      */
-    'host' => rtrim(env('BD_HOST', 'https://www.biab.app'), '/'),
+    'host' => rtrim(env('BD_HOST', 'https://www.businessdash.us'), '/'),
 
     /* The site UUID this app renders. Site Builder ▸ Developer ▸ "Site ID". */
     'site_id' => env('BD_SITE_ID'),

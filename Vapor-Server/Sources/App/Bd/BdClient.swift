@@ -36,7 +36,7 @@ struct BdClient: Sendable {
             let siteID = Environment.get("BD_SITE_ID")
         else { return nil }
 
-        let host = Environment.get("BD_HOST") ?? "https://www.biab.app"
+        let host = Environment.get("BD_HOST") ?? "https://www.businessdash.us"
 
         return BdClient(
             baseURL: host.trimmingSuffix("/") + "/api/package/v1",

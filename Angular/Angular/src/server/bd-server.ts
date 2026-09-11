@@ -12,7 +12,7 @@
  * Env (read from process.env — Node only):
  *   BD_API_KEY                 the per-site package key (server secret)
  *   BD_SITE_ID                 your site uuid
- *   BD_PACKAGE_API_BASE_URL    your BD origin (default https://www.biab.app)
+ *   BD_PACKAGE_API_BASE_URL    your BD origin (default https://www.businessdash.us)
  *   BD_REVALIDATION_SECRET     HMAC secret for the revalidate webhook
  *   BD_AUTH_CALLBACK_URL       public URL of /api/bd-auth/callback
  *
@@ -64,7 +64,7 @@ export function getBdEnv(): BdEnv | null {
 	// live in src/environments/environment.ts, Angular's own build-time config.
 	const siteId = process.env["BD_SITE_ID"];
 	const rawBase =
-		process.env["BD_PACKAGE_API_BASE_URL"] ?? "https://www.biab.app";
+		process.env["BD_PACKAGE_API_BASE_URL"] ?? "https://www.businessdash.us";
 	if (!apiKey || !siteId) {
 		envCache = null;
 		return null;
@@ -112,7 +112,7 @@ export function getBdDataModel() {
 }
 
 /**
- * BD app ORIGIN (e.g. https://www.biab.app) for the AI surfaces
+ * BD app ORIGIN (e.g. https://www.businessdash.us) for the AI surfaces
  * (`/llms.txt`, `/api/mcp`, `/.well-known/mcp.json`) — unlike the SDK
  * transport those take the host root, not the package API base.
  */

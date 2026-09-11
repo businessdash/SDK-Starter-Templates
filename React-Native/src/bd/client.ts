@@ -34,7 +34,7 @@ import {
  * custom-object reads. **No backend-for-frontend is needed.**
  */
 
-const host = process.env.EXPO_PUBLIC_BD_HOST ?? 'https://www.biab.app'
+const host = process.env.EXPO_PUBLIC_BD_HOST ?? 'https://www.businessdash.us'
 const siteId = process.env.EXPO_PUBLIC_BD_SITE_ID
 const publishableKey = process.env.EXPO_PUBLIC_BD_PK
 

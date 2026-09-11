@@ -25,7 +25,7 @@ export type BdBaseConfig = {
 	siteId: string;
 	/** Already normalized to `…/api/package/v1`. */
 	baseUrl: string;
-	/** Raw (un-normalized) host, e.g. `https://www.biab.app` — for the SEO proxies. */
+	/** Raw (un-normalized) host, e.g. `https://www.businessdash.us` — for the SEO proxies. */
 	rawBaseUrl: string;
 };
 

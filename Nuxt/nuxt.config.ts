@@ -41,7 +41,7 @@ export default defineNuxtConfig({
 		bdPackageApiBaseUrl:
 			process.env.NUXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
 			process.env.NUXT_BD_PACKAGE_API_BASE_URL ??
-			"https://www.biab.app",
+			"https://www.businessdash.us",
 		// HMAC secret (`whsec_…`) for the revalidate webhook — server-only.
 		bdRevalidationSecret:
 			process.env.BD_REVALIDATION_SECRET ??
@@ -72,7 +72,7 @@ export default defineNuxtConfig({
 			bdPackageApiBaseUrl:
 				process.env.NUXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
 				process.env.NUXT_PUBLIC_BD_PACKAGE_API_BASE_URL ??
-				"https://www.biab.app",
+				"https://www.businessdash.us",
 		},
 	},
 });

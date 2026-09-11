@@ -46,7 +46,7 @@ struct StubTransport: BdTransport {
 
 private func makeClient(_ transport: any BdTransport) -> BdClient {
     BdClient(
-        host: URL(string: "https://www.biab.app")!,
+        host: URL(string: "https://www.businessdash.us")!,
         publishableKey: "pk_test",
         siteID: "site-123",
         transport: transport
@@ -68,7 +68,7 @@ struct AccessGateTests {
                 status: 200,
                 json: """
                 {"available":false,"reason":"payment_required",
-                 "message":"Billing lapsed.","upgradeUrl":"https://www.biab.app/billing"}
+                 "message":"Billing lapsed.","upgradeUrl":"https://www.businessdash.us/billing"}
                 """
             )
         )
@@ -86,7 +86,7 @@ struct AccessGateTests {
                 return
             }
             #expect(reason == .paymentRequired)
-            #expect(upgradeURL?.absoluteString == "https://www.biab.app/billing")
+            #expect(upgradeURL?.absoluteString == "https://www.businessdash.us/billing")
             #expect(error.isUnavailable)
         }
     }

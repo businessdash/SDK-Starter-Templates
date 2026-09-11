@@ -72,7 +72,7 @@ These run the SDK CLI via `tsx` against `bd.config.ts` (the marketing schema + b
 | --- | --- | --- |
 | `BD_API_KEY` | yes | Per-site package key. **Server-side only.** |
 | `BD_SITE_ID` | yes | Your site uuid. |
-| `BD_PACKAGE_API_BASE_URL` | yes | BD origin (default `https://www.biab.app`). |
+| `BD_PACKAGE_API_BASE_URL` | yes | BD origin (default `https://www.businessdash.us`). |
 | `BD_REVALIDATION_SECRET` | for webhook | HMAC secret (`whsec_…`) for `/api/bd/revalidate`. |
 | `BD_AUTH_CALLBACK_URL` | for auth | Public URL of `/api/bd-auth/callback` (a WorkOS redirect URI). |
 | `BD_PUBLIC_ANALYTICS_KEY` | optional | The **only** key ever sent to the browser, for client analytics. Leave blank to keep analytics off. |

@@ -118,7 +118,7 @@ No API route file needed for the RPC case — TanStack Start generates the trans
 | --- | --- |
 | `BD_API_KEY` | Server-only bearer key (Site Settings → API Keys). |
 | `BD_SITE_ID` | The site UUID this app represents. |
-| `BD_PACKAGE_API_BASE_URL` | Where BD is hosted (e.g. `https://www.biab.app`). |
+| `BD_PACKAGE_API_BASE_URL` | Where BD is hosted (e.g. `https://www.businessdash.us`). |
 | `BD_REVALIDATION_SECRET` | HMAC secret for the revalidate webhook. |
 | `BD_AUTH_CALLBACK_URL` | Public URL of `/api/bd-auth/callback` — required for auth + portal. |
 

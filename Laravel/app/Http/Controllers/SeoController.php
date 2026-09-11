@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Http;
 /**
  * SEO / AEO files, proxied from BD.
  *
- * These have to be served from THIS domain — a sitemap on biab.app says
+ * These have to be served from THIS domain — a sitemap on businessdash.us says
  * nothing about your site, and `/llms.txt` is the only path answer engines
  * look at. The org curates the content in the dashboard (Marketing → AI
  * Distribution for llms.txt); this app relays the bytes.

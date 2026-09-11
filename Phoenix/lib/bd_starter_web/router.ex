@@ -88,7 +88,7 @@ defmodule BdStarterWeb.Router do
   end
 
   # ── SEO / AEO ────────────────────────────────────────────────────────────
-  # Served from THIS domain: a sitemap on biab.app says nothing about your
+  # Served from THIS domain: a sitemap on businessdash.us says nothing about your
   # site, and /llms.txt is the only path answer engines look at.
   scope "/", BdStarterWeb do
     get "/sitemap.xml", SeoController, :sitemap
