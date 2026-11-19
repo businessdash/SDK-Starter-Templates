@@ -112,7 +112,7 @@ There is no SSE or WebSocket anywhere in the Package API. `useChat` runs `create
 
 ## ⚠️ Verification
 
-**This has not been run.** No Expo toolchain or `node_modules` install was available. What *was* verified: every SDK call in this starter typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. The screens themselves are reviewed, not built.
+**Bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the screens in a simulator yet.
 
 ## Data: environment, schema, seeding, CRUD
 

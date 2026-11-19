@@ -1,8 +1,8 @@
-import { llmsTxtHandler } from "@businessdash/sdk/distribution";
+import { llmsTxtHandler } from '@businessdash/sdk/distribution';
 
-import { aiSurfaceConfig } from "$lib/server/bd-ai";
+import { aiSurfaceConfig } from '#lib/server/bd-ai.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * GET /llms.txt
@@ -33,9 +33,9 @@ function getHandler() {
 export const GET: RequestHandler = async () => {
 	const proxy = getHandler();
 	if (!proxy) {
-		return new Response("llms.txt is not configured (set the BD env vars).\n", {
+		return new Response('llms.txt is not configured (set the BD env vars).\n', {
 			status: 404,
-			headers: { "Content-Type": "text/plain; charset=utf-8" },
+			headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 		});
 	}
 	return proxy();

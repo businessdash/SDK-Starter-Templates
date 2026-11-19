@@ -1,7 +1,7 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import { bd } from "$lib/server/bd";
-import { isStoreConfigured } from "$lib/server/bd-store";
+import { bd } from '#lib/server/bd.ts';
+import { isStoreConfigured } from '#lib/server/bd-store.ts';
 
 /**
  * Post-checkout "thank you" page. Stripe redirects here with
@@ -10,7 +10,7 @@ import { isStoreConfigured } from "$lib/server/bd-store";
  * checkouts (both return a Stripe Checkout Session).
  */
 export const load: PageServerLoad = async ({ url }) => {
-	const sessionId = url.searchParams.get("session_id");
+	const sessionId = url.searchParams.get('session_id');
 	if (!isStoreConfigured() || !bd || !sessionId) {
 		return { status: null };
 	}

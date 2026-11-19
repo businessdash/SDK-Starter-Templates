@@ -34,7 +34,9 @@ export default function ProductScreen() {
     <LoadState state={state}>
       {(product) =>
         product ? (
-          <ScrollView contentContainerStyle={styles.content}>
+          // iOS 26+ draws the header over the content; "automatic" insets the
+          // scroll view below it (React Native defaults to "never").
+          <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
             <Text style={styles.name}>{product.name}</Text>
             {/* `cheapestPriceCents` and `description` arrive via the row
                 schema's passthrough — served, but typed `unknown` until the
@@ -54,7 +56,9 @@ export default function ProductScreen() {
             {message ? <Text style={styles.note}>{message}</Text> : null}
           </ScrollView>
         ) : (
-          <Text style={styles.note}>Product not found.</Text>
+          <ScrollView contentInsetAdjustmentBehavior="automatic">
+            <Text style={styles.note}>Product not found.</Text>
+          </ScrollView>
         )
       }
     </LoadState>

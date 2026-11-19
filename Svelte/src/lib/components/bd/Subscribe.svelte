@@ -1,31 +1,8 @@
-<!--
-  Subscribe — newsletter signup wired to BD followers.
-
-  Browser-safe: it talks to the followers surface (`followers:self`) through a
-  PUBLISHABLE token (`pk_…`, origin-locked, rate-limited) via the core client —
-  no backend, no bearer key. SvelteKit doesn't ship a `useFollowers` hook, so
-  the per-browser "already subscribed" hint is implemented here directly: after
-  a successful `join` we persist `{ email, at }` under `bd.followers.<siteId>`
-  in localStorage and read it on mount, exactly like `useFollowers` does in
-  React (see `@businessdash/sdk/react`).
-
-  Graceful split (mirrors DGP `SubscribeStub`):
-    - Live mode (PK + SITE_ID set)  → real join, shows "You're subscribed".
-    - Placeholder mode (env unset)  → identical fields, submit shows "coming soon".
-
-  One shared component, used in BOTH the footer and the about section.
-
-  Env (SvelteKit public, `$env/dynamic/public` — dynamic on purpose: the
-  static module turns an unset var into a BUILD error, and a fresh clone
-  with no .env must still build in placeholder mode):
-    PUBLIC_BD_PK                       publishable followers token
-    PUBLIC_BD_SITE_ID                  the site UUID
-    PUBLIC_BD_PACKAGE_API_BASE_URL     optional, defaults to production apex
--->
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { createBdClient } from '@businessdash/sdk';
-	import { env } from '$env/dynamic/public';
+
+	import { PUBLIC_BD_PK, PUBLIC_BD_SITE_ID, PUBLIC_BD_PACKAGE_API_BASE_URL } from '$app/env/public';
 
 	let {
 		label = 'Get updates in your inbox',
@@ -33,7 +10,7 @@
 		buttonLabel = 'Subscribe',
 		/** Tags the follower row so the org sees where they signed up. */
 		source = 'subscribe',
-		idPrefix = 'subscribe',
+		idPrefix = 'subscribe'
 	}: {
 		label?: string;
 		placeholder?: string;
@@ -44,11 +21,11 @@
 
 	// Publishable creds are browser-safe. When unset → placeholder mode so the
 	// template still renders in an unconfigured checkout.
-	const PK = env.PUBLIC_BD_PK;
-	const SITE_ID = env.PUBLIC_BD_SITE_ID;
-	const BASE_URL = env.PUBLIC_BD_PACKAGE_API_BASE_URL;
-	const enabled = Boolean(PK && SITE_ID);
+	const PK = PUBLIC_BD_PK;
 
+	const SITE_ID = PUBLIC_BD_SITE_ID;
+	const BASE_URL = PUBLIC_BD_PACKAGE_API_BASE_URL;
+	const enabled = Boolean(PK && SITE_ID);
 	const STORE_KEY = `bd.followers.${SITE_ID}`;
 
 	type Status = 'idle' | 'submitting' | 'done' | 'error';
@@ -66,7 +43,7 @@
 			? createBdClient({
 					apiKey: PK,
 					siteId: SITE_ID,
-					...(BASE_URL ? { baseUrl: BASE_URL } : {}),
+					...(BASE_URL ? { baseUrl: BASE_URL } : {})
 				})
 			: null;
 
@@ -116,9 +93,34 @@
 	}
 
 	const doneMessage = $derived(
-		enabled ? "You're subscribed — thanks!" : 'Thanks — newsletter signup is coming soon.',
+		enabled ? "You're subscribed — thanks!" : 'Thanks — newsletter signup is coming soon.'
 	);
 </script>
+
+<!--
+  Subscribe — newsletter signup wired to BD followers.
+
+  Browser-safe: it talks to the followers surface (`followers:self`) through a
+  PUBLISHABLE token (`pk_…`, origin-locked, rate-limited) via the core client —
+  no backend, no bearer key. SvelteKit doesn't ship a `useFollowers` hook, so
+  the per-browser "already subscribed" hint is implemented here directly: after
+  a successful `join` we persist `{ email, at }` under `bd.followers.<siteId>`
+  in localStorage and read it on mount, exactly like `useFollowers` does in
+  React (see `@businessdash/sdk/react`).
+
+  Graceful split (mirrors DGP `SubscribeStub`):
+    - Live mode (PK + SITE_ID set)  → real join, shows "You're subscribed".
+    - Placeholder mode (env unset)  → identical fields, submit shows "coming soon".
+
+  One shared component, used in BOTH the footer and the about section.
+
+  Env (`$app/env/public`, declared in `src/env.ts` as optional and read at
+  startup rather than inlined at build: a fresh clone with no .env must still
+  build and run in placeholder mode):
+    PUBLIC_BD_PK                       publishable followers token
+    PUBLIC_BD_SITE_ID                  the site UUID
+    PUBLIC_BD_PACKAGE_API_BASE_URL     optional, defaults to production apex
+-->
 
 {#if subscribedLocally || status === 'done'}
 	<p class="subscribe__done">{doneMessage}</p>
@@ -132,7 +134,7 @@
 				name="email"
 				type="email"
 				autocomplete="email"
-				placeholder={placeholder}
+				{placeholder}
 				required
 				disabled={status === 'submitting'}
 			/>

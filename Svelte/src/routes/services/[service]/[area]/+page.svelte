@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();

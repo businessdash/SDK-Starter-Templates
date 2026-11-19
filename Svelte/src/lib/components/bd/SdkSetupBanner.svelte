@@ -1,7 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { browser } from '$app/environment';
-	import { env } from '$env/dynamic/public';
+	import { browser } from '$app/env';
+
+	import {
+		PUBLIC_BD_SITE_ID,
+		PUBLIC_BD_PUBLIC_KEY,
+		PUBLIC_BD_PACKAGE_API_BASE_URL
+	} from '$app/env/public';
 
 	/**
 	 * Dismissable "not connected yet" banner. The template renders all its
@@ -11,9 +16,9 @@
 	 * and can be dismissed for this browser in the meantime.
 	 */
 	const DISMISS_KEY = 'bd-sdk-setup-banner-dismissed';
-	const siteId = env.PUBLIC_BD_SITE_ID;
-	const pk = env.PUBLIC_BD_PUBLIC_KEY;
-	const baseUrl = env.PUBLIC_BD_PACKAGE_API_BASE_URL || 'https://www.businessdash.us';
+	const siteId = PUBLIC_BD_SITE_ID;
+	const pk = PUBLIC_BD_PUBLIC_KEY;
+	const baseUrl = PUBLIC_BD_PACKAGE_API_BASE_URL || 'https://www.businessdash.us';
 
 	let hidden = $state(true);
 
@@ -34,8 +39,8 @@
 	<div class="bd-setup-banner">
 		<span class="bd-setup-banner__msg">
 			<strong>Not connected to BD yet.</strong>
-			Add your <code>.env</code> to render live content — grab every variable (site
-			ID, keys, revalidation secret) from the guided wizard.
+			Add your <code>.env</code> to render live content — grab every variable (site ID, keys, revalidation
+			secret) from the guided wizard.
 		</span>
 		<a
 			class="bd-setup-banner__cta"
@@ -45,12 +50,7 @@
 		>
 			Open setup wizard ↗
 		</a>
-		<button
-			class="bd-setup-banner__close"
-			type="button"
-			aria-label="Dismiss"
-			onclick={dismiss}
-		>
+		<button class="bd-setup-banner__close" type="button" aria-label="Dismiss" onclick={dismiss}>
 			✕
 		</button>
 	</div>

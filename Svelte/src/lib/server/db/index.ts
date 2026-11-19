@@ -1,6 +1,6 @@
 import { drizzle, type LibSQLDatabase } from 'drizzle-orm/libsql';
 import { createClient } from '@libsql/client';
-import { env } from '$env/dynamic/private';
+import { DATABASE_URL } from '$app/env/private';
 import * as schema from './schema';
 
 /**
@@ -13,7 +13,7 @@ import * as schema from './schema';
  * do — never at import/boot time.
  */
 function createDb(): LibSQLDatabase<typeof schema> {
-	if (!env.DATABASE_URL) {
+	if (!DATABASE_URL) {
 		return new Proxy({} as LibSQLDatabase<typeof schema>, {
 			get() {
 				throw new Error(
@@ -23,7 +23,7 @@ function createDb(): LibSQLDatabase<typeof schema> {
 			}
 		});
 	}
-	const client = createClient({ url: env.DATABASE_URL });
+	const client = createClient({ url: DATABASE_URL });
 	return drizzle(client, { schema });
 }
 

@@ -1,7 +1,7 @@
-import { env } from "$env/dynamic/private";
-import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
+import { BD_REVALIDATION_SECRET } from '$app/env/private';
+import { createGenericRevalidateHandler } from '@businessdash/sdk/adapters/revalidate';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * BD → SvelteKit revalidation webhook receiver.
@@ -14,17 +14,15 @@ import type { RequestHandler } from "./$types";
  * purge, Cloudflare KV delete, etc.), that callback is where to
  * wire it.
  */
-const secret = env.BD_REVALIDATION_SECRET;
+const secret = BD_REVALIDATION_SECRET;
 
 const handler = secret
 	? createGenericRevalidateHandler({
 			secret,
 			onTagsRevalidated: async (tags, orgId) => {
-				console.info(
-					`[bd] revalidate received tags=${tags.join(",")} org=${orgId}`,
-				);
+				console.info(`[bd] revalidate received tags=${tags.join(',')} org=${orgId}`);
 				// Plug your cache invalidation here.
-			},
+			}
 		})
 	: null;
 
@@ -33,9 +31,9 @@ export const POST: RequestHandler = async ({ request }) => {
 		return new Response(
 			JSON.stringify({
 				ok: false,
-				reason: "BD_REVALIDATION_SECRET not configured",
+				reason: 'BD_REVALIDATION_SECRET not configured'
 			}),
-			{ status: 500, headers: { "Content-Type": "application/json" } },
+			{ status: 500, headers: { 'Content-Type': 'application/json' } }
 		);
 	}
 	return await handler(request);

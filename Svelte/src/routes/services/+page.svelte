@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -26,15 +26,16 @@
 
 	{#if data.variants.length === 0}
 		<div class="bd-empty">
-			No programmatic pages yet. Add services and service areas in the BD
-			dashboard, publish your schema with <code>npm run sync-schema</code>, and the
-			combinations will appear here.
+			No programmatic pages yet. Add services and service areas in the BD dashboard, publish your
+			schema with <code>npm run sync-schema</code>, and the combinations will appear here.
 		</div>
 	{:else}
 		<ul class="services-index">
 			{#each data.variants as variant (`${variant.service}/${variant.area}`)}
 				<li>
-					<a href={`/services/${encodeURIComponent(variant.service)}/${encodeURIComponent(variant.area)}`}>
+					<a
+						href={`/services/${encodeURIComponent(variant.service)}/${encodeURIComponent(variant.area)}`}
+					>
 						{label(variant.service)} — {label(variant.area)}
 					</a>
 				</li>

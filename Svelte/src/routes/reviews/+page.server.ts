@@ -1,10 +1,7 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import { bd } from "$lib/server/bd";
-import {
-	fetchBundleSafe,
-	getReviewsFromBundle,
-} from "$lib/server/bd-bundle";
+import { bd } from '#lib/server/bd.ts';
+import { fetchBundleSafe, getReviewsFromBundle } from '#lib/server/bd-bundle.ts';
 
 /**
  * Reviews wall. The aggregate (average + count) rides the marketing
@@ -22,25 +19,22 @@ export const load: PageServerLoad = async () => {
 			average: null,
 			totalCount: 0,
 			items: [],
-			nextOffset: null,
+			nextOffset: null
 		};
 	}
 
 	const [bundleResult, firstPage] = await Promise.all([
-		fetchBundleSafe("home", "en"),
-		bd.reviews.list({ limit: PAGE_SIZE, offset: 0 }).catch(() => null),
+		fetchBundleSafe('home', 'en'),
+		bd.reviews.list({ limit: PAGE_SIZE, offset: 0 }).catch(() => null)
 	]);
 
-	const aggregate =
-		bundleResult.status === "ok"
-			? getReviewsFromBundle(bundleResult.bundle)
-			: null;
+	const aggregate = bundleResult.status === 'ok' ? getReviewsFromBundle(bundleResult.bundle) : null;
 
 	return {
 		configured: true as const,
 		average: aggregate?.rating ?? null,
 		totalCount: firstPage?.totalCount ?? aggregate?.totalCount ?? 0,
 		items: firstPage?.items ?? [],
-		nextOffset: firstPage?.nextOffset ?? null,
+		nextOffset: firstPage?.nextOffset ?? null
 	};
 };

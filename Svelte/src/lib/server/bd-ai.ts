@@ -1,5 +1,5 @@
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
+import { BD_SITE_ID, BD_PACKAGE_API_BASE_URL } from '$app/env/private';
+import { PUBLIC_BD_SITE_ID, PUBLIC_BD_PACKAGE_API_BASE_URL } from '$app/env/public';
 
 /**
  * Shared config for the AI surfaces (`/llms.txt`, `/api/mcp`,
@@ -13,9 +13,9 @@ import { env as publicEnv } from "$env/dynamic/public";
  * entitlement + MCP opt-in upstream.
  */
 export function aiSurfaceConfig(): { siteId: string; baseUrl: string } | null {
-	const siteId = publicEnv.PUBLIC_BD_SITE_ID ?? env.BD_SITE_ID;
-	const rawBaseUrl =
-		publicEnv.PUBLIC_BD_PACKAGE_API_BASE_URL ?? env.BD_PACKAGE_API_BASE_URL;
+	const siteId = PUBLIC_BD_SITE_ID ?? BD_SITE_ID;
+	const rawBaseUrl = PUBLIC_BD_PACKAGE_API_BASE_URL ?? BD_PACKAGE_API_BASE_URL;
+
 	if (!siteId || !rawBaseUrl) return null;
-	return { siteId, baseUrl: rawBaseUrl.trim().replace(/\/+$/, "") };
+	return { siteId, baseUrl: rawBaseUrl.trim().replace(/\/+$/, '') };
 }

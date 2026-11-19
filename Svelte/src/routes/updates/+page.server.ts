@@ -1,9 +1,6 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import {
-	fetchBundleSafe,
-	getUpdatesFromBundle,
-} from "$lib/server/bd-bundle";
+import { fetchBundleSafe, getUpdatesFromBundle } from '#lib/server/bd-bundle.ts';
 
 /**
  * News / updates feed. Reads the Google-Business-style "Posts" that ride
@@ -11,13 +8,13 @@ import {
  * until the org has connected its Google profile or posted updates.
  */
 export const load: PageServerLoad = async () => {
-	const result = await fetchBundleSafe("home", "en");
-	if (result.status === "unavailable") {
+	const result = await fetchBundleSafe('home', 'en');
+	if (result.status === 'unavailable') {
 		return { configured: true as const, unavailable: true as const, updates: [] };
 	}
 	return {
 		configured: true as const,
 		unavailable: false as const,
-		updates: getUpdatesFromBundle(result.bundle),
+		updates: getUpdatesFromBundle(result.bundle)
 	};
 };

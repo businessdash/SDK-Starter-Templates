@@ -1,15 +1,7 @@
-import { env } from "$env/dynamic/private";
-
-import {
-	BdPaymentLapsedError,
-	BdServiceSuspendedError,
-} from "@businessdash/sdk";
-import type {
-	ParallelPagesRenderResponse,
-	ParallelPagesVariantsResponse,
-} from "@businessdash/sdk";
-
-import { bd } from "$lib/server/bd";
+import { BD_API_KEY, BD_PACKAGE_API_BASE_URL, NODE_ENV } from '$app/env/private';
+import { BdPaymentLapsedError, BdServiceSuspendedError } from '@businessdash/sdk';
+import type { ParallelPagesRenderResponse, ParallelPagesVariantsResponse } from '@businessdash/sdk';
+import { bd } from '#lib/server/bd.ts';
 
 /**
  * Parallel-pages (programmatic SEO) + SEO-proxy helpers.
@@ -21,18 +13,18 @@ import { bd } from "$lib/server/bd";
  * URL here so the `/sitemap.xml` + `/robots.txt` routes can proxy them.
  */
 
-export const PARALLEL_KEY = "service-area";
+export const PARALLEL_KEY = 'service-area';
 
 function normalizeBaseUrl(input: string): string {
-	const next = input.trim().replace(/\/+$/, "");
-	if (next.endsWith("/api/package/v1")) return next;
+	const next = input.trim().replace(/\/+$/, '');
+	if (next.endsWith('/api/package/v1')) return next;
 	return `${next}/api/package/v1`;
 }
 
 /** API key + resolved base URL, or null when unconfigured. */
 export function seoProxyConfig(): { apiKey: string; baseUrl: string } | null {
-	const apiKey = env.BD_API_KEY;
-	const rawBaseUrl = env.BD_PACKAGE_API_BASE_URL;
+	const apiKey = BD_API_KEY;
+	const rawBaseUrl = BD_PACKAGE_API_BASE_URL;
 	if (!apiKey || !rawBaseUrl) return null;
 	return { apiKey, baseUrl: normalizeBaseUrl(rawBaseUrl) };
 }
@@ -55,16 +47,16 @@ export function robotsProxyUrl(): string | null {
 
 /** Every (service × area) variant declared in `bd.config.ts`, for the index. */
 export async function listServiceAreaVariants(): Promise<
-	ParallelPagesVariantsResponse["variants"]
+	ParallelPagesVariantsResponse['variants']
 > {
 	if (!bd) return [];
 	try {
 		const { variants } = await bd.parallelPages.listVariants(PARALLEL_KEY);
 		return variants;
 	} catch (err) {
-		if (env.NODE_ENV === "development") {
+		if (NODE_ENV === 'development') {
 			console.warn(
-				`[bd] parallelPages.listVariants failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[bd] parallelPages.listVariants failed: ${err instanceof Error ? err.message : String(err)}`
 			);
 		}
 		return [];
@@ -72,33 +64,31 @@ export async function listServiceAreaVariants(): Promise<
 }
 
 export type RenderResult =
-	| { status: "ok"; variant: ParallelPagesRenderResponse | null }
-	| { status: "unavailable"; reason: "lapsed" | "suspended" };
+	| { status: 'ok'; variant: ParallelPagesRenderResponse | null }
+	| { status: 'unavailable'; reason: 'lapsed' | 'suspended' };
 
 /** Render one (service × area) page, translating suspension errors. */
-export async function renderServiceArea(
-	service: string,
-	area: string,
-): Promise<RenderResult> {
-	if (!bd) return { status: "ok", variant: null };
+export async function renderServiceArea(service: string, area: string): Promise<RenderResult> {
+	if (!bd) return { status: 'ok', variant: null };
 	try {
 		const variant = await bd.parallelPages.render(PARALLEL_KEY, {
 			service,
-			area,
+			area
 		});
-		return { status: "ok", variant };
+		return { status: 'ok', variant };
 	} catch (err) {
 		if (err instanceof BdServiceSuspendedError) {
-			return { status: "unavailable", reason: "suspended" };
+			return { status: 'unavailable', reason: 'suspended' };
 		}
 		if (err instanceof BdPaymentLapsedError) {
-			return { status: "unavailable", reason: "lapsed" };
+			return { status: 'unavailable', reason: 'lapsed' };
 		}
-		if (env.NODE_ENV === "development") {
+
+		if (NODE_ENV === 'development') {
 			console.warn(
-				`[bd] parallelPages.render failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[bd] parallelPages.render failed: ${err instanceof Error ? err.message : String(err)}`
 			);
 		}
-		return { status: "ok", variant: null };
+		return { status: 'ok', variant: null };
 	}
 }

@@ -1,12 +1,8 @@
-import { env } from "$env/dynamic/private";
+import { NODE_ENV } from '$app/env/private';
+import { BdPaymentLapsedError, BdServiceSuspendedError } from '@businessdash/sdk';
+import type { GetMarketingPageBundleResponse } from '@businessdash/sdk';
 
-import {
-	BdPaymentLapsedError,
-	BdServiceSuspendedError,
-} from "@businessdash/sdk";
-import type { GetMarketingPageBundleResponse } from "@businessdash/sdk";
-
-import { bd } from "$lib/server/bd";
+import { bd } from '#lib/server/bd.ts';
 
 /**
  * Marketing-bundle helpers shared by the page loads.
@@ -32,9 +28,9 @@ export type BundleBannerMessage = {
 	linkUrl: string;
 	buttonText: string;
 	openInNewTab: boolean;
-	linkStyle?: "link" | "button";
+	linkStyle?: 'link' | 'button';
 	urgent?: boolean;
-	appearance: "always" | "once" | "until_dismiss" | "every";
+	appearance: 'always' | 'once' | 'until_dismiss' | 'every';
 };
 
 export type BundleBanner = {
@@ -74,8 +70,8 @@ export type BundleReviews = {
 };
 
 export type BundleResult =
-	| { status: "ok"; bundle: GetMarketingPageBundleResponse | null }
-	| { status: "unavailable"; reason: "lapsed" | "suspended" };
+	| { status: 'ok'; bundle: GetMarketingPageBundleResponse | null }
+	| { status: 'unavailable'; reason: 'lapsed' | 'suspended' };
 
 /**
  * Fetch a marketing-page bundle, translating the billing-suspension
@@ -83,38 +79,35 @@ export type BundleResult =
  * unconfigured client) resolves to `{ status: "ok", bundle: null }` so
  * the caller falls back to placeholder content.
  */
-export async function fetchBundleSafe(
-	pageKey = "home",
-	locale = "en",
-): Promise<BundleResult> {
-	if (!bd) return { status: "ok", bundle: null };
+export async function fetchBundleSafe(pageKey = 'home', locale = 'en'): Promise<BundleResult> {
+	if (!bd) return { status: 'ok', bundle: null };
 	try {
 		const bundle = await bd.marketing.getPageBundle({ pageKey, locale });
-		return { status: "ok", bundle };
+		return { status: 'ok', bundle };
 	} catch (err) {
 		if (err instanceof BdServiceSuspendedError) {
-			return { status: "unavailable", reason: "suspended" };
+			return { status: 'unavailable', reason: 'suspended' };
 		}
 		if (err instanceof BdPaymentLapsedError) {
-			return { status: "unavailable", reason: "lapsed" };
+			return { status: 'unavailable', reason: 'lapsed' };
 		}
-		if (env.NODE_ENV === "development") {
+
+		if (NODE_ENV === 'development') {
 			console.warn(
-				`[bd] getPageBundle(${pageKey}) failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[bd] getPageBundle(${pageKey}) failed: ${err instanceof Error ? err.message : String(err)}`
 			);
 		}
-		return { status: "ok", bundle: null };
+		return { status: 'ok', bundle: null };
 	}
 }
 
 /** Read a typed-but-passthrough section's `data`, or null. */
 export function readSection(
 	bundle: GetMarketingPageBundleResponse | null,
-	name: string,
+	name: string
 ): Record<string, unknown> | null {
-	const raw = (bundle as { sections?: Record<string, unknown> } | null)
-		?.sections?.[name];
-	if (raw && typeof raw === "object" && "ok" in raw && (raw as { ok: boolean }).ok) {
+	const raw = (bundle as { sections?: Record<string, unknown> } | null)?.sections?.[name];
+	if (raw && typeof raw === 'object' && 'ok' in raw && (raw as { ok: boolean }).ok) {
 		return (raw as unknown as { data: Record<string, unknown> }).data;
 	}
 	return null;
@@ -122,10 +115,9 @@ export function readSection(
 
 /** Banner off the bundle (`null` until the org enables one with messages). */
 export function getBannerFromBundle(
-	bundle: GetMarketingPageBundleResponse | null,
+	bundle: GetMarketingPageBundleResponse | null
 ): BundleBanner | null {
-	const banner = (bundle as unknown as { banner?: BundleBanner | null } | null)
-		?.banner;
+	const banner = (bundle as unknown as { banner?: BundleBanner | null } | null)?.banner;
 	if (!banner?.enabled) return null;
 	const messages = (banner.messages ?? []).filter((m) => m.enabled);
 	if (messages.length === 0) return null;
@@ -134,17 +126,16 @@ export function getBannerFromBundle(
 
 /** Updates feed off the bundle (empty until the org has cached Google posts). */
 export function getUpdatesFromBundle(
-	bundle: GetMarketingPageBundleResponse | null,
+	bundle: GetMarketingPageBundleResponse | null
 ): BundleUpdateItem[] {
-	const updates = (
-		bundle as unknown as { updates?: { items?: BundleUpdateItem[] } | null } | null
-	)?.updates;
+	const updates = (bundle as unknown as { updates?: { items?: BundleUpdateItem[] } | null } | null)
+		?.updates;
 	return updates?.items ?? [];
 }
 
 /** Reviews aggregate + first page off the bundle (`null` until any exist). */
 export function getReviewsFromBundle(
-	bundle: GetMarketingPageBundleResponse | null,
+	bundle: GetMarketingPageBundleResponse | null
 ): BundleReviews | null {
 	const reviews = (bundle as { reviews?: BundleReviews | null } | null)?.reviews;
 	return reviews ?? null;

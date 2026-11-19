@@ -42,7 +42,7 @@ Open http://localhost:5173. **Everything degrades gracefully when BD env is unse
 
 ## Environment variables
 
-All read server-side via `$env/dynamic/private` (never exposed to the client). See `.env.example`.
+Declared in `src/env.ts` and read when the app starts. Secrets come from `$app/env/private`, a server-only module, so they never reach the client; `PUBLIC_` variables come from `$app/env/public`. Every variable is optional, which is what lets the starter run with no `.env`. See `.env.example`.
 
 | Var | Required for | Notes |
 | --- | --- | --- |
@@ -134,7 +134,7 @@ bun run print-schema   # print the resolved schema as JSON
 
 ## Svelte 5 runes
 
-BD-specific code uses runes mode (forced via `svelte.config.js`):
+BD-specific code uses runes mode (forced via `compilerOptions.runes` in `vite.config.ts`):
 
 - `let { data }: { data: PageData } = $props();` — typed props
 - `let snapshot = $state<CartSnapshot | null>(data.snapshot);` — reactive state
@@ -181,9 +181,10 @@ src/
 The starter uses `@sveltejs/adapter-auto`. To pin one:
 
 ```ts
-// svelte.config.js
+// vite.config.ts (SvelteKit 3 has no svelte.config.js)
 import vercel from '@sveltejs/adapter-vercel';
-const config = { kit: { adapter: vercel() } };
+// …
+sveltekit({ adapter: vercel(), /* other options */ })
 ```
 
 The BD layer doesn't change — only the runtime where the SDK calls happen.

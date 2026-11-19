@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { browser } from '$app/environment';
-	import type { BundleBanner } from '$lib/server/bd-bundle';
+	import { browser } from '$app/env';
+	import type { BundleBanner } from '#lib/server/bd-bundle.ts';
 
 	/**
 	 * Dismissible announcement bar fed by `bundle.banner`. Shows the first

@@ -1,9 +1,9 @@
-import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
+import { buildSitemap, minimalSitemapXml } from '@businessdash/sdk/sitemap';
+import { BD_SITE_ID } from '$app/env/private';
+import { PUBLIC_BD_SITE_ID } from '$app/env/public';
 
-import { bd } from "$lib/server/bd";
-import type { RequestHandler } from "./$types";
+import { bd } from '#lib/server/bd.ts';
+import type { RequestHandler } from './$types';
 
 /**
  * The sitemap, assembled from three sources: your own pages, what BusinessDash
@@ -17,31 +17,30 @@ import type { RequestHandler } from "./$types";
  */
 
 /** Pages that live in THIS repo. Keep in step with `src/routes/`. */
-const STATIC_PATHS = ["/", "/services", "/reviews", "/updates", "/store", "/todos"];
+const STATIC_PATHS = ['/', '/services', '/reviews', '/updates', '/store', '/todos'];
 
 export const GET: RequestHandler = async ({ url }) => {
 	const baseUrl = url.origin;
 
 	if (!bd) {
 		return new Response(minimalSitemapXml(baseUrl), {
-			headers: { "Content-Type": "application/xml; charset=utf-8" },
+			headers: { 'Content-Type': 'application/xml; charset=utf-8' }
 		});
 	}
 
 	const xml = await buildSitemap({
 		client: bd,
-		siteId: publicEnv.PUBLIC_BD_SITE_ID ?? env.BD_SITE_ID ?? "",
+		siteId: PUBLIC_BD_SITE_ID ?? BD_SITE_ID ?? '',
 		baseUrl,
 		staticPaths: STATIC_PATHS,
-		routes: { blog: "/updates", product: "/store" },
-		onSkip: (section, reason) =>
-			console.info(`[sitemap] skipped ${section}: ${reason}`),
+		routes: { blog: '/updates', product: '/store' },
+		onSkip: (section, reason) => console.info(`[sitemap] skipped ${section}: ${reason}`)
 	});
 
 	return new Response(xml, {
 		headers: {
-			"Content-Type": "application/xml; charset=utf-8",
-			"Cache-Control": "public, max-age=300",
-		},
+			'Content-Type': 'application/xml; charset=utf-8',
+			'Cache-Control': 'public, max-age=300'
+		}
 	});
 };

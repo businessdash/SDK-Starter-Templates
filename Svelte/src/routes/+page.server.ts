@@ -1,13 +1,13 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import { bd } from "$lib/server/bd";
+import { bd } from '#lib/server/bd.ts';
 import {
 	fetchBundleSafe,
 	getBannerFromBundle,
 	readSection,
-	type BundleBanner,
-} from "$lib/server/bd-bundle";
-import { buildHomeJsonLd } from "$lib/server/bd-seo";
+	type BundleBanner
+} from '#lib/server/bd-bundle.ts';
+import { buildHomeJsonLd } from '#lib/server/bd-seo.ts';
 
 /**
  * Server-side load — runs on every request and only on the server, so the
@@ -25,10 +25,10 @@ import { buildHomeJsonLd } from "$lib/server/bd-seo";
  */
 
 const HERO_DEFAULTS = {
-	title: "Service that shows up — on time.",
+	title: 'Service that shows up — on time.',
 	tagline: "Book in 60 seconds. We'll handle the rest.",
-	ctaLabel: "Book a consult",
-	ctaHref: "#booking",
+	ctaLabel: 'Book a consult',
+	ctaHref: '#booking'
 };
 
 const ABOUT_FALLBACK =
@@ -36,51 +36,51 @@ const ABOUT_FALLBACK =
 
 const SERVICES_FALLBACK = [
 	{
-		id: "f1",
-		title: "Standard Service Call",
-		description: "Initial visit, diagnosis, and a written estimate.",
+		id: 'f1',
+		title: 'Standard Service Call',
+		description: 'Initial visit, diagnosis, and a written estimate.',
 		basePrice: 95,
-		priceType: "flat",
+		priceType: 'flat'
 	},
 	{
-		id: "f2",
-		title: "Tune-up + Inspection",
-		description: "Annual maintenance with a 14-point checklist.",
+		id: 'f2',
+		title: 'Tune-up + Inspection',
+		description: 'Annual maintenance with a 14-point checklist.',
 		basePrice: 149,
-		priceType: "flat",
+		priceType: 'flat'
 	},
 	{
-		id: "f3",
-		title: "Emergency Visit",
-		description: "Same-day arrival for urgent issues.",
+		id: 'f3',
+		title: 'Emergency Visit',
+		description: 'Same-day arrival for urgent issues.',
 		basePrice: 225,
-		priceType: "starting",
-	},
+		priceType: 'starting'
+	}
 ];
 
-const FORM_SLUG = "general-inquiry";
+const FORM_SLUG = 'general-inquiry';
 const FORM_FALLBACK = {
-	id: "fallback",
+	id: 'fallback',
 	slug: FORM_SLUG,
-	title: "Get in touch",
+	title: 'Get in touch',
 	description: "We'll get back within one business day.",
 	fields: [
-		{ id: "name", label: "Name", type: "text", required: true },
-		{ id: "email", label: "Email", type: "email", required: true },
-		{ id: "message", label: "Message", type: "textarea", required: true },
-	],
+		{ id: 'name', label: 'Name', type: 'text', required: true },
+		{ id: 'email', label: 'Email', type: 'email', required: true },
+		{ id: 'message', label: 'Message', type: 'textarea', required: true }
+	]
 };
 
-const GALLERY_FIELDS = ["id", "src", "title", "category", "blurDataURL"] as const;
+const GALLERY_FIELDS = ['id', 'src', 'title', 'category', 'blurDataURL'] as const;
 
-const SITE_URL = "https://example.com";
-const COMPANY_NAME = "Your Business";
+const SITE_URL = 'https://example.com';
+const COMPANY_NAME = 'Your Business';
 
 export const load: PageServerLoad = async () => {
 	const jsonLd = buildHomeJsonLd({
 		name: COMPANY_NAME,
 		siteUrl: SITE_URL,
-		description: HERO_DEFAULTS.tagline,
+		description: HERO_DEFAULTS.tagline
 	});
 
 	if (!bd) {
@@ -96,33 +96,33 @@ export const load: PageServerLoad = async () => {
 			formSchema: FORM_FALLBACK,
 			formSlug: FORM_SLUG,
 			banner: null as BundleBanner | null,
-			jsonLd,
+			jsonLd
 		};
 	}
 
 	const [bundleResult, gallery, eventTypes, blog, formSchema] = await Promise.all([
-		fetchBundleSafe("home", "en"),
+		fetchBundleSafe('home', 'en'),
 		bd.gallery.list({ limit: 12, fields: GALLERY_FIELDS }).catch(() => []),
 		bd.scheduling.listEventTypes().catch(() => []),
 		bd.blog.listPosts({ limit: 6 }).catch(() => ({ items: [] as unknown[] })),
-		bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK),
+		bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK)
 	]);
 
 	// Billing suspended / payment lapsed → minimal unavailable state.
-	if (bundleResult.status === "unavailable") {
+	if (bundleResult.status === 'unavailable') {
 		return {
 			configured: true as const,
 			unavailable: true as const,
 			reason: bundleResult.reason,
-			jsonLd,
+			jsonLd
 		};
 	}
 
 	const bundle = bundleResult.bundle;
-	const heroSection = readSection(bundle, "hero");
-	const aboutSection = readSection(bundle, "about");
-	const servicesSection = readSection(bundle, "services");
-	const companySection = readSection(bundle, "companyInfo");
+	const heroSection = readSection(bundle, 'hero');
+	const aboutSection = readSection(bundle, 'about');
+	const servicesSection = readSection(bundle, 'services');
+	const companySection = readSection(bundle, 'companyInfo');
 
 	return {
 		configured: true as const,
@@ -131,10 +131,9 @@ export const load: PageServerLoad = async () => {
 			title: (heroSection?.title as string) ?? HERO_DEFAULTS.title,
 			tagline: (heroSection?.tagline as string) ?? HERO_DEFAULTS.tagline,
 			ctaLabel: (heroSection?.ctaLabel as string) ?? HERO_DEFAULTS.ctaLabel,
-			ctaHref: (heroSection?.ctaHref as string) ?? HERO_DEFAULTS.ctaHref,
+			ctaHref: (heroSection?.ctaHref as string) ?? HERO_DEFAULTS.ctaHref
 		},
-		about:
-			typeof aboutSection?.body === "string" ? aboutSection.body : ABOUT_FALLBACK,
+		about: typeof aboutSection?.body === 'string' ? aboutSection.body : ABOUT_FALLBACK,
 		services:
 			Array.isArray(servicesSection?.items) && servicesSection.items.length > 0
 				? (servicesSection.items as typeof SERVICES_FALLBACK)
@@ -162,7 +161,7 @@ export const load: PageServerLoad = async () => {
 				HERO_DEFAULTS.tagline,
 			telephone: companySection?.phone as string | undefined,
 			email: companySection?.email as string | undefined,
-			city: companySection?.city as string | undefined,
-		}),
+			city: companySection?.city as string | undefined
+		})
 	};
 };

@@ -1,8 +1,8 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import { bd } from "$lib/server/bd";
+import { bd } from '#lib/server/bd.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/bd/forms/[slug]
@@ -14,10 +14,10 @@ import type { RequestHandler } from "./$types";
  */
 export const POST: RequestHandler = async ({ params, request }) => {
 	if (!bd) {
-		throw error(503, "BD not configured. See .env.example.");
+		throw error(503, 'BD not configured. See .env.example.');
 	}
 	const slug = params.slug;
-	if (!slug) throw error(400, "slug required");
+	if (!slug) throw error(400, 'slug required');
 	try {
 		const body = (await request.json()) as {
 			data: Record<string, unknown>;
@@ -26,9 +26,9 @@ export const POST: RequestHandler = async ({ params, request }) => {
 		};
 		const result = await bd.forms.submit(slug, body.data, {
 			submitterEmail: body.submitterEmail,
-			submitterName: body.submitterName,
+			submitterName: body.submitterName
 		});
-		return json(result);
+		return Response.json(result);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Couldn't submit.";
 		throw error(400, message);

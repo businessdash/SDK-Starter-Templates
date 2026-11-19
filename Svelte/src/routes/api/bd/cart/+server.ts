@@ -1,8 +1,6 @@
-import { json } from "@sveltejs/kit";
+import { getCartSnapshot, isStoreConfigured } from '#lib/server/bd-store.ts';
 
-import { getCartSnapshot, isStoreConfigured } from "$lib/server/bd-store";
-
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * GET /api/bd/cart — current cart snapshot for the visitor cookie.
@@ -13,8 +11,8 @@ import type { RequestHandler } from "./$types";
  */
 export const GET: RequestHandler = async ({ cookies }) => {
 	if (!isStoreConfigured()) {
-		return json({ configured: false, snapshot: null });
+		return Response.json({ configured: false, snapshot: null });
 	}
 	const snapshot = await getCartSnapshot(cookies);
-	return json({ configured: true, snapshot });
+	return Response.json({ configured: true, snapshot });
 };

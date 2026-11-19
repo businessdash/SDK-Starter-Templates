@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
 	import type { ReviewState } from './+page.server';
 
@@ -60,8 +60,8 @@
 			{#if work}
 				{#if work.unlinked}
 					<p class="account-note">
-						Your account isn't linked to a customer record yet. Once we connect
-						your email to a project, your jobs and invoices will appear here.
+						Your account isn't linked to a customer record yet. Once we connect your email to a
+						project, your jobs and invoices will appear here.
 					</p>
 				{:else}
 					<div class="account-stats">

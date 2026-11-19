@@ -1,5 +1,5 @@
 <script lang="ts">
-	import Subscribe from '$lib/components/bd/Subscribe.svelte';
+	import Subscribe from '#lib/components/bd/Subscribe.svelte';
 
 	let { body }: { body: string } = $props();
 </script>

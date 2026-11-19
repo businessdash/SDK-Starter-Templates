@@ -1,6 +1,6 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import { getCartSnapshot, isStoreConfigured } from "$lib/server/bd-store";
+import { getCartSnapshot, isStoreConfigured } from '#lib/server/bd-store.ts';
 
 /**
  * Cart view. Loads the current snapshot read-only (no cookie mint); the

@@ -1,10 +1,10 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
 import {
 	getCartSnapshot,
 	isStoreConfigured,
-	listStoreSubscriptions,
-} from "$lib/server/bd-store";
+	listStoreSubscriptions
+} from '#lib/server/bd-store.ts';
 
 /**
  * Subscriptions list. Recurring offerings from `subscriptions.list`.
@@ -15,13 +15,10 @@ export const load: PageServerLoad = async ({ cookies }) => {
 	if (!isStoreConfigured()) {
 		return { configured: false as const, subscriptions: [], cartCount: 0 };
 	}
-	const [list, cart] = await Promise.all([
-		listStoreSubscriptions(),
-		getCartSnapshot(cookies),
-	]);
+	const [list, cart] = await Promise.all([listStoreSubscriptions(), getCartSnapshot(cookies)]);
 	return {
 		configured: true as const,
 		subscriptions: list?.items ?? [],
-		cartCount: cart?.itemCount ?? 0,
+		cartCount: cart?.itemCount ?? 0
 	};
 };

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
@@ -18,8 +18,7 @@
 		<span class="bd-section__eyebrow">Custom collections</span>
 		<h1 class="bd-section__title">Todos</h1>
 		<p class="bd-section__sub">
-			A relational custom-collections demo — todos and their images live in your BD custom
-			database.
+			A relational custom-collections demo — todos and their images live in your BD custom database.
 		</p>
 	</div>
 

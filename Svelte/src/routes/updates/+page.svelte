@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -22,9 +22,7 @@
 	<div class="bd-section__lead">
 		<span class="bd-section__eyebrow">News</span>
 		<h1 class="bd-section__title">Updates</h1>
-		<p class="bd-section__sub">
-			Recent posts, syncing from the business profile via BD.
-		</p>
+		<p class="bd-section__sub">Recent posts, syncing from the business profile via BD.</p>
 	</div>
 
 	{#if data.unavailable}
@@ -38,7 +36,12 @@
 			{#each data.updates as update (update.id)}
 				<article class="bd-card update-card">
 					{#if update.imageUrl}
-						<img class="update-card__img" src={update.imageUrl} alt={update.title ?? 'Update'} loading="lazy" />
+						<img
+							class="update-card__img"
+							src={update.imageUrl}
+							alt={update.title ?? 'Update'}
+							loading="lazy"
+						/>
 					{/if}
 					<div class="update-card__body">
 						{#if update.title}<h3>{update.title}</h3>{/if}
@@ -46,7 +49,9 @@
 						<div class="update-card__meta">
 							{#if update.postedAt}<span>{formatDate(update.postedAt)}</span>{/if}
 							{#if update.kind}<span class="bd-badge">{update.kind}</span>{/if}
-							{#if update.link}<a href={update.link} target="_blank" rel="noreferrer">Learn more →</a>{/if}
+							{#if update.link}<a href={update.link} target="_blank" rel="noreferrer"
+									>Learn more →</a
+								>{/if}
 						</div>
 					</div>
 				</article>

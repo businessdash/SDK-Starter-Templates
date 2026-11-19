@@ -1,6 +1,6 @@
-import { error } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
 import {
 	getCartSnapshot,
@@ -8,8 +8,8 @@ import {
 	getStoreProductAddons,
 	getStoreProductReviews,
 	getStoreRelatedProducts,
-	isStoreConfigured,
-} from "$lib/server/bd-store";
+	isStoreConfigured
+} from '#lib/server/bd-store.ts';
 
 /**
  * Product detail. Resolves the full product (with variants) via
@@ -28,18 +28,18 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 			reviews: null,
 			addons: [],
 			related: [],
-			cartCount: 0,
+			cartCount: 0
 		};
 	}
 
 	const product = await getStoreProduct(params.id);
-	if (!product) throw error(404, "Product not found.");
+	if (!product) throw error(404, 'Product not found.');
 
 	const [reviews, addons, related, cart] = await Promise.all([
 		getStoreProductReviews(params.id),
 		getStoreProductAddons(params.id),
 		getStoreRelatedProducts(params.id),
-		getCartSnapshot(cookies),
+		getCartSnapshot(cookies)
 	]);
 
 	return {
@@ -48,6 +48,6 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 		reviews,
 		addons: addons ?? [],
 		related: related ?? [],
-		cartCount: cart?.itemCount ?? 0,
+		cartCount: cart?.itemCount ?? 0
 	};
 };

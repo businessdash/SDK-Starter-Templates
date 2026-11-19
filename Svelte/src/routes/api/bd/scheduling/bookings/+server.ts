@@ -1,8 +1,8 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import { bd } from "$lib/server/bd";
+import { bd } from '#lib/server/bd.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/bd/scheduling/bookings
@@ -13,7 +13,7 @@ import type { RequestHandler } from "./$types";
  */
 export const POST: RequestHandler = async ({ request }) => {
 	if (!bd) {
-		throw error(503, "BD not configured. See .env.example.");
+		throw error(503, 'BD not configured. See .env.example.');
 	}
 	try {
 		const body = (await request.json()) as {
@@ -31,9 +31,9 @@ export const POST: RequestHandler = async ({ request }) => {
 			eventTypeSlug: body.eventTypeSlug,
 			startAt: new Date(body.startAt),
 			invitee: body.invitee,
-			notes: body.notes ?? null,
+			notes: body.notes ?? null
 		});
-		return json(result);
+		return Response.json(result);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : "Couldn't confirm.";
 		throw error(400, message);

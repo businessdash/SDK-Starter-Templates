@@ -9,74 +9,34 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UpdatesRouteImport } from './routes/updates'
-import { Route as TodosRouteImport } from './routes/todos'
-import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
-import { Route as ReviewsRouteImport } from './routes/reviews'
-import { Route as MyAccountRouteImport } from './routes/my-account'
-import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
-import { Route as AboutRouteImport } from './routes/about'
-import { Route as SplatRouteImport } from './routes/$'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as StoreIndexRouteImport } from './routes/store.index'
-import { Route as ServicesIndexRouteImport } from './routes/services.index'
-import { Route as StoreCartRouteImport } from './routes/store.cart'
-import { Route as StoreIdRouteImport } from './routes/store.$id'
-import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
-import { Route as DemoStoreRouteImport } from './routes/demo.store'
-import { Route as DemoFormRouteImport } from './routes/demo.form'
-import { Route as ApiMcpRouteImport } from './routes/api/mcp'
-import { Route as AiProductFeedRouteImport } from './routes/ai.product-feed'
+import { Route as SplatRouteImport } from './routes/$'
+import { Route as AboutRouteImport } from './routes/about'
+import { Route as LlmsDottxtRouteImport } from './routes/llms[.]txt'
+import { Route as MyAccountRouteImport } from './routes/my-account'
+import { Route as ReviewsRouteImport } from './routes/reviews'
+import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as SubscriptionsRouteImport } from './routes/subscriptions'
+import { Route as TodosRouteImport } from './routes/todos'
+import { Route as UpdatesRouteImport } from './routes/updates'
 import { Route as DotwellKnownMcpDotjsonRouteImport } from './routes/[.]well-known.mcp[.]json'
-import { Route as ServicesServiceAreaRouteImport } from './routes/services.$service.$area'
-import { Route as ApiBdRevalidateRouteImport } from './routes/api/bd/revalidate'
+import { Route as AiProductFeedRouteImport } from './routes/ai.product-feed'
+import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as DemoFormRouteImport } from './routes/demo.form'
+import { Route as DemoStoreRouteImport } from './routes/demo.store'
+import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
+import { Route as ServicesIndexRouteImport } from './routes/services.index'
+import { Route as StoreIndexRouteImport } from './routes/store.index'
+import { Route as StoreIdRouteImport } from './routes/store.$id'
+import { Route as StoreCartRouteImport } from './routes/store.cart'
 import { Route as ApiBdAuthSplatRouteImport } from './routes/api/bd-auth.$'
+import { Route as ApiBdRevalidateRouteImport } from './routes/api/bd/revalidate'
+import { Route as ServicesServiceAreaRouteImport } from './routes/services.$service.$area'
 
-const UpdatesRoute = UpdatesRouteImport.update({
-  id: '/updates',
-  path: '/updates',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TodosRoute = TodosRouteImport.update({
-  id: '/todos',
-  path: '/todos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SubscriptionsRoute = SubscriptionsRouteImport.update({
-  id: '/subscriptions',
-  path: '/subscriptions',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
-  id: '/robots.txt',
-  path: '/robots.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ReviewsRoute = ReviewsRouteImport.update({
-  id: '/reviews',
-  path: '/reviews',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MyAccountRoute = MyAccountRouteImport.update({
-  id: '/my-account',
-  path: '/my-account',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
-  id: '/llms.txt',
-  path: '/llms.txt',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AboutRoute = AboutRouteImport.update({
-  id: '/about',
-  path: '/about',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SplatRoute = SplatRouteImport.update({
@@ -84,54 +44,49 @@ const SplatRoute = SplatRouteImport.update({
   path: '/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoreIndexRoute = StoreIndexRouteImport.update({
-  id: '/store/',
-  path: '/store/',
+const LlmsDottxtRoute = LlmsDottxtRouteImport.update({
+  id: '/llms.txt',
+  path: '/llms.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ServicesIndexRoute = ServicesIndexRouteImport.update({
-  id: '/services/',
-  path: '/services/',
+const MyAccountRoute = MyAccountRouteImport.update({
+  id: '/my-account',
+  path: '/my-account',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoreCartRoute = StoreCartRouteImport.update({
-  id: '/store/cart',
-  path: '/store/cart',
+const ReviewsRoute = ReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
   getParentRoute: () => rootRouteImport,
 } as any)
-const StoreIdRoute = StoreIdRouteImport.update({
-  id: '/store/$id',
-  path: '/store/$id',
+const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
+  id: '/robots.txt',
+  path: '/robots.txt',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
-  id: '/demo/tanstack-query',
-  path: '/demo/tanstack-query',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoStoreRoute = DemoStoreRouteImport.update({
-  id: '/demo/store',
-  path: '/demo/store',
+const SubscriptionsRoute = SubscriptionsRouteImport.update({
+  id: '/subscriptions',
+  path: '/subscriptions',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoFormRoute = DemoFormRouteImport.update({
-  id: '/demo/form',
-  path: '/demo/form',
+const TodosRoute = TodosRouteImport.update({
+  id: '/todos',
+  path: '/todos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiMcpRoute = ApiMcpRouteImport.update({
-  id: '/api/mcp',
-  path: '/api/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AiProductFeedRoute = AiProductFeedRouteImport.update({
-  id: '/ai/product-feed',
-  path: '/ai/product-feed',
+const UpdatesRoute = UpdatesRouteImport.update({
+  id: '/updates',
+  path: '/updates',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DotwellKnownMcpDotjsonRoute = DotwellKnownMcpDotjsonRouteImport.update({
@@ -139,9 +94,54 @@ const DotwellKnownMcpDotjsonRoute = DotwellKnownMcpDotjsonRouteImport.update({
   path: '/.well-known/mcp.json',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ServicesServiceAreaRoute = ServicesServiceAreaRouteImport.update({
-  id: '/services/$service/$area',
-  path: '/services/$service/$area',
+const AiProductFeedRoute = AiProductFeedRouteImport.update({
+  id: '/ai/product-feed',
+  path: '/ai/product-feed',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoFormRoute = DemoFormRouteImport.update({
+  id: '/demo/form',
+  path: '/demo/form',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoStoreRoute = DemoStoreRouteImport.update({
+  id: '/demo/store',
+  path: '/demo/store',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
+  id: '/demo/tanstack-query',
+  path: '/demo/tanstack-query',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ServicesIndexRoute = ServicesIndexRouteImport.update({
+  id: '/services/',
+  path: '/services/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreIndexRoute = StoreIndexRouteImport.update({
+  id: '/store/',
+  path: '/store/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreIdRoute = StoreIdRouteImport.update({
+  id: '/store/$id',
+  path: '/store/$id',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreCartRoute = StoreCartRouteImport.update({
+  id: '/store/cart',
+  path: '/store/cart',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBdAuthSplatRoute = ApiBdAuthSplatRouteImport.update({
+  id: '/api/bd-auth/$',
+  path: '/api/bd-auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiBdRevalidateRoute = ApiBdRevalidateRouteImport.update({
@@ -149,9 +149,9 @@ const ApiBdRevalidateRoute = ApiBdRevalidateRouteImport.update({
   path: '/api/bd/revalidate',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiBdAuthSplatRoute = ApiBdAuthSplatRouteImport.update({
-  id: '/api/bd-auth/$',
-  path: '/api/bd-auth/$',
+const ServicesServiceAreaRoute = ServicesServiceAreaRouteImport.update({
+  id: '/services/$service/$area',
+  path: '/services/$service/$area',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -344,67 +344,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/solid-router' {
   interface FileRoutesByPath {
-    '/updates': {
-      id: '/updates'
-      path: '/updates'
-      fullPath: '/updates'
-      preLoaderRoute: typeof UpdatesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/todos': {
-      id: '/todos'
-      path: '/todos'
-      fullPath: '/todos'
-      preLoaderRoute: typeof TodosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/subscriptions': {
-      id: '/subscriptions'
-      path: '/subscriptions'
-      fullPath: '/subscriptions'
-      preLoaderRoute: typeof SubscriptionsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/robots.txt': {
-      id: '/robots.txt'
-      path: '/robots.txt'
-      fullPath: '/robots.txt'
-      preLoaderRoute: typeof RobotsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reviews': {
-      id: '/reviews'
-      path: '/reviews'
-      fullPath: '/reviews'
-      preLoaderRoute: typeof ReviewsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/my-account': {
-      id: '/my-account'
-      path: '/my-account'
-      fullPath: '/my-account'
-      preLoaderRoute: typeof MyAccountRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/llms.txt': {
-      id: '/llms.txt'
-      path: '/llms.txt'
-      fullPath: '/llms.txt'
-      preLoaderRoute: typeof LlmsDottxtRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/about': {
-      id: '/about'
-      path: '/about'
-      fullPath: '/about'
-      preLoaderRoute: typeof AboutRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$': {
@@ -414,74 +358,67 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof SplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/store/': {
-      id: '/store/'
-      path: '/store'
-      fullPath: '/store/'
-      preLoaderRoute: typeof StoreIndexRouteImport
+    '/llms.txt': {
+      id: '/llms.txt'
+      path: '/llms.txt'
+      fullPath: '/llms.txt'
+      preLoaderRoute: typeof LlmsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/services/': {
-      id: '/services/'
-      path: '/services'
-      fullPath: '/services/'
-      preLoaderRoute: typeof ServicesIndexRouteImport
+    '/my-account': {
+      id: '/my-account'
+      path: '/my-account'
+      fullPath: '/my-account'
+      preLoaderRoute: typeof MyAccountRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/store/cart': {
-      id: '/store/cart'
-      path: '/store/cart'
-      fullPath: '/store/cart'
-      preLoaderRoute: typeof StoreCartRouteImport
+    '/reviews': {
+      id: '/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof ReviewsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/store/$id': {
-      id: '/store/$id'
-      path: '/store/$id'
-      fullPath: '/store/$id'
-      preLoaderRoute: typeof StoreIdRouteImport
+    '/robots.txt': {
+      id: '/robots.txt'
+      path: '/robots.txt'
+      fullPath: '/robots.txt'
+      preLoaderRoute: typeof RobotsDottxtRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/tanstack-query': {
-      id: '/demo/tanstack-query'
-      path: '/demo/tanstack-query'
-      fullPath: '/demo/tanstack-query'
-      preLoaderRoute: typeof DemoTanstackQueryRouteImport
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/store': {
-      id: '/demo/store'
-      path: '/demo/store'
-      fullPath: '/demo/store'
-      preLoaderRoute: typeof DemoStoreRouteImport
+    '/subscriptions': {
+      id: '/subscriptions'
+      path: '/subscriptions'
+      fullPath: '/subscriptions'
+      preLoaderRoute: typeof SubscriptionsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/form': {
-      id: '/demo/form'
-      path: '/demo/form'
-      fullPath: '/demo/form'
-      preLoaderRoute: typeof DemoFormRouteImport
+    '/todos': {
+      id: '/todos'
+      path: '/todos'
+      fullPath: '/todos'
+      preLoaderRoute: typeof TodosRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/mcp': {
-      id: '/api/mcp'
-      path: '/api/mcp'
-      fullPath: '/api/mcp'
-      preLoaderRoute: typeof ApiMcpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ai/product-feed': {
-      id: '/ai/product-feed'
-      path: '/ai/product-feed'
-      fullPath: '/ai/product-feed'
-      preLoaderRoute: typeof AiProductFeedRouteImport
+    '/updates': {
+      id: '/updates'
+      path: '/updates'
+      fullPath: '/updates'
+      preLoaderRoute: typeof UpdatesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/mcp.json': {
@@ -491,11 +428,74 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof DotwellKnownMcpDotjsonRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/services/$service/$area': {
-      id: '/services/$service/$area'
-      path: '/services/$service/$area'
-      fullPath: '/services/$service/$area'
-      preLoaderRoute: typeof ServicesServiceAreaRouteImport
+    '/ai/product-feed': {
+      id: '/ai/product-feed'
+      path: '/ai/product-feed'
+      fullPath: '/ai/product-feed'
+      preLoaderRoute: typeof AiProductFeedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/form': {
+      id: '/demo/form'
+      path: '/demo/form'
+      fullPath: '/demo/form'
+      preLoaderRoute: typeof DemoFormRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/store': {
+      id: '/demo/store'
+      path: '/demo/store'
+      fullPath: '/demo/store'
+      preLoaderRoute: typeof DemoStoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/demo/tanstack-query': {
+      id: '/demo/tanstack-query'
+      path: '/demo/tanstack-query'
+      fullPath: '/demo/tanstack-query'
+      preLoaderRoute: typeof DemoTanstackQueryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/services/': {
+      id: '/services/'
+      path: '/services'
+      fullPath: '/services/'
+      preLoaderRoute: typeof ServicesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/': {
+      id: '/store/'
+      path: '/store'
+      fullPath: '/store/'
+      preLoaderRoute: typeof StoreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/$id': {
+      id: '/store/$id'
+      path: '/store/$id'
+      fullPath: '/store/$id'
+      preLoaderRoute: typeof StoreIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/cart': {
+      id: '/store/cart'
+      path: '/store/cart'
+      fullPath: '/store/cart'
+      preLoaderRoute: typeof StoreCartRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bd-auth/$': {
+      id: '/api/bd-auth/$'
+      path: '/api/bd-auth/$'
+      fullPath: '/api/bd-auth/$'
+      preLoaderRoute: typeof ApiBdAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/bd/revalidate': {
@@ -505,11 +505,11 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof ApiBdRevalidateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/bd-auth/$': {
-      id: '/api/bd-auth/$'
-      path: '/api/bd-auth/$'
-      fullPath: '/api/bd-auth/$'
-      preLoaderRoute: typeof ApiBdAuthSplatRouteImport
+    '/services/$service/$area': {
+      id: '/services/$service/$area'
+      path: '/services/$service/$area'
+      fullPath: '/services/$service/$area'
+      preLoaderRoute: typeof ServicesServiceAreaRouteImport
       parentRoute: typeof rootRouteImport
     }
   }

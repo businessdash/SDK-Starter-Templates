@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
-	import StoreNav from '$lib/components/bd/StoreNav.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
+	import StoreNav from '#lib/components/bd/StoreNav.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -33,20 +33,20 @@
 	const hasFilters = $derived(
 		Boolean(
 			data.filters.search ||
-				data.filters.categoryId ||
-				data.filters.minRating ||
-				data.filters.minDollars != null ||
-				data.filters.maxDollars != null
+			data.filters.categoryId ||
+			data.filters.minRating ||
+			data.filters.minDollars != null ||
+			data.filters.maxDollars != null
 		)
 	);
 
 	/** Set/clear one search param and navigate, keeping scroll + focus. */
 	function setParam(key: string, value: string | null) {
-		const params = new URLSearchParams(page.url.searchParams);
+		const params = new URLSearchParams(page.url.search);
 		if (value === null || value === '') params.delete(key);
 		else params.set(key, value);
 		const qs = params.toString();
-		goto(qs ? `/store?${qs}` : '/store', { keepFocus: true, noScroll: true });
+		goto(qs ? `/store?${qs}` : '/store', { reset: false });
 	}
 
 	function onSearch(e: SubmitEvent) {
@@ -65,7 +65,7 @@
 	}
 
 	function clearAll() {
-		goto('/store', { keepFocus: true, noScroll: true });
+		goto('/store', { reset: false });
 	}
 </script>
 
@@ -91,16 +91,16 @@
 		<span class="bd-section__eyebrow">Shop</span>
 		<h1 class="bd-section__title">Products</h1>
 		<p class="bd-section__sub">
-			Live catalog from the BD storefront surface. Filter, sort, and click a
-			product to choose a variant and add it to your cart.
+			Live catalog from the BD storefront surface. Filter, sort, and click a product to choose a
+			variant and add it to your cart.
 		</p>
 	</div>
 
 	{#if !data.configured}
 		<div class="bd-empty">
 			Store isn't connected yet. Set <code>BD_API_KEY</code>,
-			<code>BD_SITE_ID</code> and <code>BD_PACKAGE_API_BASE_URL</code> in your
-			environment, then add products in the BD dashboard.
+			<code>BD_SITE_ID</code> and <code>BD_PACKAGE_API_BASE_URL</code> in your environment, then add products
+			in the BD dashboard.
 		</div>
 	{:else}
 		<div class="store-layout">
@@ -169,9 +169,7 @@
 							value={data.filters.maxDollars ?? ''}
 						/>
 					</div>
-					<button type="submit" class="bd-btn bd-btn--ghost store-price__apply">
-						Apply
-					</button>
+					<button type="submit" class="bd-btn bd-btn--ghost store-price__apply"> Apply </button>
 				</form>
 
 				<div class="store-facet">
@@ -195,9 +193,7 @@
 				</div>
 
 				{#if hasFilters}
-					<button type="button" class="store-clear" onclick={clearAll}>
-						Clear all filters
-					</button>
+					<button type="button" class="store-clear" onclick={clearAll}> Clear all filters </button>
 				{/if}
 			</aside>
 

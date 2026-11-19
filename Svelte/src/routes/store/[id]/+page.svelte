@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
-	import StoreNav from '$lib/components/bd/StoreNav.svelte';
-	import { addToCart, formatDollars, formatCents } from '$lib/bd/cart-client';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
+	import StoreNav from '#lib/components/bd/StoreNav.svelte';
+	import { addToCart, formatDollars, formatCents } from '#lib/bd/cart-client.ts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -15,9 +15,7 @@
 		return typeof v === 'number' && Number.isFinite(v) ? v : null;
 	}
 	function firstImage(images: unknown): string | null {
-		return Array.isArray(images) && typeof images[0] === 'string'
-			? images[0]
-			: null;
+		return Array.isArray(images) && typeof images[0] === 'string' ? images[0] : null;
 	}
 
 	type Variant = {
@@ -32,17 +30,15 @@
 			id: asString(raw.id),
 			name: asString(raw.name) || 'Default',
 			price: asNumber(raw.price),
-			isLive: raw.isLive !== false,
-		})),
+			isLive: raw.isLive !== false
+		}))
 	);
 
 	/** First purchasable variant id of an addon, for the rail's "Add" button. */
 	function addonFirstVariantId(variants: unknown): string | undefined {
 		if (!Array.isArray(variants)) return undefined;
 		const first = variants[0] as { variantId?: unknown } | undefined;
-		return first && typeof first.variantId === 'string'
-			? first.variantId
-			: undefined;
+		return first && typeof first.variantId === 'string' ? first.variantId : undefined;
 	}
 
 	// svelte-ignore state_referenced_locally
@@ -69,7 +65,7 @@
 		const res = await addToCart({
 			productId: data.product.id,
 			variantId: selectedVariant || undefined,
-			quantity,
+			quantity
 		});
 		busy = false;
 		if (res.ok) {
@@ -87,7 +83,7 @@
 		const res = await addToCart({
 			productId: addon.addonProductId,
 			variantId: addonFirstVariantId(addon.variants),
-			quantity: 1,
+			quantity: 1
 		});
 		addingAddon = null;
 		if (res.ok) {
@@ -173,10 +169,7 @@
 				</button>
 
 				{#if message}
-					<div
-						class="product-detail__msg"
-						class:product-detail__msg--err={messageKind === 'error'}
-					>
+					<div class="product-detail__msg" class:product-detail__msg--err={messageKind === 'error'}>
 						{message}
 						{#if messageKind === 'ok'}
 							<button class="bd-btn bd-btn--ghost" onclick={() => goto('/store/cart')}>
@@ -196,7 +189,12 @@
 						<div class="addon-card bd-card">
 							<div class="addon-card__media">
 								{#if addon.imageUrl}
-									<img src={addon.imageUrl} alt={addon.addonName} loading="lazy" referrerpolicy="no-referrer" />
+									<img
+										src={addon.imageUrl}
+										alt={addon.addonName}
+										loading="lazy"
+										referrerpolicy="no-referrer"
+									/>
 								{:else}
 									<div class="addon-card__noimg">—</div>
 								{/if}
@@ -215,11 +213,7 @@
 								onclick={() => handleAddAddon(addon)}
 								disabled={addingAddon === addon.id || addedAddons[addon.id]}
 							>
-								{addedAddons[addon.id]
-									? 'Added'
-									: addingAddon === addon.id
-										? '…'
-										: 'Add'}
+								{addedAddons[addon.id] ? 'Added' : addingAddon === addon.id ? '…' : 'Add'}
 							</button>
 						</div>
 					{/each}
@@ -260,7 +254,12 @@
 						<a class="bd-card related-card" href={`/store/${rp.id}`}>
 							<div class="related-card__media">
 								{#if rp.coverImageUrl}
-									<img src={rp.coverImageUrl} alt={rp.name} loading="lazy" referrerpolicy="no-referrer" />
+									<img
+										src={rp.coverImageUrl}
+										alt={rp.name}
+										loading="lazy"
+										referrerpolicy="no-referrer"
+									/>
 								{:else}
 									<div class="related-card__noimg">—</div>
 								{/if}

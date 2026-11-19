@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
-	import StoreNav from '$lib/components/bd/StoreNav.svelte';
-	import { formatCents } from '$lib/bd/cart-client';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
+	import StoreNav from '#lib/components/bd/StoreNav.svelte';
+	import { formatCents } from '#lib/bd/cart-client.ts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -25,14 +25,15 @@
 			{#if data.status.amountTotalCents != null}
 				<p class="order__total">
 					Total paid:
-					<strong>{formatCents(data.status.amountTotalCents, data.status.currency ?? 'USD')}</strong>
+					<strong>{formatCents(data.status.amountTotalCents, data.status.currency ?? 'USD')}</strong
+					>
 				</p>
 			{/if}
 		{:else if data.status}
 			<h1 class="bd-section__title">Payment pending</h1>
 			<p>
-				Your checkout session is <strong>{data.status.paymentStatus}</strong>. If
-				you completed payment, it may take a moment to confirm.
+				Your checkout session is <strong>{data.status.paymentStatus}</strong>. If you completed
+				payment, it may take a moment to confirm.
 			</p>
 		{:else}
 			<h1 class="bd-section__title">Order status unavailable</h1>

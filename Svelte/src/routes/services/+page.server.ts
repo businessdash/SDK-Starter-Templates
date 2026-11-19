@@ -1,6 +1,6 @@
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import { listServiceAreaVariants } from "$lib/server/bd-parallel";
+import { listServiceAreaVariants } from '#lib/server/bd-parallel.ts';
 
 /**
  * Index of every programmatic (service × area) page. SvelteKit doesn't do

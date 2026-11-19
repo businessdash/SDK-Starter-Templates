@@ -1,8 +1,8 @@
-import { mcpHandler } from "@businessdash/sdk/mcp";
+import { mcpHandler } from '@businessdash/sdk/mcp';
 
-import { aiSurfaceConfig } from "$lib/server/bd-ai";
+import { aiSurfaceConfig } from '#lib/server/bd-ai.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * /api/mcp — the site's MCP connector, served from THIS domain.
@@ -25,10 +25,7 @@ function getHandlers() {
 }
 
 const NOT_CONFIGURED = () =>
-	Response.json(
-		{ error: "MCP is not configured (set the BD env vars)." },
-		{ status: 503 },
-	);
+	Response.json({ error: 'MCP is not configured (set the BD env vars).' }, { status: 503 });
 
 export const POST: RequestHandler = async ({ request }) => {
 	const mcp = getHandlers();

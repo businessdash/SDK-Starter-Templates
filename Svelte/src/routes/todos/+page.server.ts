@@ -1,17 +1,17 @@
-import { fail } from "@sveltejs/kit";
-import { createBdApiClient } from "@businessdash/sdk";
+import { fail } from '@sveltejs/kit';
+import { createBdApiClient } from '@businessdash/sdk';
 
-import { env } from "$env/dynamic/private";
-import { env as publicEnv } from "$env/dynamic/public";
-import { bd } from "$lib/server/bd";
+import { BD_API_KEY, BD_SITE_ID, BD_PACKAGE_API_BASE_URL } from '$app/env/private';
+import { PUBLIC_BD_SITE_ID, PUBLIC_BD_PACKAGE_API_BASE_URL } from '$app/env/public';
+import { bd } from '#lib/server/bd.ts';
 
-import type { Actions, PageServerLoad } from "./$types";
+import type { Actions, PageServerLoad } from './$types';
 
 import {
 	TODOS_OBJECT_ID,
 	TODO_IMAGES_OBJECT_ID,
-	TODO_FORM_SLUG,
-} from "../../../bd.data-model.config";
+	TODO_FORM_SLUG
+} from '../../../bd.data-model.config';
 
 /**
  * Todos — the relational custom-collections demo (`bd.data-model.config.ts`).
@@ -43,24 +43,23 @@ export type TodoItem = {
 };
 
 function normalizeBaseUrl(input: string): string {
-	const next = input.trim().replace(/\/+$/, "");
-	if (next.endsWith("/api/package/v1")) return next;
+	const next = input.trim().replace(/\/+$/, '');
+	if (next.endsWith('/api/package/v1')) return next;
 	return `${next}/api/package/v1`;
 }
 
 function getDataModel() {
-	const apiKey = env.BD_API_KEY;
-	const siteId = publicEnv.PUBLIC_BD_SITE_ID ?? env.BD_SITE_ID;
-	const rawBaseUrl =
-		publicEnv.PUBLIC_BD_PACKAGE_API_BASE_URL ?? env.BD_PACKAGE_API_BASE_URL;
+	const apiKey = BD_API_KEY;
+	const siteId = PUBLIC_BD_SITE_ID ?? BD_SITE_ID;
+	const rawBaseUrl = PUBLIC_BD_PACKAGE_API_BASE_URL ?? BD_PACKAGE_API_BASE_URL;
+
 	if (!apiKey || !siteId || !rawBaseUrl) return null;
-	return createBdApiClient({ apiKey, baseUrl: normalizeBaseUrl(rawBaseUrl) })
-		.site(siteId)
+	return createBdApiClient({ apiKey, baseUrl: normalizeBaseUrl(rawBaseUrl) }).site(siteId)
 		.dataModel;
 }
 
 function asOptionalText(value: unknown): string | null {
-	return typeof value === "string" && value.length > 0 ? value : null;
+	return typeof value === 'string' && value.length > 0 ? value : null;
 }
 
 export const load: PageServerLoad = async () => {
@@ -69,35 +68,35 @@ export const load: PageServerLoad = async () => {
 		return {
 			available: false as const,
 			reason: "BD isn't configured — see .env.example.",
-			todos: [] as TodoItem[],
+			todos: [] as TodoItem[]
 		};
 	}
 
 	try {
 		const [todosRes, imagesRes] = await Promise.all([
 			dataModel.listRecords({ object: TODOS_OBJECT_ID, limit: 50 }),
-			dataModel.listRecords({ object: TODO_IMAGES_OBJECT_ID, limit: 200 }),
+			dataModel.listRecords({ object: TODO_IMAGES_OBJECT_ID, limit: 200 })
 		]);
 		if (!todosRes.available || !imagesRes.available) {
 			return {
 				available: false as const,
 				reason:
 					"Custom objects aren't available on this org's plan, or the model hasn't been promoted yet.",
-				todos: [] as TodoItem[],
+				todos: [] as TodoItem[]
 			};
 		}
 
 		// Group images by the todo each one's RELATION field links to.
 		const imagesByTodo = new Map<string, TodoImage[]>();
 		for (const record of imagesRes.records) {
-			const url = record.fields["url"];
-			if (typeof url !== "string" || url.length === 0) continue;
+			const url = record.fields['url'];
+			if (typeof url !== 'string' || url.length === 0) continue;
 			const image: TodoImage = {
 				url,
-				alt: asOptionalText(record.fields["alt"]),
-				label: asOptionalText(record.fields["label"]),
+				alt: asOptionalText(record.fields['alt']),
+				label: asOptionalText(record.fields['label'])
 			};
-			for (const link of record.relations["todo"] ?? []) {
+			for (const link of record.relations['todo'] ?? []) {
 				const bucket = imagesByTodo.get(link.recordId) ?? [];
 				bucket.push(image);
 				imagesByTodo.set(link.recordId, bucket);
@@ -107,25 +106,20 @@ export const load: PageServerLoad = async () => {
 		return {
 			available: true as const,
 			reason: null,
-			todos: todosRes.records.map(
-				(record): TodoItem => ({
-					id: record.id,
-					title:
-						typeof record.fields["title"] === "string"
-							? record.fields["title"]
-							: "(untitled)",
-					done: record.fields["done"] === true,
-					notes: asOptionalText(record.fields["notes"]),
-					createdAt: String(record.createdAt),
-					images: imagesByTodo.get(record.id) ?? [],
-				}),
-			),
+			todos: todosRes.records.map((record): TodoItem => ({
+				id: record.id,
+				title: typeof record.fields['title'] === 'string' ? record.fields['title'] : '(untitled)',
+				done: record.fields['done'] === true,
+				notes: asOptionalText(record.fields['notes']),
+				createdAt: String(record.createdAt),
+				images: imagesByTodo.get(record.id) ?? []
+			}))
 		};
 	} catch (err) {
 		return {
 			available: false as const,
 			reason: err instanceof Error ? err.message : "Couldn't read todos.",
-			todos: [] as TodoItem[],
+			todos: [] as TodoItem[]
 		};
 	}
 };
@@ -137,25 +131,23 @@ export const actions: Actions = {
 			return fail(503, { message: "BD isn't configured — see .env.example." });
 		}
 		const form = await request.formData();
-		const title = String(form.get("title") ?? "").trim();
-		const notes = String(form.get("notes") ?? "").trim();
+		const title = String(form.get('title') ?? '').trim();
+		const notes = String(form.get('notes') ?? '').trim();
 		if (!title) {
-			return fail(400, { message: "Title is required." });
+			return fail(400, { message: 'Title is required.' });
 		}
 		// Keyed by each field's output key — `validateFormSubmission` accepts
 		// output keys (preferred) or legacy field ids.
-		const result = await bd.forms.submit(TODO_FORM_SLUG, {
-			title,
-			...(notes ? { notes } : {}),
-		});
+		const result = await bd.forms.submit(TODO_FORM_SLUG, { title, ...(notes ? { notes } : {}) });
+
 		if (!result.ok) {
 			return fail(result.status >= 400 ? result.status : 400, {
 				message:
-					result.reason === "not_found"
+					result.reason === 'not_found'
 						? 'Couldn\'t add that todo — is the generated "Todo Form" Live?'
-						: result.message,
+						: result.message
 			});
 		}
 		return { added: true as const };
-	},
+	}
 };

@@ -1,8 +1,8 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import { runCartMutation } from "$lib/server/bd-store";
+import { runCartMutation } from '#lib/server/bd-store.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/bd/cart/coupon — stamp a coupon code (`{ code }`).
@@ -15,14 +15,14 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 	const body = (await request.json().catch(() => null)) as {
 		code?: string;
 	} | null;
-	if (!body?.code) throw error(400, "code required");
+	if (!body?.code) throw error(400, 'code required');
 	const result = await runCartMutation(cookies, (cart) =>
-		cart.applyCoupon({ code: body.code as string }),
+		cart.applyCoupon({ code: body.code as string })
 	);
-	return json(result);
+	return Response.json(result);
 };
 
 export const DELETE: RequestHandler = async ({ cookies }) => {
 	const result = await runCartMutation(cookies, (cart) => cart.removeCoupon());
-	return json(result);
+	return Response.json(result);
 };

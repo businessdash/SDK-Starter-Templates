@@ -1,8 +1,8 @@
-import { env } from "$env/dynamic/private";
+import { BD_PACKAGE_API_BASE_URL, BD_API_KEY, BD_AUTH_CALLBACK_URL } from '$app/env/private';
 
-import { createAuthHandler } from "@businessdash/sdk";
+import { createAuthHandler } from '@businessdash/sdk';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * BD customer-auth handler. Proxies the WorkOS-hosted sign-in / sign-up
@@ -21,14 +21,14 @@ import type { RequestHandler } from "./$types";
  * 503 when unconfigured so the rest of the site still renders.
  */
 function normalizeBaseUrl(input: string): string {
-	const next = input.trim().replace(/\/+$/, "");
-	if (next.endsWith("/api/package/v1")) return next;
+	const next = input.trim().replace(/\/+$/, '');
+	if (next.endsWith('/api/package/v1')) return next;
 	return `${next}/api/package/v1`;
 }
 
-const rawBaseUrl = env.BD_PACKAGE_API_BASE_URL ?? "";
-const apiKey = env.BD_API_KEY ?? "";
-const callbackUrl = env.BD_AUTH_CALLBACK_URL ?? "";
+const rawBaseUrl = BD_PACKAGE_API_BASE_URL ?? '';
+const apiKey = BD_API_KEY ?? '';
+const callbackUrl = BD_AUTH_CALLBACK_URL ?? '';
 
 const handler =
 	apiKey && rawBaseUrl && callbackUrl
@@ -36,10 +36,10 @@ const handler =
 				baseUrl: normalizeBaseUrl(rawBaseUrl),
 				apiKey,
 				callbackUrl,
-				basePath: "/api/bd-auth",
-				defaultReturnTo: "/my-account",
-				signOutReturnTo: "/",
-				cookieName: "bd_session",
+				basePath: '/api/bd-auth',
+				defaultReturnTo: '/my-account',
+				signOutReturnTo: '/',
+				cookieName: 'bd_session'
 			})
 		: null;
 
@@ -48,9 +48,9 @@ function unavailable(): Response {
 		JSON.stringify({
 			ok: false,
 			reason:
-				"BD auth not configured. Set BD_API_KEY, BD_PACKAGE_API_BASE_URL and BD_AUTH_CALLBACK_URL.",
+				'BD auth not configured. Set BD_API_KEY, BD_PACKAGE_API_BASE_URL and BD_AUTH_CALLBACK_URL.'
 		}),
-		{ status: 503, headers: { "Content-Type": "application/json" } },
+		{ status: 503, headers: { 'Content-Type': 'application/json' } }
 	);
 }
 

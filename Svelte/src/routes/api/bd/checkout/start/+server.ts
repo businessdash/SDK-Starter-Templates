@@ -1,8 +1,6 @@
-import { json } from "@sveltejs/kit";
+import { startCheckout } from '#lib/server/bd-store.ts';
 
-import { startCheckout } from "$lib/server/bd-store";
-
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/bd/checkout/start — convert the visitor's saved cart into a
@@ -12,5 +10,5 @@ import type { RequestHandler } from "./$types";
  */
 export const POST: RequestHandler = async ({ cookies, url }) => {
 	const result = await startCheckout(cookies, url.origin);
-	return json(result);
+	return Response.json(result);
 };

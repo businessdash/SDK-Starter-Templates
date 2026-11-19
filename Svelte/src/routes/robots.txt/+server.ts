@@ -1,8 +1,8 @@
-import { env } from "$env/dynamic/private";
+import { NODE_ENV } from '$app/env/private';
 
-import { robotsProxyUrl, seoProxyConfig } from "$lib/server/bd-parallel";
+import { robotsProxyUrl, seoProxyConfig } from '#lib/server/bd-parallel.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * Proxy the auto-generated robots.txt from BD. The platform endpoint
@@ -11,7 +11,7 @@ import type { RequestHandler } from "./$types";
  * that SEO-rescue lives entirely on the platform side. When BD isn't
  * configured we serve a permissive default.
  */
-const DEFAULT_ROBOTS = "User-agent: *\nAllow: /\n";
+const DEFAULT_ROBOTS = 'User-agent: *\nAllow: /\n';
 
 export const GET: RequestHandler = async () => {
 	const cfg = seoProxyConfig();
@@ -19,36 +19,34 @@ export const GET: RequestHandler = async () => {
 	if (!cfg || !url) {
 		return new Response(DEFAULT_ROBOTS, {
 			status: 200,
-			headers: { "Content-Type": "text/plain; charset=utf-8" },
+			headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 		});
 	}
 	try {
 		const response = await fetch(url, {
-			headers: { Authorization: `Bearer ${cfg.apiKey}` },
+			headers: { Authorization: `Bearer ${cfg.apiKey}` }
 		});
 		if (!response.ok) {
 			return new Response(DEFAULT_ROBOTS, {
 				status: 200,
-				headers: { "Content-Type": "text/plain; charset=utf-8" },
+				headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 			});
 		}
 		const body = await response.text();
 		return new Response(body, {
 			status: 200,
 			headers: {
-				"Content-Type": "text/plain; charset=utf-8",
-				"Cache-Control": "public, max-age=60, s-maxage=60",
-			},
+				'Content-Type': 'text/plain; charset=utf-8',
+				'Cache-Control': 'public, max-age=60, s-maxage=60'
+			}
 		});
 	} catch (err) {
-		if (env.NODE_ENV === "development") {
-			console.warn(
-				`[bd] robots proxy failed: ${err instanceof Error ? err.message : String(err)}`,
-			);
+		if (NODE_ENV === 'development') {
+			console.warn(`[bd] robots proxy failed: ${err instanceof Error ? err.message : String(err)}`);
 		}
 		return new Response(DEFAULT_ROBOTS, {
 			status: 200,
-			headers: { "Content-Type": "text/plain; charset=utf-8" },
+			headers: { 'Content-Type': 'text/plain; charset=utf-8' }
 		});
 	}
 };

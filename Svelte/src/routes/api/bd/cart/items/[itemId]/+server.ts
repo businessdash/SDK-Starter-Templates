@@ -1,8 +1,8 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import { runCartMutation } from "$lib/server/bd-store";
+import { runCartMutation } from '#lib/server/bd-store.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * PATCH /api/bd/cart/items/[itemId] — set a line's quantity
@@ -11,22 +11,20 @@ import type { RequestHandler } from "./$types";
  */
 export const PATCH: RequestHandler = async ({ params, request, cookies }) => {
 	const itemId = params.itemId;
-	if (!itemId) throw error(400, "itemId required");
+	if (!itemId) throw error(400, 'itemId required');
 	const body = (await request.json().catch(() => null)) as {
 		quantity?: number;
 	} | null;
-	if (typeof body?.quantity !== "number") throw error(400, "quantity required");
+	if (typeof body?.quantity !== 'number') throw error(400, 'quantity required');
 	const result = await runCartMutation(cookies, (cart) =>
-		cart.updateItem(itemId, { quantity: body.quantity as number }),
+		cart.updateItem(itemId, { quantity: body.quantity as number })
 	);
-	return json(result);
+	return Response.json(result);
 };
 
 export const DELETE: RequestHandler = async ({ params, cookies }) => {
 	const itemId = params.itemId;
-	if (!itemId) throw error(400, "itemId required");
-	const result = await runCartMutation(cookies, (cart) =>
-		cart.removeItem(itemId),
-	);
-	return json(result);
+	if (!itemId) throw error(400, 'itemId required');
+	const result = await runCartMutation(cookies, (cart) => cart.removeItem(itemId));
+	return Response.json(result);
 };

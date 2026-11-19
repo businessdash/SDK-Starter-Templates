@@ -1,6 +1,6 @@
 import { mcpManifestHandler } from "@businessdash/sdk/mcp";
 
-import { aiSurfaceConfig } from "$lib/server/bd-ai";
+import { aiSurfaceConfig } from "#lib/server/bd-ai.ts";
 
 import type { RequestHandler } from "./$types";
 

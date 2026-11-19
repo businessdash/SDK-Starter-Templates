@@ -1,8 +1,8 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
-	import StoreNav from '$lib/components/bd/StoreNav.svelte';
-	import { formatCents } from '$lib/bd/cart-client';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
+	import StoreNav from '#lib/components/bd/StoreNav.svelte';
+	import { formatCents } from '#lib/bd/cart-client.ts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -18,13 +18,10 @@
 		busyId = id;
 		error = null;
 		try {
-			const res = await fetch(
-				`/api/bd/subscriptions/${encodeURIComponent(id)}/checkout`,
-				{ method: 'POST' },
-			);
-			const body = (await res.json()) as
-				| { ok: true; url: string }
-				| { ok: false; error: string };
+			const res = await fetch(`/api/bd/subscriptions/${encodeURIComponent(id)}/checkout`, {
+				method: 'POST'
+			});
+			const body = (await res.json()) as { ok: true; url: string } | { ok: false; error: string };
 			if (body.ok) {
 				window.location.href = body.url;
 				return;
@@ -48,8 +45,8 @@
 		<span class="bd-section__eyebrow">Memberships</span>
 		<h1 class="bd-section__title">Subscriptions</h1>
 		<p class="bd-section__sub">
-			Recurring plans from the BD subscriptions surface. Checkout hands off to
-			Stripe in subscription mode.
+			Recurring plans from the BD subscriptions surface. Checkout hands off to Stripe in
+			subscription mode.
 		</p>
 	</div>
 
@@ -57,8 +54,7 @@
 		<div class="bd-empty">Store isn't connected.</div>
 	{:else if data.subscriptions.length === 0}
 		<div class="bd-empty">
-			No subscription offerings yet. Create one in the BD dashboard and sync it
-			to Stripe.
+			No subscription offerings yet. Create one in the BD dashboard and sync it to Stripe.
 		</div>
 	{:else}
 		<div class="bd-grid-3">
@@ -75,11 +71,7 @@
 						<div class="sub-card__price">
 							{formatCents(sub.amountCents)}<span> / {intervalLabel(sub.interval)}</span>
 						</div>
-						<button
-							class="bd-btn"
-							onclick={() => subscribe(sub.id)}
-							disabled={busyId === sub.id}
-						>
+						<button class="bd-btn" onclick={() => subscribe(sub.id)} disabled={busyId === sub.id}>
 							{busyId === sub.id ? 'Working…' : 'Subscribe'}
 						</button>
 					</div>

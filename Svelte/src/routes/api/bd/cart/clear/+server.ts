@@ -1,8 +1,6 @@
-import { json } from "@sveltejs/kit";
+import { runCartMutation } from '#lib/server/bd-store.ts';
 
-import { runCartMutation } from "$lib/server/bd-store";
-
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/bd/cart/clear — empty all items + drop the coupon, keeping
@@ -10,5 +8,5 @@ import type { RequestHandler } from "./$types";
  */
 export const POST: RequestHandler = async ({ cookies }) => {
 	const result = await runCartMutation(cookies, (cart) => cart.clear());
-	return json(result);
+	return Response.json(result);
 };

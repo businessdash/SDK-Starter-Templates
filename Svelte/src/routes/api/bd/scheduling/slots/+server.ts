@@ -1,8 +1,8 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import { bd } from "$lib/server/bd";
+import { bd } from '#lib/server/bd.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * GET /api/bd/scheduling/slots?slug=&from=&to=
@@ -12,22 +12,22 @@ import type { RequestHandler } from "./$types";
  */
 export const GET: RequestHandler = async ({ url }) => {
 	if (!bd) {
-		throw error(503, "BD not configured. See .env.example.");
+		throw error(503, 'BD not configured. See .env.example.');
 	}
-	const slug = url.searchParams.get("slug");
-	const fromStr = url.searchParams.get("from");
-	const toStr = url.searchParams.get("to");
+	const slug = url.searchParams.get('slug');
+	const fromStr = url.searchParams.get('from');
+	const toStr = url.searchParams.get('to');
 	if (!slug || !fromStr || !toStr) {
-		throw error(400, "slug, from, to required");
+		throw error(400, 'slug, from, to required');
 	}
 	try {
 		const slots = await bd.scheduling.getAvailableSlots(slug, {
 			from: new Date(fromStr),
-			to: new Date(toStr),
+			to: new Date(toStr)
 		});
-		return json({ slots });
+		return Response.json({ slots });
 	} catch (err) {
-		const message = err instanceof Error ? err.message : "Unknown error";
+		const message = err instanceof Error ? err.message : 'Unknown error';
 		throw error(502, message);
 	}
 };

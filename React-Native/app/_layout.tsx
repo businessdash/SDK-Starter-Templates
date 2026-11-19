@@ -6,7 +6,12 @@ export default function RootLayout() {
     <>
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="product/[id]" options={{ headerShown: true, title: 'Product' }} />
+        {/* A chevron alone: the screen behind is the "(tabs)" group, whose name
+            iOS would otherwise print as the back button's label. */}
+        <Stack.Screen
+          name="product/[id]"
+          options={{ headerShown: true, title: 'Product', headerBackButtonDisplayMode: 'minimal' }}
+        />
       </Stack>
       <StatusBar style="auto" />
     </>

@@ -1,6 +1,6 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { ReviewWallItem } from '@businessdash/sdk/contracts';
 	import type { PageData } from './$types';
 
@@ -61,8 +61,8 @@
 
 	{#if !data.configured}
 		<div class="bd-empty">
-			Reviews aren't connected. Once BD is configured, your aggregate rating
-			and reviews appear here.
+			Reviews aren't connected. Once BD is configured, your aggregate rating and reviews appear
+			here.
 		</div>
 	{:else if items.length === 0}
 		<div class="bd-empty">No reviews yet.</div>

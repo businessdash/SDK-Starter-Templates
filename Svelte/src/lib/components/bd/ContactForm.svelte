@@ -22,29 +22,27 @@
 		BdForm,
 		type BdFormSubmitAction,
 		type FormSchema,
-		type FormSubmitResult,
-	} from "@businessdash/sdk/svelte";
+		type FormSubmitResult
+	} from '@businessdash/sdk/svelte';
 
 	let { schema, slug }: { schema: FormSchema; slug: string } = $props();
 
 	// Server-safe submit: forward the re-keyed payload to our own endpoint so the
-	// bearer key stays in `$lib/server`. The endpoint returns the SDK's
+	// bearer key stays in `#lib/server`. The endpoint returns the SDK's
 	// FormSubmitResult JSON, which we hand back so <BdForm> can show inline
 	// field errors on a server-side validation failure.
 	const submitAction: BdFormSubmitAction = async (payload, options) => {
 		const res = await fetch(`/api/bd/forms/${encodeURIComponent(slug)}`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
+			method: 'POST',
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify({
 				data: payload,
 				submitterEmail:
-					(payload.email as string | undefined) ??
-					(payload.contactEmail as string | undefined),
+					(payload.email as string | undefined) ?? (payload.contactEmail as string | undefined),
 				submitterName:
-					(payload.name as string | undefined) ??
-					(payload.fullName as string | undefined),
-				...options,
-			}),
+					(payload.name as string | undefined) ?? (payload.fullName as string | undefined),
+				...options
+			})
 		});
 		if (!res.ok) {
 			// The endpoint throws a 400 with the message on validation failure.

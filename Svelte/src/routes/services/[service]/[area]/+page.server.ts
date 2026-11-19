@@ -1,8 +1,8 @@
-import { error } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import type { PageServerLoad } from "./$types";
+import type { PageServerLoad } from './$types';
 
-import { renderServiceArea } from "$lib/server/bd-parallel";
+import { renderServiceArea } from '#lib/server/bd-parallel.ts';
 
 /**
  * One programmatic (service × area) page, rendered server-side via
@@ -16,11 +16,11 @@ import { renderServiceArea } from "$lib/server/bd-parallel";
 export const load: PageServerLoad = async ({ params }) => {
 	const result = await renderServiceArea(params.service, params.area);
 
-	if (result.status === "unavailable") {
-		throw error(503, "This page is temporarily unavailable.");
+	if (result.status === 'unavailable') {
+		throw error(503, 'This page is temporarily unavailable.');
 	}
 	if (!result.variant) {
-		throw error(404, "Page not found.");
+		throw error(404, 'Page not found.');
 	}
 
 	const variant = result.variant;
@@ -34,8 +34,8 @@ export const load: PageServerLoad = async ({ params }) => {
 			title: variant.meta.title,
 			description: variant.meta.description,
 			canonical: variant.meta.canonical ?? null,
-			ogImage: variant.meta.ogImage ?? null,
+			ogImage: variant.meta.ogImage ?? null
 		},
-		body,
+		body
 	};
 };

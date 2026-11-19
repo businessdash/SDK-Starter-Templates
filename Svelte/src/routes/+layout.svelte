@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { browser } from '$app/environment';
+	import { browser } from '$app/env';
 	import { onMount } from 'svelte';
 	import { initBdAnalytics } from '@businessdash/sdk/analytics-core';
-	import { locales, localizeHref } from '$lib/paraglide/runtime';
-	import SdkSetupBanner from '$lib/components/bd/SdkSetupBanner.svelte';
+	import { locales, localizeHref } from '#lib/paraglide/runtime.js';
+	import SdkSetupBanner from '#lib/components/bd/SdkSetupBanner.svelte';
 	import './layout.css';
-	import favicon from '$lib/assets/favicon.svg';
+	import favicon from '#lib/assets/favicon.svg';
 
 	let { children } = $props();
 

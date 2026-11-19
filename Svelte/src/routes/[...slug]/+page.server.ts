@@ -1,8 +1,8 @@
-import { error } from "@sveltejs/kit";
-import { renderLegalPageHtml, resolveLegalPage } from "@businessdash/sdk/legal";
+import { error } from '@sveltejs/kit';
+import { renderLegalPageHtml, resolveLegalPage } from '@businessdash/sdk/legal';
 
-import { bd } from "$lib/server/bd";
-import type { PageServerLoad } from "./$types";
+import { bd } from '#lib/server/bd.ts';
+import type { PageServerLoad } from './$types';
 
 /**
  * The catch-all — legal pages, and everything else's 404.
@@ -20,13 +20,11 @@ import type { PageServerLoad } from "./$types";
 export const load: PageServerLoad = async ({ params }) => {
 	// Returns null for an unknown slug AND when BusinessDash is unreachable —
 	// this route runs on every unmatched URL, so it must never throw.
-	const document = bd
-		? await resolveLegalPage({ client: bd, slug: params.slug })
-		: null;
+	const document = bd ? await resolveLegalPage({ client: bd, slug: params.slug }) : null;
 
 	// `error(404)` renders `+error.svelte` with a real 404 status, rather than
 	// a 200 page apologising — which is what crawlers and uptime checks read.
-	if (!document) error(404, "Not found");
+	if (!document) error(404, 'Not found');
 
 	return { title: document.title, html: renderLegalPageHtml(document) };
 };

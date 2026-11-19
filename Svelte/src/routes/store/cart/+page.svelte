@@ -1,7 +1,7 @@
 <script lang="ts">
-	import Header from '$lib/components/bd/Header.svelte';
-	import Footer from '$lib/components/bd/Footer.svelte';
-	import StoreNav from '$lib/components/bd/StoreNav.svelte';
+	import Header from '#lib/components/bd/Header.svelte';
+	import Footer from '#lib/components/bd/Footer.svelte';
+	import StoreNav from '#lib/components/bd/StoreNav.svelte';
 	import type { CartSnapshot } from '@businessdash/sdk/contracts';
 	import {
 		applyCoupon,
@@ -11,8 +11,8 @@
 		removeCoupon,
 		startCheckout,
 		updateCartItem,
-		type CartCallResult,
-	} from '$lib/bd/cart-client';
+		type CartCallResult
+	} from '#lib/bd/cart-client.ts';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -95,9 +95,7 @@
 							max="999"
 							value={item.quantity}
 							onchange={(e) =>
-								withBusy(() =>
-									updateCartItem(item.id, Number(e.currentTarget.value)),
-								)}
+								withBusy(() => updateCartItem(item.id, Number(e.currentTarget.value)))}
 							style="width: 4.5rem;"
 							disabled={busy}
 						/>

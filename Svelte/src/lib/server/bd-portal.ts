@@ -1,11 +1,16 @@
-import { env } from "$env/dynamic/private";
+import {
+	BD_API_KEY,
+	BD_PACKAGE_API_BASE_URL,
+	BD_AUTH_CALLBACK_URL,
+	NODE_ENV
+} from '$app/env/private';
 
-import { createBdApiClient, getTenantSession } from "@businessdash/sdk";
+import { createBdApiClient, getTenantSession } from '@businessdash/sdk';
 import type {
 	CustomerReviewSubmitInput,
 	CustomerReviewSubmitResponse,
-	CustomerWorkBundle,
-} from "@businessdash/sdk/contracts";
+	CustomerWorkBundle
+} from '@businessdash/sdk/contracts';
 
 /**
  * Customer-portal helpers (SDK 0.9.x).
@@ -17,26 +22,26 @@ import type {
  * the org is read from the validated session. All server-only.
  */
 
-export const SESSION_COOKIE = "bd_session";
+export const SESSION_COOKIE = 'bd_session';
 
 function normalizeBaseUrl(input: string): string {
-	const next = input.trim().replace(/\/+$/, "");
-	if (next.endsWith("/api/package/v1")) return next;
+	const next = input.trim().replace(/\/+$/, '');
+	if (next.endsWith('/api/package/v1')) return next;
 	return `${next}/api/package/v1`;
 }
 
 type BaseConfig = { apiKey: string; baseUrl: string };
 
 function baseConfig(): BaseConfig | null {
-	const apiKey = env.BD_API_KEY;
-	const rawBaseUrl = env.BD_PACKAGE_API_BASE_URL;
+	const apiKey = BD_API_KEY;
+	const rawBaseUrl = BD_PACKAGE_API_BASE_URL;
 	if (!apiKey || !rawBaseUrl) return null;
 	return { apiKey, baseUrl: normalizeBaseUrl(rawBaseUrl) };
 }
 
 /** True when BD customer auth can run (API key + base URL + callback set). */
 export function isCustomerPortalConfigured(): boolean {
-	return baseConfig() !== null && !!env.BD_AUTH_CALLBACK_URL;
+	return baseConfig() !== null && !!BD_AUTH_CALLBACK_URL;
 }
 
 export type CustomerSession = {
@@ -59,7 +64,7 @@ export type CustomerSession = {
  * when signed out or unconfigured.
  */
 export async function getCustomerSession(
-	cookieValue: string | null | undefined,
+	cookieValue: string | null | undefined
 ): Promise<CustomerSession | null> {
 	const cfg = baseConfig();
 	if (!cfg) return null;
@@ -67,28 +72,26 @@ export async function getCustomerSession(
 	const session = await getTenantSession({
 		cookieValue,
 		baseUrl: cfg.baseUrl,
-		apiKey: cfg.apiKey,
+		apiKey: cfg.apiKey
 	});
 	if (!session) return null;
 	return {
 		token: cookieValue,
 		organizationId: session.organizationId,
 		user: session.user,
-		role: session.role,
+		role: session.role
 	};
 }
 
 /** Build a session-scoped customer-portal client for a validated session. */
 function portalFor(session: CustomerSession) {
 	const cfg = baseConfig();
-	if (!cfg) throw new Error("Customer portal is not configured.");
+	if (!cfg) throw new Error('Customer portal is not configured.');
 	const client = createBdApiClient({
 		apiKey: cfg.apiKey,
-		baseUrl: cfg.baseUrl,
+		baseUrl: cfg.baseUrl
 	});
-	return client
-		.customerPortal(session.organizationId)
-		.withSession(session.token);
+	return client.customerPortal(session.organizationId).withSession(session.token);
 }
 
 /**
@@ -97,16 +100,16 @@ function portalFor(session: CustomerSession) {
  * is true when the account isn't yet tied to a CRM contact.
  */
 export async function getCustomerWork(
-	cookieValue: string | null | undefined,
+	cookieValue: string | null | undefined
 ): Promise<CustomerWorkBundle | null> {
 	const session = await getCustomerSession(cookieValue);
 	if (!session) return null;
 	try {
 		return await portalFor(session).getWork();
 	} catch (err) {
-		if (env.NODE_ENV === "development") {
+		if (NODE_ENV === 'development') {
 			console.warn(
-				`[bd-portal] getWork failed: ${err instanceof Error ? err.message : String(err)}`,
+				`[bd-portal] getWork failed: ${err instanceof Error ? err.message : String(err)}`
 			);
 		}
 		return null;
@@ -120,9 +123,9 @@ export async function getCustomerWork(
  */
 export async function submitCustomerReview(
 	cookieValue: string | null | undefined,
-	input: CustomerReviewSubmitInput,
+	input: CustomerReviewSubmitInput
 ): Promise<CustomerReviewSubmitResponse> {
 	const session = await getCustomerSession(cookieValue);
-	if (!session) throw new Error("Not signed in.");
+	if (!session) throw new Error('Not signed in.');
 	return portalFor(session).submitReview(input);
 }

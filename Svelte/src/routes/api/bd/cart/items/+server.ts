@@ -1,8 +1,8 @@
-import { error, json } from "@sveltejs/kit";
+import { error } from '@sveltejs/kit';
 
-import { runCartMutation } from "$lib/server/bd-store";
+import { runCartMutation } from '#lib/server/bd-store.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * POST /api/bd/cart/items — add a product (optionally a variant) to the
@@ -15,13 +15,13 @@ export const POST: RequestHandler = async ({ request, cookies }) => {
 		variantId?: string | null;
 		quantity?: number;
 	} | null;
-	if (!body?.productId) throw error(400, "productId required");
+	if (!body?.productId) throw error(400, 'productId required');
 	const result = await runCartMutation(cookies, (cart) =>
 		cart.addItem({
 			productId: body.productId as string,
 			variantId: body.variantId ?? undefined,
-			quantity: body.quantity ?? 1,
-		}),
+			quantity: body.quantity ?? 1
+		})
 	);
-	return json(result);
+	return Response.json(result);
 };
