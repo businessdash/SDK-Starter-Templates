@@ -1,9 +1,9 @@
+import solidPlugin from "@solidjs/vite-plugin";
 import tailwindcss from "@tailwindcss/vite";
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/solid-start/plugin/vite";
 import { nitro } from "nitro/vite";
 import { defineConfig } from "vite";
-import solidPlugin from "vite-plugin-solid";
 
 export default defineConfig({
 	resolve: { tsconfigPaths: true },
@@ -16,6 +16,7 @@ export default defineConfig({
 		devtools(),
 		nitro(),
 		tailwindcss(),
+		// Order matters: TanStack Start's plugin must run before Solid's.
 		tanstackStart(),
 		solidPlugin({ ssr: true }),
 	],

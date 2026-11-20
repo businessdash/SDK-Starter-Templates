@@ -170,6 +170,55 @@ One-time setup: register `https://your-site/api/bd/revalidate` at BD's `/dashboa
 Every surface no-ops when BD env is unset: section loaders return local defaults, store/auth/booking show a "not connected" notice, sitemap/robots fall back to empty/allow-all, and the webhook/auth resource routes answer with a clear non-200 instead of crashing.
 
 
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+A loader and action in `app/routes/give.tsx`, on the server:
+
+```ts
+const bd = () =>
+  createBdApiClient({ apiKey: process.env.BD_API_KEY!, baseUrl: process.env.VITE_BD_PACKAGE_API_BASE_URL! })
+
+export const loader = () => bd().donations.get()
+
+export async function action({ request }: { request: Request }) {
+  const form = await request.formData()
+  const site = process.env.BD_SITE_URL!
+  const { url } = await bd().donations.startCheckout({
+    amountCents: Number(form.get('amount')),
+    frequency: form.get('monthly') ? 'monthly' : 'one_time',
+    donor: { name: String(form.get('name')), email: String(form.get('email')) },
+    successUrl: `${site}/give/thanks`,
+    cancelUrl: `${site}/give`,
+  })
+  return redirect(url, 303)
+}
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
+
 ## Where your content comes from
 
 Nothing business-specific is hardcoded in this template — it all comes from BD,

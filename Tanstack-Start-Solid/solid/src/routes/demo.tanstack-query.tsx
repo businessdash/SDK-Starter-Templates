@@ -1,4 +1,4 @@
-import { createQuery } from "@tanstack/solid-query";
+import { useQuery } from "@tanstack/solid-query";
 import { createFileRoute } from "@tanstack/solid-router";
 
 export const Route = createFileRoute("/demo/tanstack-query")({
@@ -6,7 +6,7 @@ export const Route = createFileRoute("/demo/tanstack-query")({
 });
 
 function App() {
-	const peopleQuery = createQuery(() => ({
+	const peopleQuery = useQuery(() => ({
 		queryKey: ["people"],
 		queryFn: () =>
 			Promise.resolve([{ name: "John Doe" }, { name: "Jane Doe" }]),

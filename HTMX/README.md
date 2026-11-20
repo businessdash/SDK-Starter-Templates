@@ -200,6 +200,53 @@ bun run print-schema    # print the resolved schema JSON
 HTMX is the closest shape to BD's own philosophy: the data + the business logic live on the server, the rendered output lives on your domain. Most JS frameworks ship a bundle that re-fetches the same data the server already has. HTMX renders once, swaps fragments on interaction, and never ships a JSON-fetcher. For a service business with mostly static content + a few forms, this is the lightest possible architecture.
 
 
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+A route in `server.ts` with `getBd()`. An `hx-post` form needs `HX-Redirect`, because htmx swaps a `303` into the page instead of following it to Stripe:
+
+```ts
+const bd = getBd()
+if (bd && method === 'POST' && pathname === '/give') {
+  const form = await req.formData()
+  const { url: stripe } = await bd.donations.startCheckout({
+    amountCents: Number(form.get('amount')),
+    frequency: form.get('monthly') ? 'monthly' : 'one_time',
+    donor: { name: String(form.get('name')), email: String(form.get('email')) },
+    successUrl: `${url.origin}/give/thanks`,
+    cancelUrl: `${url.origin}/give`,
+  })
+  return req.headers.get('HX-Request')
+    ? new Response(null, { headers: { 'HX-Redirect': stripe } })
+    : Response.redirect(stripe, 303)
+}
+// Render the form from (await bd.donations.get()) in the page's section.
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
+
 ## Where your content comes from
 
 Nothing business-specific is hardcoded in this template — it all comes from BD,

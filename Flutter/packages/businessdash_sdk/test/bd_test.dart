@@ -220,4 +220,83 @@ void main() {
       expect(bundle.string(['sections', 'about', 'title']), isNull);
     });
   });
+
+  group('donations', () {
+    // The platform's own coverFeeCents output, also pinned in the JS SDK — a
+    // page must show the cents the checkout charges.
+    test('cover fees matches the platform to the cent', () {
+      const reference = [
+        [2500, 0, 106],
+        [5000, 0, 181],
+        [10000, 100, 438],
+        [1999, 0, 91],
+        [123456, 250, 7079],
+        [500, 0, 46],
+      ];
+      for (final r in reference) {
+        expect(
+          donationCoverFeeCents(r[0], rateBps: 290 + r[1], fixedCents: 30),
+          r[2],
+        );
+      }
+      expect(donationCoverFeeCents(0, rateBps: 290, fixedCents: 30), 0);
+    });
+
+    test('the giving page decodes, including the tax statement', () async {
+      final stub = makeClient(jsonEncode({
+        'orgName': 'Gerus',
+        'avatarUrl': null,
+        'accentColor': null,
+        'title': 'Support our work',
+        'appeal': null,
+        'presetAmountsCents': [2500, 5000],
+        'monthlyPresetAmountsCents': [1000],
+        'allowOneTime': true,
+        'allowMonthly': true,
+        'defaultFrequency': 'one_time',
+        'minAmountCents': 500,
+        'maxAmountCents': 2500000,
+        'currency': 'usd',
+        'offerCoverFees': true,
+        'platformFeeBps': null,
+        'coverFee': {'rateBps': 290, 'fixedCents': 30},
+        'thankYouMessage': null,
+        'isTaxDeductible': false,
+        'taxStatement':
+            'Gerus is not a registered 501(c)(3) charity, so this gift is not tax-deductible.',
+        'unavailable': null,
+        'hostedUrl': 'https://www.businessdash.us/give/gerus',
+      }));
+      final page = await stub.client.donationPage();
+      expect(page.isAcceptingGifts, isTrue);
+      expect(page.isTaxDeductible, isFalse);
+      expect(page.coverFeeCents(2500), 106);
+      expect(stub.requests.single.url.path, endsWith('/donations'));
+    });
+
+    test('starting a gift posts to donations/checkout', () async {
+      final stub = makeClient(jsonEncode({
+        'url': 'https://checkout.stripe.com/c/pay/cs_1',
+        'frequency': 'monthly',
+        'amountCents': 2500,
+        'coveredFeeCents': 106,
+        'totalAmountCents': 2606,
+        'currency': 'usd',
+      }));
+      final checkout = await stub.client.startDonationCheckout(
+        amountCents: 2500,
+        donorName: 'Ada',
+        donorEmail: 'ada@example.com',
+        monthly: true,
+        coverFees: true,
+      );
+      expect(checkout.totalAmountCents, 2606);
+      final request = stub.requests.single;
+      expect(request.method, 'POST');
+      expect(request.url.path, endsWith('/donations/checkout'));
+      final sent = jsonDecode(request.body) as Map<String, dynamic>;
+      expect(sent['frequency'], 'monthly');
+      expect((sent['donor'] as Map)['email'], 'ada@example.com');
+    });
+  });
 }

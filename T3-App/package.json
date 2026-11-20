@@ -23,8 +23,8 @@
     "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
   },
   "dependencies": {
-    "@businessdash/sdk": "^0.9.90",
-    "@t3-oss/env-nextjs": "^0.12.0",
+    "@businessdash/sdk": "^0.9.91",
+    "@t3-oss/env-nextjs": "^0.13.11",
     "@tanstack/react-query": "^5.69.0",
     "@trpc/client": "^11.0.0",
     "@trpc/react-query": "^11.0.0",
@@ -36,7 +36,7 @@
     "react-dom": "^19.0.0",
     "server-only": "^0.0.1",
     "superjson": "^2.2.1",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.2.5",

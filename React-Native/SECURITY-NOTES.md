@@ -12,8 +12,11 @@ on `image-size` at all. It is absent from `pnpm-lock.yaml`, so both alerts close
 with this lockfile. If they reappear, run `pnpm why image-size` to see what
 brought it back before accepting them again.
 
-## `zod` — GHSA-mrhx-c7xc-m3w5 (open)
+## `zod` — GHSA-mrhx-c7xc-m3w5 (resolved)
 
-`zod` 3 is a dev dependency here because the published `@businessdash/sdk`
-still depends on zod 3. It moves to zod 4 when the SDK publishes its zod 4
-build; until then `pnpm audit` reports this one finding.
+Zod 3 collects one issue per failing element of an array with no length limit,
+so a large enough request runs the process out of memory. The fix exists only
+in zod 4.6.6 and later. Zod 3 was here because `@businessdash/sdk` depended on
+it through 0.9.90. This starter now pins SDK 0.9.91, which is built on zod 4,
+and zod `^4.6.7` itself, so no zod 3 is left in `pnpm-lock.yaml`. If the
+finding comes back, run `pnpm why zod` to see what brought zod 3 back.

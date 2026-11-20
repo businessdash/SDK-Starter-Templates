@@ -64,6 +64,7 @@ Sources/App/
     JSONValue.swift      for the two schema-driven surfaces
     Money.swift          cents vs decimal
     Resources.swift      the call surface
+    Donations.swift      giving page + checkout (see Donations below)
   Controllers/           one per surface + Contexts.swift
 Resources/Views/         Leaf templates
 ```
@@ -106,6 +107,50 @@ Resources/Views/         Leaf templates
 ## Verification
 
 `swift build` passes under **Swift 6 language mode**. The server has not been run against a live BD site from this machine.
+
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+`Bd/Donations.swift` adds two calls to the app's client
+(`req.application.bd`, nil until configured):
+
+```swift
+app.post("give") { req async throws -> Response in
+    guard let bd = req.application.bd else { throw Abort(.serviceUnavailable) }
+    let origin = Environment.get("BD_SITE_ORIGIN") ?? "http://localhost:8080"
+    let checkout = try await bd.startDonationCheckout(DonationCheckoutInput(
+        amountCents: 2500,
+        frequency: "monthly",
+        coverFees: true,
+        donor: DonationDonor(name: name, email: email),
+        message: nil,
+        successUrl: "\(origin)/give/thanks",
+        cancelUrl: "\(origin)/give"
+    ))
+    return req.redirect(to: checkout.url, redirectType: .normal) // 303
+}
+// The page: try await bd.donationPage(); print taxStatement with #(…)
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
 
 ## Data: environment, schema, seeding, CRUD
 

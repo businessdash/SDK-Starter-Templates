@@ -197,3 +197,64 @@ class BundleTest {
         assertNull(bundle.string("sections", "about", "title"))
     }
 }
+
+class DonationsTest {
+    /**
+     * The platform's own `coverFeeCents` output, also pinned in the JS SDK —
+     * a page must show the cents the checkout charges.
+     */
+    @Test
+    fun `cover fees matches the platform to the cent`() {
+        val reference = listOf(
+            Triple(2500, 0, 106), Triple(5000, 0, 181), Triple(10000, 100, 438),
+            Triple(1999, 0, 91), Triple(123456, 250, 7079), Triple(500, 0, 46),
+        )
+        for ((amount, platformBps, fee) in reference) {
+            assertEquals(fee, donationCoverFeeCents(amount, 290 + platformBps, 30))
+        }
+        assertEquals(0, donationCoverFeeCents(0, 290, 30))
+    }
+
+    @Test
+    fun `the giving page decodes including the tax statement`() = runTest {
+        val stub = Stub(
+            """
+            {"orgName":"Gerus","avatarUrl":null,"accentColor":null,"title":"Support our work",
+             "appeal":null,"presetAmountsCents":[2500,5000],"monthlyPresetAmountsCents":[1000],
+             "allowOneTime":true,"allowMonthly":true,"defaultFrequency":"one_time",
+             "minAmountCents":500,"maxAmountCents":2500000,"currency":"usd","offerCoverFees":true,
+             "platformFeeBps":null,"coverFee":{"rateBps":290,"fixedCents":30},"thankYouMessage":null,
+             "isTaxDeductible":false,
+             "taxStatement":"Gerus is not a registered 501(c)(3) charity, so this gift is not tax-deductible.",
+             "unavailable":null,"hostedUrl":"https://www.businessdash.us/give/gerus"}
+            """.trimIndent(),
+        )
+        val page = stub.client.donationPage()
+        assertTrue(page.isAcceptingGifts)
+        assertFalse(page.isTaxDeductible)
+        assertEquals(106, page.coverFeeCents(2500))
+        assertTrue(stub.requests.single().url.encodedPath.endsWith("/donations"))
+    }
+
+    @Test
+    fun `starting a gift posts to donations checkout`() = runTest {
+        val stub = Stub(
+            """
+            {"url":"https://checkout.stripe.com/c/pay/cs_1","frequency":"monthly","amountCents":2500,
+             "coveredFeeCents":106,"totalAmountCents":2606,"currency":"usd"}
+            """.trimIndent(),
+        )
+        val checkout = stub.client.startDonationCheckout(
+            DonationCheckoutInput(
+                amountCents = 2500,
+                frequency = "monthly",
+                donor = DonationDonor("Ada", "ada@example.com"),
+                coverFees = true,
+            ),
+        )
+        assertEquals(2606, checkout.totalAmountCents)
+        val request = stub.requests.single()
+        assertEquals("POST", request.method.value)
+        assertTrue(request.url.encodedPath.endsWith("/donations/checkout"))
+    }
+}

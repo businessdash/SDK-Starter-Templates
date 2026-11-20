@@ -62,7 +62,7 @@ lib/bd_starter/bd/
   chat_session.ex    ONE poller per conversation, fanned out over PubSub
   resources/         storefront cart checkout blog forms marketing
                      parallel_pages portal data_model reviews
-                     subscriptions followers
+                     subscriptions followers donations
 lib/bd_starter/bd.ex     app-facing entry: cache tags + fallbacks
 lib/bd_starter_web/
   plugs/cache_body_reader.ex the raw-body stash (see below)
@@ -116,6 +116,51 @@ lib/bd_starter_web/
 - **No typed structs.** Responses are maps with string keys. Real structs would be the natural next step if this graduates from a starter to a Hex package.
 - **No shipping / address / coupons-admin surfaces.** The endpoints exist; the client covers what these pages use.
 - **`/chat` assumes a session already exists.** Minting one (`chatbot/session`) and the human-handoff queue are wired in the API but not in this UI.
+
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+`BdStarter.Bd.Resources.Donations`; like every resource here it returns
+`{:ok, body}` or `{:error, reason}` and never raises:
+
+```elixir
+alias BdStarter.Bd.Resources.Donations
+
+{:ok, page} = Donations.page(BdStarter.Bd.client())
+
+{:ok, %{"url" => checkout_url}} =
+  Donations.start_checkout(BdStarter.Bd.client(), %{
+    "amountCents" => 2500,
+    "frequency" => "monthly",
+    "coverFees" => true,
+    "donor" => %{"name" => name, "email" => email},
+    "successUrl" => url(~p"/give/thanks"),
+    "cancelUrl" => url(~p"/give")
+  })
+
+conn |> put_status(303) |> redirect(external: checkout_url)
+# Cover-fees label: Donations.cover_fee_cents(2500, page["coverFee"])
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
 
 ## Data: environment, schema, seeding, CRUD
 

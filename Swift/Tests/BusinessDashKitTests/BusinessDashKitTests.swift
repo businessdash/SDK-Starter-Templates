@@ -286,3 +286,67 @@ struct JSONValueTests {
         #expect(try bundle().string("sections", "about", "title") == nil)
     }
 }
+
+// MARK: - Donations
+
+@Suite("Donations")
+struct DonationsTests {
+    /// The table is the platform's own `coverFeeCents` output, also pinned in
+    /// the JS SDK's tests — a page must show the cents the checkout charges.
+    @Test("Cover-fees matches the platform to the cent")
+    func coverFeeParity() {
+        let reference: [(Int, Int, Int)] = [
+            (2500, 0, 106), (5000, 0, 181), (10000, 100, 438),
+            (1999, 0, 91), (123456, 250, 7079), (500, 0, 46),
+        ]
+        for (amount, platformBps, fee) in reference {
+            #expect(DonationPage.coverFeeCents(amount, rateBps: 290 + platformBps, fixedCents: 30) == fee)
+        }
+        #expect(DonationPage.coverFeeCents(0, rateBps: 290, fixedCents: 30) == 0)
+    }
+
+    @Test("The giving page decodes, including the tax statement")
+    func pageDecodes() async throws {
+        let recorder = StubTransport.Recorder()
+        let client = makeClient(
+            StubTransport(json: """
+            {"orgName":"Gerus","avatarUrl":null,"accentColor":null,"title":"Support our work",
+             "appeal":null,"presetAmountsCents":[2500,5000],"monthlyPresetAmountsCents":[1000],
+             "allowOneTime":true,"allowMonthly":true,"defaultFrequency":"one_time",
+             "minAmountCents":500,"maxAmountCents":2500000,"currency":"usd","offerCoverFees":true,
+             "platformFeeBps":null,"coverFee":{"rateBps":290,"fixedCents":30},"thankYouMessage":null,
+             "isTaxDeductible":false,
+             "taxStatement":"Gerus is not a registered 501(c)(3) charity, so this gift is not tax-deductible.",
+             "unavailable":null,"hostedUrl":"https://www.businessdash.us/give/gerus"}
+            """, recorder: recorder)
+        )
+        let page = try await client.donations.page()
+        #expect(page.isAcceptingGifts)
+        #expect(page.isTaxDeductible == false)
+        #expect(page.coverFeeCents(for: 2500) == 106)
+        #expect(recorder.request?.url?.path().hasSuffix("/donations") == true)
+    }
+
+    @Test("Starting a gift posts to donations/checkout")
+    func startCheckout() async throws {
+        let recorder = StubTransport.Recorder()
+        let client = makeClient(
+            StubTransport(json: """
+            {"url":"https://checkout.stripe.com/c/pay/cs_1","frequency":"monthly","amountCents":2500,
+             "coveredFeeCents":106,"totalAmountCents":2606,"currency":"usd"}
+            """, recorder: recorder)
+        )
+        let checkout = try await client.donations.startCheckout(
+            DonationCheckoutInput(
+                amountCents: 2500,
+                monthly: true,
+                coverFees: true,
+                donor: DonationDonor(name: "Ada", email: "ada@example.com")
+            )
+        )
+        #expect(checkout.checkoutURL?.host() == "checkout.stripe.com")
+        #expect(checkout.totalAmountCents == 2606)
+        #expect(recorder.request?.httpMethod == "POST")
+        #expect(recorder.request?.url?.path().hasSuffix("/donations/checkout") == true)
+    }
+}

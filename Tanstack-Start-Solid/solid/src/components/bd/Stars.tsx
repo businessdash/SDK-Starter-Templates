@@ -16,8 +16,10 @@ export function Stars(props: { rating: number }) {
 					const half = () => !filled() && props.rating >= i + 0.5;
 					return (
 						<span
-							class="bd-stars__star"
-							classList={{ "bd-stars__star--on": filled() || half() }}
+							class={[
+								"bd-stars__star",
+								{ "bd-stars__star--on": filled() || half() },
+							]}
 							style="font-size: 0.95rem; cursor: default;"
 						>
 							{filled() ? "★" : half() ? "⯨" : "☆"}

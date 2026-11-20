@@ -1,5 +1,5 @@
 import { createBdClient } from "@businessdash/sdk";
-import { createMemo, createSignal, onMount, Show } from "solid-js";
+import { createMemo, createSignal, onSettled, Show } from "solid-js";
 
 /**
  * Newsletter signup wired to BD followers.
@@ -139,7 +139,9 @@ function LiveSubscribe(props: SubscribeProps) {
 	// Anonymous "already subscribed" hint (per-browser). Read on mount so SSR and
 	// the first client paint agree (localStorage is unavailable during SSR).
 	const [subscribedLocally, setSubscribedLocally] = createSignal(false);
-	onMount(() => setSubscribedLocally(readLocalFollow(storeKey) !== null));
+	onSettled(() => {
+		setSubscribedLocally(readLocalFollow(storeKey) !== null);
+	});
 
 	const [status, setStatus] = createSignal<
 		"idle" | "submitting" | "done" | "error"

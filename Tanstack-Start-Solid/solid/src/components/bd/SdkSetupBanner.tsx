@@ -1,4 +1,4 @@
-import { createSignal, onMount, Show } from "solid-js";
+import { createSignal, onSettled, Show } from "solid-js";
 
 /**
  * Dismissable "not connected yet" banner. The template renders all its content
@@ -9,7 +9,7 @@ import { createSignal, onMount, Show } from "solid-js";
  *
  * Reads the canonical `VITE_BD_*` names (exposed to the browser via
  * `envPrefix` in vite.config.ts), falling back to the legacy `VITE_BD_*`
- * twins so existing setups keep working. The config check runs in `onMount`
+ * twins so existing setups keep working. The config check runs in `onSettled`
  * (client only), so the server render + hydration stay in sync.
  */
 
@@ -28,7 +28,7 @@ const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 export function SdkSetupBanner() {
 	const [visible, setVisible] = createSignal(false);
 
-	onMount(() => {
+	onSettled(() => {
 		if (SITE_ID && PK) return; // configured — nothing to show
 		if (localStorage.getItem(DISMISS_KEY) === "1") return;
 		setVisible(true);

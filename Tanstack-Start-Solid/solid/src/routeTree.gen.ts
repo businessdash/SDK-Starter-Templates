@@ -23,8 +23,6 @@ import { Route as UpdatesRouteImport } from './routes/updates'
 import { Route as DotwellKnownMcpDotjsonRouteImport } from './routes/[.]well-known.mcp[.]json'
 import { Route as AiProductFeedRouteImport } from './routes/ai.product-feed'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
-import { Route as DemoFormRouteImport } from './routes/demo.form'
-import { Route as DemoStoreRouteImport } from './routes/demo.store'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as StoreIndexRouteImport } from './routes/store.index'
@@ -104,16 +102,6 @@ const ApiMcpRoute = ApiMcpRouteImport.update({
   path: '/api/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DemoFormRoute = DemoFormRouteImport.update({
-  id: '/demo/form',
-  path: '/demo/form',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemoStoreRoute = DemoStoreRouteImport.update({
-  id: '/demo/store',
-  path: '/demo/store',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
@@ -170,8 +158,6 @@ export interface FileRoutesByFullPath {
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
   '/ai/product-feed': typeof AiProductFeedRoute
   '/api/mcp': typeof ApiMcpRoute
-  '/demo/form': typeof DemoFormRoute
-  '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/store/$id': typeof StoreIdRoute
   '/store/cart': typeof StoreCartRoute
@@ -196,8 +182,6 @@ export interface FileRoutesByTo {
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
   '/ai/product-feed': typeof AiProductFeedRoute
   '/api/mcp': typeof ApiMcpRoute
-  '/demo/form': typeof DemoFormRoute
-  '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/store/$id': typeof StoreIdRoute
   '/store/cart': typeof StoreCartRoute
@@ -223,8 +207,6 @@ export interface FileRoutesById {
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
   '/ai/product-feed': typeof AiProductFeedRoute
   '/api/mcp': typeof ApiMcpRoute
-  '/demo/form': typeof DemoFormRoute
-  '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/store/$id': typeof StoreIdRoute
   '/store/cart': typeof StoreCartRoute
@@ -251,8 +233,6 @@ export interface FileRouteTypes {
     | '/.well-known/mcp.json'
     | '/ai/product-feed'
     | '/api/mcp'
-    | '/demo/form'
-    | '/demo/store'
     | '/demo/tanstack-query'
     | '/store/$id'
     | '/store/cart'
@@ -277,8 +257,6 @@ export interface FileRouteTypes {
     | '/.well-known/mcp.json'
     | '/ai/product-feed'
     | '/api/mcp'
-    | '/demo/form'
-    | '/demo/store'
     | '/demo/tanstack-query'
     | '/store/$id'
     | '/store/cart'
@@ -303,8 +281,6 @@ export interface FileRouteTypes {
     | '/.well-known/mcp.json'
     | '/ai/product-feed'
     | '/api/mcp'
-    | '/demo/form'
-    | '/demo/store'
     | '/demo/tanstack-query'
     | '/store/$id'
     | '/store/cart'
@@ -330,8 +306,6 @@ export interface RootRouteChildren {
   DotwellKnownMcpDotjsonRoute: typeof DotwellKnownMcpDotjsonRoute
   AiProductFeedRoute: typeof AiProductFeedRoute
   ApiMcpRoute: typeof ApiMcpRoute
-  DemoFormRoute: typeof DemoFormRoute
-  DemoStoreRoute: typeof DemoStoreRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   StoreIdRoute: typeof StoreIdRoute
   StoreCartRoute: typeof StoreCartRoute
@@ -442,20 +416,6 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof ApiMcpRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/demo/form': {
-      id: '/demo/form'
-      path: '/demo/form'
-      fullPath: '/demo/form'
-      preLoaderRoute: typeof DemoFormRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demo/store': {
-      id: '/demo/store'
-      path: '/demo/store'
-      fullPath: '/demo/store'
-      preLoaderRoute: typeof DemoStoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
       path: '/demo/tanstack-query'
@@ -530,8 +490,6 @@ const rootRouteChildren: RootRouteChildren = {
   DotwellKnownMcpDotjsonRoute: DotwellKnownMcpDotjsonRoute,
   AiProductFeedRoute: AiProductFeedRoute,
   ApiMcpRoute: ApiMcpRoute,
-  DemoFormRoute: DemoFormRoute,
-  DemoStoreRoute: DemoStoreRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   StoreIdRoute: StoreIdRoute,
   StoreCartRoute: StoreCartRoute,

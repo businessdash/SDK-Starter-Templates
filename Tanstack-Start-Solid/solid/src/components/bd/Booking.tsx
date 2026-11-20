@@ -30,8 +30,11 @@ function formatSlotTime(iso: string): string {
 }
 
 export function Booking(props: { eventTypes: EventType[] }) {
+	// Solid 2: a function argument makes this a writable derived signal — it
+	// follows `props.eventTypes` until the visitor picks one, and reading props
+	// here (not at the top of the body) keeps the read tracked.
 	const [selectedSlug, setSelectedSlug] = createSignal<string>(
-		props.eventTypes[0]?.slug ?? "",
+		() => props.eventTypes[0]?.slug ?? "",
 	);
 	const [slots, setSlots] = createSignal<Slot[] | null>(null);
 	const [pickedSlot, setPickedSlot] = createSignal<string | null>(null);
@@ -45,26 +48,38 @@ export function Booking(props: { eventTypes: EventType[] }) {
 	const [confirmation, setConfirmation] = createSignal<string | null>(null);
 	const [error, setError] = createSignal<string | null>(null);
 
-	// Re-load slots whenever the event type changes.
-	createEffect(async () => {
-		const slug = selectedSlug();
-		if (!slug) return;
-		setSlots(null);
-		setPickedSlot(null);
-		try {
-			const result = await fetchSlots({
-				data: {
-					slug,
-					from: startOfTomorrow().toISOString(),
-					to: plusWeek(startOfTomorrow()).toISOString(),
-				},
-			});
-			setSlots(result);
-		} catch (err) {
-			setError(err instanceof Error ? err.message : "Unknown error");
-			setSlots([]);
-		}
-	});
+	// Re-load slots whenever the event type changes. Solid 2 splits an effect
+	// into what it tracks (the slug) and what it does; the returned cleanup runs
+	// before the next slug's load, so a slow response for an event type the
+	// visitor has already left can't overwrite the new one.
+	createEffect(
+		() => selectedSlug(),
+		(slug) => {
+			if (!slug) return;
+			let stale = false;
+			setSlots(null);
+			setPickedSlot(null);
+			void (async () => {
+				try {
+					const result = await fetchSlots({
+						data: {
+							slug,
+							from: startOfTomorrow().toISOString(),
+							to: plusWeek(startOfTomorrow()).toISOString(),
+						},
+					});
+					if (!stale) setSlots(result);
+				} catch (err) {
+					if (stale) return;
+					setError(err instanceof Error ? err.message : "Unknown error");
+					setSlots([]);
+				}
+			})();
+			return () => {
+				stale = true;
+			};
+		},
+	);
 
 	async function handleConfirm() {
 		const slug = selectedSlug();
@@ -168,7 +183,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 										<For each={(slots() ?? []).slice(0, 12)}>
 											{(slot) => (
 												<button
-													aria-pressed={pickedSlot() === slot.startAt}
+													aria-pressed={pickedSlot() === slot.startAt ? "true" : "false"}
 													class="slot-button"
 													onClick={() => setPickedSlot(slot.startAt)}
 													type="button"

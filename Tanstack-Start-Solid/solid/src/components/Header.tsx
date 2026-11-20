@@ -44,18 +44,6 @@ export default function Header() {
 						<summary class="nav-link list-none cursor-pointer">Demos</summary>
 						<div class="mt-2 min-w-56 rounded-xl border border-[var(--line)] bg-[var(--header-bg)] p-2 shadow-lg sm:absolute sm:right-0">
 							<a
-								href="/demo/form"
-								class="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
-							>
-								Form
-							</a>
-							<a
-								href="/demo/store"
-								class="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
-							>
-								Store
-							</a>
-							<a
 								href="/demo/tanstack-query"
 								class="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
 							>

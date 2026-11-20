@@ -91,6 +91,7 @@ Sources/BusinessDashKit/
   Models.swift            Codable structs for every typed surface
   JSONValue.swift         for the two genuinely schema-driven surfaces
   Money.swift             cents vs decimal — read this before rendering money
+  Donations.swift         giving page + checkout, and the cover-fees math
   Resources.swift         storefront · cart · checkout · blog · forms · portal
                           reviews · subscriptions · marketing · parallel pages
                           · data model
@@ -130,6 +131,45 @@ Leaving the loop — or SwiftUI cancelling the `.task` on disappear — tears th
 ## Verification
 
 `swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal.
+
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+`BusinessDashKit/Donations.swift`, on the publishable token you already use:
+
+```swift
+let page = try await client.donations.page()
+guard page.isAcceptingGifts else { return }
+let checkout = try await client.donations.startCheckout(
+    DonationCheckoutInput(
+        amountCents: 2500,
+        monthly: true,
+        coverFees: page.offerCoverFees,
+        donor: DonationDonor(name: name, email: email)
+    )
+)
+if let url = checkout.checkoutURL { openURL(url) }   // @Environment(\.openURL)
+// Cover-fees label: page.coverFeeCents(for: 2500)
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Leave the return URLs out.** The donor lands on the hosted thank-you page
+  and closes the browser back into the app.
 
 ## Data: environment, schema, seeding, CRUD
 

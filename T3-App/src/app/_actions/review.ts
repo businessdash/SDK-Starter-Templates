@@ -54,7 +54,7 @@ export async function submitReviewAction(
 	});
 
 	if (!parsed.success) {
-		const flat = parsed.error.flatten().fieldErrors;
+		const flat = z.flattenError(parsed.error).fieldErrors;
 		return {
 			status: "error",
 			message: "Please fix the highlighted fields.",

@@ -132,6 +132,52 @@ One entry in the server route table + one method on the browser client.
 ```
 
 
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+Two routes in `server.ts`, using its `bd` client; `public/pages/give.js` fetches `/api/give` and renders the form:
+
+```ts
+if (bd && pathname === '/api/give') return Response.json(await bd.donations.get())
+if (bd && method === 'POST' && pathname === '/give') {
+  const form = await req.formData()
+  const { url: stripe } = await bd.donations.startCheckout({
+    amountCents: Number(form.get('amount')),
+    frequency: form.get('monthly') ? 'monthly' : 'one_time',
+    donor: { name: String(form.get('name')), email: String(form.get('email')) },
+    successUrl: `${url.origin}/give/thanks`,
+    cancelUrl: `${url.origin}/give`,
+  })
+  return Response.redirect(stripe, 303)
+}
+```
+
+Set `taxStatement` with `textContent`, not `innerHTML`.
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
+
 ## Where your content comes from
 
 Nothing business-specific is hardcoded in this template — it all comes from BD,

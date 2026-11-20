@@ -7,6 +7,7 @@ use App\Bd\Resources\Cart;
 use App\Bd\Resources\Chatbot;
 use App\Bd\Resources\Checkout;
 use App\Bd\Resources\DataModel;
+use App\Bd\Resources\Donations;
 use App\Bd\Resources\Followers;
 use App\Bd\Resources\Forms;
 use App\Bd\Resources\Marketing;
@@ -178,6 +179,12 @@ class Client
     public function reviews(): Reviews
     {
         return new Reviews($this);
+    }
+
+    /** One-time and monthly gifts — see {@see Donations}. */
+    public function donations(): Donations
+    {
+        return new Donations($this);
     }
 
     public function subscriptions(): Subscriptions

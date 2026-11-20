@@ -12,8 +12,8 @@ import "@fontsource/inter/400.css";
 import "@businessdash/sdk/bd-forms.css";
 
 import { initBdAnalytics } from "@businessdash/sdk/analytics-core";
-import { onCleanup, onMount, Suspense } from "solid-js";
-import { HydrationScript } from "solid-js/web";
+import { HydrationScript } from "@solidjs/web";
+import { Loading, onSettled } from "solid-js";
 
 import Header from "../components/Header";
 import { SdkSetupBanner } from "../components/bd/SdkSetupBanner";
@@ -28,7 +28,9 @@ export const Route = createRootRouteWithContext()({
 });
 
 function RootComponent() {
-	onMount(() => {
+	// Solid 2: `onSettled` replaces `onMount` and takes its cleanup as the
+	// return value, so the tracker stops when the shell unmounts.
+	onSettled(() => {
 		// Canonical VITE_ names (exposed to the browser via envPrefix in
 		// vite.config.ts), falling back to the legacy VITE_ twins.
 		const siteId = (import.meta.env.VITE_BD_SITE_ID ??
@@ -39,7 +41,7 @@ function RootComponent() {
 			import.meta.env.VITE_BD_PUBLIC_KEY) as string | undefined;
 		if (!siteId || !baseUrl || !apiKey) return;
 		const tracker = initBdAnalytics({ siteId, baseUrl, apiKey });
-		onCleanup(() => tracker.stop());
+		return () => tracker.stop();
 	});
 
 	return (
@@ -49,12 +51,12 @@ function RootComponent() {
 				<HeadContent />
 			</head>
 			<body>
-				<Suspense>
+				<Loading>
 					<Header />
 					<Outlet />
 					<SdkSetupBanner />
 					<TanStackRouterDevtools />
-				</Suspense>
+				</Loading>
 				<Scripts />
 			</body>
 		</html>

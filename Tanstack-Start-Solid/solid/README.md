@@ -1,4 +1,8 @@
-# BD SDK — TanStack Solid Start starter
+# BD SDK — TanStack Solid Start starter (Solid 2)
+
+> **This is the Solid 2 version.** It runs `solid-js` 2.0.3+ on TanStack Start's
+> 2.0 release candidate. On Solid 1? Use [`../solid-1`](../solid-1/README.md),
+> the same starter on Solid 1.9 and TanStack Start 1.x.
 
 Same generic business site as the other framework starters, built on **TanStack Solid Start** (Solid.js + TanStack Router + TanStack Start SSR + Nitro). The shape is closest to the Qwik starter: route `loader` for SSR data, `createServerFn` for client-callable RPCs — no separate API endpoint files needed for those.
 
@@ -152,16 +156,104 @@ src/
 └── styles.css                                 # Existing tokens + appended BD tokens
 ```
 
-## Solid 1.x idioms used
+## Solid 2 idioms used
 
-- `createSignal()` — reactive primitive, returns `[get, set]`
-- `createEffect()` — runs when its dependencies (called signals) change; perfect for "re-load slots when event type changes"
-- `<For each={...}>` / `<Show when={...}>` — Solid's reactive control flow components
-- Component props are reactive — read `props.x` (not destructured) inside JSX
-- Event handlers like `onInput`, `onClick` — same shape as React
+- `createSignal()` returns `[get, set]` as before. Given a **function**, it's a
+  writable derived signal: `Booking` seeds the selected event type with
+  `createSignal(() => props.eventTypes[0]?.slug ?? "")`, which follows the prop
+  until the visitor picks one.
+- `createEffect(compute, apply)` takes two functions: what to watch, then what
+  to do. `Booking` re-loads slots with it, and `apply` returns a cleanup that
+  drops a stale response when the visitor switches event type mid-load.
+- `onSettled()` replaces `onMount()` and returns its cleanup instead of calling
+  `onCleanup` (the analytics tracker in `__root.tsx`, the setup banner, the
+  subscribe form's local hint).
+- An async `createMemo` replaces `createResource`. The store listing returns
+  the loader's page synchronously, then a promise per facet change; Solid keeps
+  the old listing on screen while the next loads, and `isPending(() => listing())`
+  drives the "updating…" hint.
+- `<Loading>` replaces `<Suspense>` in the root shell.
+- `class={["base", { modifier: on() }]}` replaces `classList` (`Stars`, the
+  store facets).
+- DOM APIs come from `@solidjs/web` instead of `solid-js/web` (here, just
+  `HydrationScript` in `__root.tsx`), and `tsconfig.json` sets
+  `"jsxImportSource": "@solidjs/web"`.
+- `<For>` / `<Show>`, reading `props.x` instead of destructuring, and
+  `onInput` / `onClick` handlers are unchanged from 1.x.
+
+### What changed from the Solid 1.9 version
+
+| | `solid-1/` | `solid/` |
+| --- | --- | --- |
+| `solid-js` | 1.9 | 2.0.3+, plus `@solidjs/web` |
+| TanStack Router / Start | 1.x | `2.0.0-rc.10` (pinned, see below) |
+| Vite plugin | `vite-plugin-solid` | `@solidjs/vite-plugin`, after `tanstackStart()` |
+| TanStack Query | 5 (`createQuery`) | 6 release candidate (`useQuery`) |
+| Form and Store demos | included | removed: `@tanstack/solid-form` and `@tanstack/solid-store` have no Solid 2 build yet |
+
+**Why rc.10 and not the newest release candidate:** `@tanstack/solid-start@2.0.0-rc.11`
+(19 Nov 2026) imports `@tanstack/start-server-core/request-scope`, an export no
+published `start-server-core` has, so its server build fails. Move to a later
+release candidate once one builds.
+
+**SDK version:** `<BdForm>` (the contact form and `/todos`) needs
+`@businessdash/sdk` 0.9.91 or later on Solid 2, which this starter pins. On
+0.9.90, Solid 2 throws when the form reads its client context, and the page
+shows TanStack's error screen.
 
 The BD layer doesn't care which framework lives on top — Solid components just receive plain data from the loader and call typed server functions.
 
+
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+Server functions in `src/routes/give.tsx`:
+
+```ts
+const bd = () =>
+  createBdApiClient({ apiKey: process.env.BD_API_KEY!, baseUrl: process.env.VITE_BD_PACKAGE_API_BASE_URL! })
+const origin = () =>
+  `${getRequestHeader('x-forwarded-proto') ?? 'https'}://${getRequestHeader('host')}`
+
+const getPage = createServerFn().handler(() => bd().donations.get())
+
+const give = createServerFn({ method: 'POST' })
+  .validator((form: FormData) => form)
+  .handler(async ({ data }) => {
+    const { url } = await bd().donations.startCheckout({
+      amountCents: Number(data.get('amount')),
+      frequency: data.get('monthly') ? 'monthly' : 'one_time',
+      donor: { name: String(data.get('name')), email: String(data.get('email')) },
+      successUrl: `${origin()}/give/thanks`,
+      cancelUrl: `${origin()}/give`,
+    })
+    throw redirect({ href: url })
+  })
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
 
 ## Where your content comes from
 

@@ -59,7 +59,7 @@ app/Bd/
   BdException.php   BdApiException + BdAccessRejectedException
   Resources/          Storefront Cart Checkout Blog Forms Marketing
                       ParallelPages Portal DataModel Reviews
-                      Subscriptions Followers
+                      Subscriptions Followers Donations
 app/Http/Controllers/ one per surface
 app/Support/Money.php cents vs decimal — see the note below
 config/bd.php       every knob, all server-side
@@ -106,6 +106,50 @@ resources/views/      layout.blade.php + pages/
 - **No native chatbot UI.** Front Desk chat is a polling API (`chatbot/messages`, every 3–5s while open). A Blade page can poll it, but the SDK's widget isn't ported. Wire `<bd-chat>` from the CDN, or build it.
 - **No typed models.** Responses are PHP arrays; the views use `data_get()` with defaults. Real DTOs would be the natural next step if this graduates from a starter to a package.
 - **No shipping / address / coupons-admin surfaces.** The endpoints exist; the client covers what these twelve pages use.
+
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+`App\Bd\Resources\Donations`, reached through `Bd::client()`:
+
+```php
+Route::get('/give', fn () => view('give', ['page' => Bd::client()?->donations()->page()]));
+
+Route::post('/give', function (Request $request) {
+    $checkout = Bd::client()->donations()->startCheckout([
+        'amountCents' => (int) $request->input('amount'),
+        'frequency' => $request->boolean('monthly') ? 'monthly' : 'one_time',
+        'coverFees' => $request->boolean('coverFees'),
+        'donor' => ['name' => $request->input('name'), 'email' => $request->input('email')],
+        'successUrl' => url('/give/thanks'),
+        'cancelUrl' => url('/give'),
+    ]);
+    return redirect()->away($checkout['url'], 303);
+});
+// Cover-fees label: Donations::coverFeeCents(2500, $page['coverFee'])
+```
+
+Print `taxStatement` with `{{ }}` (escaped), never `{!! !!}`.
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
 
 ## Data: environment, schema, seeding, CRUD
 

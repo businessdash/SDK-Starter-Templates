@@ -73,7 +73,7 @@ export const actions: Actions = {
 			jobId: form.get('jobId') || undefined
 		});
 		if (!parsed.success) {
-			const flat = parsed.error.flatten().fieldErrors;
+			const flat = z.flattenError(parsed.error).fieldErrors;
 			const fieldErrors: ReviewFieldErrors = {
 				rating: flat.rating?.[0],
 				title: flat.title?.[0],

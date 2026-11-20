@@ -172,6 +172,56 @@ Standalone components, `ChangeDetectionStrategy.OnPush`, signals + `computed()`,
 Add a surface in three steps: (1) add a server endpoint in `src/server/bd-api.ts` calling the SDK, (2) add a method to `src/app/lib/bd-api.client.ts`, (3) add a lazy route + page component. Keep all key-bearing code under `src/server/`.
 
 
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+Two endpoints inside `mountBdApi(app)` in `src/server/bd-api.ts`, using `getBd()`; the component reads `/api/give` and posts its form to `/give`:
+
+```ts
+app.get('/api/give', async (_req, res) => {
+  const bd = getBd()
+  if (!bd) return res.status(503).end()
+  res.json(await bd.donations.get())
+})
+app.post('/give', express.urlencoded({ extended: false }), async (req, res) => {
+  const bd = getBd()
+  if (!bd) return res.status(503).end()
+  const origin = `${req.protocol}://${req.get('host')}`
+  const { url } = await bd.donations.startCheckout({
+    amountCents: Number(req.body.amount),
+    frequency: req.body.monthly ? 'monthly' : 'one_time',
+    donor: { name: String(req.body.name), email: String(req.body.email) },
+    successUrl: `${origin}/give/thanks`,
+    cancelUrl: `${origin}/give`,
+  })
+  res.redirect(303, url)
+})
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
+
 ## Where your content comes from
 
 Nothing business-specific is hardcoded in this template — it all comes from BD,

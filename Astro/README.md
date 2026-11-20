@@ -205,6 +205,56 @@ export default defineConfig({ output: "server", adapter: cloudflare() });
 The component layer doesn't change — only the runtime where the SDK calls happen.
 
 
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+`src/pages/give.astro` (the starter already builds with `output: 'server'`):
+
+```astro
+---
+const bd = createBdApiClient({
+  apiKey: import.meta.env.BD_API_KEY,
+  baseUrl: import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL,
+})
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData()
+  const { url } = await bd.donations.startCheckout({
+    amountCents: Number(form.get('amount')),
+    frequency: form.get('monthly') ? 'monthly' : 'one_time',
+    donor: { name: String(form.get('name')), email: String(form.get('email')) },
+    successUrl: `${Astro.url.origin}/give/thanks`,
+    cancelUrl: `${Astro.url.origin}/give`,
+  })
+  return Astro.redirect(url, 303)
+}
+const page = await bd.donations.get()
+---
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Return URLs must be on a verified domain** (Settings → Organization), or
+  the call fails with `400 return_url_not_verified`. `localhost` works in
+  development.
+
 ## Where your content comes from
 
 Nothing business-specific is hardcoded in this template — it all comes from BD,

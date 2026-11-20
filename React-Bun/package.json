@@ -17,10 +17,10 @@
     "print-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
   },
   "dependencies": {
-    "@businessdash/sdk": "^0.9.90",
+    "@businessdash/sdk": "^0.9.91",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

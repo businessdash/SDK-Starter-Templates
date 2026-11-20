@@ -114,6 +114,53 @@ There is no SSE or WebSocket anywhere in the Package API. `useChat` runs `create
 
 **Bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the screens in a simulator yet.
 
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+> `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
+> starter pins. An app made from an older copy upgrades zod in the same step,
+> since 0.9.91 is built on zod 4: `pnpm up @businessdash/sdk zod@^4.6.7`.
+
+With the app's publishable token (`EXPO_PUBLIC_BD_PK`):
+
+```tsx
+import { donationCoverFeeCents } from '@businessdash/sdk/native'
+import * as WebBrowser from 'expo-web-browser'
+import { getBd } from '../src/bd/client'
+
+const bd = getBd()
+const page = await bd?.donations.get()
+if (bd && page && !page.unavailable) {
+  const { url } = await bd.donations.startCheckout({
+    amountCents: 2500,
+    frequency: 'monthly',
+    coverFees: true,
+    donor: { name, email },
+  })
+  await WebBrowser.openBrowserAsync(url)
+}
+// Cover-fees label: donationCoverFeeCents(2500, page.coverFee)
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Leave the return URLs out.** The donor lands on the hosted thank-you page
+  and closes the browser back into the app.
+
 ## Data: environment, schema, seeding, CRUD
 
 Everything below is the same in every starter — the CLI and the seed module are

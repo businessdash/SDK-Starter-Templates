@@ -1,6 +1,6 @@
 import type { StorefrontSort } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { createMemo, createResource, createSignal, For, Show } from "solid-js";
+import { createMemo, createSignal, For, isPending, Show } from "solid-js";
 
 import { formatMoney } from "../components/bd/money";
 import { Stars } from "../components/bd/Stars";
@@ -16,14 +16,18 @@ import {
  * sidebar (search, categories with counts, price range, min-rating, sort).
  *
  * The loader fetches the unfiltered first page server-side; facet changes drive
- * a `createResource` that refetches through the same `getStoreListing` server fn
- * (the secret key stays on the server). Degrades to a "not connected" /
+ * an async `createMemo` that refetches through the same `getStoreListing`
+ * server fn (the secret key stays on the server). Degrades to a "not connected" /
  * "unavailable" state when BD env is unset or the org is suspended.
  */
 export const Route = createFileRoute("/store/")({
 	component: StoreIndex,
 	loader: () => getStoreListing({ data: {} }),
 });
+
+/** The loader's filters. Compared by identity, so "Clear filters" (a fresh
+ *  `{}`) still refetches. */
+const UNFILTERED: StoreFilters = {};
 
 const SORT_LABELS: Record<StorefrontSort, string> = {
 	featured: "Featured",
@@ -36,17 +40,19 @@ const SORT_LABELS: Record<StorefrontSort, string> = {
 function StoreIndex() {
 	const initial = Route.useLoaderData();
 
-	const [filters, setFilters] = createSignal<StoreFilters>({});
+	const [filters, setFilters] = createSignal<StoreFilters>(UNFILTERED);
 
-	// Refetch through the server fn whenever a facet changes. Seeded with the
-	// loader's first page so there's no flash before the first interaction.
-	const [listing] = createResource<StoreListingResult, StoreFilters>(
-		filters,
-		(f) => getStoreListing({ data: f }),
-		{ initialValue: initial() },
-	);
+	// Refetch through the server fn whenever a facet changes. Until the first
+	// change the memo answers synchronously with the loader's page, so nothing
+	// suspends on first paint. After that it returns a promise: Solid 2 keeps
+	// showing the previous listing while the next one loads, and `isPending`
+	// (below) reports the gap.
+	const listing = createMemo<StoreListingResult>(() => {
+		const f = filters();
+		return f === UNFILTERED ? initial() : getStoreListing({ data: f });
+	});
 
-	const result = () => listing() ?? initial();
+	const result = () => listing();
 	const data = () => {
 		const r = result();
 		return r.ok ? r : null;
@@ -150,10 +156,12 @@ function StoreIndex() {
 										<ul class="store-facet__list">
 											<li>
 												<button
-													class="store-facet__btn"
-													classList={{
-														"store-facet__btn--active": !filters().categoryId,
-													}}
+													class={[
+														"store-facet__btn",
+														{
+															"store-facet__btn--active": !filters().categoryId,
+														},
+													]}
 													onClick={() => patch({ categoryId: undefined })}
 													type="button"
 												>
@@ -166,10 +174,10 @@ function StoreIndex() {
 													return (
 														<li>
 															<button
-																class="store-facet__btn"
-																classList={{
-																	"store-facet__btn--active": active(),
-																}}
+																class={[
+																	"store-facet__btn",
+																	{ "store-facet__btn--active": active() },
+																]}
 																onClick={() =>
 																	patch({
 																		categoryId: active() ? undefined : c.id,
@@ -225,10 +233,10 @@ function StoreIndex() {
 												return (
 													<li>
 														<button
-															class="store-facet__btn"
-															classList={{
-																"store-facet__btn--active": active(),
-															}}
+															class={[
+																"store-facet__btn",
+																{ "store-facet__btn--active": active() },
+															]}
 															onClick={() =>
 																patch({ minRating: active() ? undefined : r })
 															}
@@ -262,7 +270,7 @@ function StoreIndex() {
 									<span class="store-toolbar__count">
 										{d().items.length}{" "}
 										{d().items.length === 1 ? "product" : "products"}
-										<Show when={listing.loading}> · updating…</Show>
+										<Show when={isPending(() => listing())}> · updating…</Show>
 									</span>
 									<label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
 										<span>Sort</span>

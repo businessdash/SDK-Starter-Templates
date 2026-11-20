@@ -1,0 +1,24 @@
+{
+  "projectName": "solid",
+  "mode": "file-router",
+  "typescript": true,
+  "packageManager": "npm",
+  "includeExamples": true,
+  "tailwind": true,
+  "addOnOptions": {},
+  "envVarValues": {},
+  "git": false,
+  "install": true,
+  "routerOnly": false,
+  "version": 1,
+  "framework": "solid",
+  "chosenAddOns": [
+    "biome",
+    "nitro",
+    "form",
+    "solid-ui",
+    "store",
+    "t3env",
+    "tanstack-query"
+  ]
+}

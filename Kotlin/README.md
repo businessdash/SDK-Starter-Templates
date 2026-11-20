@@ -74,6 +74,7 @@ bd/src/main/kotlin/app/bd/
   ChatFeed.kt     the polling chat API as a cold Flow
   Bundle.kt       key-path reads for the two schema-driven surfaces
   Money.kt        cents vs decimal — read this before rendering money
+  Donations.kt    giving page + checkout, and the cover-fees math
 ```
 
 ## Five things that will bite you
@@ -105,6 +106,46 @@ The loop also de-duplicates on message id: `since` is only as good as what the s
 **None of this has been compiled.** The machine it was written on has Java 11 and no Kotlin compiler, no Gradle, and no Android SDK. The tests in `bd/src/test` are written but have never run.
 
 Treat it as reviewed, not verified. `./gradlew :bd:test` is the first thing to run, and it needs no Android SDK — the module split exists partly so that check is cheap.
+
+## Donations
+
+One-time and monthly gifts, paid to the org's own Stripe account. Your app
+reads the giving page, posts the gift, and sends the donor to the Stripe URL it
+gets back; BusinessDash records the gift, adds the donor as a contact, notifies
+the org and emails the receipt. The full guide, with this starter's code in its
+own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+
+`bd/…/Donations.kt`, on the publishable token you already use:
+
+```kotlin
+val page = client.donationPage()
+if (page.isAcceptingGifts) {
+    val checkout = client.startDonationCheckout(
+        DonationCheckoutInput(
+            amountCents = 2500,
+            frequency = "monthly",
+            donor = DonationDonor(name, email),
+            coverFees = page.offerCoverFees,
+        ),
+    )
+    context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(checkout.url)))
+}
+// Cover-fees label: page.coverFeeCents(2500)
+```
+
+Three rules:
+
+- **Render `taxStatement` as given.** It says whether the gift is
+  tax-deductible (it isn't, unless the org registered as a 501(c)(3) and
+  entered its EIN), and it matches the receipt word for word. Don't write that
+  sentence yourself.
+- **Check `unavailable` first.** `"disabled"` or `"payments_not_ready"` means
+  no form; show a fallback instead.
+- **The key needs `donations:give`.** Keys made under Site Builder ▸ Developer
+  include it by default; keys made before donations shipped don't, and scopes
+  can't be added later, so mint a new key.
+- **Leave the return URLs out.** The donor lands on the hosted thank-you page
+  and closes the browser back into the app.
 
 ## Data: environment, schema, seeding, CRUD
 
