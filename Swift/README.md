@@ -1,9 +1,10 @@
 # BD SDK — Swift starter
 
-Two products in one package:
+Three products in one package:
 
 - **`BusinessDashKit`** — the data layer. No dependencies; the Package API is plain REST with a bearer key, so `URLSession` + `Codable` covers all of it.
-- **`BdStarterApp`** — SwiftUI screens built on the kit: shop, cart, blog, Front Desk chat, and the customer portal.
+- **`BdForms`** — BD forms rendered natively in SwiftUI, with the form's conditions, steps, calculations, validation, uploads and submission. No dependencies, not even `BusinessDashKit`. See [Forms](#forms).
+- **`BdStarterApp`** — SwiftUI screens built on both: shop, cart, blog, Front Desk chat, forms, and the customer portal.
 
 ## The one rule that shapes everything here
 
@@ -24,7 +25,7 @@ swift build
 swift test
 ```
 
-For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BusinessDashKit` and `BdStarterApp` to your target.
+For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BusinessDashKit` and `BdStarterApp` to your target (or just `BdForms`, if forms are all you need).
 
 Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdStarter.xcconfig` has the four keys and how to wire them:
 
@@ -109,6 +110,31 @@ Sources/BusinessDashKit/
 
 **5. The cart visitor token is generated locally.** There is no endpoint that mints one — `cart/session` is a different feature (a tokenized iframe embed). `BdSessionStore` keeps it in `UserDefaults`, because it's an opaque id, not a secret. The *session* token goes in the Keychain, because it is one.
 
+## Forms
+
+`BdForm` renders a Live BD form with native controls: every element type, the form's conditions and steps, calculated fields, validation with the server's rules, file and photo uploads on submit, and the success screen. Styling follows the OS and your app's tint.
+
+```swift
+import BdForms
+
+BdForm(form: "contact", publishableKey: "pk_live_…") { result in
+    print("Submitted", result.submissionId ?? "")
+}
+.bdFormStyle(BdFormStyle(tint: .indigo))
+```
+
+In this starter, `BdFormView(slug:)` does the same with the keys from `BdEnvironment`.
+
+- **Style** with `.bdFormStyle(_:)`: `.grouped` (a `Form`, the default) or `.plain` layout, tint, required marker, submit button (`.prominent`, `.standard`, `.glass`).
+- **Reword or localize** with `.bdFormStrings(_:)`, including every validation message.
+- **Draw one element yourself** with `.bdFieldRenderer(for: "star_rating") { ctx in … }`, or one field with `forField:`. Label, help, errors and validation stay.
+- **Own the state** with `BdFormController`: read and prefill values, drive steps, submit from your own button. `BdForm(controller:)` renders it.
+- **Cards**: set `controller.paymentHandler` to present Stripe's sheet with the intent BD creates; without it, a card element says card entry isn't set up.
+
+The rules are a port of the JS SDK's `forms-core`, and `swift test` replays the TypeScript implementation's own outputs (`Tests/BdFormsTests/Fixtures/forms-parity.json`, made by `pnpm gen:native-forms` in `sdk/`) so the two can't drift silently.
+
+Full guide: [Native Forms (SwiftUI)](https://www.businessdash.us/docs/developer/byFeature/forms/native-swift).
+
 ## Chat is polling, and that's the API
 
 There is no SSE or WebSocket anywhere in the Package API. The platform's guidance is `chatbot/messages` every 3–5 seconds while a widget is open. `ChatFeed` wraps that loop in an `AsyncStream` so a view can `for await` instead of owning a timer:
@@ -123,14 +149,13 @@ Leaving the loop — or SwiftUI cancelling the `.task` on disappear — tears th
 
 ## What this starter does not do
 
-- **The form renderer is minimal.** `<bd-form>` is a DOM web component with no native counterpart, so this is the one surface an app genuinely reimplements. `BdFormView` covers text, textarea, select and checkbox fields; conditional blocks, availability pickers and uploads are not ported. Extend `field(for:)` — the schema tells you the type.
 - **Sign-in uses `openURL`, not `ASWebAuthenticationSession`.** A production app should use the latter so the sheet dismisses itself and the callback is delivered directly. `openURL` keeps the starter free of AuthenticationServices presentation-anchor plumbing.
 - **One chat session per install.** A real app would mint a session per topic and persist the id next to the visitor token.
 - **No shipping / address / coupons-admin surfaces.** The endpoints exist; the kit covers what these screens use.
 
 ## Verification
 
-`swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal.
+`swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal. `BdForms` adds the forms-core parity fixtures and the controller's behavior: conditions, repeaters, calculations, uploads, server issue mapping and every submit outcome.
 
 ## Donations
 

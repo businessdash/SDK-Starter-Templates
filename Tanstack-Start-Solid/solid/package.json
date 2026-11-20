@@ -18,7 +18,7 @@
 		"print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
 	},
 	"dependencies": {
-		"@businessdash/sdk": "^0.9.91",
+		"@businessdash/sdk": "^0.9.92",
 		"@fontsource/inter": "^5.1.1",
 		"@solidjs/web": "^2.0.3",
 		"@t3-oss/env-core": "^0.13.10",

@@ -3,7 +3,7 @@
 Official Kotlin/JVM client for the BusinessDash Package API.
 
 ```kotlin
-implementation("us.businessdash:sdk:0.9.91")
+implementation("us.businessdash:sdk:0.9.92")
 ```
 
 Pure Kotlin/JVM — no Android dependency, so it builds and tests without the

@@ -203,10 +203,11 @@ public struct ParallelPagesResource: Sendable {
 
 /// Org-defined forms.
 ///
-/// This is the one surface a native app genuinely reimplements: `<bd-form>`
-/// is a DOM web component with no native counterpart, so the app fetches the
-/// schema and renders it with its own SwiftUI field views. `BdFormView` in
-/// `BdStarterApp` is a working minimal renderer.
+/// The raw schema and submit calls. To show a form, use `BdForm` from the
+/// `BdForms` library instead: it renders every BD element natively and runs
+/// the form's conditions, calculations and validation (`BdFormView` in
+/// `BdStarterApp` wires it to this app's keys). Use these when your own UI
+/// owns the form and BD is only the receiver.
 ///
 /// ``submit(slug:input:)`` is also the documented CREATE path for a custom
 /// collection — point a form's output at the collection and post here. There

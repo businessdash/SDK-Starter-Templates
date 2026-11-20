@@ -12,7 +12,12 @@ let package = Package(
         // SwiftPM can't build an iOS app bundle, so the starter app is an
         // Xcode project that imports this. It still compiles under
         // `swift build` on macOS, which is what keeps it honest.
-        .library(name: "BdStarterApp", targets: ["BdStarterApp"])
+        .library(name: "BdStarterApp", targets: ["BdStarterApp"]),
+        // Native form renderer: BD forms as SwiftUI, with BD's conditions,
+        // validation, calculations and submission. Depends on nothing — not
+        // even BusinessDashKit — so any app can embed it, including one that
+        // already has a module of that name.
+        .library(name: "BdForms", targets: ["BdForms"])
     ],
     targets: [
         .target(
@@ -20,13 +25,23 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(
+            name: "BdForms",
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .target(
             name: "BdStarterApp",
-            dependencies: ["BusinessDashKit"],
+            dependencies: ["BusinessDashKit", "BdForms"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(
             name: "BusinessDashKitTests",
             dependencies: ["BusinessDashKit"],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .testTarget(
+            name: "BdFormsTests",
+            dependencies: ["BdForms"],
+            resources: [.copy("Fixtures")],
             swiftSettings: [.swiftLanguageMode(.v6)]
         )
     ]

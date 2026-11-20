@@ -1,0 +1,938 @@
+import Foundation
+
+/// A required field with no answer, found by the required-field walk.
+public struct BdMissingField: Sendable, Hashable {
+    /// The field's id.
+    public let id: String
+    public let label: String
+    /// Unique per instance: the id at the top level, `repeater[2].child`
+    /// inside a repeater. Errors are keyed by this.
+    public let path: String
+}
+
+/// BD's form rules, ported from the server validator
+/// (`apps/web/src/server/forms/validate.ts`) and the shared condition module.
+///
+/// The server is the authority: it re-runs all of this on submit. The point of
+/// running it here first is that a visitor learns "this is required" or "that
+/// isn't an email" next to the field, before a round trip, and is never told
+/// something the server would then contradict. So these functions follow the
+/// server line for line, including its quirks.
+public enum BdFormRules {
+    // MARK: Limits (server `validate.ts`)
+
+    static let maxStringLen = 50_000
+    static let maxTextareaLen = 200_000
+    static let maxArrayLen = 500
+    static let maxPhoneLen = 64
+    static let maxDateLen = 64
+    static let maxAddressFieldLen = 512
+    static let maxNamePartLen = 128
+    static let maxNameStringLen = 1024
+    static let maxNicknames = 20
+    static let maxFileFieldLen = 4096
+    static let maxIconNameLen = 64
+    static let maxRichTextLen = 20_000
+    static let maxKeys = 500
+    static let nameValueKeys: Set<String> = ["prefix", "first", "middle", "last", "suffix", "nicknames", "full", "short"]
+
+    nonisolated(unsafe) static let emailRegex = #/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/#
+    nonisolated(unsafe) static let urlRegex =
+        #/^(https?:\/\/)?([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?::\d{1,5})?(?:[\/?#]\S*)?$/#.ignoresCase()
+    nonisolated(unsafe) static let hexColorRegex = #/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/#
+    nonisolated(unsafe) static let iconNameRegex = #/^[a-z0-9]+(?:-[a-z0-9]+)*$/#
+    nonisolated(unsafe) static let monthYearRegex = #/^\d{4}-(0[1-9]|1[0-2])$/#
+    nonisolated(unsafe) static let usZipRegex = #/^\d{5}(-\d{4})?$/#
+
+    // MARK: Author regex
+
+    /// Compile an author's pattern: a bare source or a `/source/flags` literal.
+    /// A broken pattern compiles to nil and never blocks a submission.
+    public static func compileFieldRegex(_ raw: String) -> NSRegularExpression? {
+        let trimmed = raw.trimmingCharacters(in: BdJS.jsWhitespace)
+        var source = trimmed
+        var flags = ""
+        if let m = trimmed.wholeMatch(of: #/\/(.*)\/([dgimsuvy]*)/#.dotMatchesNewlines()) {
+            source = String(m.1)
+            flags = String(m.2)
+        }
+        var options: NSRegularExpression.Options = []
+        if flags.contains("i") { options.insert(.caseInsensitive) }
+        if flags.contains("m") { options.insert(.anchorsMatchLines) }
+        if flags.contains("s") { options.insert(.dotMatchesLineSeparators) }
+        if let re = try? NSRegularExpression(pattern: source, options: options) { return re }
+        return try? NSRegularExpression(pattern: raw)
+    }
+
+    static func regexTest(_ re: NSRegularExpression, _ s: String) -> Bool {
+        re.firstMatch(in: s, range: NSRange(s.startIndex..., in: s)) != nil
+    }
+
+    // MARK: Conditions
+
+    public static func evalClause(_ value: BdJSON?, _ op: String, _ target: String) -> Bool {
+        switch op {
+        case "eq": return BdJS.string(value) == target
+        case "neq": return BdJS.string(value) != target
+        case "contains": return BdJS.string(value).lowercased().contains(target.lowercased())
+                || target.isEmpty
+        case "gt": return BdJS.number(value) > BdJS.number(target)
+        case "lt": return BdJS.number(value) < BdJS.number(target)
+        case "is_empty": return BdJSON.isBlank(value)
+        case "is_not_empty": return !BdJSON.isBlank(value)
+        default: return true
+        }
+    }
+
+    public static func clauses(_ rule: BdConditionRule?) -> [BdConditionRule.Clause] {
+        if let c = rule?.clauses, !c.isEmpty { return c }
+        if let op = rule?.operator { return [.init(operator: op, value: rule?.value)] }
+        return []
+    }
+
+    /// Evaluate a rule. `resolve` returns the value the rule compares, which is
+    /// usually `data[rule.fieldId]` but resolves a collection record's column
+    /// when `matchField` is set.
+    public static func evalCondition(
+        _ rule: BdConditionRule?,
+        resolve: (BdConditionRule) -> BdJSON?
+    ) -> Bool {
+        guard let rule, rule.fieldId != nil else { return true }
+        let all = clauses(rule)
+        if all.isEmpty { return true }
+        let value = resolve(rule)
+        let test = { (c: BdConditionRule.Clause) in evalClause(value, c.operator, c.value ?? "") }
+        return rule.match == "any" ? all.contains(where: test) : all.allSatisfy(test)
+    }
+
+    public static func evalCondition(_ rule: BdConditionRule?, data: [String: BdJSON]) -> Bool {
+        evalCondition(rule) { data[$0.fieldId ?? ""] }
+    }
+
+    /// Only a `condition_block` or an `input_group` can be hidden by a rule.
+    public static func isNodeVisible(
+        _ node: BdFormField,
+        resolve: (BdConditionRule) -> BdJSON?
+    ) -> Bool {
+        guard node.type == "condition_block" || node.type == "input_group" else { return true }
+        return evalCondition(node.conditionRule, resolve: resolve)
+    }
+
+    /// Single-page: one step holding everything. Consecutive: each visible
+    /// top-level node is a step, so a hidden page is skipped, not shown blank.
+    public static func computeSteps(
+        _ fields: [BdFormField],
+        consecutive: Bool,
+        resolve: (BdConditionRule) -> BdJSON?
+    ) -> [[BdFormField]] {
+        guard consecutive else { return [fields] }
+        return fields.filter { isNodeVisible($0, resolve: resolve) }.map { [$0] }
+    }
+
+    // MARK: Emptiness (server `isEmpty`)
+
+    public static func isEmpty(_ field: BdFormField, _ value: BdJSON?) -> Bool {
+        func emptyArray() -> Bool { (value?.arrayValue?.isEmpty ?? true) }
+        func emptyString() -> Bool {
+            guard let s = value?.stringValue else { return true }
+            return s.isEmpty
+        }
+        switch field.type {
+        case "checkbox", "tags", "file_upload":
+            return emptyArray()
+        case "collection_select":
+            return field.collectionSelectConfig?.multi == true ? emptyArray() : emptyString()
+        case "rich_text_input":
+            guard let s = value?.stringValue else { return true }
+            return s.replacingOccurrences(of: "<[^>]*>", with: "", options: .regularExpression)
+                .trimmingCharacters(in: BdJS.jsWhitespace).isEmpty
+        case "month_year":
+            return emptyString()
+        case "choice_cards":
+            return field.choiceConfig?.mode == "multi" ? emptyArray() : emptyString()
+        case "boolean":
+            // Consent: empty unless exactly true. Otherwise any explicit
+            // choice, true or false, is an answer.
+            if field.mustBeTrue == true { return value != .bool(true) }
+            return value?.boolValue == nil
+        case "schedule":
+            let s = value?.objectValue ?? [:]
+            let slot = s["slotStartAt"]?.stringValue.map { !$0.isEmpty } ?? false
+            let asap = s["asap"] == .bool(true)
+            let days = !(s["days"]?.arrayValue?.isEmpty ?? true)
+            let times = !(s["times"]?.arrayValue?.isEmpty ?? true)
+            return !(slot || asap || days || times)
+        case "multi_populator":
+            guard let arr = value?.arrayValue else { return true }
+            return !arr.contains { instanceHasValue($0) }
+        case "date_range":
+            return isFalsy(value?["start"]) || isFalsy(value?["end"])
+        case "address":
+            return isFalsy(value?["line1"]) || isFalsy(value?["city"])
+                || isFalsy(value?["state"]) || isFalsy(value?["zip"])
+        case "name":
+            let first = value?["first"]?.stringValue?.trimmingCharacters(in: BdJS.jsWhitespace) ?? ""
+            let last = value?["last"]?.stringValue?.trimmingCharacters(in: BdJS.jsWhitespace) ?? ""
+            return first.isEmpty || last.isEmpty
+        case "time_picker":
+            switch field.timeConfig?.mode ?? "simple" {
+            case "time_block": return isFalsy(value?["start"]) || isFalsy(value?["end"])
+            case "appointment": return isFalsy(value?["date"]) || isFalsy(value?["time"])
+            default: return BdJSON.isBlank(value)
+            }
+        case "star_rating", "happiness_rating":
+            guard let n = value?.doubleValue else { return true }
+            return n <= 0
+        case "measurement":
+            return value?["value"]?.doubleValue == nil
+        case "url":
+            guard let u = value?["url"]?.stringValue else { return true }
+            return u.isEmpty
+        default:
+            return BdJSON.isBlank(value)
+        }
+    }
+
+    /// JS falsiness for the `!v?.x` checks in the server's rules.
+    static func isFalsy(_ v: BdJSON?) -> Bool {
+        switch v {
+        case nil, .null?: return true
+        case .bool(let b)?: return !b
+        case .number(let n)?: return n == 0 || n.isNaN
+        case .string(let s)?: return s.isEmpty
+        default: return false
+        }
+    }
+
+    static func instanceHasValue(_ instance: BdJSON) -> Bool {
+        guard let o = instance.objectValue else { return false }
+        return o.values.contains { v in
+            switch v {
+            case .null: return false
+            case .string(let s): return !s.isEmpty
+            case .array(let a): return !a.isEmpty
+            default: return true
+            }
+        }
+    }
+
+    // MARK: Value validation (server `validateValue`)
+
+    /// Why a non-empty value doesn't conform to its field, or nil when it
+    /// does. Reasons are the server's: `type`, `format`, `min`, `max`,
+    /// `options`, `regex`, `business_email`. Empty values always pass here;
+    /// required-ness is the required walk's job.
+    public static func validateValue(_ field: BdFormField, _ value: BdJSON?) -> String? {
+        guard let value, !BdJSON.isBlank(value) else { return nil }
+        let opts = field.options
+        func len(_ s: String) -> Int { s.utf16.count }
+
+        switch field.type {
+        case "email":
+            guard let s = value.stringValue else { return "type" }
+            if len(s) > maxStringLen { return "max" }
+            if s.wholeMatch(of: emailRegex) == nil { return "format" }
+            if field.emailConfig?.businessOnly == true,
+               isConsumerEmailDomain(emailDomain(s) ?? "")
+            {
+                return "business_email"
+            }
+            return nil
+        case "url":
+            guard let o = value.objectValue else { return "type" }
+            let u = o["url"]
+            if BdJSON.isBlank(u) { return nil }
+            guard let s = u?.stringValue else { return "type" }
+            if len(s) > maxStringLen { return "max" }
+            if s.trimmingCharacters(in: BdJS.jsWhitespace).wholeMatch(of: urlRegex) == nil { return "format" }
+            if let v = o["verified"] {
+                guard let vs = v.stringValue, ["unverified", "safe", "unsafe"].contains(vs) else { return "options" }
+            }
+            return onlyBoundedPrimitives(o, maxStringLen) ? nil : "type"
+        case "phone":
+            guard let s = value.stringValue else { return "type" }
+            if len(s) > maxPhoneLen { return "max" }
+            if let rx = regexFail(field, s) { return rx }
+            let digits = s.filter(\.isASCIIDigit)
+            if field.phoneConfig?.international == true {
+                return (7...15).contains(digits.count) ? nil : "format"
+            }
+            let national = digits.count == 11 && digits.hasPrefix("1") ? String(digits.dropFirst()) : digits
+            return national.count == 10 ? nil : "format"
+        case "number", "slider", "stepper":
+            let n: Double
+            switch value {
+            case .number(let x): n = x
+            case .string(let s) where !s.trimmingCharacters(in: BdJS.jsWhitespace).isEmpty && !BdJS.number(s).isNaN:
+                n = BdJS.number(s)
+            default: return "type"
+            }
+            if field.type == "number", field.allowDecimal == false, n.rounded() != n { return "format" }
+            if field.type == "number", field.allowNegative == false, n < 0 { return "min" }
+            let min = field.validation?.min ?? field.sliderConfig?.min
+            let max = field.validation?.max ?? field.sliderConfig?.max
+            if let min, n < min { return "min" }
+            if let max, n > max { return "max" }
+            return nil
+        case "star_rating", "happiness_rating":
+            guard let n = value.doubleValue else { return "type" }
+            let maxStars = Double(field.starRatingConfig?.maxStars ?? 5)
+            if n < 0 || n > maxStars + 0.0001 { return "max" }
+            return nil
+        case "boolean":
+            return value.boolValue != nil ? nil : "type"
+        case "select", "radio":
+            guard let s = value.stringValue else { return "type" }
+            if len(s) > maxStringLen { return "max" }
+            if let opts, field.allowCustom != true, !opts.contains(s) { return "options" }
+            return nil
+        case "collection_select":
+            if field.collectionSelectConfig?.multi == true {
+                guard let a = value.arrayValue else { return "type" }
+                if a.count > maxArrayLen { return "max" }
+                for v in a {
+                    guard let s = v.stringValue else { return "type" }
+                    if len(s) > maxStringLen { return "max" }
+                }
+                return nil
+            }
+            guard let s = value.stringValue else { return "type" }
+            return len(s) > maxStringLen ? "max" : nil
+        case "rich_text_input":
+            guard let s = value.stringValue else { return "type" }
+            return len(s) > maxRichTextLen ? "max" : nil
+        case "month_year":
+            guard let s = value.stringValue else { return "type" }
+            return s.wholeMatch(of: monthYearRegex) == nil ? "format" : nil
+        case "color_picker":
+            guard let s = value.stringValue else { return "type" }
+            return s.wholeMatch(of: hexColorRegex) == nil ? "format" : nil
+        case "icon_select":
+            guard let s = value.stringValue else { return "type" }
+            if len(s) > maxIconNameLen { return "max" }
+            if s.wholeMatch(of: iconNameRegex) == nil { return "format" }
+            if let allowed = field.iconConfig?.allowedIcons, !allowed.isEmpty, !allowed.contains(s) { return "options" }
+            return nil
+        case "image_input":
+            guard let s = value.stringValue else { return "type" }
+            if len(s) > maxStringLen { return "max" }
+            return s.trimmingCharacters(in: BdJS.jsWhitespace).wholeMatch(of: urlRegex) == nil ? "format" : nil
+        case "tags":
+            guard let a = value.arrayValue else { return "type" }
+            if a.count > maxArrayLen { return "max" }
+            for v in a {
+                guard let s = v.stringValue else { return "type" }
+                if len(s) > maxStringLen { return "max" }
+            }
+            return nil
+        case "checkbox":
+            guard let a = value.arrayValue else { return "type" }
+            if a.count > maxArrayLen { return "max" }
+            for v in a {
+                guard let s = v.stringValue else { return "type" }
+                if let opts, field.allowCustom != true, !opts.contains(s) { return "options" }
+            }
+            return nil
+        case "service_selector":
+            guard let a = value.arrayValue else { return "type" }
+            if a.count > maxArrayLen { return "max" }
+            let offered = (field.serviceConfig?.options ?? []).map(\.id)
+            for v in a {
+                guard let s = v.stringValue else { return "type" }
+                if !offered.isEmpty, !offered.contains(s) { return "options" }
+            }
+            return nil
+        case "choice_cards":
+            let labels = (field.choiceConfig?.options ?? []).map(\.label)
+            if field.choiceConfig?.mode == "multi" {
+                guard let a = value.arrayValue else { return "type" }
+                if a.count > maxArrayLen { return "max" }
+                for v in a {
+                    guard let s = v.stringValue else { return "type" }
+                    if !labels.isEmpty, !labels.contains(s) { return "options" }
+                }
+                return nil
+            }
+            guard let s = value.stringValue else { return "type" }
+            if len(s) > maxStringLen { return "max" }
+            if !labels.isEmpty, !labels.contains(s) { return "options" }
+            return nil
+        case "file_upload":
+            guard let a = value.arrayValue else { return "type" }
+            let maxFiles = min(field.fileConfig?.maxFiles ?? maxArrayLen, maxArrayLen)
+            if a.count > maxFiles { return "max" }
+            for item in a {
+                guard let o = item.objectValue else { return "type" }
+                if !onlyBoundedPrimitives(o, maxFileFieldLen) { return "type" }
+            }
+            return nil
+        case "currency":
+            guard let n = value.doubleValue, !n.isNaN else { return "type" }
+            if field.currencyConfig?.allowNegative != true, n < 0 { return "format" }
+            if field.currencyConfig?.allowDecimal == false, n.rounded() != n { return "format" }
+            return nil
+        case "measurement":
+            guard let o = value.objectValue else { return "type" }
+            if BdJSON.isBlank(o["value"]) { return nil }
+            guard let n = o["value"]?.doubleValue, !n.isNaN else { return "type" }
+            guard let unit = o["unit"]?.stringValue else { return "type" }
+            if let cat = BdUnits.category(field.unitConfig?.category), !cat.contains(unit) { return "options" }
+            if field.unitConfig?.allowDecimal == false, n.rounded() != n { return "format" }
+            return onlyBoundedPrimitives(o, maxDateLen) ? nil : "type"
+        case "multi_populator":
+            guard let a = value.arrayValue else { return "type" }
+            let maxInstances = min(field.populatorConfig?.maxInstances ?? 10, maxArrayLen)
+            if a.count > maxInstances { return "max" }
+            let known = instanceValueFields(field.children ?? [])
+            for instance in a {
+                guard let o = instance.objectValue else { return "type" }
+                if o.count > maxKeys { return "max" }
+                for (key, v) in o {
+                    guard let child = known[key] else { return "options" }
+                    if let reason = validateValue(child, v) {
+                        return "\(child.label.isEmpty ? key : child.label): \(reason)"
+                    }
+                }
+            }
+            return nil
+        case "date_range":
+            guard let o = value.objectValue else { return "type" }
+            return onlyBoundedPrimitives(o, maxDateLen) ? nil : "type"
+        case "time_picker":
+            if (field.timeConfig?.mode ?? "simple") == "simple" {
+                guard let s = value.stringValue else { return "type" }
+                return len(s) > maxDateLen ? "max" : nil
+            }
+            guard let o = value.objectValue else { return "type" }
+            return onlyBoundedPrimitives(o, maxDateLen) ? nil : "type"
+        case "address":
+            guard let o = value.objectValue else { return "type" }
+            if !onlyBoundedPrimitives(o, maxAddressFieldLen) { return "type" }
+            if let zip = o["zip"]?.stringValue, !isValidUSZip(zip) { return "format" }
+            return nil
+        case "name":
+            guard let o = value.objectValue else { return "type" }
+            for (key, v) in o {
+                if !nameValueKeys.contains(key) { return "options" }
+                if key == "nicknames" || v.isNull { continue }
+                guard let s = v.stringValue else { return "type" }
+                let cap = key == "full" || key == "short" ? maxNameStringLen : maxNamePartLen
+                if len(s) > cap { return "max" }
+            }
+            switch o["nicknames"] {
+            case nil, .null?: break
+            case .string(let s)?: if len(s) > maxNameStringLen { return "max" }
+            case .array(let a)?:
+                if a.count > maxNicknames { return "max" }
+                for item in a {
+                    guard let s = item.stringValue else { return "type" }
+                    if len(s) > maxNamePartLen { return "max" }
+                }
+            default: return "type"
+            }
+            return nil
+        case "schedule":
+            guard let s = value.objectValue else { return "type" }
+            if let slot = s["slotStartAt"] {
+                guard let str = slot.stringValue else { return "type" }
+                if len(str) > maxDateLen { return "max" }
+                if BdDates.parseInstant(str) == nil { return "format" }
+            }
+            if let asap = s["asap"], asap.boolValue == nil { return "type" }
+            for key in ["days", "times"] {
+                guard let raw = s[key] else { continue }
+                guard let arr = raw.arrayValue else { return "type" }
+                if arr.count > maxArrayLen { return "max" }
+                for item in arr {
+                    guard let str = item.stringValue else { return "type" }
+                    if len(str) > maxDateLen { return "max" }
+                }
+            }
+            if let notes = s["notes"] {
+                guard let str = notes.stringValue else { return "type" }
+                if len(str) > maxStringLen { return "max" }
+            }
+            return nil
+        default:
+            // text / textarea / date / any plain-text input.
+            switch value {
+            case .number, .bool: return nil
+            case .string(let s):
+                let cap = field.type == "textarea" ? maxTextareaLen : maxStringLen
+                if len(s) > cap { return "max" }
+                return regexFail(field, s)
+            default: return "type"
+            }
+        }
+    }
+
+    static func regexFail(_ field: BdFormField, _ value: String) -> String? {
+        guard let pattern = field.regexPattern, !pattern.isEmpty,
+              let re = compileFieldRegex(pattern) else { return nil }
+        return regexTest(re, value) ? nil : "regex"
+    }
+
+    static func onlyBoundedPrimitives(_ obj: [String: BdJSON], _ maxLen: Int) -> Bool {
+        obj.values.allSatisfy { v in
+            switch v {
+            case .null, .number, .bool: return true
+            case .string(let s): return s.utf16.count <= maxLen
+            default: return false
+            }
+        }
+    }
+
+    /// Value-bearing fields inside a repeater, keyed by id and output key.
+    static func instanceValueFields(_ children: [BdFormField]) -> [String: BdFormField] {
+        var out: [String: BdFormField] = [:]
+        func walk(_ nodes: [BdFormField]) {
+            for f in nodes {
+                if !BdFieldType.layoutOnly.contains(f.type) {
+                    out[f.id] = f
+                    if let k = f.key { out[k] = f }
+                }
+                if f.type != "multi_populator", let kids = f.children { walk(kids) }
+            }
+        }
+        walk(children)
+        return out
+    }
+
+    public static func isValidUSZip(_ zip: String) -> Bool {
+        zip.trimmingCharacters(in: BdJS.jsWhitespace).wholeMatch(of: usZipRegex) != nil
+    }
+
+    public static func emailDomain(_ email: String) -> String? {
+        guard let at = email.lastIndex(of: "@"), email.index(after: at) < email.endIndex else { return nil }
+        return email[email.index(after: at)...].trimmingCharacters(in: BdJS.jsWhitespace).lowercased()
+    }
+
+    public static func isConsumerEmailDomain(_ host: String) -> Bool {
+        let h = host.trimmingCharacters(in: BdJS.jsWhitespace).lowercased()
+        if BdFormsData.consumerEmailDomains.contains(h) { return true }
+        return h.hasSuffix(".gmail.com") || h.hasSuffix(".googlemail.com")
+    }
+
+    // MARK: Required walk (server `findMissingRequiredFields`)
+
+    /// Every required field with no answer under the current conditions:
+    /// hidden blocks and pages enforce nothing, an either/or needs one side,
+    /// a required repeater needs an entry and each filled entry its own
+    /// required fields, and consent must be `true`.
+    public static func findMissingRequired(
+        _ fields: [BdFormField],
+        _ data: [String: BdJSON],
+        resolveMatch: ((BdConditionRule, BdJSON?) -> BdJSON?)? = nil
+    ) -> [BdMissingField] {
+        let derived = withDerivedFieldValues(fields, deriveReferenceValues(fields, data))
+        var missing: [BdMissingField] = []
+        walkRequired(fields, scope: derived, prefix: "", resolveMatch: resolveMatch, into: &missing)
+        return missing
+    }
+
+    static func resolver(
+        _ scope: [String: BdJSON],
+        _ resolveMatch: ((BdConditionRule, BdJSON?) -> BdJSON?)?
+    ) -> (BdConditionRule) -> BdJSON? {
+        { rule in
+            let raw = scope[rule.fieldId ?? ""]
+            guard rule.matchField != nil, let resolveMatch else { return raw }
+            return resolveMatch(rule, raw)
+        }
+    }
+
+    static func walkRequired(
+        _ nodes: [BdFormField],
+        scope: [String: BdJSON],
+        prefix: String,
+        resolveMatch: ((BdConditionRule, BdJSON?) -> BdJSON?)?,
+        into missing: inout [BdMissingField]
+    ) {
+        let resolve = resolver(scope, resolveMatch)
+        for f in nodes {
+            switch f.type {
+            case "condition_block":
+                guard evalCondition(f.conditionRule, resolve: resolve) else { continue }
+                walkRequired(f.children ?? [], scope: scope, prefix: prefix, resolveMatch: resolveMatch, into: &missing)
+            case "or_condition":
+                let children = f.children ?? []
+                let filled = children.map { subtreeHasValue([$0], scope, resolveMatch: resolveMatch) }
+                if !children.isEmpty && !filled.contains(true) {
+                    missing.append(.init(id: f.id, label: f.label.isEmpty ? "Either side required" : f.label, path: prefix + f.id))
+                    continue
+                }
+                for (i, child) in children.enumerated() where filled[i] {
+                    walkRequired([child], scope: scope, prefix: prefix, resolveMatch: resolveMatch, into: &missing)
+                }
+            case "input_group", "flex_row":
+                guard isNodeVisible(f, resolve: resolve) else { continue }
+                walkRequired(f.children ?? [], scope: scope, prefix: prefix, resolveMatch: resolveMatch, into: &missing)
+            case "multi_populator":
+                let instances = scope[f.id]?.arrayValue ?? []
+                let filled = instances.enumerated().filter { $0.element.objectValue != nil && instanceHasValue($0.element) }
+                if f.required && filled.isEmpty {
+                    missing.append(.init(id: f.id, label: f.label.isEmpty ? "At least one entry required" : f.label, path: prefix + f.id))
+                    continue
+                }
+                for (index, inst) in filled {
+                    walkRequired(
+                        f.children ?? [],
+                        scope: inst.objectValue ?? [:],
+                        prefix: "\(prefix)\(f.id)[\(index)].",
+                        resolveMatch: resolveMatch,
+                        into: &missing
+                    )
+                }
+            default:
+                if BdFieldType.staticOrLayout.contains(f.type) { continue }
+                if (f.required || f.mustBeTrue == true) && isEmpty(f, scope[f.id]) {
+                    missing.append(.init(id: f.id, label: f.label.isEmpty ? "Untitled" : f.label, path: prefix + f.id))
+                }
+            }
+        }
+    }
+
+    /// Does any value-bearing leaf under these nodes hold an answer? Decides
+    /// which side of an either/or the visitor chose.
+    static func subtreeHasValue(
+        _ nodes: [BdFormField],
+        _ data: [String: BdJSON],
+        resolveMatch: ((BdConditionRule, BdJSON?) -> BdJSON?)? = nil
+    ) -> Bool {
+        let resolve = resolver(data, resolveMatch)
+        for f in nodes {
+            switch f.type {
+            case "condition_block":
+                guard evalCondition(f.conditionRule, resolve: resolve) else { continue }
+                if subtreeHasValue(f.children ?? [], data, resolveMatch: resolveMatch) { return true }
+            case "or_condition", "input_group", "flex_row":
+                guard isNodeVisible(f, resolve: resolve) else { continue }
+                if subtreeHasValue(f.children ?? [], data, resolveMatch: resolveMatch) { return true }
+            default:
+                if BdFieldType.staticOrLayout.contains(f.type) { continue }
+                if !isEmpty(f, data[f.id]) { return true }
+            }
+        }
+        return false
+    }
+
+    /// Concurrent reveal: show children up to and including the first one
+    /// that still has a missing required answer.
+    public static func concurrentRevealCount(_ children: [BdFormField], _ data: [String: BdJSON]) -> Int {
+        for (i, child) in children.enumerated() where !findMissingRequired([child], data).isEmpty {
+            return i + 1
+        }
+        return children.count
+    }
+
+    // MARK: Derived values
+
+    /// Hidden `reference_value` elements mirror their source once the source
+    /// is complete (non-empty and passing its regex), else null.
+    public static func deriveReferenceValues(_ fields: [BdFormField], _ data: [String: BdJSON]) -> [String: BdJSON] {
+        let byId = fieldsById(fields)
+        var out = data
+        for f in byId.values where f.type == "reference_value" {
+            var derived: BdJSON = .null
+            if let sourceId = f.referenceFieldId, let source = byId[sourceId], !isEmpty(source, data[sourceId]) {
+                let val = data[sourceId] ?? .null
+                var ok = true
+                if let pattern = source.regexPattern, !pattern.isEmpty, let re = compileFieldRegex(pattern) {
+                    ok = regexTest(re, BdJS.string(val))
+                }
+                if ok { derived = val }
+            }
+            out[f.id] = derived
+        }
+        return out
+    }
+
+    /// One derived value per exploded checkbox option (`id::optionKey`),
+    /// month/year part (`id::year`), and name part (`id::first`), so a
+    /// condition can point at any of them.
+    public static func withDerivedFieldValues(_ fields: [BdFormField], _ data: [String: BdJSON]) -> [String: BdJSON] {
+        var out = data
+        for field in fieldsById(fields).values {
+            if field.type == "checkbox", field.explodeOptions == true, let options = field.options, !options.isEmpty {
+                let picked = data[field.id]?.stringArray ?? []
+                for o in checkboxOptionKeys(keyBase(field), options) {
+                    out["\(field.id)::\(o.key)"] = .bool(picked.contains(o.option))
+                }
+            }
+            if field.type == "month_year", field.explodeMonthYear == true {
+                let parts = monthYearParts(data[field.id])
+                out["\(field.id)::year"] = parts.map { .number(Double($0.year)) } ?? .null
+                out["\(field.id)::month"] = parts.map { .number(Double($0.month)) } ?? .null
+            }
+            if field.type == "name" {
+                let cfg = field.nameConfig
+                var parts = ["first", "last", "full", "short"]
+                if cfg?.prefix == true { parts.append("prefix") }
+                if cfg?.middle == true { parts.append("middle") }
+                if cfg?.suffix == true { parts.append("suffix") }
+                if cfg?.nicknames == true { parts.append("nicknames") }
+                for part in parts {
+                    out["\(field.id)::\(part)"] = namePartValue(data[field.id], part).map { .string($0) } ?? .null
+                }
+            }
+        }
+        return out
+    }
+
+    static func keyBase(_ field: BdFormField) -> String {
+        field.outputKey ?? toOutputKey(field.label)
+    }
+
+    static func monthYearParts(_ raw: BdJSON?) -> (year: Int, month: Int)? {
+        guard let s = raw?.stringValue?.trimmingCharacters(in: BdJS.jsWhitespace),
+              let m = s.wholeMatch(of: #/(\d{4})-(\d{1,2})/#),
+              let y = Int(m.1), let mo = Int(m.2) else { return nil }
+        return (y, mo)
+    }
+
+    static func namePartValue(_ raw: BdJSON?, _ part: String) -> String? {
+        guard let o = raw?.objectValue else { return nil }
+        switch part {
+        case "prefix", "first", "middle", "last", "suffix":
+            guard let s = o[part]?.stringValue, !s.isEmpty else { return nil }
+            return s
+        case "full":
+            if let s = o["full"]?.stringValue, !s.isEmpty { return s }
+            let c = composeFullName(o)
+            return c.isEmpty ? nil : c
+        case "short":
+            if let s = o["short"]?.stringValue, !s.isEmpty { return s }
+            let c = composeShortName(o)
+            return c.isEmpty ? nil : c
+        case "nicknames":
+            guard let a = o["nicknames"]?.arrayValue, !a.isEmpty else { return nil }
+            return a.map { BdJS.string($0) }.joined(separator: ", ")
+        default:
+            return nil
+        }
+    }
+
+    public static func fieldsById(_ fields: [BdFormField]) -> [String: BdFormField] {
+        var out: [String: BdFormField] = [:]
+        func walk(_ nodes: [BdFormField]) {
+            for f in nodes {
+                out[f.id] = f
+                if let kids = f.children { walk(kids) }
+            }
+        }
+        walk(fields)
+        return out
+    }
+
+    // MARK: Output keys
+
+    /// "Best time to reach:" → "bestTimeToReach". "" when the label has no
+    /// usable characters.
+    public static func toOutputKey(_ raw: String) -> String {
+        let words = raw.replacingOccurrences(of: "[^a-zA-Z0-9]+", with: " ", options: .regularExpression)
+            .split(separator: " ").map(String.init)
+        guard !words.isEmpty else { return "" }
+        let key = words.enumerated().map { i, w in
+            i == 0 ? w.lowercased() : w.prefix(1).uppercased() + w.dropFirst().lowercased()
+        }.joined()
+        return key.first?.isASCIIDigit == true ? "_" + key : key
+    }
+
+    static func checkboxOptionKeys(_ fieldKey: String, _ options: [String]) -> [(key: String, option: String)] {
+        var used = Set<String>()
+        return options.map { option in
+            let optKey = toOutputKey(option).isEmpty ? "option" : toOutputKey(option)
+            var key = fieldKey + optKey.prefix(1).uppercased() + optKey.dropFirst()
+            if used.contains(key) {
+                var n = 2
+                while used.contains("\(key)\(n)") { n += 1 }
+                key = "\(key)\(n)"
+            }
+            used.insert(key)
+            return (key, option)
+        }
+    }
+
+    // MARK: Names
+
+    static let namePartOrder = ["prefix", "first", "middle", "last", "suffix"]
+
+    static func composeFullName(_ v: [String: BdJSON]) -> String {
+        namePartOrder.compactMap { v[$0]?.stringValue?.trimmingCharacters(in: BdJS.jsWhitespace) }
+            .filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
+    static func composeShortName(_ v: [String: BdJSON]) -> String {
+        ["first", "last"].compactMap { v[$0]?.stringValue?.trimmingCharacters(in: BdJS.jsWhitespace) }
+            .filter { !$0.isEmpty }.joined(separator: " ")
+    }
+
+    /// Trimmed parts, nicknames split into a list, `full`/`short` recomputed.
+    public static func normalizeNameValue(_ raw: BdJSON) -> BdJSON {
+        guard let o = raw.objectValue else { return raw }
+        var out: [String: BdJSON] = [:]
+        for key in namePartOrder {
+            if let s = o[key]?.stringValue?.trimmingCharacters(in: BdJS.jsWhitespace), !s.isEmpty {
+                out[key] = .string(s)
+            }
+        }
+        var nicknames: [String] = []
+        switch o["nicknames"] {
+        case .string(let s)?:
+            nicknames = s.split(separator: ",").map { $0.trimmingCharacters(in: BdJS.jsWhitespace) }.filter { !$0.isEmpty }
+        case .array(let a)?:
+            nicknames = a.compactMap(\.stringValue).map { $0.trimmingCharacters(in: BdJS.jsWhitespace) }.filter { !$0.isEmpty }
+        default: break
+        }
+        if !nicknames.isEmpty { out["nicknames"] = .array(nicknames.map { .string($0) }) }
+        out["full"] = .string(composeFullName(out))
+        out["short"] = .string(composeShortName(out))
+        return .object(out)
+    }
+
+    // MARK: Seed + payload
+
+    static let noSeedStatic: Set<String> = [
+        "title", "subtitle", "separator", "image", "richtext", "body_text", "bullet_list", "table",
+        "calculation", "reference_value",
+    ]
+    static let stepContainers: Set<String> = ["input_group", "condition_block", "or_condition"]
+
+    /// Starting values: what each element shows before the visitor touches it.
+    public static func seedInitialData(_ fields: [BdFormField]) -> [String: BdJSON] {
+        var out: [String: BdJSON] = [:]
+        func walk(_ nodes: [BdFormField]) {
+            for f in nodes {
+                if f.type == "multi_populator" {
+                    out[f.id] = defaultValue(for: f)
+                    continue
+                }
+                if !noSeedStatic.contains(f.type), !stepContainers.contains(f.type), f.type != "flex_row",
+                   let v = defaultValue(for: f)
+                {
+                    out[f.id] = v
+                }
+                if let kids = f.children { walk(kids) }
+            }
+        }
+        walk(fields)
+        return out
+    }
+
+    /// A field's starting value, or nil for one that starts unanswered.
+    public static func defaultValue(for field: BdFormField) -> BdJSON? {
+        switch field.type {
+        case "checkbox", "tags": return []
+        case "choice_cards": return field.choiceConfig?.mode == "multi" ? [] : ""
+        case "multi_populator": return [[:]]
+        case "measurement":
+            let cat = BdUnits.category(field.unitConfig?.category) ?? BdUnits.category("length")!
+            let unit = field.unitConfig?.defaultUnit ?? cat.units.first?.symbol ?? ""
+            return ["value": "", "unit": .string(unit), "baseUnit": .string(cat.baseUnit)]
+        case "boolean": return .bool(field.defaultValue == .bool(true))
+        case "number", "stepper", "star_rating": return 0
+        // Start where the thumb is drawn (seeding 0 under a higher minimum
+        // submitted a value the visitor never chose).
+        case "slider": return .number(field.sliderConfig?.min ?? 0)
+        // 0 is a real answer (😞): an unanswered rating stays unset.
+        case "happiness_rating": return nil
+        case "date_range": return ["start": "", "end": ""]
+        case "time_picker":
+            switch field.timeConfig?.mode ?? "simple" {
+            case "time_block": return ["start": "", "end": ""]
+            case "appointment": return ["date": "", "time": ""]
+            default: return ""
+            }
+        default:
+            if case .string(let s)? = field.defaultValue { return .string(s) }
+            return ""
+        }
+    }
+
+    /// The wire payload: values re-keyed by each field's published output key,
+    /// repeaters remapped per entry, names normalized. Hidden references never
+    /// travel (the server would reject them as unknown keys).
+    public static func toSubmissionPayload(_ fields: [BdFormField], _ data: [String: BdJSON]) -> [String: BdJSON] {
+        let all = fieldsById(fields)
+        func remap(_ scopeFields: [BdFormField], _ scopeData: [String: BdJSON]) -> [String: BdJSON] {
+            let byId = flattenValueFields(scopeFields)
+            var out: [String: BdJSON] = [:]
+            for (id, input) in scopeData {
+                if let f = all[id], BdFieldType.layoutOnly.contains(f.type) { continue }
+                guard let field = byId[id] else {
+                    out[id] = input
+                    continue
+                }
+                var value = input
+                if field.type == "multi_populator", let arr = input.arrayValue {
+                    value = .array(arr.map { inst in
+                        inst.objectValue.map { .object(remap(field.children ?? [], $0)) } ?? inst
+                    })
+                }
+                if field.type == "name", input.objectValue != nil {
+                    value = normalizeNameValue(input)
+                }
+                out[field.key ?? id] = value
+            }
+            return out
+        }
+        return remap(fields, data)
+    }
+
+    static func flattenValueFields(_ fields: [BdFormField]) -> [String: BdFormField] {
+        var out: [String: BdFormField] = [:]
+        func walk(_ nodes: [BdFormField]) {
+            for f in nodes {
+                if f.type == "multi_populator" {
+                    out[f.id] = f
+                    continue
+                }
+                if !BdFieldType.staticOrLayout.contains(f.type) || f.type == "stepper" { out[f.id] = f }
+                if let kids = f.children { walk(kids) }
+            }
+        }
+        walk(fields)
+        return out
+    }
+
+    // MARK: Formatting helpers
+
+    /// `(555) 123-4567` as the visitor types; `+44 207 946 0958` when
+    /// international. Same as the web renderer's.
+    public static func formatPhone(_ input: String, international: Bool) -> String {
+        if international {
+            let plus = input.drop(while: { $0 == " " }).hasPrefix("+") ? "+" : ""
+            let digits = String(input.filter(\.isASCIIDigit).prefix(15))
+            var grouped = ""
+            for (i, ch) in digits.enumerated() {
+                if i > 0 && i % 3 == 0 { grouped.append(" ") }
+                grouped.append(ch)
+            }
+            return (plus + grouped).trimmingCharacters(in: .whitespaces)
+        }
+        let d = Array(input.filter(\.isASCIIDigit))
+        if d.count <= 3 { return String(d) }
+        if d.count <= 6 { return "(\(String(d[0..<3]))) \(String(d[3...]))" }
+        return "(\(String(d[0..<3]))) \(String(d[3..<6]))-\(String(d[6..<min(10, d.count)]))"
+    }
+
+    /// A table cell in a `check` column: ✓, –, or its own text.
+    public static func tableCheckState(_ cell: String) -> String {
+        let v = cell.trimmingCharacters(in: .whitespaces).lowercased()
+        if ["yes", "y", "true", "1", "x", "✓", "✔", "check"].contains(v) { return "yes" }
+        if ["no", "n", "false", "0", "-", "–", "—", ""].contains(v) { return "no" }
+        return "text"
+    }
+
+    /// Only http(s) links leave the form.
+    public static func safeHTTPURL(_ raw: String?) -> URL? {
+        guard let raw = raw?.trimmingCharacters(in: .whitespaces), !raw.isEmpty,
+              let url = URL(string: raw), let scheme = url.scheme?.lowercased(),
+              scheme == "http" || scheme == "https" else { return nil }
+        return url
+    }
+}
+
+extension Character {
+    var isASCIIDigit: Bool { isASCII && isNumber }
+}

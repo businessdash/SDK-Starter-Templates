@@ -71,7 +71,7 @@
 
     @if (\App\Bd\Bd::configured())
         <script type="module">
-            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.91/analytics-core";
+            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.92/analytics-core";
             createAnalytics({
                 siteId: @json(config('bd.site_id')),
                 baseUrl: @json(rtrim(config('bd.host'), '/') . '/api/package/v1'),
