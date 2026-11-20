@@ -45,8 +45,8 @@ importers:
         specifier: ^21.2.27
         version: 21.2.30(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(@angular/platform-server@21.2.26(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/compiler@21.2.26)(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(@angular/platform-browser@21.2.26(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)))(rxjs@7.8.2))(@angular/router@21.2.26(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(@angular/platform-browser@21.2.26(@angular/common@21.2.26(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)))(rxjs@7.8.2))
       '@businessdash/sdk':
-        specifier: ^0.9.90
-        version: 0.9.90(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))
+        specifier: ^0.9.92
+        version: 0.9.92(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))
       express:
         specifier: ^5.3.0
         version: 5.3.0
@@ -57,8 +57,8 @@ importers:
         specifier: ^2.8.1
         version: 2.9.1
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@angular/build':
         specifier: ^21.2.27
@@ -403,8 +403,8 @@ packages:
     resolution: {integrity: sha512-0GEz8qJWokkUVYQYRukmkSHIFNoBH8QTreeHrAFbvz1XFYc3Y+puhMs8PQ5x8GNugiC2l5jvDBXKLbBIByeSBw==}
     hasBin: true
 
-  '@businessdash/sdk@0.9.90':
-    resolution: {integrity: sha512-kFQYQk6EdSqfPueSC0z/Mh4oGiyvdfCywaF6Opg0OMlU807FFTl84bBCCuSLLXjC0/5IvB0RCs0Pf1H7XkMaJQ==}
+  '@businessdash/sdk@0.9.92':
+    resolution: {integrity: sha512-Alb+q5SHfJflpHDiBYQLyRxh/1kX+ANP/WlDrNBa18ASHWJ/jUT781W2vgFLbSZq1EpRdz34zwxIEWFo48/vWg==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -2809,11 +2809,11 @@ packages:
     peerDependencies:
       zod: ^3.25.28 || ^4
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
-
   zod@4.6.6:
     resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
+
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
 snapshots:
 
@@ -3225,11 +3225,10 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@businessdash/sdk@0.9.90(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))':
+  '@businessdash/sdk@0.9.92(@angular/core@21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2))':
     dependencies:
       '@js-temporal/polyfill': 0.5.1
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
+      zod: 4.6.7
     optionalDependencies:
       '@angular/core': 21.2.26(@angular/compiler@21.2.26)(rxjs@7.8.2)
 
@@ -5512,14 +5511,10 @@ snapshots:
 
   yoctocolors@2.2.0: {}
 
-  zod-to-json-schema@3.25.2(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
-
   zod-to-json-schema@3.25.2(zod@4.6.6):
     dependencies:
       zod: 4.6.6
 
-  zod@3.25.76: {}
-
   zod@4.6.6: {}
+
+  zod@4.6.7: {}
