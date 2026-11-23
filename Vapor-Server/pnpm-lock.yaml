@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.92
-        version: 0.9.92
+        specifier: ^0.9.93
+        version: 0.9.93
       tsx:
         specifier: ^4.22.4
         version: 4.23.12
@@ -20,8 +20,8 @@ importers:
 
 packages:
 
-  '@businessdash/sdk@0.9.92':
-    resolution: {integrity: sha512-Alb+q5SHfJflpHDiBYQLyRxh/1kX+ANP/WlDrNBa18ASHWJ/jUT781W2vgFLbSZq1EpRdz34zwxIEWFo48/vWg==}
+  '@businessdash/sdk@0.9.93':
+    resolution: {integrity: sha512-QN3tQaIBRx/UWLx/heqtVS7RjDoXDHRAF5omPvOePzh+HXfuXaVmj/KlN9R2HhernU8ZP8gnOKe6EU2F9whA7w==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -204,10 +204,6 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@js-temporal/polyfill@0.5.1':
-    resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==}
-    engines: {node: '>=12'}
-
   esbuild@0.28.2:
     resolution: {integrity: sha512-HKVLS8dvII+xoKW9kmqxbRKrnWEXfJJr/FZhhJmiqIB0e053QNYFqOBouTMO/k5sID4MvCiUCvv8b9M4h32wIA==}
     engines: {node: '>=18'}
@@ -217,9 +213,6 @@ packages:
     resolution: {integrity: sha512-5xoDfX+fL7faATnagmWPpbFtwh/R77WmMMqqHGS65C3vvB0YHrgF+B1YmZ3441tMj5n63k0212XNoJwzlhffQw==}
     engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
     os: [darwin]
-
-  jsbi@4.3.2:
-    resolution: {integrity: sha512-9fqMSQbhJykSeii05nxKl4m6Eqn2P6rOlYiS+C5Dr/HPIU/7yZxu5qzbs40tgaFORiw2Amd0mirjxatXYMkIew==}
 
   tsx@4.23.12:
     resolution: {integrity: sha512-FDf4L4sYzKtzWYhU/Xm0AQFdTjdIxNo9ElTf2mxXM6k8YMHXzYUe4yODVaXP4V9uMFbVg8c0qyBccK2OOxb45Q==}
@@ -231,9 +224,8 @@ packages:
 
 snapshots:
 
-  '@businessdash/sdk@0.9.92':
+  '@businessdash/sdk@0.9.93':
     dependencies:
-      '@js-temporal/polyfill': 0.5.1
       zod: 4.6.7
 
   '@esbuild/aix-ppc64@0.28.2':
@@ -314,10 +306,6 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@js-temporal/polyfill@0.5.1':
-    dependencies:
-      jsbi: 4.3.2
-
   esbuild@0.28.2:
     optionalDependencies:
       '@esbuild/aix-ppc64': 0.28.2
@@ -349,8 +337,6 @@ snapshots:
 
   fsevents@2.3.3:
     optional: true
-
-  jsbi@4.3.2: {}
 
   tsx@4.23.12:
     dependencies:

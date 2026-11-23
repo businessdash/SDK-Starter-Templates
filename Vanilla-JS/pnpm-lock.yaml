@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.92
-        version: 0.9.92
+        specifier: ^0.9.93
+        version: 0.9.93
       zod:
         specifier: ^4.6.7
         version: 4.6.7
@@ -24,8 +24,8 @@ importers:
 
 packages:
 
-  '@businessdash/sdk@0.9.92':
-    resolution: {integrity: sha512-Alb+q5SHfJflpHDiBYQLyRxh/1kX+ANP/WlDrNBa18ASHWJ/jUT781W2vgFLbSZq1EpRdz34zwxIEWFo48/vWg==}
+  '@businessdash/sdk@0.9.93':
+    resolution: {integrity: sha512-QN3tQaIBRx/UWLx/heqtVS7RjDoXDHRAF5omPvOePzh+HXfuXaVmj/KlN9R2HhernU8ZP8gnOKe6EU2F9whA7w==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -52,10 +52,6 @@ packages:
       vue:
         optional: true
 
-  '@js-temporal/polyfill@0.5.1':
-    resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==}
-    engines: {node: '>=12'}
-
   '@types/bun@1.3.14':
     resolution: {integrity: sha512-h1hFqFVcvAvD9j9K7ZW7vd82aSA+rTdznZa+5bwvCwqSB1jmmfLcbIWhOLx1/+boy/xmjgCs/OMUL8hRJSmnPw==}
 
@@ -64,9 +60,6 @@ packages:
 
   bun-types@1.3.14:
     resolution: {integrity: sha512-4N0ig0fEomHt5R0KCFWjovxow98rIoRwKolrYdCcknNwMekCXRnWEUvgu5soYV8QXtVsrUD8B95MBOZGPvr6KQ==}
-
-  jsbi@4.3.2:
-    resolution: {integrity: sha512-9fqMSQbhJykSeii05nxKl4m6Eqn2P6rOlYiS+C5Dr/HPIU/7yZxu5qzbs40tgaFORiw2Amd0mirjxatXYMkIew==}
 
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
@@ -81,14 +74,9 @@ packages:
 
 snapshots:
 
-  '@businessdash/sdk@0.9.92':
+  '@businessdash/sdk@0.9.93':
     dependencies:
-      '@js-temporal/polyfill': 0.5.1
       zod: 4.6.7
-
-  '@js-temporal/polyfill@0.5.1':
-    dependencies:
-      jsbi: 4.3.2
 
   '@types/bun@1.3.14':
     dependencies:
@@ -101,8 +89,6 @@ snapshots:
   bun-types@1.3.14:
     dependencies:
       '@types/node': 25.9.3
-
-  jsbi@4.3.2: {}
 
   typescript@5.9.3: {}
 
