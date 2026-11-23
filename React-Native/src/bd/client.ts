@@ -34,7 +34,9 @@ import {
  * custom-object reads. **No backend-for-frontend is needed.**
  */
 
-const host = process.env.EXPO_PUBLIC_BD_HOST ?? 'https://www.businessdash.us'
+// The apex: www redirects there, and a redirect to another host drops the
+// Authorization header on iOS and Android alike.
+const host = process.env.EXPO_PUBLIC_BD_HOST ?? 'https://businessdash.us'
 const siteId = process.env.EXPO_PUBLIC_BD_SITE_ID
 const publishableKey = process.env.EXPO_PUBLIC_BD_PK
 

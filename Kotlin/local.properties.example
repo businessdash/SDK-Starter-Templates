@@ -6,7 +6,8 @@
 # `local.properties` is gitignored by Android convention, which is why it's
 # the right home for this. Copy this file to local.properties and fill it in.
 
-bd.host=https://www.businessdash.us
+# The apex host. www redirects to it, and the redirect drops your key.
+bd.host=https://businessdash.us
 bd.siteId=
 
 # ⚠️ PUBLISHABLE TOKEN ONLY (`pk_…`).
@@ -20,6 +21,10 @@ bd.siteId=
 # custom-object reads. Only operator/admin writes need a secret key, and a
 # customer app never makes those.
 bd.publishableKey=
+
+# A Live form's slug, shown natively on the Form tab. Leave empty for the
+# bundled sample form, which runs offline.
+bd.form=
 
 # The Android SDK location Gradle needs. Android Studio writes this for you.
 # sdk.dir=/Users/you/Library/Android/sdk

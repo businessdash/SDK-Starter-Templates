@@ -11,17 +11,17 @@ plugins {
 // and verifies. `sdk` rather than `bd` because the package rename already
 // happened everywhere else — see BusinessDashKit on the Swift side.
 group = "us.businessdash"
-version = "0.9.92"
+version = "0.9.93"
 
 kotlin {
     jvmToolchain(17)
 
-    compilerOptions {
-        // Public API is a contract for consumers now, not just the app module.
-        // Strict mode makes an accidentally-public symbol a build failure
-        // rather than something we are stuck supporting.
-        freeCompilerArgs.add("-Xexplicit-api=strict")
-    }
+    // Public API is a contract for consumers now, not just the app module.
+    // Strict mode makes an accidentally-public symbol a build failure rather
+    // than something we are stuck supporting. `explicitApi()` rather than the
+    // raw compiler flag: the flag also applies to the test sources, where
+    // `public` on every test is noise and the build failed without it.
+    explicitApi()
 }
 
 java {

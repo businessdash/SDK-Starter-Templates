@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Forms load from BD, and element icons and option images from the web. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+</manifest>

@@ -1,9 +1,10 @@
 # BD SDK — Kotlin starter
 
-Two Gradle modules:
+Three Gradle modules:
 
-- **`:bd`** — the client. **Pure Kotlin/JVM**: no Android dependency, so it builds and tests with `./gradlew :bd:test` and no Android SDK, and stays reusable in a server or a Kotlin Multiplatform target later.
-- **`:app`** — the Android app (Compose) built on it.
+- **`:bd`** — the client, plus the native forms engine (`app.bd.forms`: conditions, formulas, validation, the submission payload). **Pure Kotlin/JVM**: no Android dependency, so it builds and tests with `./gradlew :bd:test` and no Android SDK, and stays reusable in a server or a Kotlin Multiplatform target later.
+- **`:bd-forms`** — `BdForm`, the drop-in Compose renderer: any Live BusinessDash form, drawn with Material 3 controls. See [Native Forms (Jetpack Compose)](https://businessdash.us/docs/developer/byFeature/forms/native-compose).
+- **`:app`** — the Android app (Compose) built on them: a Shop tab and a Form tab.
 
 The split is not tidiness. It means the part most likely to be wrong — decoding, error mapping, the access gate — is testable without an emulator.
 
@@ -97,15 +98,17 @@ The loop also de-duplicates on message id: `since` is only as good as what the s
 
 ## What this starter does not do
 
-- **The form renderer isn't built.** `<bd-form>` is a DOM web component with no Compose counterpart, so this is the one surface an app genuinely reimplements. `formSchema()` returns a typed `FormSchema`; rendering it is left to you.
 - **No sign-in / customer portal UI.** The scopes allow it (`tenant_auth:public`, `customer_portal:self`); the hosted auth flow needs a deep-link callback the way the Swift starter does.
-- **One screen.** Shop + add-to-cart. Cart, blog and chat are wired in the client and the ViewModel but have no Compose screens yet.
+- **Two tabs.** Shop + add-to-cart, and a form. Cart, blog and chat are wired in the client and the ViewModel but have no Compose screens yet.
 
 ## ⚠️ Verification status
 
-**None of this has been compiled.** The machine it was written on has Java 11 and no Kotlin compiler, no Gradle, and no Android SDK. The tests in `bd/src/test` are written but have never run.
+Built with Gradle 9.8, AGP 8.7, Kotlin 2.0 and JDK 21 (toolchain 17). There is no Gradle wrapper in the repo; a system `gradle` works, or let Android Studio add one.
 
-Treat it as reviewed, not verified. `./gradlew :bd:test` is the first thing to run, and it needs no Android SDK — the module split exists partly so that check is cheap.
+- `gradle :bd:test` passes, including the forms parity suite that replays the TypeScript forms-core fixtures. It needs no Android SDK.
+- `gradle :bd-forms:testDebugUnitTest` passes.
+- `gradle :app:assembleDebug` builds, and the Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit.
+- The Shop tab and `BdPackageFormsBackend` against a live site have not been run from this app; they need a real site id and publishable key.
 
 ## Donations
 
@@ -226,7 +229,17 @@ Four behaviours worth knowing before you run it:
 ### 4. Forms
 
 Forms are defined in the dashboard and fetched by slug — the schema drives the
-rendering, so a field added there appears here without a deploy.
+rendering, so a field added there appears here without a deploy. `BdForm`
+draws them natively:
+
+```kotlin
+BdForm(form = "contact", publishableKey = BuildConfig.BD_PK)
+```
+
+The Form tab shows a bundled sample (`app/src/main/assets/bd-demo-form.json`)
+until you set `bd.form` in `local.properties` to a Live form's slug. The sample
+submits nowhere; it logs the payload a live form would send:
+`adb logcat -s BdStarter`.
 
 ```sh
 npx tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema

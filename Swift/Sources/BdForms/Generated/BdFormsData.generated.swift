@@ -61,7 +61,7 @@ enum BdFormsData {
             BdUnit(symbol: "MB", factor: 1000000.0),
             BdUnit(symbol: "GB", factor: 1000000000.0),
             BdUnit(symbol: "TB", factor: 1000000000000.0),
-            BdUnit(symbol: "PB", factor: 1000000000000000),
+            BdUnit(symbol: "PB", factor: 1000000000000000.0),
             BdUnit(symbol: "KiB", factor: 1024.0),
             BdUnit(symbol: "MiB", factor: 1048576.0),
             BdUnit(symbol: "GiB", factor: 1073741824.0),

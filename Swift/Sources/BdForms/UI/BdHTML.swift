@@ -116,7 +116,10 @@ public enum BdHTML {
                 }
                 continue
             }
-            let next = html[i...].firstIndex(of: "<") ?? html.endIndex
+            // A stray "<" with no ">" after it is text; start past it, or
+            // this would find it again and never advance.
+            let from = html[i] == "<" ? html.index(after: i) : i
+            let next = html[from...].firstIndex(of: "<") ?? html.endIndex
             let text = decodeEntities(String(html[i..<next]))
                 .replacingOccurrences(of: "[\\s]+", with: " ", options: .regularExpression)
             emit(text)

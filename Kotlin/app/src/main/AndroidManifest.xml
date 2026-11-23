@@ -7,7 +7,7 @@
         android:allowBackup="true"
         android:label="BD Starter"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Material3.DayNight.NoActionBar">
+        android:theme="@style/Theme.BdStarter">
 
         <activity
             android:name=".MainActivity"

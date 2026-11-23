@@ -1,0 +1,32 @@
+name: businessdash_forms
+description: >-
+  Native BusinessDash forms for Flutter: give BdForm a form slug and a
+  publishable key, and it renders the form with Material controls on Android
+  and Cupertino ones on iOS, with BD's validation, conditions, calculations,
+  uploads and submission.
+version: 0.9.92
+homepage: https://businessdash.us
+documentation: https://businessdash.us/docs
+# Depends on businessdash_sdk by path while both live in this starter.
+publish_to: none
+
+environment:
+  sdk: ^3.9.0
+  flutter: ">=3.35.0"
+
+dependencies:
+  # Pickers, links and payments come in through BdForm's callbacks, so the
+  # app chooses its own plugins and this package pulls in none. Icons are
+  # BD's SVGs, fetched with http and drawn by a small built-in renderer.
+  businessdash_sdk:
+    path: ../businessdash_sdk
+  flutter:
+    sdk: flutter
+  http: ^1.2.0
+  # The font behind CupertinoIcons, for the iOS controls.
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  lints: ^4.0.0

@@ -8,7 +8,7 @@ import SwiftUI
 ///
 /// ```swift
 /// let backend = BdPackageFormsBackend(
-///     host: URL(string: "https://www.businessdash.us")!,
+///     host: URL(string: "https://businessdash.us")!,
 ///     publishableKey: "pk_live_…"
 /// )
 ///
@@ -42,7 +42,7 @@ public struct BdForm: View {
     /// Load `form` from BD's Package API with a publishable key.
     public init(
         form: String,
-        host: URL = URL(string: "https://www.businessdash.us")!,
+        host: URL = URL(string: "https://businessdash.us")!,
         publishableKey: String,
         submitOptions: BdSubmitOptions = BdSubmitOptions(),
         onSubmitted: (@MainActor (BdSubmitSuccess) -> Void)? = nil

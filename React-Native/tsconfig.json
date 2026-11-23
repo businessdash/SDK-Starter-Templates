@@ -13,5 +13,7 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"]
+  "include": ["**/*.ts", "**/*.tsx", ".expo/types/**/*.ts", "expo-env.d.ts"],
+  // Node's test runner runs these (`pnpm test:forms`); the app has no Node types.
+  "exclude": ["node_modules", "**/__tests__/**"]
 }

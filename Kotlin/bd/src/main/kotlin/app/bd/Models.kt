@@ -253,8 +253,12 @@ public data class ChatSessionResponse(
     val visitorToken: String = "",
 )
 
-/** The access gate's body shape. Internal — callers see [BdException]. */
+/**
+ * The access gate's body shape. Internal — callers see [BdException].
+ * `@PublishedApi` because the inline `BdClient.decode` reads it.
+ */
 @Serializable
+@PublishedApi
 internal data class AccessGateBody(
     val available: Boolean,
     val reason: String = "plan_required",
@@ -263,4 +267,5 @@ internal data class AccessGateBody(
 )
 
 @Serializable
+@PublishedApi
 internal data class ErrorBody(val message: String? = null)

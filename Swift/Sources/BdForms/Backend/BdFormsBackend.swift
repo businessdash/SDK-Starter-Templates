@@ -212,7 +212,8 @@ public struct BdPackageFormsBackend: BdFormsBackend {
     let session: URLSession
 
     /// - Parameters:
-    ///   - host: e.g. `https://www.businessdash.us`. `/api/package/v1` is appended.
+    ///   - host: e.g. `https://businessdash.us` (not www: it redirects to the
+    ///     apex, and a redirect to another host drops the key). `/api/package/v1` is appended.
     public init(host: URL, publishableKey: String, session: URLSession = .shared) {
         // A precondition, not an assert: release builds are the ones that
         // ship the key inside the binary, so they're the ones that must stop.

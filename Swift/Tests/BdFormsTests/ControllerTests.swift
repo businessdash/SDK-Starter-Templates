@@ -319,6 +319,10 @@ struct ConverterTests {
         #expect(link?.link == URL(string: "https://x.com"))
     }
 
+    @Test func readsAStrayAngleBracketAsText() {
+        #expect(String(BdHTML.attributedString("a < b").characters) == "a < b")
+    }
+
     @Test func dropsUnsafeLinks() {
         let a = BdHTML.attributedString("<a href=\"javascript:alert(1)\">x</a>")
         #expect(a.runs.allSatisfy { $0.link == nil })

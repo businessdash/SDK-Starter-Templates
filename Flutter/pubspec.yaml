@@ -7,14 +7,21 @@ publish_to: none
 version: 0.1.0
 
 environment:
-  sdk: ^3.6.0
+  sdk: ^3.9.0
 
 dependencies:
   businessdash_sdk:
     path: packages/businessdash_sdk
+  # Native forms (the Form tab). The pickers and link opener below are
+  # Flutter's own plugins; BdForm takes them as callbacks, so swap in any.
+  businessdash_forms:
+    path: packages/businessdash_forms
 
   flutter:
     sdk: flutter
+  file_selector: ^1.1.0
+  image_picker: ^1.2.4
+  url_launcher: ^6.3.3
 
 dev_dependencies:
   flutter_test:

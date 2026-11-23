@@ -180,9 +180,12 @@ public enum BdFormRules {
             case "appointment": return isFalsy(value?["date"]) || isFalsy(value?["time"])
             default: return BdJSON.isBlank(value)
             }
-        case "star_rating", "happiness_rating":
+        case "star_rating":
             guard let n = value?.doubleValue else { return true }
             return n <= 0
+        // 0 is a real answer (😞 very unhappy), not a missing one.
+        case "happiness_rating":
+            return value?.doubleValue == nil
         case "measurement":
             return value?["value"]?.doubleValue == nil
         case "url":
@@ -274,10 +277,15 @@ public enum BdFormRules {
             if let min, n < min { return "min" }
             if let max, n > max { return "max" }
             return nil
-        case "star_rating", "happiness_rating":
+        case "star_rating":
             guard let n = value.doubleValue else { return "type" }
             let maxStars = Double(field.starRatingConfig?.maxStars ?? 5)
             if n < 0 || n > maxStars + 0.0001 { return "max" }
+            return nil
+        // Five faces valued 0–4 (0 = 😞 … 4 = very happy); nothing else is a face.
+        case "happiness_rating":
+            guard let n = value.doubleValue else { return "type" }
+            if n.rounded() != n || n < 0 || n > 4 { return "options" }
             return nil
         case "boolean":
             return value.boolValue != nil ? nil : "type"
@@ -824,6 +832,7 @@ public enum BdFormRules {
         switch field.type {
         case "checkbox", "tags": return []
         case "choice_cards": return field.choiceConfig?.mode == "multi" ? [] : ""
+        case "collection_select" where field.collectionSelectConfig?.multi == true: return []
         case "multi_populator": return [[:]]
         case "measurement":
             let cat = BdUnits.category(field.unitConfig?.category) ?? BdUnits.category("length")!

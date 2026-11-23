@@ -1992,7 +1992,7 @@
         "type": "happiness_rating"
       },
       "value": 0,
-      "empty": true,
+      "empty": false,
       "reason": null
     },
     {
@@ -2005,6 +2005,61 @@
       "value": 3,
       "empty": false,
       "reason": null
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
+        "type": "happiness_rating"
+      },
+      "value": 4,
+      "empty": false,
+      "reason": null
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
+        "type": "happiness_rating"
+      },
+      "value": 5,
+      "empty": false,
+      "reason": "options"
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
+        "type": "happiness_rating"
+      },
+      "value": -1,
+      "empty": false,
+      "reason": "options"
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
+        "type": "happiness_rating"
+      },
+      "value": 2.5,
+      "empty": false,
+      "reason": "options"
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
+        "type": "happiness_rating"
+      },
+      "value": "3",
+      "empty": true,
+      "reason": "type"
     },
     {
       "field": {
@@ -3251,9 +3306,7 @@
         "h": 0,
         "s": 5
       },
-      "missing": [
-        "h"
-      ],
+      "missing": [],
       "seed": {
         "s": 5,
         "s0": 0,
@@ -3263,6 +3316,45 @@
         "h": 0,
         "s": 5
       }
+    },
+    {
+      "name": "collection select seeds",
+      "fields": [
+        {
+          "id": "cm",
+          "type": "collection_select",
+          "label": "Rooms",
+          "required": false,
+          "collectionSelectConfig": {
+            "collectionKey": "rooms",
+            "multi": true
+          }
+        },
+        {
+          "id": "cs",
+          "type": "collection_select",
+          "label": "Room",
+          "required": false,
+          "defaultValue": "lobby",
+          "collectionSelectConfig": {
+            "collectionKey": "rooms"
+          }
+        },
+        {
+          "id": "fu",
+          "type": "file_upload",
+          "label": "Files",
+          "required": false
+        }
+      ],
+      "data": {},
+      "missing": [],
+      "seed": {
+        "cm": [],
+        "cs": "lobby",
+        "fu": ""
+      },
+      "payload": {}
     }
   ],
   "units": [

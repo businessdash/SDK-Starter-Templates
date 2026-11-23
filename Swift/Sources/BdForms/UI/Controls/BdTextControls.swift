@@ -127,7 +127,12 @@ struct BdNumericField: View {
             if (c == "." || c == ","), allowDecimal, !sawDot { out.append("."); sawDot = true; continue }
             if c == "-", allowNegative, i == 0 { out.append(c) }
         }
-        return out
+        // A zero in front of another digit means nothing: typing after the
+        // seeded "0" gives "40", not "040". "0.5" and "0" stay.
+        var chars = Array(out)
+        let start = chars.first == "-" ? 1 : 0
+        while chars.count > start + 1, chars[start] == "0", chars[start + 1].isASCIIDigit { chars.remove(at: start) }
+        return String(chars)
     }
 
     static func parse(_ s: String) -> Double? {

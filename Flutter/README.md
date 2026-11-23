@@ -1,9 +1,10 @@
 # BD SDK — Flutter starter
 
-Two packages:
+Three packages:
 
-- **`packages/bd`** — the client. **Pure Dart**: it imports nothing from Flutter, so it analyzes, tests and runs anywhere Dart does — a server, a CLI, a test runner with no Flutter toolchain installed. Its only dependency is `http`.
-- **the root package** — the Flutter app built on it: shop, product detail, cart, and Front Desk chat.
+- **`packages/businessdash_sdk`** — the client, and the forms engine (`package:businessdash_sdk/forms.dart`). **Pure Dart**: it imports nothing from Flutter, so it analyzes, tests and runs anywhere Dart does — a server, a CLI, a test runner with no Flutter toolchain installed. Its only dependency is `http`.
+- **`packages/businessdash_forms`** — `BdForm`, the widget that renders a Live BusinessDash form natively: Material controls on Android, Cupertino on iOS. See [Native forms](#native-forms).
+- **the root package** — the Flutter app built on them: shop, product detail, cart, Front Desk chat, and a Form tab.
 
 The split is not tidiness. It means the part most likely to be wrong — decoding, error mapping, the access gate — is testable without an emulator, and stays reusable if you later want the same client in a Dart backend.
 
@@ -22,7 +23,7 @@ So **this app needs no backend-for-frontend.** Only operator/admin writes need a
 The client verifies on its own, with no Flutter installed:
 
 ```sh
-cd packages/bd
+cd packages/businessdash_sdk
 dart pub get
 dart analyze
 dart test
@@ -31,10 +32,12 @@ dart test
 The app:
 
 ```sh
+flutter create --platforms=ios,android .   # once: the starter ships without platform folders
 flutter pub get
 flutter run \
   --dart-define=BD_SITE_ID=… \
-  --dart-define=BD_PK=pk_…
+  --dart-define=BD_PK=pk_… \
+  --dart-define=BD_FORM=contact            # optional: a Live form for the Form tab
 ```
 
 Configuration comes from `--dart-define`, not a `.env` file. There is no env in an APK, and dart-defines are compiled in — which is exactly what an app credential is. **With no defines at all the app still launches**, showing a setup banner and empty states.
@@ -62,7 +65,7 @@ every starter. Only the *schema* files are TypeScript.
 ## What's in the client
 
 ```
-packages/bd/lib/src/
+packages/businessdash_sdk/lib/src/
   client.dart      transport, bearer, the access gate, the pk_ assert
   errors.dart      sealed exception hierarchy + isUnavailable
   models.dart      typed models for every fixed-shape surface
@@ -72,6 +75,8 @@ packages/bd/lib/src/
   bundle.dart      key-path reads for the two schema-driven surfaces
   money.dart       cents vs decimal — read this before rendering money
   donations.dart   giving page + checkout, and the cover-fees math
+  forms/           the native forms engine: conditions, formulas, validation,
+                   the submission payload, and BdFormController
 ```
 
 ## Five things that will bite you
@@ -96,18 +101,37 @@ StreamBuilder<List<ChatMessage>>(stream: feed.messages(), builder: …)
 
 Cancelling the subscription stops the network work through `onCancel`. The loop also de-duplicates on message id: `since` is only as good as what the server returns, and with no cursor **and** no timestamp it can't advance, replaying rows a naive listener would render twice.
 
-## What this starter does not do
+## Native forms
 
-- **The form renderer isn't built.** `<bd-form>` is a DOM web component with no Flutter counterpart, so this is the one surface an app genuinely reimplements. `formSchema()` returns a typed `FormSchema`; rendering it with Flutter widgets is left to you.
+`<bd-form>` is a DOM web component, so a Flutter app needs its own renderer. `packages/businessdash_forms` is that renderer: `BdForm` draws every form element with native widgets and runs the form's conditions, steps, calculations and validation on the device, then uploads and submits. No web view.
+
+```dart
+BdForm(
+  form: 'contact',
+  publishableKey: const String.fromEnvironment('BD_PK'),
+  pickFiles: pickFiles,   // lib/forms/form_hooks.dart: file_selector + image_picker
+  openLink: openLink,     // url_launcher
+)
+```
+
+The **Form tab** (`lib/ui/form_page.dart`) shows the Live form named by `--dart-define=BD_FORM`. Without it, it shows a bundled sample with every kind of field (`lib/forms/demo_form.dart`) that submits nowhere and prints the payload to the `flutter run` console.
+
+`BdForm` takes no plugins itself; file picking, links and the booking time zone are callbacks, and `lib/forms/form_hooks.dart` wires them to Flutter's own `file_selector`, `image_picker` and `url_launcher`. For iOS, add `NSPhotoLibraryUsageDescription` to `ios/Runner/Info.plist`, as `image_picker` asks.
+
+Styling, localization, custom renderers, the headless `BdFormController` and card collection are covered in [Native Forms (Flutter)](https://businessdash.us/docs/developer/byFeature/forms/native-flutter).
+
+## What this starter does not do
 - **No sign-in / customer portal UI.** The scopes allow it (`tenant_auth:public`, `customer_portal:self`); the hosted auth flow needs a deep-link callback the way the Swift starter does.
 - **The visitor token isn't persisted.** See above — one line with `shared_preferences`.
-- **No widget tests.** Flutter isn't installed in the environment this was built in, so only the pure-Dart client is covered.
+- **No widget tests for the shop, cart and chat screens.** The forms package has them; the app screens don't.
 
 ## Verification
 
-`dart analyze` reports no issues and **14 tests pass** in `packages/bd`, covering the parts most likely to break silently: the 200-with-`available:false` gate, a real 4xx, `stripeUrl`, nil-query dropping, the bearer + site path, the cart header, both relation shapes, cents-vs-decimal, and empty-string-as-missing.
+`dart test` passes in `packages/businessdash_sdk`. The client tests cover the parts most likely to break silently: the 200-with-`available:false` gate, a real 4xx, `stripeUrl`, nil-query dropping, the bearer + site path, the cart header, both relation shapes, cents-vs-decimal, and empty-string-as-missing. The forms tests replay the fixtures `pnpm gen:native-forms` generates from the TypeScript forms engine, so the Dart port agrees with the web, Swift and Kotlin ones.
 
-**The Flutter app itself has not been compiled** — no Flutter toolchain was available. Treat `lib/` as reviewed-but-unbuilt.
+`flutter test` passes in `packages/businessdash_forms`: rendering, validation, submit, conditions, steps, Cupertino and Material controls, sheets, repeaters, collections, retry, the leave guard, custom renderers, and hosting in a `CupertinoApp`.
+
+The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`).
 
 ## Donations
 

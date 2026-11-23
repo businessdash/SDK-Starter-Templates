@@ -4,6 +4,7 @@ import 'package:businessdash_sdk/businessdash_sdk.dart';
 import 'ui/bd_scope.dart';
 import 'ui/cart_page.dart';
 import 'ui/chat_page.dart';
+import 'ui/form_page.dart';
 import 'ui/storefront_page.dart';
 
 /// Configuration comes from `--dart-define`, not a `.env` file — there is no
@@ -12,10 +13,12 @@ import 'ui/storefront_page.dart';
 ///
 ///     flutter run \
 ///       --dart-define=BD_SITE_ID=… \
-///       --dart-define=BD_PK=pk_…
-const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://www.businessdash.us');
+///       --dart-define=BD_PK=pk_… \
+///       --dart-define=BD_FORM=contact   # optional: the Form tab's live form
+const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://businessdash.us');
 const _siteId = String.fromEnvironment('BD_SITE_ID');
 const _publishableKey = String.fromEnvironment('BD_PK');
+const _form = String.fromEnvironment('BD_FORM');
 
 void main() => runApp(const BdStarterApp());
 
@@ -58,7 +61,12 @@ class _Home extends StatefulWidget {
 class _HomeState extends State<_Home> {
   int _index = 0;
 
-  static const _pages = [StorefrontPage(), CartPage(), ChatPage()];
+  static const _pages = [
+    StorefrontPage(),
+    CartPage(),
+    ChatPage(),
+    FormPage(host: _host, publishableKey: _publishableKey, form: _form),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -68,16 +76,25 @@ class _HomeState extends State<_Home> {
       body: Column(
         children: [
           if (!configured)
+            // The banner takes the status bar's space, so the page below
+            // doesn't pad for it again.
             Container(
               width: double.infinity,
               color: Colors.amber.withValues(alpha: 0.25),
-              padding: const EdgeInsets.all(8),
-              child: const Text(
-                'Not connected to BD — pass --dart-define=BD_SITE_ID and BD_PK.',
-                style: TextStyle(fontSize: 12),
+              child: const SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: EdgeInsets.all(8),
+                  child: Text(
+                    'Not connected to BD — pass --dart-define=BD_SITE_ID and BD_PK.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ),
               ),
             ),
-          Expanded(child: _pages[_index]),
+          Expanded(
+            child: MediaQuery.removePadding(context: context, removeTop: !configured, child: _pages[_index]),
+          ),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -87,6 +104,7 @@ class _HomeState extends State<_Home> {
           NavigationDestination(icon: Icon(Icons.storefront), label: 'Shop'),
           NavigationDestination(icon: Icon(Icons.shopping_cart), label: 'Cart'),
           NavigationDestination(icon: Icon(Icons.chat_bubble), label: 'Chat'),
+          NavigationDestination(icon: Icon(Icons.assignment), label: 'Form'),
         ],
       ),
     );

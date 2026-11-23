@@ -39,17 +39,17 @@ export default function ProductScreen() {
           <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
             <Text style={styles.name}>{product.name}</Text>
             {/* `cheapestPriceCents` and `description` arrive via the row
-                schema's passthrough — served, but typed `unknown` until the
-                contract declares them — so narrow before rendering. */}
+                schema's passthrough — served, but not in the contract's
+                type — so read them as unknown and narrow before rendering. */}
             <Text style={styles.price}>
               {cents(
-                typeof product.cheapestPriceCents === 'number'
-                  ? product.cheapestPriceCents
+                typeof extra(product).cheapestPriceCents === 'number'
+                  ? (extra(product).cheapestPriceCents as number)
                   : null,
               )}
             </Text>
-            {typeof product.description === 'string' && product.description ? (
-              <Text>{product.description}</Text>
+            {typeof extra(product).description === 'string' && extra(product).description ? (
+              <Text>{extra(product).description as string}</Text>
             ) : null}
 
             <Button title="Add to cart" onPress={addToCart} disabled={!visitorToken} />
@@ -71,3 +71,8 @@ const styles = StyleSheet.create({
   price: { fontSize: 18, fontVariant: ['tabular-nums'] },
   note: { color: '#6b7280', padding: 16 },
 })
+
+/** Fields the API serves beyond the typed contract. */
+function extra(row: object): Record<string, unknown> {
+  return row as Record<string, unknown>
+}

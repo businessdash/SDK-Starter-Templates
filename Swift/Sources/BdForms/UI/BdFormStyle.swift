@@ -201,7 +201,7 @@ extension EnvironmentValues {
     @Entry public var bdFormStrings = BdFormStrings()
     @Entry public var bdFieldRenderers = BdFieldRenderers()
     /// Where element icons come from (`{base}/api/icons/{name}.svg`).
-    @Entry public var bdIconBaseURL = URL(string: "https://www.businessdash.us")!
+    @Entry public var bdIconBaseURL = URL(string: "https://businessdash.us")!
 }
 
 extension View {

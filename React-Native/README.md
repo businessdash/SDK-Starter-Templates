@@ -104,15 +104,30 @@ The redirect URI still has to be registered on the BD site, or `auth/start` refu
 
 There is no SSE or WebSocket anywhere in the Package API. `useChat` runs `createPersistedSession` → `postMessage` → `pollMessages` every 4s, and the effect's cleanup stops the loop: an interval left running in a mobile app burns battery and the org's rate limit for as long as the process lives. It de-duplicates on message id, because `since` only advances when the server returns a usable timestamp.
 
+## Native forms
+
+`src/bd-forms` renders a Live BusinessDash form with native views — no web view. It runs the SDK's own `createFormController`, the one every web binding uses, so conditions, steps, calculations, validation and the submit payload match the web exactly. iOS gets filled fields, system colors and page sheets; Android gets Material 3 outlined fields, dynamic color and bottom sheets.
+
+```tsx
+<BdForm form="contact" client={getBd()} pickFiles={pickFiles} renderIcon={renderIcon} />
+```
+
+The **Form** tab shows a built-in sample with every kind of field. It submits nowhere and logs the payload to the Metro console. Set `EXPO_PUBLIC_BD_FORM` in `.env` to a Live form's slug to show that form instead.
+
+`src/bd-forms` needs only `@businessdash/sdk` (0.9.93+) and `react-native-safe-area-context`, so the folder copies into any app. File picking and icons need native modules, so they're wired in `src/bd/forms.tsx` with `expo-document-picker`, `expo-image-picker` and `react-native-svg`. `pnpm test:forms` runs the renderer's logic tests.
+
+Full guide: [Native Forms (React Native)](https://businessdash.us/docs/developer/byFeature/forms/native-react-native).
+
 ## What this starter does not do
 
-- **The form renderer isn't built.** `<bd-form>` is a DOM custom element with no RN counterpart — the one surface an app genuinely reimplements. `bd.forms.schema()` gives you a typed schema.
 - **No portal detail screens.** Sign-in works and the scopes allow the whole portal; only the session check is wired.
 - **No tests.** The SDK's own suite covers the client; what's here is app glue.
 
 ## ⚠️ Verification
 
-**Bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the screens in a simulator yet.
+**The Form tab has run on a device; the other screens haven't.** The form was walked end to end on an Android 16 emulator in Expo Go: every step, validation and scroll-to-error, a condition, the searchable sheets, calculations, color, date and time pickers, a picked PDF uploading on submit, the success screen and reset, light and dark. On iOS it has been rendered in the simulator, light and dark, but not tapped through.
+
+The rest is **bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the other screens in a simulator yet.
 
 ## Donations
 
