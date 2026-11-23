@@ -17,7 +17,11 @@ let package = Package(
         // validation, calculations and submission. Depends on nothing — not
         // even BusinessDashKit — so any app can embed it, including one that
         // already has a module of that name.
-        .library(name: "BdForms", targets: ["BdForms"])
+        .library(name: "BdForms", targets: ["BdForms"]),
+        // Native sign-in for a business's customers, in the business's own
+        // brand: email and password, codes by email, Sign in with Apple and
+        // Google. Depends on nothing; talks to BD through the app's server.
+        .library(name: "BdSignIn", targets: ["BdSignIn"])
     ],
     targets: [
         .target(
@@ -26,6 +30,10 @@ let package = Package(
         ),
         .target(
             name: "BdForms",
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .target(
+            name: "BdSignIn",
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .target(

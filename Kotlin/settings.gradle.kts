@@ -28,10 +28,12 @@ rootProject.name = "bd-starter"
 //               in a server or a Kotlin Multiplatform target later. The forms
 //               engine (rules, formulas, controller) lives here too.
 //   :bd-forms — the drop-in Compose renderer for BD forms (Android library).
+//   :bd-sign-in — native customer sign-in in the business's brand (Android library).
 //   :app      — the Android app (Compose) built on them.
 //
 // The split means the part most likely to be wrong — decoding, error mapping,
 // the access gate — is testable with `./gradlew :bd:test` alone.
 include(":bd")
 include(":bd-forms")
+include(":bd-sign-in")
 include(":app")
