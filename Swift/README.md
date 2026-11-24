@@ -8,7 +8,7 @@ Three products in one package:
 
 ## The one rule that shapes everything here
 
-**A native app ships its credential inside the binary.** `strings` on an `.ipa` finds anything you bundle, so `BdClient` accepts a **publishable `pk_…` token only** and traps at `init` if you hand it an `sk_…` key.
+**A native app ships its credential inside the binary.** `strings` on an `.ipa` finds anything you bundle, so `BdClient` accepts a **publishable `pk_…` token only** and traps at `init` if you hand it anything else, such as a secret `bd_…` key.
 
 That turns out to be barely limiting. The publishable scope set covers the entire customer-facing surface:
 
@@ -32,7 +32,7 @@ Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdSt
 | Info.plist key | What |
 | --- | --- |
 | `BDHost` | defaults to `https://businessdash.us` |
-| `BDPublishableKey` | `pk_…` — never `sk_…` |
+| `BDPublishableKey` | `pk_…` — never a secret `bd_…` key |
 | `BDSiteID` | the site UUID |
 
 **With no keys at all the app still runs** — screens render their empty states and a setup notice appears. A starter you can't launch before signing up isn't a starter.
@@ -194,6 +194,7 @@ Leaving the loop — or SwiftUI cancelling the `.task` on disappear — tears th
 
 `swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal. `BdForms` adds the forms-core parity fixtures and the controller's behavior: conditions, repeaters, calculations, uploads, server issue mapping and every submit outcome.
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -232,6 +233,7 @@ Three rules:
   can't be added later, so mint a new key.
 - **Leave the return URLs out.** The donor lands on the hosted thank-you page
   and closes the browser back into the app.
+<!-- [/bd:donations] -->
 
 ## Data: environment, schema, seeding, CRUD
 

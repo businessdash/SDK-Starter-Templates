@@ -82,10 +82,10 @@ These run the SDK CLI via `tsx` against `bd.config.ts` (the marketing schema + b
 | Path | Component | What it shows |
 | --- | --- | --- |
 | `/` | `pages/home.page.ts` | Hero, About, Services, reviews teaser, updates, blog, contact. |
-| `/store` | `pages/store.page.ts` | Storefront product list + add-to-cart + load-more. |
-| `/store/:id` | `pages/product-detail.page.ts` | Product detail + add-to-cart. |
-| `/cart` | `pages/cart.page.ts` | Cart: qty update/remove, coupon apply/remove (reactive form), clear, Stripe checkout. |
-| `/subscriptions` | `pages/subscriptions.page.ts` | Recurring plans list. |
+| `/store` | `pages/store.page.ts` | Storefront product list + add-to-cart + load-more. | <!-- [bd-line:store] -->
+| `/store/:id` | `pages/product-detail.page.ts` | Product detail + add-to-cart. | <!-- [bd-line:store] -->
+| `/cart` | `pages/cart.page.ts` | Cart: qty update/remove, coupon apply/remove (reactive form), clear, Stripe checkout. | <!-- [bd-line:store] -->
+| `/subscriptions` | `pages/subscriptions.page.ts` | Recurring plans list. | <!-- [bd-line:saas] -->
 | `/my-account` | `pages/my-account.page.ts` | Signed-in user + work bundle (jobs) + review-submit form. |
 | `/reviews` | `pages/reviews.page.ts` | Reviews wall: aggregate + paginated load-more. |
 | `/updates` | `pages/updates.page.ts` | News/updates feed (`bundle.updates`). |
@@ -103,10 +103,10 @@ Mounted by `mountBdApi(app)` in `src/server.ts`, all in `src/server/bd-api.ts`:
 | --- | --- |
 | `GET /api/bd/home` | `marketing.getPageBundle` → hero/about/services/reviews/banner/updates |
 | `GET /api/bd/blog` | `blog.listPosts` |
-| `GET /api/bd/store/products` `…/:id` | `storefront.listProducts` / `getProduct` |
-| `GET /api/bd/subscriptions` | `subscriptions.list` |
-| `GET /api/bd/cart`, `POST …/items`, `PATCH/DELETE …/items/:id`, `POST/DELETE …/coupon`, `POST …/clear` | `cart.forVisitor(token).*` |
-| `POST /api/bd/checkout/start` | `checkout.forVisitor(token).start` → Stripe URL |
+| `GET /api/bd/store/products` `…/:id` | `storefront.listProducts` / `getProduct` | <!-- [bd-line:store] -->
+| `GET /api/bd/subscriptions` | `subscriptions.list` | <!-- [bd-line:saas] -->
+| `GET /api/bd/cart`, `POST …/items`, `PATCH/DELETE …/items/:id`, `POST/DELETE …/coupon`, `POST …/clear` | `cart.forVisitor(token).*` | <!-- [bd-line:store] -->
+| `POST /api/bd/checkout/start` | `checkout.forVisitor(token).start` → Stripe URL | <!-- [bd-line:store] -->
 | `POST /api/bd/contact` | `forms.submit(slug, data, opts)` |
 | `GET /api/bd/reviews` | `reviews.list({ limit, offset })` |
 | `GET /api/bd/portal/me` | `getTenantSession` + `customerPortal(org).withSession(token).getWork` |
@@ -172,6 +172,7 @@ Standalone components, `ChangeDetectionStrategy.OnPush`, signals + `computed()`,
 Add a surface in three steps: (1) add a server endpoint in `src/server/bd-api.ts` calling the SDK, (2) add a method to `src/app/lib/bd-api.client.ts`, (3) add a lazy route + page component. Keep all key-bearing code under `src/server/`.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -221,6 +222,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

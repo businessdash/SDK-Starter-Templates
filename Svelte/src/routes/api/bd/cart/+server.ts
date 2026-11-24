@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { getCartSnapshot, isStoreConfigured } from '#lib/server/bd-store.ts';
 
 import type { RequestHandler } from './$types';

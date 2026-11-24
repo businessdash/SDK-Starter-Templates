@@ -28,6 +28,8 @@ cp .env.example .env
 mix phx.server
 ```
 
+In dev, `config/runtime.exs` reads `.env` and then `.env.local`; anything already set in your shell wins. A release reads only the real environment.
+
 Open <http://localhost:4000>. **With no BD credentials at all the site still renders** — every section falls back to local copy and a banner tells you what to set. A starter you can't run before signing up isn't a starter.
 
 For the schema + custom-database flows:
@@ -145,6 +147,7 @@ so the page updates in place.
 - **No shipping / address / coupons-admin surfaces.** The endpoints exist; the client covers what these pages use.
 - **`/chat` assumes a session already exists.** Minting one (`chatbot/session`) and the human-handoff queue are wired in the API but not in this UI.
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -189,6 +192,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Data: environment, schema, seeding, CRUD
 

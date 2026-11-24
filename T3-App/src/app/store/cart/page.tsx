@@ -1,3 +1,4 @@
+// [bd-file:store]
 import Link from "next/link";
 
 import { getCartSnapshot } from "@/server/lib/bd-store";

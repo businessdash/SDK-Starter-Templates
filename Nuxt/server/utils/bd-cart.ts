@@ -1,3 +1,4 @@
+// [bd-file:store]
 import type { H3Event } from "h3";
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 

@@ -1,3 +1,4 @@
+// [bd-file:store]
 "use server";
 
 import type { CartSnapshot } from "@businessdash/sdk/contracts";

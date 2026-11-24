@@ -31,7 +31,7 @@ object BdApp {
             cached ?: BdClient(
                 host = BuildConfig.BD_HOST,
                 // ⚠️ Publishable token only — BuildConfig values land in the
-                // APK, where `strings` finds them. BdClient refuses an sk_.
+                // APK, where `strings` finds them. BdClient refuses anything but pk_.
                 publishableKey = BuildConfig.BD_PK,
                 siteId = BuildConfig.BD_SITE_ID,
             ).also { cached = it }

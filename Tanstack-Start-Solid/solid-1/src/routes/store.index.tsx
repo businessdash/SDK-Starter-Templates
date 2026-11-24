@@ -1,3 +1,4 @@
+// [bd-file:store]
 import type { StorefrontSort } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createMemo, createResource, createSignal, For, Show } from "solid-js";
@@ -371,9 +372,11 @@ function StoreIndex() {
 					<Link class="bd-btn bd-btn--ghost" to="/store/cart">
 						View cart
 					</Link>
+					{/* [bd:saas] */}
 					<Link class="bd-btn bd-btn--ghost" to="/subscriptions">
 						Subscriptions
 					</Link>
+					{/* [/bd:saas] */}
 				</div>
 			</section>
 		</main>

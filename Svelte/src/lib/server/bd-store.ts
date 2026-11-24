@@ -1,5 +1,7 @@
+// [bd-file:store,saas]
 import { NODE_ENV } from '$app/env/private';
 
+// [bd:store]
 import type { Cookies } from '@sveltejs/kit';
 import type { BdClient } from '@businessdash/sdk';
 import type {
@@ -12,9 +14,12 @@ import type {
 	StorefrontProductReviewsResponse,
 	StorefrontProductsWithMetaResponse,
 	StorefrontRelatedProduct,
-	StorefrontSort,
-	SubscriptionOffering
+	StorefrontSort
 } from '@businessdash/sdk/contracts';
+// [/bd:store]
+// [bd:saas]
+import type { SubscriptionOffering } from '@businessdash/sdk/contracts';
+// [/bd:saas]
 
 import { bd } from '#lib/server/bd.ts';
 
@@ -33,8 +38,10 @@ import { bd } from '#lib/server/bd.ts';
  * so the storefront still renders an "not connected" placeholder.
  */
 
+// [bd:store]
 export const VISITOR_COOKIE = 'bd_cart_visitor';
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
+// [/bd:store]
 
 /** Whether the storefront can talk to BD at all. */
 export function isStoreConfigured(): boolean {
@@ -46,6 +53,7 @@ export function sdkErrorMessage(err: unknown): string {
 	return err instanceof Error ? err.message : String(err);
 }
 
+// [bd:store]
 /** Read-only: the current visitor's cart token, or null if none yet. */
 export function getVisitorToken(cookies: Cookies): string | null {
 	return cookies.get(VISITOR_COOKIE) ?? null;
@@ -65,6 +73,7 @@ export function ensureVisitorToken(cookies: Cookies): string {
 	});
 	return token;
 }
+// [/bd:store]
 
 function devwarn(label: string, err: unknown): void {
 	if (NODE_ENV === 'development') {
@@ -72,6 +81,7 @@ function devwarn(label: string, err: unknown): void {
 	}
 }
 
+// [bd:store]
 export async function listStoreProducts(input?: {
 	limit?: number;
 	cursor?: number | null;
@@ -173,6 +183,9 @@ export async function getStoreProduct(productId: string): Promise<StorefrontProd
 	}
 }
 
+// [/bd:store]
+
+// [bd:saas]
 export async function listStoreSubscriptions(): Promise<{ items: SubscriptionOffering[] } | null> {
 	if (!bd) return null;
 	try {
@@ -183,6 +196,9 @@ export async function listStoreSubscriptions(): Promise<{ items: SubscriptionOff
 	}
 }
 
+// [/bd:saas]
+
+// [bd:store]
 /** Current cart snapshot, or null when unconfigured / no visitor token yet. */
 export async function getCartSnapshot(cookies: Cookies): Promise<CartSnapshot | null> {
 	if (!bd) return null;
@@ -243,3 +259,4 @@ export async function startCheckout(
 		return { ok: false, error: sdkErrorMessage(err) };
 	}
 }
+// [/bd:store]

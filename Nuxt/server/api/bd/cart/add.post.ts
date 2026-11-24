@@ -1,3 +1,4 @@
+// [bd-file:store]
 /**
  * POST /api/bd/cart/add
  *

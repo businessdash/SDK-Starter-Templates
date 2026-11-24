@@ -1,14 +1,16 @@
 ---
+// [bd-file:saas]
 /**
  * Subscriptions list. Server-renders recurring offerings via
- * `subscriptions.list()`. Each card shows the price + billing interval. The
- * "Subscribe" link points at the product/sign-in flow — recurring checkout in
- * BD runs through the same Stripe-hosted handoff as the cart.
+ * `subscriptions.list()`. Each card shows the price + billing interval.
+ * "Subscribe" posts to `/api/bd/subscriptions/checkout`, which hands a
+ * signed-in customer to Stripe; a visitor is offered sign-in first.
  *
  * Suspension-aware (503) and unconfigured-safe.
  */
 import { bd } from "../../lib/bd";
 import { isStoreConfigured } from "../../lib/bd-store";
+import { getCustomerSession } from "../../lib/bd-portal";
 import { isSuspensionError, suspendedResponse } from "../../lib/bd-suspension";
 import Layout from "../../layouts/Layout.astro";
 
@@ -39,6 +41,10 @@ if (bd) {
 
 if (suspended) return suspendedResponse();
 
+const signedIn = (await getCustomerSession(Astro.cookies)) !== null;
+const subscribed = Astro.url.searchParams.has("session_id");
+const checkoutFailed = Astro.url.searchParams.get("error") === "checkout";
+
 function price(o: Offering): string {
 	const amount = new Intl.NumberFormat(undefined, {
 		style: "currency",
@@ -62,6 +68,19 @@ function price(o: Offering): string {
 		</div>
 
 		{
+			subscribed ? (
+				<div class="bd-empty">
+					Thanks for subscribing. Your plan is in <a href="/my-account">your account</a>.
+				</div>
+			) : null
+		}
+		{
+			checkoutFailed ? (
+				<div class="sub-error">Couldn't start checkout. Please try again.</div>
+			) : null
+		}
+
+		{
 			!isStoreConfigured() ? (
 				<div class="bd-empty">Store isn't connected.</div>
 			) : loadError ? (
@@ -83,9 +102,18 @@ function price(o: Offering): string {
 							{o.description ? (
 								<p class="sub-card__desc">{o.description}</p>
 							) : null}
-							<a class="bd-btn" href="/my-account">
-								Subscribe
-							</a>
+							{signedIn ? (
+								<form method="post" action="/api/bd/subscriptions/checkout">
+									<input type="hidden" name="planId" value={o.id} />
+									<button class="bd-btn" type="submit">
+										Subscribe
+									</button>
+								</form>
+							) : (
+								<a class="bd-btn" href="/my-account?next=/store/subscriptions">
+									Sign in to subscribe
+								</a>
+							)}
 						</article>
 					))}
 				</div>
@@ -112,6 +140,13 @@ function price(o: Offering): string {
 		color: var(--accent);
 		font-weight: 700;
 		font-size: 1.1rem;
+	}
+	.sub-error {
+		color: var(--danger);
+		background: var(--danger-bg);
+		padding: 0.75rem 1rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.5rem;
 	}
 	.sub-card__desc {
 		color: var(--text-muted);

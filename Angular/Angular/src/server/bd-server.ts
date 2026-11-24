@@ -273,4 +273,21 @@ export function portalForSession(organizationId: string, sessionToken: string) {
 		.withSession(sessionToken);
 }
 
+// [bd:saas]
+/**
+ * The subscriptions client acting for the signed-in customer. A plan
+ * belongs to a person, and BD refuses a plan checkout without the
+ * customer's session, so the session rides on every call as a header.
+ */
+export function subscriptionsForSession(sessionToken: string) {
+	const env = getBdEnv();
+	if (!env) return null;
+	return createBdApiClient({
+		baseUrl: env.baseUrl,
+		apiKey: env.apiKey,
+		defaultHeaders: { "X-BD-Session-Token": sessionToken },
+	}).subscriptions;
+}
+// [/bd:saas]
+
 export { BdPaymentLapsedError, BdServiceSuspendedError };

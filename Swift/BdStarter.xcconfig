@@ -17,7 +17,7 @@ BD_HOST = https:/$()/businessdash.us
 // ⚠️ PUBLISHABLE TOKEN ONLY (`pk_…`).
 //
 // An app ships its credential inside the binary, where `strings` on an .ipa
-// finds it in seconds. BdClient traps at init if you hand it an `sk_…` key.
+// finds it in seconds. BdClient traps at init on anything but a `pk_…` token.
 //
 // This is less limiting than it sounds: the publishable scope set covers the
 // entire customer-facing surface — storefront, cart, checkout, blog, marketing

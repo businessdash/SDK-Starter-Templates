@@ -72,12 +72,14 @@ Every surface below is server-driven by a `createServerFn` in `src/lib/bd-server
 
 | Surface | File | SDK call |
 | --- | --- | --- |
-| **Store list** | `src/routes/store.index.tsx` | `storefront.listProducts(...)` |
-| **Product detail** | `src/routes/store.$id.tsx` | `storefront.getProduct(id)`, `cart.forVisitor(t).addItem(...)` |
-| **Cart** | `src/routes/store.cart.tsx` | `cart.forVisitor(t)` get/update/remove/coupon/clear + `checkout.forVisitor(t).start(...)` |
-| **Subscriptions** | `src/routes/subscriptions.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` |
+| **Store list** | `src/routes/store.index.tsx` | `storefront.listProducts(...)` | <!-- [bd-line:store] -->
+| **Product detail** | `src/routes/store.$id.tsx` | `storefront.getProduct(id)`, `cart.forVisitor(t).addItem(...)` | <!-- [bd-line:store] -->
+| **Cart** | `src/routes/store.cart.tsx` | `cart.forVisitor(t)` get/update/remove/coupon/clear + `checkout.forVisitor(t).start(...)` | <!-- [bd-line:store] -->
+| **Subscriptions** | `src/routes/subscriptions.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` | <!-- [bd-line:saas] -->
 
+<!-- [bd:store] -->
 The cart is keyed on a visitor UUID we own, stored in an httpOnly cookie `bd_cart_visitor`. It's read on cart loads and minted on the first write — all inside the server fns via TanStack Start's `getCookie` / `setCookie` (`@tanstack/solid-start/server`). Checkout and subscription "subscribe" return a Stripe-hosted URL; the client redirects to it.
+<!-- [/bd:store] -->
 
 ### Auth + customer portal
 
@@ -144,8 +146,12 @@ src/
 │   └── money.ts                                # price/interval formatters
 ├── routes/
 │   ├── index.tsx                              # home: loader composes sections + injects JSON-LD
+<!-- [bd:store] -->
 │   ├── store.index.tsx · store.$id.tsx · store.cart.tsx
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
 │   ├── subscriptions.tsx
+<!-- [/bd:saas] -->
 │   ├── reviews.tsx · updates.tsx
 │   ├── my-account.tsx                          # session + work bundle + review form
 │   ├── services.index.tsx · services.$service.$area.tsx   # programmatic SEO
@@ -204,6 +210,7 @@ shows TanStack's error screen.
 The BD layer doesn't care which framework lives on top — Solid components just receive plain data from the loader and call typed server functions.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -254,6 +261,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

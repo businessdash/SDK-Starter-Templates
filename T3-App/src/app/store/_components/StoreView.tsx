@@ -1,3 +1,4 @@
+// [bd-file:store]
 "use client";
 
 import Link from "next/link";

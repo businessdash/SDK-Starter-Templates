@@ -74,9 +74,14 @@ class AccessGateTest {
 
     @Test
     fun `a secret key is refused at construction`() {
-        assertFailsWith<IllegalArgumentException> {
-            BdClient(host = "https://www.businessdash.us", publishableKey = "sk_live_x", siteId = "s")
+        // Real secret keys are bd_…; the sk_ case stays to prove it's an allowlist.
+        for (secret in listOf("bd_3ZxQf9", "sk_live_x", " bd_padded ")) {
+            assertFailsWith<IllegalArgumentException>(secret) {
+                BdClient(host = "https://www.businessdash.us", publishableKey = secret, siteId = "s")
+            }
         }
+        BdClient(host = "https://www.businessdash.us", publishableKey = "pk_ok", siteId = "s")
+        BdClient(host = "https://www.businessdash.us", publishableKey = "", siteId = "s")
     }
 }
 

@@ -525,6 +525,7 @@ main {
 	font-size: 0.9rem;
 }
 
+/* [bd:store] */
 .app-header__cart {
 	color: var(--text);
 	display: inline-flex;
@@ -548,6 +549,7 @@ main {
 	font-size: 0.7rem;
 	font-weight: 700;
 }
+/* [/bd:store] */
 
 @media (max-width: 860px) {
 	.app-header nav {

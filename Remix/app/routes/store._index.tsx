@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { Form, Link, useLoaderData, useSearchParams } from "react-router";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 
@@ -107,9 +108,11 @@ export default function StoreIndex() {
 				<section className="section">
 					<div className="section__head">
 						<h1 className="section__title">Store</h1>
+						{/* [bd:saas] */}
 						<Link className="muted" to="/store/subscriptions">
 							Subscriptions →
 						</Link>
+						{/* [/bd:saas] */}
 					</div>
 
 					{!connected ? (

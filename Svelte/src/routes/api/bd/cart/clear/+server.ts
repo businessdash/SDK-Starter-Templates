@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { runCartMutation } from '#lib/server/bd-store.ts';
 
 import type { RequestHandler } from './$types';

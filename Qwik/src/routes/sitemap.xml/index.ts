@@ -20,9 +20,13 @@ const STATIC_PATHS = [
 	"/services",
 	"/reviews",
 	"/updates",
+	// [bd:store]
 	"/store",
-	"/todos",
+	// [/bd:store]
+	// [bd:saas]
 	"/subscriptions",
+	// [/bd:saas]
+	"/todos",
 ];
 
 export const onGet: RequestHandler = async ({ send, url, env }) => {
@@ -36,7 +40,12 @@ export const onGet: RequestHandler = async ({ send, url, env }) => {
 					env.get("PUBLIC_BD_SITE_ID") ?? env.get("BD_SITE_ID") ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
-				routes: { blog: "/updates", product: "/store" },
+				routes: {
+					// [bd:store]
+					product: "/store",
+					// [/bd:store]
+					blog: "/updates",
+				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),
 			})

@@ -30,6 +30,26 @@ import 'package:test/test.dart';
 }
 
 void main() {
+  group('the token rule', () {
+    BdClient build(String key) => BdClient(
+          host: Uri.parse('https://www.businessdash.us'),
+          publishableKey: key,
+          siteId: 'site-123',
+        );
+
+    test('refuses a secret key, whatever its prefix', () {
+      // Real secret keys are bd_…; sk_ stays to prove it's an allowlist.
+      expect(() => build('bd_3ZxQf9'), throwsArgumentError);
+      expect(() => build('sk_live_x'), throwsArgumentError);
+      expect(() => build(' bd_padded '), throwsArgumentError);
+    });
+
+    test('takes a pk_ token, or nothing yet', () {
+      expect(build('pk_ok').siteId, 'site-123');
+      expect(build('').siteId, 'site-123');
+    });
+  });
+
   group('access gate', () {
     // The subtle one. Reads signal a lapsed plan with HTTP **200** and a body
     // flag, so a client that only checks the status code decodes an empty

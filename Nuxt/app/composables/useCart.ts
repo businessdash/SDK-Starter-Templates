@@ -1,3 +1,4 @@
+// [bd:store]
 import { ref } from "vue";
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
@@ -71,6 +72,7 @@ export function useCart() {
 		clear,
 	};
 }
+// [/bd:store]
 
 /** Format an integer cent amount as currency for display. */
 export function formatMoney(cents: number, currency = "USD"): string {

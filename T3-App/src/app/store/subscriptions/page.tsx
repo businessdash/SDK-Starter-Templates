@@ -1,3 +1,6 @@
+// [bd-file:saas]
+import { subscribeAction } from "@/app/_actions/plans";
+import { getCustomerSession } from "@/server/lib/bd-portal";
 import {
 	isStoreConfigured,
 	listStoreSubscriptions,
@@ -15,7 +18,12 @@ function formatPrice(amountCents: number, interval: string): string {
 	return `${amount}/${interval}`;
 }
 
-export default async function SubscriptionsPage() {
+export default async function SubscriptionsPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ error?: string }>;
+}) {
+	const { error } = await searchParams;
 	if (!isStoreConfigured()) {
 		return (
 			<Notice
@@ -25,7 +33,10 @@ export default async function SubscriptionsPage() {
 		);
 	}
 
-	const data = await listStoreSubscriptions();
+	const [data, session] = await Promise.all([
+		listStoreSubscriptions(),
+		getCustomerSession(),
+	]);
 
 	if (data === null) {
 		return (
@@ -56,6 +67,9 @@ export default async function SubscriptionsPage() {
 					<code className="bd-code">subscriptions.list()</code>
 				</p>
 			</div>
+			{error === "checkout" ? (
+				<div className="bd-empty">Couldn&apos;t start checkout. Please try again.</div>
+			) : null}
 			<div className="bd-grid-3">
 				{data.items.map((sub) => (
 					<article className="bd-card store-card" key={sub.id}>
@@ -75,6 +89,18 @@ export default async function SubscriptionsPage() {
 							<span className="store-card__cta">
 								{formatPrice(sub.amountCents, sub.interval)}
 							</span>
+							{session ? (
+								<form action={subscribeAction}>
+									<input name="planId" type="hidden" value={sub.id} />
+									<button className="bd-btn" type="submit">
+										Subscribe
+									</button>
+								</form>
+							) : (
+								<a className="bd-btn" href="/my-account?next=/store/subscriptions">
+									Sign in to subscribe
+								</a>
+							)}
 						</div>
 					</article>
 				))}

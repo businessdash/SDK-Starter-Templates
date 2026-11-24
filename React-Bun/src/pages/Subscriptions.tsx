@@ -1,12 +1,37 @@
+// [bd-file:saas]
+import { useState } from "react";
 import { bd, money } from "../lib/bd";
 import { ErrorBox, PageHead, useApi } from "./ui";
+
+const SIGN_IN = "/my-account?next=/subscriptions";
 
 export function Subscriptions() {
 	const { data, error, loading } = useApi(() => bd.subscriptions.list());
 	const items: Record<string, any>[] = data?.items ?? [];
+	const subscribed = new URLSearchParams(window.location.search).has("session_id");
+	const [busyId, setBusyId] = useState<string | null>(null);
+	const [failure, setFailure] = useState<string | null>(null);
+
+	// A plan is the signed-in customer's own; anyone else signs in first.
+	const subscribe = async (planId: string) => {
+		setBusyId(planId);
+		setFailure(null);
+		try {
+			const res = await bd.subscriptions.checkout(planId, window.location.origin);
+			window.location.href = res.url ?? res.signIn ?? SIGN_IN;
+		} catch (e) {
+			setFailure(e instanceof Error ? e.message : "Couldn't start checkout.");
+			setBusyId(null);
+		}
+	};
 	return (
 		<main className="page">
 			<PageHead title="Plans" sub="Recurring subscriptions, billed via Stripe." />
+			{subscribed ? (
+				<p className="muted">
+					Thanks for subscribing. Your plan is in <a href="/my-account">your account</a>.
+				</p>
+			) : null}
 			{loading ? <p className="muted">Loading…</p> : null}
 			{error ? <ErrorBox error={error} /> : null}
 			{data && items.length === 0 ? <p className="muted">No subscription plans yet.</p> : null}
@@ -21,10 +46,25 @@ export function Subscriptions() {
 								{money(p.amountCents, p.currency)}
 								<span className="plan-card__interval"> / {p.interval ?? "month"}</span>
 							</div>
+							{data?.signedIn ? (
+								<button
+									className="btn btn--primary"
+									type="button"
+									disabled={busyId === p.id}
+									onClick={() => subscribe(p.id)}
+								>
+									{busyId === p.id ? "Working…" : "Subscribe"}
+								</button>
+							) : (
+								<a className="btn btn--primary" href={SIGN_IN}>
+									Sign in to subscribe
+								</a>
+							)}
 						</div>
 					))}
 				</div>
 			) : null}
+			{failure ? <p className="rf__msg">{failure}</p> : null}
 		</main>
 	);
 }

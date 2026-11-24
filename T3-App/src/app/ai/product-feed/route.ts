@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { productFeedUrl } from "@businessdash/sdk/distribution";
 
 import { getDistributionConfig } from "@/server/lib/bd-distribution";

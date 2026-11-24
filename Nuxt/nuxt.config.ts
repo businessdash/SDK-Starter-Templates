@@ -32,7 +32,7 @@ export default defineNuxtConfig({
 	 * reach the client bundle.
 	 */
 	runtimeConfig: {
-		// Secret API key (`sk_…`) — server-only, never exposed to the browser.
+		// Secret API key (`bd_…`) — server-only, never exposed to the browser.
 		bdApiKey: process.env.BD_API_KEY ?? process.env.NUXT_BD_API_KEY ?? "",
 		bdSiteId:
 			process.env.NUXT_PUBLIC_BD_SITE_ID ??

@@ -1,4 +1,7 @@
+// [bd-file:store,saas]
+// [bd:store]
 import type { AstroCookies } from "astro";
+// [/bd:store]
 
 import { bd } from "./bd";
 
@@ -16,8 +19,11 @@ import { bd } from "./bd";
  * Everything no-ops gracefully (returns `null`) when BD env is unset.
  */
 
+// [bd:store]
 const VISITOR_COOKIE = "bd_cart_visitor";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
+
+// [/bd:store]
 
 /** Whether the SDK is configured at all — lets the UI show a "store not
  *  connected" state instead of an empty grid. */
@@ -25,6 +31,7 @@ export function isStoreConfigured(): boolean {
 	return bd !== null;
 }
 
+// [bd:store]
 /** Read-only: the current visitor's cart token, or null if none yet. */
 export function getVisitorToken(cookies: AstroCookies): string | null {
 	return cookies.get(VISITOR_COOKIE)?.value ?? null;
@@ -134,6 +141,9 @@ export async function getStoreProductAddons(productId: string) {
 	}
 }
 
+// [/bd:store]
+
+// [bd:saas]
 export async function listStoreSubscriptions() {
 	if (!bd) return null;
 	try {
@@ -143,6 +153,9 @@ export async function listStoreSubscriptions() {
 	}
 }
 
+// [/bd:saas]
+
+// [bd:store]
 /** Current cart snapshot, or null when unconfigured / no cart yet. */
 export async function getCartSnapshot(cookies: AstroCookies) {
 	if (!bd) return null;
@@ -169,3 +182,4 @@ export async function getCheckoutStatus(sessionId: string) {
 		return null;
 	}
 }
+// [/bd:store]

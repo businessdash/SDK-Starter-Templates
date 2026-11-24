@@ -4,7 +4,7 @@ import Vapor
 /// Transport for the BD Package API — the **server** flavour.
 ///
 /// Deliberately NOT the same client as the native Swift starter's `BdKit`.
-/// That one traps on an `sk_…` key, because an app ships its credential inside
+/// That one traps on anything but a `pk_…` token, because an app ships its credential inside
 /// the binary. A server is the opposite case: the key never leaves the
 /// process, so this client takes a **secret key** and gets the full API rather
 /// than the publishable subset.

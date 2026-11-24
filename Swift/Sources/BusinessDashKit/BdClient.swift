@@ -7,8 +7,9 @@ import Foundation
 /// A native app **holds its credential in the artifact**. `strings` on an
 /// `.ipa` finds anything you ship, so `BdClient` only accepts a
 /// **publishable** `pk_…` token — origin-locked and rate-limited by the
-/// platform. `init` traps on an `sk_…` key rather than letting a secret ride
-/// to the App Store.
+/// platform. `init` traps on any other key rather than letting a secret ride
+/// to the App Store. (Secret keys start with `bd_`; the check is "is it a
+/// `pk_` token", never "is it some secret prefix", so no format slips past.)
 ///
 /// That is less limiting than it sounds. The publishable scope set covers the
 /// entire customer-facing surface: storefront, cart, checkout, blog, marketing
@@ -30,8 +31,8 @@ public struct BdClient: Sendable {
     /// - Parameters:
     ///   - host: BD app origin, e.g. `https://businessdash.us`. The client
     ///     appends `/api/package/v1` itself.
-    ///   - publishableKey: a `pk_…` token. Passing `sk_…` is a programmer
-    ///     error and traps.
+    ///   - publishableKey: a `pk_…` token, or empty before the app has one.
+    ///     Anything else (a `bd_…` secret key) is a programmer error and traps.
     ///   - siteID: the site UUID this app renders.
     public init(
         host: URL,
@@ -39,13 +40,14 @@ public struct BdClient: Sendable {
         siteID: String,
         transport: (any BdTransport)? = nil
     ) {
+        let key = publishableKey.trimmingCharacters(in: .whitespacesAndNewlines)
         precondition(
-            !publishableKey.hasPrefix("sk_"),
+            key.isEmpty || key.hasPrefix("pk_"),
             """
-            BdClient was given a SECRET key. A native app ships its \
-            credential inside the binary, where `strings` finds it — use a \
-            publishable pk_ token instead, and route anything that genuinely \
-            needs a secret key through a server you control.
+            BdClient takes a publishable pk_ token only. A native app ships its \
+            credential inside the binary, where `strings` finds it — never put \
+            a secret key there; route anything that genuinely needs one through \
+            a server you control.
             """
         )
 

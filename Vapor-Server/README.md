@@ -15,7 +15,7 @@ error: 'vapor': product 'Vapor' required by package 'vapor' target 'App'
 
 ## Not the same client as the Swift app starter
 
-The native Swift starter's `BdKit` **traps on an `sk_…` key**, because an app ships its credential inside the binary where `strings` finds it. A server is the opposite case: the key never leaves this process, so the client here takes a **secret key** and gets the full API rather than the publishable subset.
+The native Swift starter's `BdKit` **traps on anything but a publishable `pk_…` token**, because an app ships its credential inside the binary where `strings` finds it. A server is the opposite case: the key never leaves this process, so the client here takes a **secret key** and gets the full API rather than the publishable subset.
 
 Keeping them separate also keeps each starter clonable on its own, which is how every other template in this repo works.
 
@@ -135,6 +135,7 @@ back so the page updates in place. Without JavaScript they're plain form posts.
 
 `swift build` passes under **Swift 6 language mode**, and `Sources/BdForms` also builds on Linux (Swift 6.0). The forms and quizzes were driven in a browser against the bundled samples and a stand-in for BD's API: a form's steps, validation, uploads and submit; practice, timed and invitation quizzes, including sign-in and back. The server has not been run against a live BD site from this machine.
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -178,6 +179,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Data: environment, schema, seeding, CRUD
 

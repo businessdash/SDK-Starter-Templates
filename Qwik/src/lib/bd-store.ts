@@ -1,3 +1,4 @@
+// [bd-file:store,saas]
 /**
  * Server-only storefront helpers — thin wrappers over the SDK's
  * `storefront` / `cart` / `checkout` / `subscriptions` / `coupons`
@@ -12,6 +13,7 @@
  * `server$` functions, and request handlers.
  */
 
+// [bd:store]
 import type { BdClient } from "@businessdash/sdk";
 import type {
 	CartSnapshot,
@@ -23,17 +25,22 @@ import type {
 	StorefrontProductsWithMetaResponse,
 	StorefrontRelatedProductsResponse,
 	StorefrontSort,
-	SubscriptionOfferingsListResponse,
 } from "@businessdash/sdk/contracts";
 import type { Cookie } from "@builder.io/qwik-city";
+// [/bd:store]
+// [bd:saas]
+import type { SubscriptionOfferingsListResponse } from "@businessdash/sdk/contracts";
+// [/bd:saas]
 
 import { getBd } from "./bd";
 
+// [bd:store]
 /** The visitor-bound cart client the mutation helpers operate on. */
 type VisitorCart = ReturnType<BdClient["cart"]["forVisitor"]>;
 
 const VISITOR_COOKIE = "bd_cart_visitor";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
+// [/bd:store]
 
 /** Whether the SDK is configured at all (env present). Lets the UI show a
  *  "store not connected" state instead of an empty grid. */
@@ -46,6 +53,7 @@ export function sdkErrorMessage(err: unknown): string {
 	return err instanceof Error ? err.message : String(err);
 }
 
+// [bd:store]
 /** Read-only: the current visitor's cart token, or null if none yet. Safe to
  *  call from a loader — it never writes the cookie. */
 export function getVisitorToken(cookie: Cookie): string | null {
@@ -165,6 +173,9 @@ export async function getStoreProductAddons(
 	}
 }
 
+// [/bd:store]
+
+// [bd:saas]
 export async function listStoreSubscriptions(): Promise<SubscriptionOfferingsListResponse | null> {
 	const bd = getBd();
 	if (!bd) return null;
@@ -175,6 +186,9 @@ export async function listStoreSubscriptions(): Promise<SubscriptionOfferingsLis
 	}
 }
 
+// [/bd:saas]
+
+// [bd:store]
 /** Current cart snapshot, or null when unconfigured or no cart exists yet (no
  *  visitor token). Pure read — never mints the cookie. */
 export async function getCartSnapshot(
@@ -278,6 +292,8 @@ export async function startCheckout(
 		return { ok: false, error: sdkErrorMessage(err) };
 	}
 }
+
+// [/bd:store]
 
 /** Cents → display string, e.g. 1299 + "usd" → "$12.99". */
 export function formatMoney(cents: number, currency: string): string {

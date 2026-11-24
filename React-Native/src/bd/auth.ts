@@ -57,7 +57,7 @@ let pendingVerifier: string | null = null
 /** Null until the app has a publishable key (see `src/bd/client.ts`). */
 export function appSignInBackend(): BdSignInBackend | null {
   const key = publishableKey?.trim()
-  if (!key || key.startsWith('sk_')) return null
+  if (!key || !key.startsWith('pk_')) return null
 
   const base = businessDashSignInBackend({ publishableKey: key, host: BD_HOST })
 

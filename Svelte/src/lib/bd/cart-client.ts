@@ -1,3 +1,5 @@
+// [bd-file:store,saas]
+// [bd:store]
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
 /**
@@ -88,6 +90,8 @@ export async function startCheckout(): Promise<
 		return { ok: false, error: err instanceof Error ? err.message : "Network error." };
 	}
 }
+
+// [/bd:store]
 
 /** Format a dollar amount (cart `unitPrice`/`subtotal`, variant `price`). */
 export function formatDollars(amount: number, currency = "USD"): string {

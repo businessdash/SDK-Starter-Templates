@@ -1,3 +1,4 @@
+// [bd-file:store,saas]
 import { component$ } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$ } from "@builder.io/qwik-city";
 
@@ -49,9 +50,16 @@ export default component$(() => {
 								? `A receipt is on its way${data.value.email ? ` to ${data.value.email}` : ""}.`
 								: "We're confirming your payment. You'll get an email shortly."}
 						</p>
+						{/* [bd:store] */}
 						<a class="bd-btn bd-btn--ghost" href="/store">
 							Continue shopping
 						</a>
+						{/* [/bd:store] */}
+						{/* [bd:saas] */}
+						<a class="bd-btn bd-btn--ghost" href="/my-account">
+							See your plan
+						</a>
+						{/* [/bd:saas] */}
 					</div>
 				</section>
 			</main>

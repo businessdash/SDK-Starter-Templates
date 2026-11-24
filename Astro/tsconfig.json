@@ -1,5 +1,8 @@
 {
   "extends": "astro/tsconfigs/strict",
   "include": [".astro/types.d.ts", "**/*"],
-  "exclude": ["dist"]
+  // The React islands (ContactForm.tsx, Subscribe.tsx) are opt-in: React
+  // isn't installed until you run `npx astro add react`. They're checked as
+  // soon as a page imports one.
+  "exclude": ["dist", "src/components/*.tsx"]
 }

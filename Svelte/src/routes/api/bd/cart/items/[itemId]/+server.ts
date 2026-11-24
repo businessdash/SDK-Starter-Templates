@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { error } from '@sveltejs/kit';
 
 import { runCartMutation } from '#lib/server/bd-store.ts';

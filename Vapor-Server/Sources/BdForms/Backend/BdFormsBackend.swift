@@ -212,7 +212,7 @@ public struct BdFormsError: Error, LocalizedError, Sendable {
 /// BD's Package API, authenticated with a publishable (`pk_…`) key.
 ///
 /// A publishable key is meant to ship inside an app. A secret key is not,
-/// and passing one traps in debug builds rather than letting it ride along.
+/// and passing anything but a `pk_…` token traps rather than letting it ride along.
 public struct BdPackageFormsBackend: BdFormsBackend {
     public let baseURL: URL
     /// Sent with every BD call: the key, and anything the endpoint wants.
@@ -225,7 +225,10 @@ public struct BdPackageFormsBackend: BdFormsBackend {
     public init(host: URL, publishableKey: String, session: URLSession = .shared) {
         // A precondition, not an assert: release builds are the ones that
         // ship the key inside the binary, so they're the ones that must stop.
-        precondition(!publishableKey.hasPrefix("sk_"), "BdForms: never ship a secret key in an app; use a pk_ key.")
+        // Allow, don't deny: secret keys start with bd_, so only "is it a pk_
+        // token" catches every one. Empty means the app has no key yet.
+        let key = publishableKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        precondition(key.isEmpty || key.hasPrefix("pk_"), "BdForms: an app takes a publishable pk_ key only, never a secret key.")
         self.baseURL = host.appendingPathComponent("api/package/v1")
         self.headers = ["Authorization": "Bearer \(publishableKey)"]
         self.session = session

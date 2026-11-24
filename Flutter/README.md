@@ -10,7 +10,7 @@ The split is not tidiness. It means the part most likely to be wrong — decodin
 
 ## The one rule that shapes everything here
 
-**A mobile app ships its credential inside the artifact.** `strings` on an APK or IPA finds anything you bundle, so `BdClient` asserts on an `sk_…` key and takes a **publishable `pk_…` token** only.
+**A mobile app ships its credential inside the artifact.** `strings` on an APK or IPA finds anything you bundle, so `BdClient` takes a **publishable `pk_…` token** only and throws on anything else, including a secret `bd_…` key, in release builds too.
 
 That turns out to be barely limiting. The publishable scope set covers the entire customer-facing surface:
 
@@ -180,6 +180,7 @@ The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in s
 
 The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`).
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -219,6 +220,7 @@ Three rules:
   can't be added later, so mint a new key.
 - **Leave the return URLs out.** The donor lands on the hosted thank-you page
   and closes the browser back into the app.
+<!-- [/bd:donations] -->
 
 ## Data: environment, schema, seeding, CRUD
 

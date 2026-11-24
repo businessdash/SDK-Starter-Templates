@@ -70,10 +70,10 @@ is unset.
 | Surface | Route / page | SDK calls (proxied) |
 | --- | --- | --- |
 | **Home sections** | `/` | `marketing.getPageBundle`, `gallery.list`, `blog.listPosts`, `scheduling.*`, `forms.*` |
-| **Storefront** | `/store`, `/store/:id` | `storefront.listProducts`, `storefront.getProduct` |
-| **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie minted by the proxy |
-| **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` |
-| **Subscriptions** | `/subscriptions` | `subscriptions.list` |
+| **Storefront** | `/store`, `/store/:id` | `storefront.listProducts`, `storefront.getProduct` | <!-- [bd-line:store] -->
+| **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie minted by the proxy | <!-- [bd-line:store] -->
+| **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` | <!-- [bd-line:store] -->
+| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:saas] -->
 | **Reviews wall** | `/reviews` | `reviews.list({ limit, offset })` with "load more" |
 | **News banner + updates** | banner on every page, `/updates` | `bundle.banner`, `bundle.updates` |
 | **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
@@ -137,13 +137,19 @@ fetch returns fresh data within seconds of a publish, no redeploy. Set
 │   │   └── ContactForm.tsx    # Forms schema + validator
 │   └── pages/
 │       ├── ui.tsx            # useApi hook + ErrorBox + PageHead
-│       ├── Store.tsx  Product.tsx  Cart.tsx  Subscriptions.tsx
+<!-- [bd:store] -->
+│       ├── Store.tsx  Product.tsx  Cart.tsx
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
+│       ├── Subscriptions.tsx
+<!-- [/bd:saas] -->
 │       ├── Reviews.tsx  Updates.tsx  MyAccount.tsx
 │       └── ServiceAreas.tsx  ServiceArea.tsx
 └── .env.example
 ```
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -188,6 +194,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

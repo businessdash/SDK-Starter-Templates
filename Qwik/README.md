@@ -81,6 +81,7 @@ bundle.
 | `src/lib/bd-portal.ts` | `getTenantSession` on the `bd_session` cookie + `customerPortal(org).withSession(token)` (work bundle, review submit). |
 | `src/lib/bd-content.ts` | `bundle.banner` / `bundle.updates` extraction, reviews-wall pagination (`reviews.list`), and `localBusiness` + `website` JSON-LD via `@businessdash/sdk/seo`. |
 
+<!-- [bd:store] -->
 ### Storefront + commerce
 
 | Surface | File | SDK call |
@@ -89,12 +90,21 @@ bundle.
 | **Product detail + add to cart** | `src/routes/store/[id]/index.tsx` | `storefront.getProduct(id)`, `cart.forVisitor(token).addItem(...)` via `server$` |
 | **Cart** (update / remove / coupon / clear / checkout) | `src/routes/cart/index.tsx` | `cart.forVisitor(token).*`, `checkout.forVisitor(token).start(...)` via `server$` |
 | **Order confirmation** | `src/routes/store/order/index.tsx` | `checkout.getStatus(sessionId)` |
-| **Subscriptions** | `src/routes/subscriptions/index.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` |
 
 The cart is keyed on a visitor token we own — an httpOnly `bd_cart_visitor`
 cookie minted on the first mutation through Qwik's RequestEvent `cookie` API. No
 separate API endpoint files: cart/checkout mutations are `server$` RPCs that
 read/write the cookie via `this.cookie` and return a fresh `CartSnapshot`.
+<!-- [/bd:store] -->
+
+<!-- [bd:saas] -->
+### Plans
+
+`src/routes/subscriptions/index.tsx` lists `subscriptions.list()`; Subscribe calls
+`subscriptions.startCheckout(id, ...)` in a `server$` RPC and sends the customer to
+Stripe, which returns them to `src/routes/store/order/index.tsx`
+(`checkout.getStatus(sessionId)`).
+<!-- [/bd:saas] -->
 
 ### Auth + customer portal
 
@@ -165,7 +175,9 @@ bd.config.ts                                 # marketing schema + parallel-page 
 src/
 ├── lib/
 │   ├── bd.ts                                # SDK client (server-only)
+<!-- [bd:store,saas] -->
 │   ├── bd-store.ts                          # storefront / cart / checkout / subs + visitor cookie
+<!-- [/bd:store,saas] -->
 │   ├── bd-portal.ts                         # session + customer portal
 │   └── bd-content.ts                        # banner / updates / reviews / JSON-LD
 ├── global.css                                 # BD CSS vars + section styles
@@ -179,11 +191,19 @@ src/
 │   └── ContactForm.tsx                        # useSignal + server$ RPC
 └── routes/
     ├── index.tsx                              # routeLoader$ + banner + JSON-LD
+<!-- [bd:store] -->
     ├── store/index.tsx                        # product list
     ├── store/[id]/index.tsx                   # product detail + add to cart
+<!-- [/bd:store] -->
+<!-- [bd:store,saas] -->
     ├── store/order/index.tsx                  # Stripe checkout return
+<!-- [/bd:store,saas] -->
+<!-- [bd:store] -->
     ├── cart/index.tsx                         # cart mutations + checkout
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
     ├── subscriptions/index.tsx               # subscription plans
+<!-- [/bd:saas] -->
     ├── reviews/index.tsx                      # reviews wall + load more
     ├── updates/index.tsx                      # bundle.updates feed
     ├── my-account/index.tsx                   # portal: work bundle + review form
@@ -209,6 +229,7 @@ npm run qwik add netlify-edge
 The BD layer doesn't change — only the runtime where `routeLoader$` and `server$` execute.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -255,6 +276,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

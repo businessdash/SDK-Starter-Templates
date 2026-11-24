@@ -4,7 +4,7 @@ import { env } from "@/env";
 
 /**
  * Shared config for the AEO + MCP proxy routes — `/llms.txt`, `/api/mcp`,
- * `/.well-known/mcp.json`, and `/ai/product-feed`.
+ * `/.well-known/mcp.json`, and `/ai/product-feed` (with the store).
  *
  * The platform serves those artifacts from its bare ORIGIN
  * (`…/api/public/ai-feed/<siteId>/…` and `…/api/public/mcp/<siteId>`), not

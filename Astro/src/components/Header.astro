@@ -7,10 +7,14 @@
  * at that catch-all). Sign-out points at the same handler, which clears the
  * `bd_session` cookie and redirects home.
  */
+// [bd:store]
 import { getCartCount } from "../lib/bd-store";
+// [/bd:store]
 import { getCustomerSession } from "../lib/bd-portal";
 
+// [bd:store]
 const cartCount = await getCartCount(Astro.cookies);
+// [/bd:store]
 const session = await getCustomerSession(Astro.cookies).catch(() => null);
 const firstName = session?.user.firstName ?? null;
 ---
@@ -20,7 +24,12 @@ const firstName = session?.user.firstName ?? null;
 		<a class="app-header__brand" href="/">Your Business</a>
 		<nav>
 			<a href="/#services">Services</a>
+			<!-- [bd:store] -->
 			<a href="/store">Store</a>
+			<!-- [/bd:store] -->
+			<!-- [bd:saas] -->
+			<a href="/store/subscriptions">Plans</a>
+			<!-- [/bd:saas] -->
 			<a href="/#gallery">Gallery</a>
 			<a href="/#booking">Book</a>
 			<a href="/reviews">Reviews</a>
@@ -29,9 +38,11 @@ const firstName = session?.user.firstName ?? null;
 			<a href="/#contact">Contact</a>
 		</nav>
 		<div class="app-header__actions">
+			<!-- [bd:store] -->
 			<a class="app-header__cart" href="/store/cart" aria-label="Cart">
 				Cart{cartCount > 0 ? <span class="app-header__cart-count">{cartCount}</span> : null}
 			</a>
+			<!-- [/bd:store] -->
 			{
 				session ? (
 					<>

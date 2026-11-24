@@ -10,6 +10,10 @@ import {
 	getCustomerWork,
 	isCustomerPortalConfigured,
 } from "@/server/lib/bd-portal";
+// [bd:saas]
+import { changePlanAction } from "@/app/_actions/plans";
+import { getCustomerSubscription } from "@/server/lib/bd-portal";
+// [/bd:saas]
 
 export const metadata: Metadata = {
 	title: "My Account",
@@ -77,9 +81,14 @@ function JobCard({
 export default async function MyAccountPage({
 	searchParams,
 }: {
-	searchParams: Promise<{ start?: string }>;
+	searchParams: Promise<{ start?: string; next?: string; plan?: string }>;
 }) {
-	const { start } = await searchParams;
+	const { start, next, plan } = await searchParams;
+	// Where sign-in returns to: a path on this site, or the account page.
+	const redirectTo =
+		next?.startsWith("/") && !next.startsWith("//") && !next.startsWith("/\\")
+			? next
+			: "/my-account";
 	const configured = isCustomerPortalConfigured();
 	const session = configured ? await getCustomerSession() : null;
 
@@ -107,11 +116,15 @@ export default async function MyAccountPage({
 				) : !session ? (
 					<div className="bd-card account__signedout">
 						<SignInScreen
+							redirectTo={redirectTo}
 							start={start === "create" ? "createAccount" : "signIn"}
 						/>
 					</div>
 				) : (
 					<>
+						{/* [bd:saas] */}
+						<PlanSection result={plan} />
+						{/* [/bd:saas] */}
 						<AccountWork />
 						<p className="account__delete">
 							<a href="/api/bd-auth/delete-account">Delete my account</a>
@@ -169,3 +182,78 @@ async function AccountWork() {
 		</div>
 	);
 }
+
+// [bd:saas]
+/**
+ * The customer's plan, with Cancel, or Keep my plan while a cancel is pending.
+ * `result` is what the last change did; it wins over the stored status,
+ * which lags until the payment provider confirms.
+ */
+async function PlanSection({ result }: { result?: string }) {
+	const plan = (await getCustomerSubscription())?.subscription ?? null;
+	const cancelPending =
+		result === "cancelled"
+			? true
+			: result === "resumed"
+				? false
+				: (plan?.cancelledButActive ?? false);
+	const until = formatDate(plan?.expiresAt ?? null);
+	return (
+		<section>
+			<h2 className="account__sectionTitle">Your plan</h2>
+			<div className="bd-card account-job">
+				{plan?.hasAccess ? (
+					<>
+						<div className="account-job__head">
+							<h3>{plan.plan?.name ?? "Subscription"}</h3>
+							<span
+								className={`bd-badge ${cancelPending ? "" : "bd-badge--active"}`}
+							>
+								{cancelPending ? "Cancelled" : "Active"}
+							</span>
+						</div>
+						{plan.type === "lifetime" ? (
+							<p className="account-job__meta">Yours for good. Nothing renews.</p>
+						) : (
+							<>
+								<p className="account-job__meta">
+									{cancelPending
+										? `It won't renew. You keep everything${until ? ` until ${until}` : ""}.`
+										: until
+											? `Renews ${until}.`
+											: "Renews automatically."}
+								</p>
+								<form action={changePlanAction}>
+									<input
+										name="intent"
+										type="hidden"
+										value={cancelPending ? "resume" : "cancel"}
+									/>
+									<button
+										className={cancelPending ? "bd-btn" : "bd-btn bd-btn--ghost"}
+										type="submit"
+									>
+										{cancelPending ? "Keep my plan" : "Cancel plan"}
+									</button>
+								</form>
+							</>
+						)}
+					</>
+				) : (
+					<>
+						<p className="account-job__meta">You don&apos;t have a plan yet.</p>
+						<a className="bd-btn" href="/store/subscriptions">
+							See plans
+						</a>
+					</>
+				)}
+				{result === "error" ? (
+					<p className="account-job__meta">
+						We couldn&apos;t change your plan. Please try again.
+					</p>
+				) : null}
+			</div>
+		</section>
+	);
+}
+// [/bd:saas]

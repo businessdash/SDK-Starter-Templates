@@ -235,8 +235,11 @@ class BdPackageFormsBackend implements BdFormsBackend {
   })  : _key = publishableKey,
         baseUrl = '${host.replaceAll(RegExp(r'/+$'), '')}/api/package/v1',
         _http = httpClient ?? http.Client() {
-    if (publishableKey.startsWith('sk_')) {
-      throw ArgumentError('BdForms: never ship a secret key in an app; use a pk_ key.');
+    // Allow, don't deny: secret keys start with bd_, so only "is it a pk_
+    // token" catches every one. Empty means the app has no key yet.
+    final key = publishableKey.trim();
+    if (key.isNotEmpty && !key.startsWith('pk_')) {
+      throw ArgumentError('BdForms: an app takes a publishable pk_ key only, never a secret key.');
     }
   }
 

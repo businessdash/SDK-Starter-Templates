@@ -358,6 +358,8 @@ void main() {
         http.Response(body, status, headers: {'content-type': 'application/json'});
 
     test('refuses a secret key', () {
+      // Real secret keys are bd_…; sk_ stays to prove it's an allowlist.
+      expect(() => BdPackageFormsBackend(publishableKey: 'bd_3ZxQf9'), throwsArgumentError);
       expect(() => BdPackageFormsBackend(publishableKey: 'sk_live_oops'), throwsArgumentError);
     });
 

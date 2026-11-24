@@ -111,7 +111,7 @@ class BdForm extends StatefulWidget {
   /// The form's slug (Forms → Share in BusinessDash).
   final String? form;
 
-  /// A publishable `pk_…` key. Never an `sk_` key: it ships in the app.
+  /// A publishable `pk_…` key. Never a secret (`bd_…`) key: it ships in the app.
   final String? publishableKey;
   final BdFormsBackend? backend;
   final BdFormController? controller;

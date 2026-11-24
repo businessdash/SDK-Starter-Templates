@@ -14,11 +14,11 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.90
-        version: 0.9.90(@builder.io/qwik@1.20.4(vite@7.3.8(@types/node@20.19.0)(less@4.9.1)(sass@1.108.2)(stylus@0.62.0)(tsx@4.23.15)(yaml@2.9.1)))
+        specifier: ^0.9.94
+        version: 0.9.94(@builder.io/qwik@1.20.4(vite@7.3.8(@types/node@20.19.0)(less@4.9.1)(sass@1.108.2)(stylus@0.62.0)(tsx@4.23.15)(yaml@2.9.1)))
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
     devDependencies:
       '@builder.io/qwik':
         specifier: ^1.20.0
@@ -82,8 +82,8 @@ packages:
     peerDependencies:
       vite: '>=5 <8'
 
-  '@businessdash/sdk@0.9.90':
-    resolution: {integrity: sha512-kFQYQk6EdSqfPueSC0z/Mh4oGiyvdfCywaF6Opg0OMlU807FFTl84bBCCuSLLXjC0/5IvB0RCs0Pf1H7XkMaJQ==}
+  '@businessdash/sdk@0.9.94':
+    resolution: {integrity: sha512-flSHB/uPftoE2taTPZk2NIeVpws41p77dY0riuofC3fgB9Dk/t2QC1B8IuYlTPZ6XYeM3IUXKiddVJQN05VuRQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -495,10 +495,6 @@ packages:
 
   '@isaacs/nonrecursive-glob-match@1.1.0':
     resolution: {integrity: sha512-GPm/Dbvk5RLmhRnxXIa7nTpK0xtl4E0wj0MslsuNiJ1FIROU+2+9lgUC/dgF7Ey4QCWhfEsgxilMRMCdHPfDfw==}
-
-  '@js-temporal/polyfill@0.5.1':
-    resolution: {integrity: sha512-hloP58zRVCRSpgDxmqCWJNlizAlUgJFqG2ypq79DCvyv9tHjRYMDOcPFjzfl/A1/YxDvRCZz8wvZvmapQnKwFQ==}
-    engines: {node: '>=12'}
 
   '@mdx-js/mdx@3.1.1':
     resolution: {integrity: sha512-f6ZO2ifpwAQIpzGWaBQT2TXxPv6z3RBzQKpVftEWN78Vl/YweF1uwussDx8ECAXVtr3Rs89fKyG9YlzUs9DyGQ==}
@@ -1526,9 +1522,6 @@ packages:
     resolution: {integrity: sha512-SFNOvSJ+Dgf/9An904Yx+CgSlIPCkIpao4qo51lpee25TIRejdH3rhR4EZMGoNx3/TP3O+wzWuiTFl4sqbltzA==}
     hasBin: true
 
-  jsbi@4.3.2:
-    resolution: {integrity: sha512-9fqMSQbhJykSeii05nxKl4m6Eqn2P6rOlYiS+C5Dr/HPIU/7yZxu5qzbs40tgaFORiw2Amd0mirjxatXYMkIew==}
-
   json-buffer@3.0.1:
     resolution: {integrity: sha512-4bV5BfR2mqfQTJm+V5tPPdf+ZpuhiIvTuAB5g8kcrXOZpTT/QwwVRWBywX1ozr6lEuPdbHxwaJlm9G6mI2sfSQ==}
 
@@ -2302,16 +2295,11 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  zod-to-json-schema@3.25.2:
-    resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
-    peerDependencies:
-      zod: ^3.25.28 || ^4
-
   zod@3.25.48:
     resolution: {integrity: sha512-0X1mz8FtgEIvaxGjdIImYpZEaZMrund9pGXm3M6vM7Reba0e2eI71KPjSCGXBfwKDPwPoywf6waUKc3/tFvX2Q==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -2356,11 +2344,9 @@ snapshots:
       rollup: 4.68.7
       vite: 7.3.8(@types/node@20.19.0)(less@4.9.1)(sass@1.108.2)(stylus@0.62.0)(tsx@4.23.15)(yaml@2.9.1)
 
-  '@businessdash/sdk@0.9.90(@builder.io/qwik@1.20.4(vite@7.3.8(@types/node@20.19.0)(less@4.9.1)(sass@1.108.2)(stylus@0.62.0)(tsx@4.23.15)(yaml@2.9.1)))':
+  '@businessdash/sdk@0.9.94(@builder.io/qwik@1.20.4(vite@7.3.8(@types/node@20.19.0)(less@4.9.1)(sass@1.108.2)(stylus@0.62.0)(tsx@4.23.15)(yaml@2.9.1)))':
     dependencies:
-      '@js-temporal/polyfill': 0.5.1
-      zod: 3.25.76
-      zod-to-json-schema: 3.25.2(zod@3.25.76)
+      zod: 4.6.7
     optionalDependencies:
       '@builder.io/qwik': 1.20.4(vite@7.3.8(@types/node@20.19.0)(less@4.9.1)(sass@1.108.2)(stylus@0.62.0)(tsx@4.23.15)(yaml@2.9.1))
 
@@ -2616,10 +2602,6 @@ snapshots:
     optional: true
 
   '@isaacs/nonrecursive-glob-match@1.1.0': {}
-
-  '@js-temporal/polyfill@0.5.1':
-    dependencies:
-      jsbi: 4.3.2
 
   '@mdx-js/mdx@3.1.1':
     dependencies:
@@ -3787,8 +3769,6 @@ snapshots:
     dependencies:
       argparse: 2.0.1
 
-  jsbi@4.3.2: {}
-
   json-buffer@3.0.1: {}
 
   json-schema-traverse@0.4.1: {}
@@ -4941,12 +4921,8 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-to-json-schema@3.25.2(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
-
   zod@3.25.48: {}
 
-  zod@3.25.76: {}
+  zod@4.6.7: {}
 
   zwitch@2.0.4: {}

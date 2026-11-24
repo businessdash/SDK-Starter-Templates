@@ -13,7 +13,7 @@ bd.siteId=
 # ⚠️ PUBLISHABLE TOKEN ONLY (`pk_…`).
 #
 # BuildConfig values land in the APK, where `strings` finds them in seconds.
-# BdClient refuses an `sk_…` key at construction.
+# BdClient refuses anything but a `pk_…` token at construction.
 #
 # This is less limiting than it sounds: the publishable scope set covers the
 # entire customer-facing surface — storefront, cart, checkout, blog, marketing

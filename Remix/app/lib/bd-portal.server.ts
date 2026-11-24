@@ -4,6 +4,9 @@ import type {
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle,
 } from "@businessdash/sdk/contracts";
+// [bd:saas]
+import type { CustomerSubscriptionResponse } from "@businessdash/sdk/contracts";
+// [/bd:saas]
 import { createCookie } from "react-router";
 
 import { getServerConfig } from "./bd.server";
@@ -116,3 +119,52 @@ export async function submitCustomerReview(
 	if (!session) throw new Error("Not signed in.");
 	return portalFor(session).submitReview(input);
 }
+
+// [bd:saas]
+/**
+ * Start a Stripe subscription checkout for the signed-in customer. Returns
+ * null when nobody is signed in: a plan belongs to a person, and BD refuses a
+ * plan checkout without the customer's session.
+ */
+export async function startPlanCheckout(
+	request: Request,
+	planId: string,
+	urls: { successUrl: string; cancelUrl: string },
+): Promise<{ url: string } | null> {
+	const session = await getCustomerSession(request);
+	const cfg = getServerConfig();
+	if (!session || !cfg) return null;
+	// The session rides as a header, so the checkout is the customer's own.
+	const client = createBdApiClient({
+		apiKey: cfg.apiKey,
+		baseUrl: cfg.baseUrl,
+		defaultHeaders: { "X-BD-Session-Token": session.token },
+	});
+	const res = await client.subscriptions.startCheckout(planId, urls);
+	return { url: res.stripeUrl };
+}
+
+/** The signed-in customer's plan with this business, and what it offers. */
+export async function getCustomerSubscription(
+	request: Request,
+): Promise<CustomerSubscriptionResponse | null> {
+	const session = await getCustomerSession(request);
+	if (!session) return null;
+	try {
+		return await portalFor(session).getSubscription();
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Cancel the plan at the end of the paid period, or take a pending cancel
+ * back. Access runs until `accessUntil` either way.
+ */
+export async function setPlanCancelled(request: Request, cancel: boolean) {
+	const session = await getCustomerSession(request);
+	if (!session) throw new Error("Not signed in.");
+	const portal = portalFor(session);
+	return cancel ? portal.cancelSubscription() : portal.resumeSubscription();
+}
+// [/bd:saas]

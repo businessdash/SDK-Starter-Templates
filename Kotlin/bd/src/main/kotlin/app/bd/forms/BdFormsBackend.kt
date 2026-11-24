@@ -175,7 +175,10 @@ public class BdPackageFormsBackend(
     engine: HttpClientEngine? = null,
 ) : BdFormsBackend {
     init {
-        require(!publishableKey.startsWith("sk_")) { "BdForms: never ship a secret key in an app; use a pk_ key." }
+        // Allow, don't deny: secret keys start with bd_, so only "is it a pk_
+        // token" catches every one. Empty means the app has no key yet.
+        val key = publishableKey.trim()
+        require(key.isEmpty() || key.startsWith("pk_")) { "BdForms: an app takes a publishable pk_ key only, never a secret key." }
     }
 
     public val baseUrl: String = host.trimEnd('/') + "/api/package/v1"

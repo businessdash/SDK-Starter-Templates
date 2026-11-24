@@ -1,3 +1,4 @@
+// [bd-file:saas]
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city";
 
@@ -11,7 +12,9 @@ import { Footer } from "../../components/bd/Footer";
 import { SiteHeader } from "../../components/bd/SiteHeader";
 import { getBd } from "../../lib/bd";
 import { formatMoney } from "../../lib/bd-store";
-import { getCustomerSession } from "../../lib/bd-portal";
+import { getCustomerSession, startPlanCheckout } from "../../lib/bd-portal";
+
+const SIGN_IN = "/my-account?next=/subscriptions";
 
 /** Subscription offerings list. Each plan starts its own Stripe checkout. */
 export const useSubscriptions = routeLoader$(async ({ cookie }) => {
@@ -42,14 +45,15 @@ export const useSubscriptions = routeLoader$(async ({ cookie }) => {
 });
 
 const startSubscriptionRpc = server$(async function (this, id: string) {
-	const bd = getBd();
-	if (!bd) return { ok: false as const, error: "Plans aren't connected." };
+	if (!getBd()) return { ok: false as const, error: "Plans aren't connected." };
 	try {
-		const res = await bd.subscriptions.startCheckout(id, {
+		// A plan is the signed-in customer's own; anyone else signs in first.
+		const res = await startPlanCheckout(this.cookie, id, {
 			successUrl: `${this.url.origin}/store/order?session_id={CHECKOUT_SESSION_ID}`,
 			cancelUrl: `${this.url.origin}/subscriptions`,
 		});
-		return { ok: true as const, url: res.stripeUrl };
+		if (!res) return { ok: true as const, url: SIGN_IN };
+		return { ok: true as const, url: res.url };
 	} catch (err) {
 		return {
 			ok: false as const,
@@ -116,15 +120,25 @@ export default component$(() => {
 									<div class="service-card__price">
 										{formatMoney(plan.amountCents, "usd")} / {plan.interval}
 									</div>
-									<button
-										class="bd-btn"
-										disabled={busy.value === plan.id}
-										onClick$={() => subscribe(plan.id)}
-										style="align-self: flex-start; margin-top: 0.5rem;"
-										type="button"
-									>
-										{busy.value === plan.id ? "Working…" : "Subscribe"}
-									</button>
+									{data.value.signedIn ? (
+										<button
+											class="bd-btn"
+											disabled={busy.value === plan.id}
+											onClick$={() => subscribe(plan.id)}
+											style="align-self: flex-start; margin-top: 0.5rem;"
+											type="button"
+										>
+											{busy.value === plan.id ? "Working…" : "Subscribe"}
+										</button>
+									) : (
+										<a
+											class="bd-btn"
+											href={SIGN_IN}
+											style="align-self: flex-start; margin-top: 0.5rem;"
+										>
+											Sign in to subscribe
+										</a>
+									)}
 								</div>
 							))}
 						</div>

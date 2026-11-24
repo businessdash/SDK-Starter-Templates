@@ -6,7 +6,7 @@ import Foundation
 /// populated from an `.xcconfig` so the values aren't hard-coded in a file
 /// people commit. `BdStarter.xcconfig` in this starter shows the shape.
 ///
-/// Only the publishable token belongs here. A secret `sk_…` in Info.plist is
+/// Only the publishable token belongs here. A secret `bd_…` in Info.plist is
 /// a secret in the App Store — `BdClient.init` traps if you try.
 public struct BdConfiguration: Sendable {
     public let host: URL

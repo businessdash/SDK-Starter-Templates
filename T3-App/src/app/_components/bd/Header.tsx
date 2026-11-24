@@ -10,7 +10,14 @@ export function BdHeader() {
 					<a href="#gallery">Gallery</a>
 					<a href="#booking">Book</a>
 					<a href="#reviews">Reviews</a>
+					{/* [bd:store] */}
 					<a href="/store">Store</a>
+					{/* [/bd:store] */}
+					{/* [bd:saas] */}
+					{/* [bd:!store] */}
+					<a href="/store/subscriptions">Plans</a>
+					{/* [/bd:!store] */}
+					{/* [/bd:saas] */}
 					<a href="#contact">Contact</a>
 					<HeaderAuth />
 				</nav>

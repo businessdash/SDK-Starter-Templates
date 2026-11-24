@@ -1,3 +1,4 @@
+<!-- [bd-file:store,saas] -->
 <script lang="ts">
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
@@ -39,9 +40,16 @@
 			<h1 class="bd-section__title">Order status unavailable</h1>
 			<p>We couldn't look up this checkout session.</p>
 		{/if}
+		<!-- [bd:store] -->
 		<a class="bd-btn bd-btn--ghost" href="/store" style="align-self: flex-start;">
 			Continue shopping
 		</a>
+		<!-- [/bd:store] -->
+		<!-- [bd:saas] -->
+		<a class="bd-btn bd-btn--ghost" href="/my-account" style="align-self: flex-start;">
+			See your plan
+		</a>
+		<!-- [/bd:saas] -->
 	</div>
 </main>
 

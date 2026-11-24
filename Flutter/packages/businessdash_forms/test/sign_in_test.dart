@@ -233,6 +233,11 @@ void main() {
   });
 
   group('BdBusinessDashSignInBackend', () {
+    test('refuses a secret key, in release builds too', () {
+      expect(() => BdBusinessDashSignInBackend(publishableKey: 'bd_3ZxQf9'), throwsArgumentError);
+      expect(() => BdBusinessDashSignInBackend(publishableKey: 'sk_live_x'), throwsArgumentError);
+    });
+
     test('calls auth/customer with the publishable key; passes BD refusals on', () async {
       late http.Request seen;
       final backend = BdBusinessDashSignInBackend(

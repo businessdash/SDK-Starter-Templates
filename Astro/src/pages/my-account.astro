@@ -18,6 +18,9 @@ import {
 	getCustomerWork,
 	isCustomerPortalConfigured,
 } from "../lib/bd-portal";
+// [bd:saas]
+import { getCustomerSubscription } from "../lib/bd-portal";
+// [/bd:saas]
 import Layout from "../layouts/Layout.astro";
 
 export const prerender = false;
@@ -27,6 +30,32 @@ const start =
 	Astro.url.searchParams.get("start") === "create" ? "createAccount" : "signIn";
 const session = configured ? await getCustomerSession(Astro.cookies) : null;
 const work = session ? await getCustomerWork(Astro.cookies) : null;
+// Where sign-in returns to: a path on this site, or the account page.
+const rawNext = Astro.url.searchParams.get("next") ?? "";
+const next =
+	rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\")
+		? rawNext
+		: "/my-account";
+// [bd:saas]
+const plan = session
+	? ((await getCustomerSubscription(Astro.cookies))?.subscription ?? null)
+	: null;
+// What just happened wins over the stored status, which lags until the
+// payment provider confirms.
+const planResult = Astro.url.searchParams.get("plan");
+const cancelPending =
+	planResult === "cancelled"
+		? true
+		: planResult === "resumed"
+			? false
+			: (plan?.cancelledButActive ?? false);
+const accessUntil = plan?.expiresAt ?? null;
+function formatDate(iso: string): string {
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+		new Date(iso),
+	);
+}
+// [/bd:saas]
 
 const fullName = session
 	? [session.user.firstName, session.user.lastName].filter(Boolean).join(" ") ||
@@ -60,7 +89,7 @@ function money(n: number): string {
 				<div class="bd-card account-card">
 					<bd-sign-in
 						start={start}
-						redirect-to="/my-account"
+						redirect-to={next}
 						tagline="See your jobs, quotes, and invoices — and leave a review."
 					/>
 				</div>
@@ -121,6 +150,59 @@ function money(n: number): string {
 							</ul>
 						</div>
 					) : null}
+
+					{/* [bd:saas] */}
+					<div class="account-section">
+						<h3>Your plan</h3>
+						<div class="bd-card account-card">
+							{plan?.hasAccess ? (
+								<>
+									<strong>
+										{plan.plan?.name ?? "Subscription"}{" "}
+										<span class="bd-badge">
+											{cancelPending ? "Cancelled" : "Active"}
+										</span>
+									</strong>
+									{plan.type === "lifetime" ? (
+										<p>Yours for good. Nothing renews.</p>
+									) : (
+										<>
+											<p>
+												{cancelPending
+													? `It won't renew. You keep everything${accessUntil ? ` until ${formatDate(accessUntil)}` : ""}.`
+													: accessUntil
+														? `Renews ${formatDate(accessUntil)}.`
+														: "Renews automatically."}
+											</p>
+											<form method="post" action="/api/bd/portal/plan">
+												<input
+													type="hidden"
+													name="intent"
+													value={cancelPending ? "resume" : "cancel"}
+												/>
+												<button class="bd-btn" type="submit">
+													{cancelPending ? "Keep my plan" : "Cancel plan"}
+												</button>
+											</form>
+										</>
+									)}
+								</>
+							) : (
+								<>
+									<p>You don't have a plan yet.</p>
+									<a class="bd-btn" href="/store/subscriptions">
+										See plans
+									</a>
+								</>
+							)}
+							{planResult === "error" ? (
+								<p class="account-error">
+									We couldn't change your plan. Please try again.
+								</p>
+							) : null}
+						</div>
+					</div>
+					{/* [/bd:saas] */}
 
 					<div class="account-section">
 						<h3>Leave a review</h3>
@@ -231,6 +313,12 @@ function money(n: number): string {
 		flex-direction: column;
 		gap: 0.6rem;
 	}
+	/* [bd:saas] */
+	.account-error {
+		color: var(--danger);
+		font-size: 0.9rem;
+	}
+	/* [/bd:saas] */
 	.account-row {
 		padding: 0.85rem 1.25rem;
 		display: flex;

@@ -6,7 +6,12 @@
  * What's wired here (BD SDK 0.9.5, feature parity with the reference
  * consumer "David's Garage Pro"):
  *   - Marketing bundle, gallery, blog, scheduling, forms (the baseline).
- *   - Storefront + cart + checkout + subscriptions (visitor-token cart).
+ * [bd:store]
+ *   - Storefront + cart + checkout (visitor-token cart).
+ * [/bd:store]
+ * [bd:saas]
+ *   - Subscription plans.
+ * [/bd:saas]
  *   - Customer portal + tenant auth (createAuthHandler at /api/bd-auth/*).
  *   - Reviews wall, news banner + updates feed.
  *   - Programmatic-SEO parallel pages + sitemap.xml / robots.txt proxies +
@@ -184,10 +189,13 @@ function getCookie(req: Request, name: string): string | null {
 	return null;
 }
 
+// [bd:store]
 const VISITOR_COOKIE = "bd_cart_visitor";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
+// [/bd:store]
 const SESSION_COOKIE = "bd_session";
 
+// [bd:store]
 function visitorSetCookie(token: string): string {
 	return `${VISITOR_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${VISITOR_MAX_AGE}`;
 }
@@ -199,6 +207,7 @@ function resolveVisitor(req: Request): { token: string; setCookie?: string } {
 	const token = crypto.randomUUID();
 	return { token, setCookie: visitorSetCookie(token) };
 }
+// [/bd:store]
 
 type Session = {
 	token: string;
@@ -264,12 +273,18 @@ function navHtml(): string {
 	return `<header class="docnav">
   <a class="docnav__brand" href="/">BD&nbsp;Starter</a>
   <nav class="docnav__links">
+    <!-- [bd:store] -->
     <a href="/store">Store</a>
+    <!-- [/bd:store] -->
+    <!-- [bd:saas] -->
     <a href="/subscriptions">Plans</a>
+    <!-- [/bd:saas] -->
     <a href="/reviews">Reviews</a>
     <a href="/updates">Updates</a>
     <a href="/todos">Todos</a>
+    <!-- [bd:store] -->
     <a href="/cart">Cart</a>
+    <!-- [/bd:store] -->
     <a href="/my-account">Account</a>
   </nav>
   <span class="docnav__auth">
@@ -522,6 +537,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		}
 	},
 
+	// [bd:store]
 	// ── storefront ────────────────────────────────────────────────
 	"GET /api/bd/storefront/products": async (req) => {
 		if (!bd) return notConfigured();
@@ -577,18 +593,62 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 			return errResponse(err);
 		}
 	},
+	// [/bd:store]
 
-	"GET /api/bd/subscriptions": async () => {
+	// [bd:saas]
+	"GET /api/bd/subscriptions": async (req) => {
 		if (!bd) return notConfigured();
 		try {
 			const result = await cached("subscriptions", ["bd:catalog", "bd:subscriptions"], () =>
 				bd.subscriptions.list(),
 			);
-			return json(result);
+			// Subscribing needs a signed-in customer; anyone else signs in first.
+			return json({ ...result, signedIn: (await getSession(req)) !== null });
 		} catch (err) {
 			return errResponse(err);
 		}
 	},
+
+	// Hand the signed-in customer to Stripe-hosted Checkout in subscription
+	// mode. A plan is the customer's own, so a visitor gets the sign-in link.
+	"POST /api/bd/subscriptions/checkout": async (req) => {
+		if (!apiKey || !packageBase) return notConfigured();
+		const session = await getSession(req);
+		if (!session) return json({ signIn: "/my-account?next=/subscriptions" });
+		try {
+			const body = (await req.json()) as { planId: string };
+			const origin = new URL(req.url).origin;
+			// The session rides as a header, so the checkout is the customer's own.
+			const client = createBdApiClient({
+				apiKey,
+				baseUrl: packageBase,
+				defaultHeaders: { "X-BD-Session-Token": session.token },
+			});
+			const result = await client.subscriptions.startCheckout(body.planId, {
+				successUrl: `${origin}/subscriptions?session_id={CHECKOUT_SESSION_ID}`,
+				cancelUrl: `${origin}/subscriptions`,
+			});
+			return json({ url: result.stripeUrl });
+		} catch (err) {
+			return errResponse(err);
+		}
+	},
+
+	// Cancel the plan at the end of the paid period, or take the cancel back.
+	"POST /api/bd/portal/plan": async (req) => {
+		const session = await getSession(req);
+		if (!session) return json({ error: "Please sign in again." }, 401);
+		try {
+			const body = (await req.json()) as { intent: "cancel" | "resume" };
+			const portal = portalFor(session);
+			const result =
+				body.intent === "cancel" ? await portal.cancelSubscription() : await portal.resumeSubscription();
+			return json({ cancelAtPeriodEnd: result.cancelAtPeriodEnd, accessUntil: result.accessUntil });
+		} catch (err) {
+			return json({ error: errMessage(err) }, 400);
+		}
+	},
+	// [/bd:saas]
 
 	// ── reviews wall (paginated) ──────────────────────────────────
 	"GET /api/bd/reviews": async (req) => {
@@ -608,6 +668,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		}
 	},
 
+	// [bd:store]
 	// ── cart (visitor-token; never cached) ────────────────────────
 	"GET /api/bd/cart": async (req) => {
 		if (!bd) return notConfigured();
@@ -728,6 +789,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 			return errResponse(err);
 		}
 	},
+	// [/bd:store]
 
 	// ── customer portal ───────────────────────────────────────────
 	"GET /api/bd/portal/work": async (req) => {
@@ -735,7 +797,14 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		if (!session) return json({ signedIn: false, work: null });
 		try {
 			const work = await portalFor(session).getWork();
-			return json({ signedIn: true, user: session.user, work });
+			let plan = null;
+			// [bd:saas]
+			plan = await portalFor(session)
+				.getSubscription()
+				.then((r) => r.subscription)
+				.catch(() => null);
+			// [/bd:saas]
+			return json({ signedIn: true, user: session.user, work, plan });
 		} catch (err) {
 			return errResponse(err);
 		}
@@ -798,6 +867,7 @@ const patternRoutes: Array<{
 	pattern: RegExp;
 	handler: (req: Request, m: RegExpMatchArray) => Promise<Response>;
 }> = [
+	// [bd:store]
 	{
 		method: "GET",
 		pattern: /^\/api\/bd\/storefront\/product\/([^/]+)$/,
@@ -873,6 +943,7 @@ const patternRoutes: Array<{
 			}
 		},
 	},
+	// [/bd:store]
 ];
 
 // ── SEO proxies (host root, not the package API path) ──────────────
@@ -917,12 +988,16 @@ async function proxyRobots(): Promise<Response> {
 
 async function matchHtmlPage(pathname: string, origin: string): Promise<Response | null> {
 	switch (pathname) {
+		// [bd:store]
 		case "/store":
 			return pageShell({ origin, title: "Store", description: "Browse our products.", module: "store" });
 		case "/cart":
 			return pageShell({ origin, title: "Your cart", module: "cart" });
+		// [/bd:store]
+		// [bd:saas]
 		case "/subscriptions":
 			return pageShell({ origin, title: "Plans", description: "Subscription plans.", module: "subscriptions" });
+		// [/bd:saas]
 		case "/my-account":
 			return pageShell({ origin, title: "My account", module: "my-account" });
 		case "/updates":
@@ -934,9 +1009,11 @@ async function matchHtmlPage(pathname: string, origin: string): Promise<Response
 		case "/services":
 			return pageShell({ origin, title: "Service areas", description: "Programmatic-SEO pages.", module: "services" });
 	}
+	// [bd:store]
 	if (/^\/store\/[^/]+$/.test(pathname)) {
 		return pageShell({ origin, title: "Product", module: "product" });
 	}
+	// [/bd:store]
 	if (/^\/services\/[^/]+\/[^/]+$/.test(pathname)) {
 		return pageShell({ origin, title: "Service area", module: "services-area" });
 	}

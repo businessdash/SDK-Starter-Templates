@@ -65,6 +65,7 @@ Declared in `src/env.ts` and read when the app starts. Secrets come from `$app/e
 | **Contact form** | schema server-rendered; submit hits `/api/bd/forms/[slug]` | `forms.schema(slug)`, `forms.submit(...)` |
 | **News banner** | `bundle.banner` → `Banner.svelte` (dismissible, remembered per message id) | bundle passthrough |
 
+<!-- [bd:store] -->
 ### Storefront (`/store`)
 
 Visitor-token cart pattern: this app owns a UUID in the **httpOnly `bd_cart_visitor`** cookie (`src/lib/server/bd-store.ts`), minted on the first cart mutation via `event.cookies`. Reads never mint the cookie (safe in `load`); mutations do.
@@ -74,7 +75,6 @@ Visitor-token cart pattern: this app owns a UUID in the **httpOnly `bd_cart_visi
 | Product list | `src/routes/store/+page.{server.ts,svelte}` | `storefront.listProducts(...)` |
 | Product detail | `src/routes/store/[id]/+page.{server.ts,svelte}` | `storefront.getProduct(id)` |
 | Cart | `src/routes/store/cart/+page.{server.ts,svelte}` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` |
-| Subscriptions | `src/routes/store/subscriptions/+page.{server.ts,svelte}` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` |
 | Order / return | `src/routes/store/order/+page.{server.ts,svelte}` | `checkout.getStatus(sessionId)` |
 
 Cart + checkout endpoints (browser → these, never the SDK):
@@ -86,10 +86,18 @@ src/routes/api/bd/cart/items/[itemId]/+server.ts        PATCH  set qty · DELETE
 src/routes/api/bd/cart/coupon/+server.ts                POST   apply · DELETE remove
 src/routes/api/bd/cart/clear/+server.ts                 POST   clear
 src/routes/api/bd/checkout/start/+server.ts             POST   → Stripe URL
-src/routes/api/bd/subscriptions/[id]/checkout/+server.ts POST  → Stripe URL
 ```
 
 The browser-side helpers in `src/lib/bd/cart-client.ts` wrap those endpoints and return the new `CartSnapshot`. Money: cart `unitPrice`/`subtotal` and variant `price` are **dollars** (`formatDollars`); subscription `amountCents` and checkout totals are **cents** (`formatCents`).
+<!-- [/bd:store] -->
+
+<!-- [bd:saas] -->
+### Plans (`/store/subscriptions`)
+
+- `src/routes/store/subscriptions/+page.{server.ts,svelte}` lists the org's recurring offerings with `subscriptions.list()`.
+- Subscribe posts to `src/routes/api/bd/subscriptions/[id]/checkout/+server.ts`, which calls `subscriptions.startCheckout(id, ...)` and sends the browser to Stripe.
+- Stripe sends them back to `src/routes/store/order/+page.{server.ts,svelte}`, which confirms with `checkout.getStatus(sessionId)`.
+<!-- [/bd:saas] -->
 
 ### Auth + customer portal
 
@@ -152,20 +160,28 @@ src/
 │   ├── server/
 │   │   ├── bd.ts                               # SDK client (server-only)
 │   │   ├── bd-bundle.ts                        # bundle banner/updates/reviews + suspension
+<!-- [bd:store,saas] -->
 │   │   ├── bd-store.ts                         # storefront/cart/checkout + visitor cookie
+<!-- [/bd:store,saas] -->
 │   │   ├── bd-portal.ts                        # session + customer-portal helpers
 │   │   ├── bd-parallel.ts                      # parallel-pages + sitemap/robots URLs
 │   │   └── bd-seo.ts                           # JSON-LD builders
+<!-- [bd:store,saas] -->
 │   ├── bd/cart-client.ts                       # browser cart helpers (call our endpoints)
+<!-- [/bd:store,saas] -->
 │   └── components/bd/
 │       ├── Header.svelte  Footer.svelte  Hero.svelte  About.svelte
 │       ├── Services.svelte  Gallery.svelte  Blog.svelte
 │       ├── Booking.svelte  ContactForm.svelte    # Svelte 5 runes, client-driven
 │       ├── Banner.svelte                         # dismissible bundle.banner bar
+<!-- [bd:store,saas] -->
 │       └── StoreNav.svelte                       # storefront sub-nav + cart badge
+<!-- [/bd:store,saas] -->
 └── routes/
     ├── +page.{server.ts,svelte}                  # home: marketing + banner + JSON-LD
+<!-- [bd:store,saas] -->
     ├── store/…                                   # storefront (list, [id], cart, subscriptions, order)
+<!-- [/bd:store,saas] -->
     ├── reviews/+page.{server.ts,svelte}          # reviews wall + load-more
     ├── updates/+page.{server.ts,svelte}          # bundle.updates feed
     ├── my-account/+page.{server.ts,svelte}       # customer portal + review action
@@ -191,6 +207,7 @@ The BD layer doesn't change — only the runtime where the SDK calls happen.
 ```
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -239,6 +256,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

@@ -12,14 +12,22 @@ import { Hero } from "./components/Hero";
 import { SdkSetupBanner } from "./components/SdkSetupBanner";
 import { Services } from "./components/Services";
 import { RouterProvider, useRoute } from "./lib/router";
+// [bd:store]
 import { Cart } from "./pages/Cart";
+// [/bd:store]
 import { MyAccount } from "./pages/MyAccount";
+// [bd:store]
 import { Product } from "./pages/Product";
+// [/bd:store]
 import { Reviews } from "./pages/Reviews";
 import { ServiceArea } from "./pages/ServiceArea";
 import { ServiceAreas } from "./pages/ServiceAreas";
+// [bd:store]
 import { Store } from "./pages/Store";
+// [/bd:store]
+// [bd:saas]
 import { Subscriptions } from "./pages/Subscriptions";
+// [/bd:saas]
 import { Todos } from "./pages/Todos";
 import { Updates } from "./pages/Updates";
 
@@ -49,10 +57,14 @@ function Home() {
 
 function Routed() {
 	const { path } = useRoute();
+	// [bd:store]
 	if (path === "/store") return <Store />;
 	if (/^\/store\/[^/]+$/.test(path)) return <Product />;
 	if (path === "/cart") return <Cart />;
+	// [/bd:store]
+	// [bd:saas]
 	if (path === "/subscriptions") return <Subscriptions />;
+	// [/bd:saas]
 	if (path === "/reviews") return <Reviews />;
 	if (path === "/updates") return <Updates />;
 	if (path === "/todos") return <Todos />;

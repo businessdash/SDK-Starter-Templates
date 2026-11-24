@@ -224,13 +224,15 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
     required String publishableKey,
     Uri? host,
     http.Client? httpClient,
-  })  : assert(
-          !publishableKey.startsWith('sk_'),
-          'An app holds the publishable pk_ key, never a secret sk_ key.',
-        ),
-        _key = publishableKey.trim(),
+  })  : _key = publishableKey.trim(),
         _base = _customerBase(host ?? Uri.parse('https://businessdash.us')),
-        _http = httpClient ?? http.Client();
+        _http = httpClient ?? http.Client() {
+    // A throw, not an assert: release builds drop asserts, and they're the
+    // ones that ship. Allow, don't deny: secret keys start with bd_.
+    if (_key.isNotEmpty && !_key.startsWith('pk_')) {
+      throw ArgumentError('An app holds the publishable pk_ key, never a secret key.');
+    }
+  }
 
   final String _key;
   final Uri _base;

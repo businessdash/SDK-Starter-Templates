@@ -24,7 +24,7 @@ Recent Expo SDKs default this to true. It's set anyway — "the default changed"
 
 ## The token rule
 
-`EXPO_PUBLIC_` vars are inlined into the JS bundle at build time, so anything here ships in the app. This app can only hold a **publishable `pk_…` token**, and `getBd()` throws on an `sk_…` key rather than letting a secret reach the store.
+`EXPO_PUBLIC_` vars are inlined into the JS bundle at build time, so anything here ships in the app. This app can only hold a **publishable `pk_…` token**, and `getBd()` throws on anything else, including a secret `bd_…` key, rather than letting a secret reach the store.
 
 Barely limiting: the publishable scope set covers the entire customer-facing surface — storefront, cart, checkout, blog, marketing content, chat, forms, **the whole customer portal**, sign-in, and public custom-object reads. **No backend-for-frontend is needed.**
 
@@ -131,6 +131,7 @@ Full guide: [Native Forms (React Native)](https://businessdash.us/docs/developer
 
 The rest is **bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the other screens in a simulator yet.
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -177,6 +178,7 @@ Three rules:
   can't be added later, so mint a new key.
 - **Leave the return URLs out.** The donor lands on the hosted thank-you page
   and closes the browser back into the app.
+<!-- [/bd:donations] -->
 
 ## Data: environment, schema, seeding, CRUD
 

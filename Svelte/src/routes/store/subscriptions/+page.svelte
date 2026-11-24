@@ -1,3 +1,4 @@
+<!-- [bd-file:saas] -->
 <script lang="ts">
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
@@ -21,9 +22,15 @@
 			const res = await fetch(`/api/bd/subscriptions/${encodeURIComponent(id)}/checkout`, {
 				method: 'POST'
 			});
-			const body = (await res.json()) as { ok: true; url: string } | { ok: false; error: string };
+			const body = (await res.json()) as
+				| { ok: true; url: string }
+				| { ok: false; error: string; signIn?: string };
 			if (body.ok) {
 				window.location.href = body.url;
+				return;
+			}
+			if (body.signIn) {
+				window.location.href = body.signIn;
 				return;
 			}
 			error = body.error;
@@ -46,7 +53,7 @@
 		<h1 class="bd-section__title">Subscriptions</h1>
 		<p class="bd-section__sub">
 			Recurring plans from the BD subscriptions surface. Checkout hands off to Stripe in
-			subscription mode.
+			subscription mode, and the plan shows up in your account.
 		</p>
 	</div>
 
@@ -71,9 +78,13 @@
 						<div class="sub-card__price">
 							{formatCents(sub.amountCents)}<span> / {intervalLabel(sub.interval)}</span>
 						</div>
-						<button class="bd-btn" onclick={() => subscribe(sub.id)} disabled={busyId === sub.id}>
-							{busyId === sub.id ? 'Working…' : 'Subscribe'}
-						</button>
+						{#if data.signedIn}
+							<button class="bd-btn" onclick={() => subscribe(sub.id)} disabled={busyId === sub.id}>
+								{busyId === sub.id ? 'Working…' : 'Subscribe'}
+							</button>
+						{:else}
+							<a class="bd-btn" href="/my-account?next=/store/subscriptions">Sign in to subscribe</a>
+						{/if}
 					</div>
 				</article>
 			{/each}

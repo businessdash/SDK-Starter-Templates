@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { useState } from "react";
 import { bd, dollars, money } from "../lib/bd";
 import { Link } from "../lib/router";

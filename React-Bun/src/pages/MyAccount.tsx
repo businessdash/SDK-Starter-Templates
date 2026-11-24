@@ -2,7 +2,16 @@ import { BdSignIn } from "@businessdash/sdk/react";
 import { useState } from "react";
 import { bd } from "../lib/bd";
 import type { Loose } from "../lib/bd";
+// [bd:saas]
+import type { CustomerPlan } from "../lib/bd";
+// [/bd:saas]
 import { ErrorBox, PageHead, useApi } from "./ui";
+
+/** Where sign-in returns to: a path on this site, or the account page. */
+function signInReturn(): string {
+	const raw = new URLSearchParams(window.location.search).get("next") ?? "";
+	return raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\") ? raw : "/my-account";
+}
 
 export function MyAccount() {
 	const { data, error, loading } = useApi(() => bd.portal.work());
@@ -57,7 +66,7 @@ export function MyAccount() {
 					 */}
 					<BdSignIn
 						start={new URLSearchParams(window.location.search).get("start") === "create" ? "createAccount" : "signIn"}
-						redirectTo="/my-account"
+						redirectTo={signInReturn()}
 						brand={{ tagline: "Sign in to see your jobs and invoices." }}
 					/>
 				</div>
@@ -93,6 +102,9 @@ export function MyAccount() {
 					))}
 				</ul>
 			)}
+			{/* [bd:saas] */}
+			<PlanCard plan={data.plan ?? null} />
+			{/* [/bd:saas] */}
 			<section className="review-form">
 				<h2 className="section-title">Leave a review</h2>
 				<div className="rf__row">
@@ -122,3 +134,74 @@ export function MyAccount() {
 		</main>
 	);
 }
+
+// [bd:saas]
+function formatDate(iso: string): string {
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(iso));
+}
+
+/** The customer's plan, with Cancel, or Keep my plan while a cancel is pending. */
+function PlanCard({ plan }: { plan: CustomerPlan | null }) {
+	// What just happened wins over the stored status, which lags until the
+	// payment provider confirms.
+	const [change, setChange] = useState<{ cancelAtPeriodEnd: boolean; accessUntil: string | null } | null>(null);
+	const [busy, setBusy] = useState(false);
+	const [failure, setFailure] = useState("");
+	const cancelPending = change?.cancelAtPeriodEnd ?? plan?.cancelledButActive ?? false;
+	const until = change?.accessUntil ?? plan?.expiresAt ?? null;
+
+	const toggle = async () => {
+		setBusy(true);
+		setFailure("");
+		try {
+			setChange(await bd.portal.changePlan(cancelPending ? "resume" : "cancel"));
+		} catch {
+			setFailure("We couldn't change your plan. Please try again.");
+		} finally {
+			setBusy(false);
+		}
+	};
+
+	return (
+		<section className="review-form">
+			<h2 className="section-title">Your plan</h2>
+			{plan?.hasAccess ? (
+				<>
+					<p>
+						<strong>{plan.plan?.name ?? "Subscription"}</strong> · {cancelPending ? "Cancelled" : "Active"}
+					</p>
+					{plan.type === "lifetime" ? (
+						<p className="muted">Yours for good. Nothing renews.</p>
+					) : (
+						<>
+							<p className="muted">
+								{cancelPending
+									? `It won't renew. You keep everything${until ? ` until ${formatDate(until)}` : ""}.`
+									: until
+										? `Renews ${formatDate(until)}.`
+										: "Renews automatically."}
+							</p>
+							<button
+								className={cancelPending ? "btn btn--primary" : "btn btn--ghost"}
+								type="button"
+								disabled={busy}
+								onClick={toggle}
+							>
+								{cancelPending ? "Keep my plan" : "Cancel plan"}
+							</button>
+						</>
+					)}
+				</>
+			) : (
+				<>
+					<p className="muted">You don't have a plan yet.</p>
+					<a className="btn btn--primary" href="/subscriptions">
+						See plans
+					</a>
+				</>
+			)}
+			{failure ? <p className="rf__msg">{failure}</p> : null}
+		</section>
+	);
+}
+// [/bd:saas]

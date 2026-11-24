@@ -14,7 +14,7 @@ import { getBd } from "@/server/lib/bd";
  *
  * Everything in `routes` is opt-in. Delete a line and those URLs vanish, which
  * is right for a business without that surface: a mobile mechanic with no
- * storefront should not advertise `/store/{id}` URLs that 404. A missing URL
+ * storefront should not advertise product URLs that 404. A missing URL
  * costs one page's indexing; a sitemap full of 404s costs trust in every URL.
  *
  * The customer portal and the other token-gated surfaces are excluded
@@ -23,7 +23,18 @@ import { getBd } from "@/server/lib/bd";
 export const revalidate = 300;
 
 /** Pages that live in THIS repo. Keep in step with `src/app/`. */
-const STATIC_PATHS = ["/", "/services", "/store", "/todos", "/my-account"];
+const STATIC_PATHS = [
+	"/",
+	"/services",
+	// [bd:store]
+	"/store",
+	// [/bd:store]
+	// [bd:saas]
+	"/store/subscriptions",
+	// [/bd:saas]
+	"/todos",
+	"/my-account",
+];
 
 function siteOrigin(): string {
 	const raw = env.NEXT_PUBLIC_SITE_URL ?? "https://example.com";
@@ -50,7 +61,9 @@ export async function GET() {
 		routes: {
 			// Where THIS starter renders them. Change if you move the routes;
 			// delete if you drop the surface.
+			// [bd:store]
 			product: "/store",
+			// [/bd:store]
 		},
 		onSkip: (section, reason) =>
 			console.info(`[sitemap] skipped ${section}: ${reason}`),

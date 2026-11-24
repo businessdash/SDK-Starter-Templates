@@ -15,7 +15,18 @@ import { getBd } from "~/lib/bd.server";
  */
 
 /** Pages that live in THIS repo. Keep in step with `app/routes/`. */
-const STATIC_PATHS = ["/", "/services", "/reviews", "/store", "/book"];
+const STATIC_PATHS = [
+	"/",
+	"/services",
+	"/reviews",
+	// [bd:store]
+	"/store",
+	// [/bd:store]
+	// [bd:saas]
+	"/store/subscriptions",
+	// [/bd:saas]
+	"/book",
+];
 
 export async function loader({ request }: LoaderFunctionArgs) {
 	const baseUrl = new URL(request.url).origin;
@@ -27,7 +38,11 @@ export async function loader({ request }: LoaderFunctionArgs) {
 				siteId: process.env.BD_SITE_ID ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
-				routes: { product: "/store" },
+				routes: {
+					// [bd:store]
+					product: "/store",
+					// [/bd:store]
+				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),
 			})

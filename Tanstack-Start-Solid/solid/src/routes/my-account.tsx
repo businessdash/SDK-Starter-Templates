@@ -3,6 +3,19 @@ import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, Show } from "solid-js";
 
 import { getMyAccount, submitCustomerReview } from "../lib/bd-server-fns";
+// [bd:saas]
+import { changePlan, type MyAccountData } from "../lib/bd-server-fns";
+// [/bd:saas]
+
+/** Where sign-in returns to: a path on this site. */
+function safeNext(raw: unknown): string | undefined {
+	return typeof raw === "string" &&
+		raw.startsWith("/") &&
+		!raw.startsWith("//") &&
+		!raw.startsWith("/\\")
+		? raw
+		: undefined;
+}
 
 /**
  * Customer portal home. The loader reads the `bd_session` cookie via
@@ -16,8 +29,15 @@ import { getMyAccount, submitCustomerReview } from "../lib/bd-server-fns";
  */
 export const Route = createFileRoute("/my-account")({
 	component: MyAccount,
-	validateSearch: (search: Record<string, unknown>): { start?: "create" } =>
-		search.start === "create" ? { start: "create" } : {},
+	validateSearch: (
+		search: Record<string, unknown>,
+	): { start?: "create"; next?: string } => {
+		const next = safeNext(search.next);
+		return {
+			...(search.start === "create" ? { start: "create" as const } : {}),
+			...(next ? { next } : {}),
+		};
+	},
 	loader: () => getMyAccount(),
 });
 
@@ -50,7 +70,7 @@ function MyAccount() {
 							<div class="bd-card" style="padding: 2rem 1.25rem;">
 								<BdSignIn
 									start={search().start === "create" ? "createAccount" : "signIn"}
-									redirectTo="/my-account"
+									redirectTo={search().next ?? "/my-account"}
 									brand={{
 										tagline: "Sign in to view your jobs, quotes, and invoices.",
 									}}
@@ -87,6 +107,10 @@ function MyAccount() {
 
 							<WorkSummary work={work()} />
 						</div>
+
+						{/* [bd:saas] */}
+						<PlanCard plan={data().plan} />
+						{/* [/bd:saas] */}
 
 						<ReviewForm />
 
@@ -251,3 +275,91 @@ function ReviewForm() {
 		</div>
 	);
 }
+
+// [bd:saas]
+function formatDate(iso: string): string {
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+		new Date(iso),
+	);
+}
+
+/** The customer's plan, with Cancel, or Keep my plan while a cancel is pending. */
+function PlanCard(props: { plan: MyAccountData["plan"] }) {
+	// What just happened wins over the stored status, which lags until the
+	// payment provider confirms.
+	const [change, setChange] = createSignal<{
+		cancelAtPeriodEnd: boolean;
+		accessUntil: string | null;
+	} | null>(null);
+	const [busy, setBusy] = createSignal(false);
+	const [error, setError] = createSignal<string | null>(null);
+	const cancelPending = () =>
+		change()?.cancelAtPeriodEnd ?? props.plan?.cancelledButActive ?? false;
+	const until = () => change()?.accessUntil ?? props.plan?.expiresAt ?? null;
+
+	async function toggle() {
+		setBusy(true);
+		setError(null);
+		const res = await changePlan({ data: { cancel: !cancelPending() } });
+		setBusy(false);
+		if (res.ok) {
+			setChange({
+				cancelAtPeriodEnd: res.cancelAtPeriodEnd,
+				accessUntil: res.accessUntil,
+			});
+		} else {
+			setError(res.error);
+		}
+	}
+
+	return (
+		<div
+			class="bd-card"
+			style="padding: 1.5rem; margin-top: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start;"
+		>
+			<h2 style="font-size: 1.15rem;">Your plan</h2>
+			<Show
+				when={props.plan?.hasAccess}
+				fallback={
+					<>
+						<p style="color: var(--text-muted);">You don't have a plan yet.</p>
+						<a class="bd-btn" href="/subscriptions">
+							See plans
+						</a>
+					</>
+				}
+			>
+				<div style="font-weight: 700; color: var(--title);">
+					{props.plan?.plan?.name ?? "Subscription"}{" "}
+					<span class="bd-badge">{cancelPending() ? "Cancelled" : "Active"}</span>
+				</div>
+				<Show
+					when={props.plan?.type !== "lifetime"}
+					fallback={
+						<p style="color: var(--text-muted);">Yours for good. Nothing renews.</p>
+					}
+				>
+					<p style="color: var(--text-muted);">
+						{cancelPending()
+							? `It won't renew. You keep everything${until() ? ` until ${formatDate(until() ?? "")}` : ""}.`
+							: until()
+								? `Renews ${formatDate(until() ?? "")}.`
+								: "Renews automatically."}
+					</p>
+					<button
+						type="button"
+						class={cancelPending() ? "bd-btn" : "bd-btn bd-btn--ghost"}
+						disabled={busy()}
+						onClick={toggle}
+					>
+						{cancelPending() ? "Keep my plan" : "Cancel plan"}
+					</button>
+				</Show>
+			</Show>
+			<Show when={error()}>
+				<div style="color: var(--danger); font-size: 0.9rem;">{error()}</div>
+			</Show>
+		</div>
+	);
+}
+// [/bd:saas]

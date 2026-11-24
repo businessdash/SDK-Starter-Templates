@@ -10,6 +10,9 @@ import {
 	isCustomerPortalConfigured,
 	submitCustomerReview
 } from '#lib/server/bd-portal.ts';
+// [bd:saas]
+import { getCustomerSubscription, setPlanCancelled } from '#lib/server/bd-portal.ts';
+// [/bd:saas]
 
 /**
  * Customer portal. Reads + validates the `bd_session` cookie via
@@ -19,19 +22,39 @@ import {
  */
 export const load: PageServerLoad = async ({ cookies }) => {
 	if (!isCustomerPortalConfigured()) {
-		return { configured: false as const, session: null, work: null };
+		return {
+			configured: false as const,
+			session: null,
+			work: null,
+			// [bd:saas]
+			plan: null,
+			// [/bd:saas]
+		};
 	}
 	const cookieValue = cookies.get(SESSION_COOKIE);
 	const session = await getCustomerSession(cookieValue);
 	if (!session) {
-		return { configured: true as const, session: null, work: null };
+		return {
+			configured: true as const,
+			session: null,
+			work: null,
+			// [bd:saas]
+			plan: null,
+			// [/bd:saas]
+		};
 	}
 	const work = await getCustomerWork(cookieValue);
+	// [bd:saas]
+	const plan = await getCustomerSubscription(cookieValue);
+	// [/bd:saas]
 	return {
 		configured: true as const,
 		// Only hand the client the display-safe fields — never the token.
 		session: { user: session.user, role: session.role },
-		work
+		work,
+		// [bd:saas]
+		plan,
+		// [/bd:saas]
 	};
 };
 
@@ -41,6 +64,33 @@ export type ReviewFieldErrors = Partial<Record<'rating' | 'title' | 'body', stri
 export type ReviewState =
 	| { status: 'success'; message: string; reviewStatus?: string }
 	| { status: 'error'; message: string; fieldErrors: ReviewFieldErrors };
+
+// [bd:saas]
+/** Result of cancelling a plan, or taking the cancel back. */
+export type PlanChangeState =
+	| { status: 'ok'; cancelAtPeriodEnd: boolean; accessUntil: string | null }
+	| { status: 'error'; message: string };
+
+async function changePlan(cookieValue: string | undefined, cancel: boolean) {
+	try {
+		const res = await setPlanCancelled(cookieValue, cancel);
+		return {
+			planChange: {
+				status: 'ok',
+				cancelAtPeriodEnd: res.cancelAtPeriodEnd,
+				accessUntil: res.accessUntil
+			} satisfies PlanChangeState
+		};
+	} catch {
+		return fail(400, {
+			planChange: {
+				status: 'error',
+				message: "We couldn't change your plan. Please try again."
+			} satisfies PlanChangeState
+		});
+	}
+}
+// [/bd:saas]
 
 const reviewSchema = z.object({
 	rating: z.coerce.number().int().min(1).max(5),
@@ -54,6 +104,12 @@ const reviewSchema = z.object({
 });
 
 export const actions: Actions = {
+	// [bd:saas]
+	/** Stop the renewal. Access runs to the end of the paid period. */
+	cancelPlan: async ({ cookies }) => changePlan(cookies.get(SESSION_COOKIE), true),
+	/** Take a pending cancel back. */
+	resumePlan: async ({ cookies }) => changePlan(cookies.get(SESSION_COOKIE), false),
+	// [/bd:saas]
 	/** Validate + submit a customer review via the BD portal. */
 	submitReview: async ({ request, cookies }) => {
 		if (!isCustomerPortalConfigured()) {

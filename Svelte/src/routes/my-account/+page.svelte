@@ -6,6 +6,9 @@
 	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
 	import type { ReviewState } from './+page.server';
+	// [bd:saas]
+	import type { PlanChangeState } from './+page.server';
+	// [/bd:saas]
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -16,6 +19,26 @@
 	const user = $derived(data.session?.user);
 	const work = $derived(data.work);
 	const start = $derived(page.url.searchParams.get('start') === 'create' ? 'createAccount' : 'signIn');
+	// Where sign-in returns to: a path on this site, or the account page.
+	const next = $derived.by(() => {
+		const raw = page.url.searchParams.get('next') ?? '';
+		return raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : '/my-account';
+	});
+	// [bd:saas]
+	const planChange = $derived(form?.planChange as PlanChangeState | undefined);
+	const plan = $derived(data.plan?.subscription ?? null);
+	// What just happened wins over the stored status, which lags until the
+	// payment provider confirms.
+	const cancelPending = $derived(
+		planChange?.status === 'ok' ? planChange.cancelAtPeriodEnd : (plan?.cancelledButActive ?? false)
+	);
+	const accessUntil = $derived(
+		(planChange?.status === 'ok' ? planChange.accessUntil : null) ?? plan?.expiresAt ?? null
+	);
+	function formatDate(iso: string): string {
+		return new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(new Date(iso));
+	}
+	// [/bd:saas]
 
 	function displayName(): string {
 		if (!user) return '';
@@ -44,7 +67,7 @@
 			{#key start}
 				<BdSignIn
 					{start}
-					redirectTo="/my-account"
+					redirectTo={next}
 					brand={{ tagline: 'Sign in to view your jobs, quotes and invoices, and to leave a review.' }}
 				/>
 			{/key}
@@ -95,6 +118,41 @@
 				{/if}
 			{/if}
 		</div>
+
+		<!-- [bd:saas] -->
+		<div class="bd-card account-card">
+			<h3>Your plan</h3>
+			{#if plan?.hasAccess}
+				<div>
+					<strong>{plan.plan?.name ?? 'Subscription'}</strong>
+					<span class="bd-badge">{cancelPending ? 'Cancelled' : 'Active'}</span>
+				</div>
+				{#if plan.type === 'lifetime'}
+					<p class="account-note">Yours for good. Nothing renews.</p>
+				{:else if cancelPending}
+					<p class="account-note">
+						It won't renew. You keep everything{accessUntil ? ` until ${formatDate(accessUntil)}` : ''}.
+					</p>
+					<form method="POST" action="?/resumePlan" use:enhance>
+						<button class="bd-btn" type="submit">Keep my plan</button>
+					</form>
+				{:else}
+					<p class="account-note">
+						{accessUntil ? `Renews ${formatDate(accessUntil)}.` : 'Renews automatically.'}
+					</p>
+					<form method="POST" action="?/cancelPlan" use:enhance>
+						<button class="bd-btn bd-btn--ghost" type="submit">Cancel plan</button>
+					</form>
+				{/if}
+			{:else}
+				<p class="account-note">You don't have a plan yet.</p>
+				<a class="bd-btn" href="/store/subscriptions" style="align-self: flex-start;">See plans</a>
+			{/if}
+			{#if planChange?.status === 'error'}
+				<div class="account-msg account-msg--err">{planChange.message}</div>
+			{/if}
+		</div>
+		<!-- [/bd:saas] -->
 
 		<div class="bd-card account-card">
 			<h3>Leave a review</h3>

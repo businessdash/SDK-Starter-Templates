@@ -1,3 +1,4 @@
+// [bd-file:store]
 import {
 	BdPaymentLapsedError,
 	BdServiceSuspendedError,

@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { $, component$, useSignal } from "@builder.io/qwik";
 import {
 	type DocumentHead,

@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { createFileRoute } from "@tanstack/solid-router";
 
 import { buildProductFeedRedirectResponse } from "../lib/bd-server-fns";

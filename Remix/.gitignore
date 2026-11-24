@@ -5,3 +5,6 @@ build/
 .env.local
 .DS_Store
 *.log
+
+# React Router writes its route types here (react-router typegen / dev).
+.react-router/

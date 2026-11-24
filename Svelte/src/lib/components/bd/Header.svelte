@@ -3,7 +3,14 @@
 		<a class="app-header__brand" href="/">Your Business</a>
 		<nav>
 			<a href="/#services">Services</a>
+			<!-- [bd:store] -->
 			<a href="/store">Store</a>
+			<!-- [/bd:store] -->
+			<!-- [bd:saas] -->
+			<!-- [bd:!store] -->
+			<a href="/store/subscriptions">Plans</a>
+			<!-- [/bd:!store] -->
+			<!-- [/bd:saas] -->
 			<a href="/reviews">Reviews</a>
 			<a href="/updates">Updates</a>
 			<a href="/todos">Todos</a>

@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { redirect } from "react-router";
 
 import { productFeedUrl } from "@businessdash/sdk/distribution";

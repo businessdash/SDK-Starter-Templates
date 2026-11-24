@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { useMemo, useState } from "react";
 
 import { bd, money } from "../lib/bd";

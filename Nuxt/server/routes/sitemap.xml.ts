@@ -19,10 +19,14 @@ const STATIC_PATHS = [
 	"/services",
 	"/reviews",
 	"/updates",
+	// [bd:store]
 	"/store",
-	"/todos",
 	"/cart",
+	// [/bd:store]
+	// [bd:saas]
 	"/subscriptions",
+	// [/bd:saas]
+	"/todos",
 ];
 
 export default defineEventHandler(async (event) => {
@@ -39,7 +43,12 @@ export default defineEventHandler(async (event) => {
 				siteId: (config.bdSiteId as string | undefined) ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
-				routes: { blog: "/updates", product: "/store" },
+				routes: {
+					// [bd:store]
+					product: "/store",
+					// [/bd:store]
+					blog: "/updates",
+				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),
 			})

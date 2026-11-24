@@ -1,3 +1,4 @@
+// [bd-file:store]
 /** /cart — line items, quantity, coupon, clear, and Stripe checkout. */
 import { bd, el, dollars } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";

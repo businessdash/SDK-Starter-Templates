@@ -50,6 +50,7 @@ export type BlogPost = {
 // `FormSchema` is the full published shape (settings, orgIcon, nested fields);
 // `FormFieldDef` is the flat per-field view, re-exported as `FieldDef` for the
 // existing local references.
+import type { FormSchema } from "@businessdash/sdk/forms";
 export type { FormFieldDef as FieldDef, FormSchema } from "@businessdash/sdk/forms";
 
 /**

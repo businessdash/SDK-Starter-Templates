@@ -1,3 +1,4 @@
+// [bd-file:store]
 import type { PageServerLoad } from './$types';
 
 import { getCartSnapshot, isStoreConfigured } from '#lib/server/bd-store.ts';

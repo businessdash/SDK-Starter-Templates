@@ -1,3 +1,4 @@
+// [bd-file:store]
 import {
 	Form,
 	Link,

@@ -10,6 +10,7 @@
  *   GET  /api/bd/home              marketing bundle → hero/about/services/
  *                                    reviews-config/banner/updates (cached)
  *   GET  /api/bd/blog              recent posts
+ * [bd:store]
  *   GET  /api/bd/store/products    storefront list (?cursor, ?categoryId)
  *   GET  /api/bd/store/products-meta filterable grid + facets (search,
  *                                    category, price, rating, sort, limit)
@@ -18,7 +19,13 @@
  *   GET  /api/bd/store/products/:id/reviews   approved reviews + aggregate
  *   GET  /api/bd/store/products/:id/related   "you may also like"
  *   GET  /api/bd/store/products/:id/addons    companion cross-sell rail
+ * [/bd:store]
+ * [bd:saas]
  *   GET  /api/bd/subscriptions     recurring offerings list
+ *   POST /api/bd/subscriptions/:id/checkout  → { url } Stripe, or { signIn }
+ *   POST /api/bd/portal/plan       cancel the plan, or take the cancel back
+ * [/bd:saas]
+ * [bd:store]
  *   GET  /api/bd/cart              current visitor cart snapshot
  *   POST /api/bd/cart/items        add item
  *   PATCH/api/bd/cart/items/:id    set quantity (0 removes)
@@ -27,6 +34,7 @@
  *   DELETE /api/bd/cart/coupon     remove coupon
  *   POST /api/bd/cart/clear        empty cart
  *   POST /api/bd/checkout/start    → { url } Stripe Checkout
+ * [/bd:store]
  *   POST /api/bd/contact           submit the contact form
  *   GET  /api/bd/reviews           reviews wall page (?offset, ?limit)
  *   GET  /api/bd/portal/me         signed-in customer + work bundle
@@ -41,7 +49,9 @@
 
 import type { Express, Request as ExRequest, Response as ExResponse } from "express";
 import express from "express";
+// [bd:store]
 import { randomUUID } from "node:crypto";
+// [/bd:store]
 import { createAuthHandler } from "@businessdash/sdk";
 import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
 import { llmsTxtHandler } from "@businessdash/sdk/distribution";
@@ -65,9 +75,13 @@ import {
 	readSession,
 	portalForSession,
 	SESSION_COOKIE,
-	VISITOR_COOKIE,
-	VISITOR_MAX_AGE_SECONDS,
 } from "./bd-server";
+// [bd:store]
+import { VISITOR_COOKIE, VISITOR_MAX_AGE_SECONDS } from "./bd-server";
+// [/bd:store]
+// [bd:saas]
+import { subscriptionsForSession } from "./bd-server";
+// [/bd:saas]
 
 // ── Cookie helpers (no cookie-parser dependency) ───────────────────
 
@@ -84,6 +98,7 @@ function readCookie(req: ExRequest, name: string): string | null {
 	return null;
 }
 
+// [bd:store]
 function setVisitorCookie(res: ExResponse, token: string): void {
 	res.append(
 		"Set-Cookie",
@@ -99,6 +114,7 @@ function ensureVisitorToken(req: ExRequest, res: ExResponse): string {
 	setVisitorCookie(res, token);
 	return token;
 }
+// [/bd:store]
 
 // ── Web Request <-> Node bridge (for the auth handler) ─────────────
 //
@@ -268,6 +284,7 @@ export function mountBdApi(app: Express): void {
 		res.json(out.ok ? { items: out.data.items } : { items: [] });
 	});
 
+	// [bd:store]
 	// ---- Storefront -------------------------------------------------
 	app.get("/api/bd/store/products", async (req, res) => {
 		const bd = getBd();
@@ -407,23 +424,78 @@ export function mountBdApi(app: Express): void {
 		);
 		res.json(out.ok ? out.data : { items: [] });
 	});
+	// [/bd:store]
 
+	// [bd:saas]
 	// ---- Subscriptions ----------------------------------------------
-	app.get("/api/bd/subscriptions", async (_req, res) => {
+	app.get("/api/bd/subscriptions", async (req, res) => {
 		const bd = getBd();
 		if (!bd) {
 			res.json({ items: [], configured: false });
 			return;
 		}
 		const env = getBdEnv()!;
-		const out = await runGuarded(() =>
-			cached(`subs:${env.siteId}`, ["bd:catalog"], () =>
-				bd.subscriptions.list(),
+		const [out, session] = await Promise.all([
+			runGuarded(() =>
+				cached(`subs:${env.siteId}`, ["bd:catalog"], () =>
+					bd.subscriptions.list(),
+				),
 			),
-		);
-		res.json(out.ok ? { ...out.data, configured: true } : { items: [] });
+			readSession(readCookie(req, SESSION_COOKIE)),
+		]);
+		// Subscribing needs a signed-in customer; anyone else signs in first.
+		const signedIn = session !== null;
+		res.json(out.ok ? { ...out.data, configured: true, signedIn } : { items: [], signedIn });
 	});
 
+	app.post("/api/bd/subscriptions/:id/checkout", async (req, res) => {
+		const session = await readSession(readCookie(req, SESSION_COOKIE));
+		if (!session) {
+			res.json({ signIn: "/my-account?next=/subscriptions" });
+			return;
+		}
+		const subscriptions = subscriptionsForSession(session.token);
+		if (!subscriptions) {
+			res.status(503).json({ error: "unconfigured" });
+			return;
+		}
+		const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "http";
+		const origin = `${proto}://${req.headers.host ?? "localhost"}`;
+		const out = await runGuarded(() =>
+			subscriptions.startCheckout(req.params["id"] ?? "", {
+				successUrl: `${origin}/subscriptions?session_id={CHECKOUT_SESSION_ID}`,
+				cancelUrl: `${origin}/subscriptions`,
+			}),
+		);
+		if (out.ok) res.json({ url: out.data.stripeUrl });
+		else res.status(400).json({ error: out.reason });
+	});
+
+	app.post("/api/bd/portal/plan", async (req, res) => {
+		const session = await readSession(readCookie(req, SESSION_COOKIE));
+		const portal = session
+			? portalForSession(session.organizationId, session.token)
+			: null;
+		if (!portal) {
+			res.status(401).json({ error: "sign_in_required" });
+			return;
+		}
+		const cancel = req.body?.intent === "cancel";
+		const out = await runGuarded(() =>
+			cancel ? portal.cancelSubscription() : portal.resumeSubscription(),
+		);
+		if (out.ok) {
+			res.json({
+				cancelAtPeriodEnd: out.data.cancelAtPeriodEnd,
+				accessUntil: out.data.accessUntil,
+			});
+		} else {
+			res.status(400).json({ error: out.reason });
+		}
+	});
+	// [/bd:saas]
+
+	// [bd:store]
 	// ---- Cart -------------------------------------------------------
 	app.get("/api/bd/cart", async (req, res) => {
 		const bd = getBd();
@@ -549,6 +621,7 @@ export function mountBdApi(app: Express): void {
 		if (out.ok) res.json({ url: out.data.stripeUrl });
 		else res.status(400).json({ error: out.reason });
 	});
+	// [/bd:store]
 
 	// ---- Contact form -----------------------------------------------
 	app.post("/api/bd/contact", async (req, res) => {
@@ -832,12 +905,18 @@ export function mountBdApi(app: Express): void {
 		const work = portal
 			? await runGuarded(() => portal.getWork())
 			: ({ ok: false, suspended: false, reason: "unconfigured" } as const);
+		let plan = null;
+		// [bd:saas]
+		const sub = portal ? await runGuarded(() => portal.getSubscription()) : null;
+		plan = sub?.ok ? sub.data.subscription : null;
+		// [/bd:saas]
 		res.json({
 			signedIn: true,
 			user: session.user,
 			organizationId: session.organizationId,
 			role: session.role,
 			work: work.ok ? work.data : null,
+			plan,
 		});
 	});
 

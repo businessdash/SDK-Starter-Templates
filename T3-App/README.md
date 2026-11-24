@@ -67,6 +67,7 @@ pnpm start
 | **Updates feed** | `Updates.tsx` fed by `bundle.updates` (Google Business posts) | `bundle.updates` (passthrough) |
 | **JSON-LD (SEO)** | `homeJsonLd()` in `src/server/lib/bd-seo.ts`, injected server-side into the page | `localBusiness()` + `website()` from `@businessdash/sdk/seo` |
 
+<!-- [bd:store] -->
 ### Storefront (`src/app/store/*`)
 
 The cart is keyed on a visitor token we own — an httpOnly `bd_cart_visitor`
@@ -79,8 +80,15 @@ runs server-side.
 | `/store` | product list (`page.tsx`) | `bd.storefront.listProducts(...)` |
 | `/store/[id]` | product detail + `AddToCart.tsx` | `bd.storefront.getProduct(id)`, `cart.forVisitor(token).addItem(...)` |
 | `/store/cart` | `CartClient.tsx` — qty ±, remove, clear, coupon, checkout | `cart.forVisitor(token).{updateItem,removeItem,clear,applyCoupon,removeCoupon}`, `checkout.forVisitor(token).start(...)` |
-| `/store/subscriptions` | subscription offerings list | `bd.subscriptions.list()` |
 | `/store/order` | Stripe return page — confirms payment | `bd.checkout.getStatus(sessionId)` |
+<!-- [/bd:store] -->
+
+<!-- [bd:saas] -->
+### Plans (`/store/subscriptions`)
+
+`src/app/store/subscriptions/page.tsx` lists the org's recurring offerings with
+`bd.subscriptions.list()`.
+<!-- [/bd:saas] -->
 
 ### Auth + customer portal
 
@@ -165,7 +173,9 @@ Validated in `src/env.js`, documented in `.env.example`:
 │   ├── server/
 │   │   ├── lib/
 │   │   │   ├── bd.ts                           # SDK client + bundle/banner/updates/reviews + suspension
+<!-- [bd:store,saas] -->
 │   │   │   ├── bd-store.ts                     # storefront / cart / checkout / subscriptions helpers
+<!-- [/bd:store,saas] -->
 │   │   │   ├── bd-portal.ts                    # session + customer-portal helpers
 │   │   │   └── bd-seo.ts                        # server-side JSON-LD builder
 │   │   └── api/
@@ -174,7 +184,9 @@ Validated in `src/env.js`, documented in `.env.example`:
 │   ├── app/
 │   │   ├── page.tsx                              # home: sections + banner + updates + reviews + JSON-LD
 │   │   ├── _actions/                             # Server Actions
+<!-- [bd:store] -->
 │   │   │   ├── store.ts                          # cart / checkout (mints bd_cart_visitor cookie)
+<!-- [/bd:store] -->
 │   │   │   └── review.ts                         # customer review submit
 │   │   ├── _components/bd/
 │   │   │   ├── Header.tsx / Footer.tsx / Hero.tsx / About.tsx / Services.tsx
@@ -184,7 +196,12 @@ Validated in `src/env.js`, documented in `.env.example`:
 │   │   │   ├── Reviews.tsx / ReviewsLoadMore.tsx # reviews wall + load-more
 │   │   │   ├── Updates.tsx                       # bundle.updates feed
 │   │   │   └── NewsBanner.tsx                    # dismissible bundle.banner bar
-│   │   ├── store/                                # /store, /store/[id], /store/cart, /store/subscriptions, /store/order
+<!-- [bd:store] -->
+│   │   ├── store/                                # /store, /store/[id], /store/cart, /store/order
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
+│   │   ├── store/subscriptions/                  # plans
+<!-- [/bd:saas] -->
 │   │   ├── my-account/page.tsx                   # signed-in portal + review form
 │   │   ├── services/[service]/[area]/page.tsx    # programmatic SEO page
 │   │   ├── sitemap.xml/route.ts                  # proxies BD sitemap
@@ -201,6 +218,7 @@ Validated in `src/env.js`, documented in `.env.example`:
 The BD layer plugs into the existing T3 conventions cleanly — the tRPC client/server boundary, the Drizzle DB layer, the Tailwind setup all stay as-is.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -250,6 +268,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

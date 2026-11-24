@@ -13,15 +13,24 @@ export function SiteHeader({ cartCount = 0 }: { cartCount?: number }) {
 				Your Business
 			</Link>
 			<nav>
+				{/* [bd:store] */}
 				<Link to="/store">Store</Link>
+				{/* [/bd:store] */}
+				{/* [bd:saas] */}
+				{/* [bd:!store] */}
+				<Link to="/store/subscriptions">Plans</Link>
+				{/* [/bd:!store] */}
+				{/* [/bd:saas] */}
 				<Link to="/services">Services</Link>
 				<Link to="/reviews">Reviews</Link>
 				<Link to="/updates">Updates</Link>
 				<Link to="/book">Book</Link>
 				<Link to="/my-account">Account</Link>
+				{/* [bd:store] */}
 				<Link to="/store/cart" className="cart-link">
 					Cart{cartCount > 0 ? <span className="cart-badge">{cartCount}</span> : null}
 				</Link>
+				{/* [/bd:store] */}
 			</nav>
 		</header>
 	);

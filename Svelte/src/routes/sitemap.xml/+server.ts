@@ -17,7 +17,19 @@ import type { RequestHandler } from './$types';
  */
 
 /** Pages that live in THIS repo. Keep in step with `src/routes/`. */
-const STATIC_PATHS = ['/', '/services', '/reviews', '/updates', '/store', '/todos'];
+const STATIC_PATHS = [
+	'/',
+	'/services',
+	'/reviews',
+	'/updates',
+	// [bd:store]
+	'/store',
+	// [/bd:store]
+	// [bd:saas]
+	'/store/subscriptions',
+	// [/bd:saas]
+	'/todos'
+];
 
 export const GET: RequestHandler = async ({ url }) => {
 	const baseUrl = url.origin;
@@ -33,7 +45,12 @@ export const GET: RequestHandler = async ({ url }) => {
 		siteId: PUBLIC_BD_SITE_ID ?? BD_SITE_ID ?? '',
 		baseUrl,
 		staticPaths: STATIC_PATHS,
-		routes: { blog: '/updates', product: '/store' },
+		routes: {
+			// [bd:store]
+			product: '/store',
+			// [/bd:store]
+			blog: '/updates'
+		},
 		onSkip: (section, reason) => console.info(`[sitemap] skipped ${section}: ${reason}`)
 	});
 

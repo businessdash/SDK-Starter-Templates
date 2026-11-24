@@ -1,3 +1,4 @@
+// [bd-file:store]
 import type { RequestHandler } from "@builder.io/qwik-city";
 
 import { productFeedUrl } from "@businessdash/sdk/distribution";

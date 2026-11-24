@@ -162,7 +162,10 @@ extension BdServerSignInBackend where Session == BdSignInSession {
         host: URL = URL(string: "https://businessdash.us")!,
         urlSession: URLSession = .shared
     ) -> Self {
-        precondition(!publishableKey.hasPrefix("sk_"), "Use the publishable pk_ key in an app, never a secret sk_ key.")
+        // Allow, don't deny: secret keys start with bd_, so only "is it a pk_
+        // token" catches every one. Empty means the app has no key yet.
+        let key = publishableKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        precondition(key.isEmpty || key.hasPrefix("pk_"), "Use the publishable pk_ key in an app, never a secret key.")
         return Self(
             baseURL: host.appending(path: "api/package/v1/auth/customer"),
             headers: ["Authorization": "Bearer \(publishableKey)"],

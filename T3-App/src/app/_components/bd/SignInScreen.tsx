@@ -16,13 +16,16 @@ import { BdSignIn } from "@businessdash/sdk/react";
  */
 export function SignInScreen({
 	start = "signIn",
+	redirectTo = "/my-account",
 }: {
 	start?: "signIn" | "createAccount";
+	/** Where to land once signed in: a path on this site. */
+	redirectTo?: string;
 }) {
 	return (
 		<BdSignIn
 			start={start}
-			redirectTo="/my-account"
+			redirectTo={redirectTo}
 			brand={{ tagline: "Sign in to see your jobs, quotes, and invoices." }}
 		/>
 	);

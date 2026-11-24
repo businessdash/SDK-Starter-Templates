@@ -189,6 +189,7 @@ export const bd = {
 			return await getJson<TodosResult>("/api/bd/todos");
 		},
 	},
+	// [bd:store]
 	storefront: {
 		async listProducts(params?: { limit?: number; categoryId?: string }): Promise<Loose> {
 			const query = new URLSearchParams();
@@ -246,11 +247,18 @@ export const bd = {
 			return await getJson<Loose>(`/api/bd/storefront/product/${encodeURIComponent(id)}/addons`);
 		},
 	},
+	// [/bd:store]
+	// [bd:saas]
 	subscriptions: {
 		async list(): Promise<Loose> {
 			return await getJson<Loose>("/api/bd/subscriptions");
 		},
+		/** A Stripe URL for the signed-in customer, or where to sign in first. */
+		async checkout(planId: string, origin: string): Promise<{ url?: string; signIn?: string }> {
+			return await postJson("/api/bd/subscriptions/checkout", { planId, origin });
+		},
 	},
+	// [/bd:saas]
 	reviews: {
 		async list(params?: { limit?: number; offset?: number }): Promise<Loose> {
 			const query = new URLSearchParams();
@@ -259,6 +267,7 @@ export const bd = {
 			return await getJson<Loose>(`/api/bd/reviews${query.toString() ? `?${query}` : ""}`);
 		},
 	},
+	// [bd:store]
 	cart: {
 		async get(): Promise<Loose> {
 			return await getJson<Loose>("/api/bd/cart");
@@ -287,10 +296,17 @@ export const bd = {
 			return await postJson<{ url: string }>("/api/bd/checkout/start", input);
 		},
 	},
+	// [/bd:store]
 	portal: {
-		async work(): Promise<{ signedIn: boolean; user?: PortalUser; work: Loose | null }> {
+		async work(): Promise<{ signedIn: boolean; user?: PortalUser; work: Loose | null; plan?: CustomerPlan | null }> {
 			return await getJson("/api/bd/portal/work");
 		},
+		// [bd:saas]
+		/** Cancel at the end of the paid period, or take the cancel back. */
+		async changePlan(intent: "cancel" | "resume"): Promise<{ cancelAtPeriodEnd: boolean; accessUntil: string | null }> {
+			return await postJson("/api/bd/portal/plan", { intent });
+		},
+		// [/bd:saas]
 		async submitReview(input: { rating: number; body: string; jobId?: string | null }): Promise<Loose> {
 			return await postJson<Loose>("/api/bd/portal/submit-review", input);
 		},
@@ -313,6 +329,15 @@ export const bd = {
 
 /** Loose shape for surfaces the SDK keeps passthrough/untyped at 0.9.5. */
 export type Loose = Record<string, any>;
+
+/** The customer's plan, as the portal reports it. */
+export type CustomerPlan = {
+	hasAccess: boolean;
+	cancelledButActive: boolean;
+	type: string | null;
+	expiresAt: string | null;
+	plan: { name: string } | null;
+};
 
 export type PortalUser = {
 	id: string;

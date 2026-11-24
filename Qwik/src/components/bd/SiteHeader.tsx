@@ -20,13 +20,19 @@ export const SiteHeader = component$<{ signedIn?: boolean; cartCount?: number }>
 						Your Business
 					</Link>
 					<nav>
+						{/* [bd:store] */}
 						<Link href="/store">Store</Link>
+						{/* [/bd:store] */}
+						{/* [bd:saas] */}
 						<Link href="/subscriptions">Plans</Link>
+						{/* [/bd:saas] */}
 						<Link href="/reviews">Reviews</Link>
 						<Link href="/updates">Updates</Link>
+						{/* [bd:store] */}
 						<Link href="/cart">
 							Cart{cartCount > 0 ? ` (${cartCount})` : ""}
 						</Link>
+						{/* [/bd:store] */}
 						{signedIn ? (
 							<>
 								<Link href="/my-account">Account</Link>

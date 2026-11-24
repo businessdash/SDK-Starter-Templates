@@ -19,6 +19,22 @@ import {
 	isCustomerPortalConfigured,
 	submitCustomerReview,
 } from "../../lib/bd-portal";
+// [bd:saas]
+import { getCustomerSubscription, setPlanCancelled } from "../../lib/bd-portal";
+// [/bd:saas]
+
+/** Where sign-in returns to: a path on this site, or the account page. */
+function safeNext(raw: string | null): string {
+	return raw?.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\")
+		? raw
+		: "/my-account";
+}
+
+function formatDate(iso: string): string {
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+		new Date(iso),
+	);
+}
 
 /**
  * Customer portal "my account" page.
@@ -42,9 +58,16 @@ export const useAccount = routeLoader$(async ({ cookie, url }) => {
 				url.searchParams.get("start") === "create"
 					? ("createAccount" as const)
 					: ("signIn" as const),
+			next: safeNext(url.searchParams.get("next")),
+			// [bd:saas]
+			plan: null,
+			// [/bd:saas]
 		};
 	}
 	const work = await getCustomerWork(cookie);
+	// [bd:saas]
+	const plan = (await getCustomerSubscription(cookie))?.subscription ?? null;
+	// [/bd:saas]
 	return {
 		configured: true,
 		session: {
@@ -53,8 +76,33 @@ export const useAccount = routeLoader$(async ({ cookie, url }) => {
 			lastName: session.user.lastName,
 		},
 		work,
+		// [bd:saas]
+		plan,
+		// [/bd:saas]
 	};
 });
+
+// [bd:saas]
+/** Cancel the plan at the end of the paid period, or take the cancel back. */
+export const useChangePlan = routeAction$(
+	async (data, { cookie }) => {
+		try {
+			const res = await setPlanCancelled(cookie, data.intent === "cancel");
+			return {
+				ok: true as const,
+				cancelAtPeriodEnd: res.cancelAtPeriodEnd,
+				accessUntil: res.accessUntil,
+			};
+		} catch {
+			return {
+				ok: false as const,
+				message: "We couldn't change your plan. Please try again.",
+			};
+		}
+	},
+	zod$({ intent: z.enum(["cancel", "resume"]) }),
+);
+// [/bd:saas]
 
 export const useSubmitReview = routeAction$(
 	async (data, { cookie }) => {
@@ -130,6 +178,17 @@ export default component$(() => {
 	const review = useSubmitReview();
 	const signedIn = !!data.value.session;
 	const work = data.value.work;
+	// [bd:saas]
+	const changePlan = useChangePlan();
+	const plan = data.value.plan;
+	// What just happened wins over the stored status, which lags until the
+	// payment provider confirms.
+	const changed = changePlan.value?.ok ? changePlan.value : null;
+	const cancelPending = changed
+		? changed.cancelAtPeriodEnd
+		: (plan?.cancelledButActive ?? false);
+	const accessUntil = changed?.accessUntil ?? plan?.expiresAt ?? null;
+	// [/bd:saas]
 
 	return (
 		<>
@@ -150,7 +209,7 @@ export default component$(() => {
 						<div class="bd-card" style="padding: 2rem 1.25rem;">
 							<BdSignIn
 								start={"start" in data.value ? data.value.start : "signIn"}
-								redirectTo="/my-account"
+								redirectTo={"next" in data.value ? data.value.next : "/my-account"}
 								brand={{ tagline: "Sign in to view your jobs, quotes, and invoices." }}
 							/>
 						</div>
@@ -175,6 +234,60 @@ export default component$(() => {
 							) : work ? (
 								<WorkSummary work={work} />
 							) : null}
+
+							{/* [bd:saas] */}
+							<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
+								<h3>Your plan</h3>
+								{plan?.hasAccess ? (
+									<>
+										<div style="font-weight: 600; color: var(--title);">
+											{plan.plan?.name ?? "Subscription"}{" "}
+											<span class="bd-badge">
+												{cancelPending ? "Cancelled" : "Active"}
+											</span>
+										</div>
+										{plan.type === "lifetime" ? (
+											<p>Yours for good. Nothing renews.</p>
+										) : (
+											<>
+												<p>
+													{cancelPending
+														? `It won't renew. You keep everything${accessUntil ? ` until ${formatDate(accessUntil)}` : ""}.`
+														: accessUntil
+															? `Renews ${formatDate(accessUntil)}.`
+															: "Renews automatically."}
+												</p>
+												<Form action={changePlan}>
+													<input
+														name="intent"
+														type="hidden"
+														value={cancelPending ? "resume" : "cancel"}
+													/>
+													<button
+														class={cancelPending ? "bd-btn" : "bd-btn bd-btn--ghost"}
+														type="submit"
+													>
+														{cancelPending ? "Keep my plan" : "Cancel plan"}
+													</button>
+												</Form>
+											</>
+										)}
+									</>
+								) : (
+									<>
+										<p>You don't have a plan yet.</p>
+										<a class="bd-btn" href="/subscriptions">
+											See plans
+										</a>
+									</>
+								)}
+								{changePlan.value && !changePlan.value.ok ? (
+									<div style="color: var(--danger); font-size: 0.9rem;">
+										{changePlan.value.message}
+									</div>
+								) : null}
+							</div>
+							{/* [/bd:saas] */}
 
 							{/* Customer review submission */}
 							<div class="bd-card" style="padding: 2rem;">

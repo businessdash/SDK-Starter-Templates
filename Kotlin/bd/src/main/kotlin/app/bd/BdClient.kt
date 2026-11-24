@@ -23,7 +23,8 @@ import kotlinx.serialization.json.Json
  *
  * A mobile app **holds its credential in the artifact** — `strings` on an APK
  * finds anything you ship. So this takes a **publishable `pk_…` token** and
- * `require`s that you didn't hand it an `sk_…` key.
+ * `require`s that it is one. Secret keys start with `bd_`, so the check is "is
+ * it a `pk_` token", never "is it some secret prefix".
  *
  * That is barely limiting: the publishable scope set covers the entire
  * customer-facing surface — storefront, cart, checkout, blog, marketing
@@ -47,11 +48,13 @@ public class BdClient(
     engine: HttpClientEngine? = null,
 ) {
     init {
-        require(!publishableKey.startsWith("sk_")) {
-            "BdClient was given a SECRET key. A mobile app ships its " +
-                "credential inside the binary, where `strings` finds it — use " +
-                "a publishable pk_ token instead, and route anything that " +
-                "genuinely needs a secret key through a server you control."
+        // Empty means the app has no key yet; anything else must be a pk_ token.
+        val key = publishableKey.trim()
+        require(key.isEmpty() || key.startsWith("pk_")) {
+            "BdClient takes a publishable pk_ token only. A mobile app ships its " +
+                "credential inside the binary, where `strings` finds it — never put " +
+                "a secret key there; route anything that genuinely needs one " +
+                "through a server you control."
         }
     }
 

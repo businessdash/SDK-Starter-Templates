@@ -1,3 +1,4 @@
+// [bd-file:store]
 /**
  * /store/:id — product detail + add-to-cart, enriched with the 0.9.12 surfaces:
  * customer reviews (`getProductReviews`), "you may also like" related products

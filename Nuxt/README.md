@@ -88,6 +88,7 @@ The output is a Node server by default; Nitro presets cover Vercel / Cloudflare 
 | **News banner** | `bundle.banner` surfaced by the home aggregator → `components/bd/NewsBanner.vue` (dismissible bar) | `bd.marketing.getPageBundle(...)` (untyped `banner` passthrough) |
 | **JSON-LD** | `useFetch('/api/bd/jsonld')` → injected into `<head>` via `useHead({ script })` | `localBusiness()` + `website()` + `renderJsonLdToHtml()` from `@businessdash/sdk/seo` |
 
+<!-- [bd:store] -->
 ### Storefront / commerce
 
 Visitor-token cart pattern: a UUID stored in an httpOnly cookie named `bd_cart_visitor` (`server/utils/bd-cart.ts`) keys the cart. Reads never mint the cookie; the first mutation does.
@@ -98,7 +99,15 @@ Visitor-token cart pattern: a UUID stored in an httpOnly cookie named `bd_cart_v
 | **Product detail** | `app/pages/store/[id].vue` | `GET /api/bd/store/product/[id]` | `bd.storefront.getProduct(id)` |
 | **Cart** | `app/pages/cart.vue` (via `composables/useCart.ts`) | `GET /api/bd/cart`, `POST /api/bd/cart/{add,update,remove,coupon,clear}` | `bd.cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` |
 | **Checkout** | Cart page "Checkout" button | `POST /api/bd/checkout/start` → redirect to Stripe | `bd.checkout.forVisitor(token).start({ successUrl, cancelUrl })` |
+<!-- [/bd:store] -->
+
+<!-- [bd:saas] -->
+### Plans
+
+| Surface | Page | Endpoint(s) | SDK call |
+| --- | --- | --- | --- |
 | **Subscriptions** | `app/pages/subscriptions.vue` | `GET /api/bd/store/subscriptions` | `bd.subscriptions.list()` |
+<!-- [/bd:saas] -->
 
 ### Auth + customer portal
 
@@ -161,14 +170,23 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 │           ├── jsonld.get.ts                   # JSON-LD (LocalBusiness + WebSite)
 │           ├── reviews.get.ts                  # Reviews wall page (paginated)
 │           ├── revalidate.post.ts              # Webhook receiver
+<!-- [bd:store] -->
 │           ├── cart/
 │           │   ├── index.get.ts                # Read-only snapshot
 │           │   ├── add.post.ts  update.post.ts  remove.post.ts
 │           │   ├── coupon.post.ts  clear.post.ts
 │           ├── checkout/start.post.ts          # Stripe-hosted checkout
+<!-- [/bd:store] -->
+<!-- [bd:store,saas] -->
 │           ├── store/
-│           │   ├── products.get.ts  subscriptions.get.ts
+<!-- [/bd:store,saas] -->
+<!-- [bd:store] -->
+│           │   ├── products.get.ts
 │           │   └── product/[id].get.ts
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
+│           │   └── subscriptions.get.ts
+<!-- [/bd:saas] -->
 │           ├── portal/
 │           │   ├── context.get.ts              # Session + work bundle
 │           │   └── submit-review.post.ts
@@ -181,8 +199,12 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 │   ├── composables/useCart.ts                  # Client cart helper + formatMoney
 │   ├── pages/
 │   │   ├── index.vue                           # Home (useFetch + sections + banner + JSON-LD)
-│   │   ├── store/index.vue  store/[id].vue
-│   │   ├── cart.vue  subscriptions.vue
+<!-- [bd:store] -->
+│   │   ├── store/index.vue  store/[id].vue  cart.vue
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
+│   │   ├── subscriptions.vue
+<!-- [/bd:saas] -->
 │   │   ├── my-account.vue  reviews.vue  updates.vue
 │   │   └── services/index.vue  services/[service]/[area].vue
 │   ├── components/bd/
@@ -209,6 +231,7 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 The BD layer doesn't care which framework lives on top — Vue components just receive plain data from the endpoint and call `$fetch` for mutations.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -263,6 +286,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

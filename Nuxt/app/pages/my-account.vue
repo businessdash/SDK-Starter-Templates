@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { BdSignIn } from "@businessdash/sdk/vue";
 import { computed } from "vue";
+// [bd:saas]
+import { ref } from "vue";
+// [/bd:saas]
 import BdHeader from "~/components/bd/BdHeader.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
 import ReviewForm from "~/components/bd/ReviewForm.vue";
@@ -20,6 +23,13 @@ const route = useRoute();
 const start = computed(() =>
 	route.query.start === "create" ? "createAccount" : "signIn",
 );
+// Where sign-in returns to: a path on this site, or the account page.
+const next = computed(() => {
+	const raw = typeof route.query.next === "string" ? route.query.next : "";
+	return raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\")
+		? raw
+		: "/my-account";
+});
 
 const session = computed(() => data.value?.session ?? null);
 const work = computed(() => data.value?.work ?? null);
@@ -29,6 +39,38 @@ const displayName = computed(() => {
 	const name = [s.firstName, s.lastName].filter(Boolean).join(" ").trim();
 	return name || s.email || "there";
 });
+
+// [bd:saas]
+const plan = computed(() => data.value?.plan ?? null);
+// What just happened wins over the stored status, which lags until the
+// payment provider confirms.
+const planChange = ref<{ cancelAtPeriodEnd: boolean; accessUntil: string | null } | null>(
+	null,
+);
+const planError = ref<string | null>(null);
+const cancelPending = computed(
+	() => planChange.value?.cancelAtPeriodEnd ?? plan.value?.cancelledButActive ?? false,
+);
+const accessUntil = computed(
+	() => planChange.value?.accessUntil ?? plan.value?.expiresAt ?? null,
+);
+function formatDate(iso: string): string {
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+		new Date(iso),
+	);
+}
+async function changePlan(intent: "cancel" | "resume") {
+	planError.value = null;
+	try {
+		planChange.value = await $fetch<{ cancelAtPeriodEnd: boolean; accessUntil: string | null }>(
+			"/api/bd/portal/plan",
+			{ method: "POST", body: { intent } },
+		);
+	} catch {
+		planError.value = "We couldn't change your plan. Please try again.";
+	}
+}
+// [/bd:saas]
 
 useHead({ title: "My account — Your Business" });
 </script>
@@ -57,7 +99,7 @@ useHead({ title: "My account — Your Business" });
 						<ClientOnly>
 							<BdSignIn
 								:start="start"
-								redirect-to="/my-account"
+								:redirect-to="next"
 								:brand="{
 									tagline: 'Access your jobs, quotes, invoices, and leave a review.',
 								}"
@@ -111,6 +153,46 @@ useHead({ title: "My account — Your Business" });
 							<span class="account-stat__label">Balance due</span>
 						</div>
 					</div>
+
+					<!-- [bd:saas] -->
+					<div class="bd-card account-plan">
+						<h3>Your plan</h3>
+						<template v-if="plan?.hasAccess">
+							<div>
+								<strong>{{ plan.plan?.name ?? "Subscription" }}</strong>
+								<span class="bd-badge">{{ cancelPending ? "Cancelled" : "Active" }}</span>
+							</div>
+							<p v-if="plan.type === 'lifetime'">Yours for good. Nothing renews.</p>
+							<template v-else-if="cancelPending">
+								<p>
+									It won't renew. You keep everything{{
+										accessUntil ? ` until ${formatDate(accessUntil)}` : ""
+									}}.
+								</p>
+								<button class="bd-btn" type="button" @click="changePlan('resume')">
+									Keep my plan
+								</button>
+							</template>
+							<template v-else>
+								<p>
+									{{ accessUntil ? `Renews ${formatDate(accessUntil)}.` : "Renews automatically." }}
+								</p>
+								<button
+									class="bd-btn bd-btn--ghost"
+									type="button"
+									@click="changePlan('cancel')"
+								>
+									Cancel plan
+								</button>
+							</template>
+						</template>
+						<template v-else>
+							<p>You don't have a plan yet.</p>
+							<NuxtLink class="bd-btn" to="/subscriptions">See plans</NuxtLink>
+						</template>
+						<p v-if="planError" class="plan-error">{{ planError }}</p>
+					</div>
+					<!-- [/bd:saas] -->
 
 					<ReviewForm />
 

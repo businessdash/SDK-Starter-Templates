@@ -1,3 +1,4 @@
+// [bd-file:store]
 import {
 	ChangeDetectionStrategy,
 	Component,
@@ -223,7 +224,10 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 			}
 
 			<p class="store-links">
-				<a routerLink="/cart">View cart</a> · <a routerLink="/subscriptions">Subscriptions</a>
+				<a routerLink="/cart">View cart</a>
+				<!-- [bd:saas] -->
+				· <a routerLink="/subscriptions">Subscriptions</a>
+				<!-- [/bd:saas] -->
 			</p>
 		</section>
 	`,

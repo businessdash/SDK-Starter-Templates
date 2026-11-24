@@ -1,11 +1,16 @@
+// [bd-file:store,saas]
+// [bd:store]
 import { createCookie } from "react-router";
 import type { BdClient } from "@businessdash/sdk";
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
+// [/bd:store]
 
 import { getBd } from "./bd.server";
 
+// [bd:store]
 /** The visitor-bound cart client returned by `client.cart.forVisitor(...)`. */
 type VisitorCart = ReturnType<BdClient["cart"]["forVisitor"]>;
+// [/bd:store]
 
 /**
  * Storefront / cart / checkout helpers (server-only).
@@ -22,6 +27,7 @@ type VisitorCart = ReturnType<BdClient["cart"]["forVisitor"]>;
  *                     attach `Set-Cookie: serializeVisitorCookie(token)`.
  */
 
+// [bd:store]
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
 
 /** httpOnly cookie holding the visitor's cart token. */
@@ -32,11 +38,14 @@ export const visitorCookie = createCookie("bd_cart_visitor", {
 	maxAge: VISITOR_MAX_AGE,
 });
 
+// [/bd:store]
+
 /** Whether the store can run at all (BD env present). */
 export function isStoreConfigured(): boolean {
 	return getBd() !== null;
 }
 
+// [bd:store]
 /** Read-only: the request's cart token, or null if none yet. */
 export async function readVisitorToken(
 	request: Request,
@@ -57,11 +66,13 @@ export async function ensureVisitorToken(request: Request): Promise<string> {
 export function serializeVisitorCookie(token: string): Promise<string> {
 	return visitorCookie.serialize(token);
 }
+// [/bd:store]
 
 export function sdkErrorMessage(err: unknown): string {
 	return err instanceof Error ? err.message : String(err);
 }
 
+// [bd:store]
 // ── Catalog reads ─────────────────────────────────────────────────────
 
 export async function listStoreProducts(input?: {
@@ -164,6 +175,9 @@ export async function getStoreProductAddons(productId: string) {
 	}
 }
 
+// [/bd:store]
+
+// [bd:saas]
 export async function listStoreSubscriptions() {
 	const bd = getBd();
 	if (!bd) return null;
@@ -174,6 +188,9 @@ export async function listStoreSubscriptions() {
 	}
 }
 
+// [/bd:saas]
+
+// [bd:store]
 // ── Cart reads ────────────────────────────────────────────────────────
 
 /** Current cart snapshot for the request's visitor, or null when the store
@@ -293,25 +310,7 @@ export async function startCheckout(
 	}
 }
 
-/** Start Stripe-hosted checkout for a recurring subscription offering. */
-export async function startSubscriptionCheckout(
-	offeringId: string,
-	origin: string,
-): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
-	const bd = getBd();
-	if (!bd) {
-		return { ok: false, error: "Store isn't connected (missing BD env)." };
-	}
-	try {
-		const res = await bd.subscriptions.startCheckout(offeringId, {
-			successUrl: `${origin}/store/subscriptions?session_id={CHECKOUT_SESSION_ID}`,
-			cancelUrl: `${origin}/store/subscriptions`,
-		});
-		return { ok: true, url: res.stripeUrl };
-	} catch (err) {
-		return { ok: false, error: sdkErrorMessage(err) };
-	}
-}
+// [/bd:store]
 
 // ── Display helpers ───────────────────────────────────────────────────
 

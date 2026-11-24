@@ -1,3 +1,4 @@
+// [bd-file:store]
 /**
  * /store — full shop page on `bd.storefront.listProductsWithMeta`.
  *

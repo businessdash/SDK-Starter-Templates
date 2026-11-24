@@ -17,14 +17,20 @@ import {
 	localBusiness,
 	website,
 } from "@businessdash/sdk";
-import { llmsTxtHandler, productFeedUrl } from "@businessdash/sdk/distribution";
+import { llmsTxtHandler } from "@businessdash/sdk/distribution";
+// [bd:store]
+import { productFeedUrl } from "@businessdash/sdk/distribution";
+// [/bd:store]
 import type { FormSchema as SdkFormSchema } from "@businessdash/sdk/forms";
 import { mcpHandler, mcpManifestHandler } from "@businessdash/sdk/mcp";
 import type {
-	CartSnapshot,
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle,
 	ReviewWallListResponse,
+} from "@businessdash/sdk/contracts";
+// [bd:store]
+import type {
+	CartSnapshot,
 	StorefrontAddon,
 	StorefrontCategory,
 	StorefrontListProductsResponse,
@@ -33,8 +39,14 @@ import type {
 	StorefrontProductReviewsResponse,
 	StorefrontRelatedProduct,
 	StorefrontSort,
+} from "@businessdash/sdk/contracts";
+// [/bd:store]
+// [bd:saas]
+import type {
+	CustomerSubscriptionResponse,
 	SubscriptionOffering,
 } from "@businessdash/sdk/contracts";
+// [/bd:saas]
 import {
 	renderLegalPageHtml,
 	resolveLegalPage,
@@ -44,11 +56,10 @@ import {
 	minimalSitemapXml,
 } from "@businessdash/sdk/sitemap";
 import { createServerFn } from "@tanstack/solid-start";
-import {
-	getCookie,
-	getRequestHeader,
-	setCookie,
-} from "@tanstack/solid-start/server";
+import { getCookie, getRequestHeader } from "@tanstack/solid-start/server";
+// [bd:store]
+import { setCookie } from "@tanstack/solid-start/server";
+// [/bd:store]
 
 import {
 	type BundleBanner,
@@ -65,6 +76,15 @@ import {
 import { getDistributionConfig } from "./bd-distribution";
 import { listTodosWithImages, type TodosResult } from "./bd-todos";
 import { TODO_FORM_SLUG } from "../../bd.data-model.config";
+
+/**
+ * For server functions that return SDK records. TanStack Start checks at the
+ * type level that a return value can be serialized, and an SDK record's open
+ * `[key: string]: unknown` fields fail that check, though they're JSON from
+ * the API and serialize fine. This turns off the output check only; inputs
+ * are still checked.
+ */
+const SDK_OUTPUT = { output: false } as const;
 
 export type HeroData = {
 	title: string;
@@ -323,7 +343,7 @@ export const confirmBooking = createServerFn({ method: "POST" })
 		});
 	});
 
-export const submitContactForm = createServerFn({ method: "POST" })
+export const submitContactForm = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { slug: string; values: Record<string, unknown> }) => data)
 	.handler(async ({ data }) => {
 		const bd = getBd();
@@ -350,6 +370,7 @@ export function isSuspensionError(err: unknown): boolean {
 	);
 }
 
+// [bd:store]
 /* ────────────────────────────────────────────────────────────────────
  * Storefront — product list + detail
  * ──────────────────────────────────────────────────────────────────── */
@@ -358,7 +379,7 @@ export type StoreListResult =
 	| { ok: true; products: StorefrontListProductsResponse["items"] }
 	| { ok: false; reason: "unconfigured" | "suspended" | "error" };
 
-export const getStoreProducts = createServerFn({ method: "GET" }).handler(
+export const getStoreProducts = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
 	async (): Promise<StoreListResult> => {
 		const bd = getBd();
 		if (!bd) return { ok: false, reason: "unconfigured" };
@@ -377,7 +398,7 @@ export type StoreProductResult =
 	| { ok: true; product: StorefrontProductDetail }
 	| { ok: false; reason: "unconfigured" | "suspended" | "notfound" };
 
-export const getStoreProduct = createServerFn({ method: "GET" })
+export const getStoreProduct = createServerFn({ method: "GET", strict: SDK_OUTPUT })
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }): Promise<StoreProductResult> => {
 		const bd = getBd();
@@ -474,7 +495,7 @@ export type StoreProductExtras = {
 	addons: StorefrontAddon[];
 };
 
-export const getStoreProductExtras = createServerFn({ method: "GET" })
+export const getStoreProductExtras = createServerFn({ method: "GET", strict: SDK_OUTPUT })
 	.validator((data: { id: string }) => data)
 	.handler(async ({ data }): Promise<StoreProductExtras> => {
 		const bd = getBd();
@@ -537,12 +558,12 @@ export type CartResult =
 	| { ok: true; snapshot: CartSnapshot }
 	| { ok: false; error: string };
 
-function cartErr(err: unknown): CartResult {
+function cartErr(err: unknown): Extract<CartResult, { ok: false }> {
 	return { ok: false, error: err instanceof Error ? err.message : String(err) };
 }
 
 /** Read the current cart, or null when unconfigured / no cart yet (no token). */
-export const getCart = createServerFn({ method: "GET" }).handler(
+export const getCart = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
 	async (): Promise<CartSnapshot | null> => {
 		const bd = getBd();
 		if (!bd) return null;
@@ -557,7 +578,7 @@ export const getCart = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-export const addToCart = createServerFn({ method: "POST" })
+export const addToCart = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator(
 		(data: { productId: string; variantId?: string; quantity?: number }) =>
 			data,
@@ -579,7 +600,7 @@ export const addToCart = createServerFn({ method: "POST" })
 		}
 	});
 
-export const updateCartItem = createServerFn({ method: "POST" })
+export const updateCartItem = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { itemId: string; quantity: number }) => data)
 	.handler(async ({ data }): Promise<CartResult> => {
 		const bd = getBd();
@@ -594,7 +615,7 @@ export const updateCartItem = createServerFn({ method: "POST" })
 		}
 	});
 
-export const removeCartItem = createServerFn({ method: "POST" })
+export const removeCartItem = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { itemId: string }) => data)
 	.handler(async ({ data }): Promise<CartResult> => {
 		const bd = getBd();
@@ -609,7 +630,7 @@ export const removeCartItem = createServerFn({ method: "POST" })
 		}
 	});
 
-export const applyCartCoupon = createServerFn({ method: "POST" })
+export const applyCartCoupon = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { code: string }) => data)
 	.handler(async ({ data }): Promise<CartResult> => {
 		const bd = getBd();
@@ -624,7 +645,7 @@ export const applyCartCoupon = createServerFn({ method: "POST" })
 		}
 	});
 
-export const removeCartCoupon = createServerFn({ method: "POST" }).handler(
+export const removeCartCoupon = createServerFn({ method: "POST", strict: SDK_OUTPUT }).handler(
 	async (): Promise<CartResult> => {
 		const bd = getBd();
 		if (!bd) return { ok: false, error: "Store isn't connected." };
@@ -639,7 +660,7 @@ export const removeCartCoupon = createServerFn({ method: "POST" }).handler(
 	},
 );
 
-export const clearCart = createServerFn({ method: "POST" }).handler(
+export const clearCart = createServerFn({ method: "POST", strict: SDK_OUTPUT }).handler(
 	async (): Promise<CartResult> => {
 		const bd = getBd();
 		if (!bd) return { ok: false, error: "Store isn't connected." };
@@ -655,7 +676,7 @@ export const clearCart = createServerFn({ method: "POST" }).handler(
 /** Start Stripe-hosted checkout for the visitor's cart; returns the URL to
  *  redirect to. `origin` is the browser's `window.location.origin` so the
  *  success/cancel URLs land back on this site. */
-export const startCheckout = createServerFn({ method: "POST" })
+export const startCheckout = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { origin: string }) => data)
 	.handler(
 		async ({
@@ -676,13 +697,15 @@ export const startCheckout = createServerFn({ method: "POST" })
 			}
 		},
 	);
+// [/bd:store]
 
+// [bd:saas]
 /* ────────────────────────────────────────────────────────────────────
  * Subscriptions
  * ──────────────────────────────────────────────────────────────────── */
 
 export type SubscriptionsResult =
-	| { ok: true; items: SubscriptionOffering[] }
+	| { ok: true; items: SubscriptionOffering[]; signedIn: boolean }
 	| { ok: false; reason: "unconfigured" | "suspended" | "error" };
 
 export const getSubscriptions = createServerFn({ method: "GET" }).handler(
@@ -690,8 +713,11 @@ export const getSubscriptions = createServerFn({ method: "GET" }).handler(
 		const bd = getBd();
 		if (!bd) return { ok: false, reason: "unconfigured" };
 		try {
-			const res = await bd.subscriptions.list();
-			return { ok: true, items: res.items };
+			const [res, session] = await Promise.all([
+				bd.subscriptions.list(),
+				readCustomerSession(),
+			]);
+			return { ok: true, items: res.items, signedIn: session !== null };
 		} catch (err) {
 			if (isSuspensionError(err)) return { ok: false, reason: "suspended" };
 			devwarn("subscriptions.list", err);
@@ -700,26 +726,50 @@ export const getSubscriptions = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-/** Start a Stripe-hosted subscription checkout; returns the URL to redirect to. */
+/**
+ * Start a Stripe-hosted subscription checkout for the signed-in customer;
+ * returns the URL to redirect to. A plan is the customer's own, so a visitor
+ * who isn't signed in gets the sign-in link instead.
+ */
 export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 	.validator((data: { id: string; origin: string }) => data)
 	.handler(
 		async ({
 			data,
-		}): Promise<{ ok: true; url: string } | { ok: false; error: string }> => {
-			const bd = getBd();
-			if (!bd) return { ok: false, error: "Store isn't connected." };
+		}): Promise<
+			{ ok: true; url: string } | { ok: false; error: string; signIn?: string }
+		> => {
+			const cfg = bdRawConfig();
+			if (!cfg) return { ok: false, error: "Store isn't connected." };
+			const session = await readCustomerSession();
+			if (!session) {
+				return {
+					ok: false,
+					error: "Sign in to subscribe.",
+					signIn: "/my-account?next=/subscriptions",
+				};
+			}
 			try {
-				const res = await bd.subscriptions.startCheckout(data.id, {
-					successUrl: `${data.origin}/store/order?session_id={CHECKOUT_SESSION_ID}`,
+				// The session rides as a header, so the checkout is the customer's own.
+				const client = createBdApiClient({
+					apiKey: cfg.apiKey,
+					baseUrl: cfg.baseUrl,
+					defaultHeaders: { "X-BD-Session-Token": session.token },
+				});
+				const res = await client.subscriptions.startCheckout(data.id, {
+					successUrl: `${data.origin}/subscriptions?session_id={CHECKOUT_SESSION_ID}`,
 					cancelUrl: `${data.origin}/subscriptions`,
 				});
 				return { ok: true, url: res.stripeUrl };
 			} catch (err) {
-				return cartErr(err);
+				return {
+					ok: false,
+					error: err instanceof Error ? err.message : String(err),
+				};
 			}
 		},
 	);
+// [/bd:saas]
 
 /* ────────────────────────────────────────────────────────────────────
  * Reviews wall — aggregate (off bundle) + paginated page (reviews.list)
@@ -852,22 +902,43 @@ export type MyAccountData = {
 		role: string | null;
 	} | null;
 	work: CustomerWorkBundle | null;
+	// [bd:saas]
+	/** The customer's plan, or null when they have none. */
+	plan: CustomerSubscriptionResponse["subscription"];
+	// [/bd:saas]
 };
 
 /** Everything the /my-account loader needs: configured flag, the signed-in
  *  user (or null), and their work bundle (jobs / quotes / invoices). */
-export const getMyAccount = createServerFn({ method: "GET" }).handler(
+export const getMyAccount = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
 	async (): Promise<MyAccountData> => {
 		const cfg = bdRawConfig();
 		const configured = cfg !== null;
 		const session = await readCustomerSession();
-		if (!session) return { configured, session: null, work: null };
+		if (!session) {
+			return {
+				configured,
+				session: null,
+				work: null,
+				// [bd:saas]
+				plan: null,
+				// [/bd:saas]
+			};
+		}
 		let work: CustomerWorkBundle | null = null;
 		try {
 			work = await portalFor(session).getWork();
 		} catch (err) {
 			devwarn("customerPortal.getWork", err);
 		}
+		// [bd:saas]
+		let plan: CustomerSubscriptionResponse["subscription"] = null;
+		try {
+			plan = (await portalFor(session).getSubscription()).subscription;
+		} catch (err) {
+			devwarn("customerPortal.getSubscription", err);
+		}
+		// [/bd:saas]
 		return {
 			configured,
 			session: {
@@ -877,9 +948,40 @@ export const getMyAccount = createServerFn({ method: "GET" }).handler(
 				role: session.role,
 			},
 			work,
+			// [bd:saas]
+			plan,
+			// [/bd:saas]
 		};
 	},
 );
+
+// [bd:saas]
+export type PlanChangeResult =
+	| { ok: true; cancelAtPeriodEnd: boolean; accessUntil: string | null }
+	| { ok: false; error: string };
+
+/** Cancel the plan at the end of the paid period, or take the cancel back. */
+export const changePlan = createServerFn({ method: "POST" })
+	.validator((data: { cancel: boolean }) => data)
+	.handler(async ({ data }): Promise<PlanChangeResult> => {
+		const session = await readCustomerSession();
+		if (!session) return { ok: false, error: "Please sign in again." };
+		try {
+			const portal = portalFor(session);
+			const res = data.cancel
+				? await portal.cancelSubscription()
+				: await portal.resumeSubscription();
+			return {
+				ok: true,
+				cancelAtPeriodEnd: res.cancelAtPeriodEnd,
+				accessUntil: res.accessUntil,
+			};
+		} catch (err) {
+			devwarn("customerPortal.changePlan", err);
+			return { ok: false, error: "We couldn't change your plan. Please try again." };
+		}
+	});
+// [/bd:saas]
 
 export type ReviewSubmitResult =
 	| { ok: true; status: string }
@@ -954,7 +1056,7 @@ export type ParallelPageResult =
 	| { ok: false; reason: "unconfigured" | "suspended" | "notfound" };
 
 /** Render one (service, area) variant: resolved meta + body. */
-export const renderServiceAreaPage = createServerFn({ method: "GET" })
+export const renderServiceAreaPage = createServerFn({ method: "GET", strict: SDK_OUTPUT })
 	.validator((data: { service: string; area: string }) => data)
 	.handler(async ({ data }): Promise<ParallelPageResult> => {
 		const bd = getBd();
@@ -1085,9 +1187,13 @@ const SITEMAP_STATIC_PATHS = [
 	"/services",
 	"/reviews",
 	"/updates",
+	// [bd:store]
 	"/store",
-	"/todos",
+	// [/bd:store]
+	// [bd:saas]
 	"/subscriptions",
+	// [/bd:saas]
+	"/todos",
 ];
 
 /**
@@ -1112,7 +1218,12 @@ export async function buildSitemapResponse(request: Request): Promise<Response> 
 				siteId: bdRawConfig()?.siteId ?? "",
 				baseUrl,
 				staticPaths: SITEMAP_STATIC_PATHS,
-				routes: { blog: "/updates", product: "/store" },
+				routes: {
+					// [bd:store]
+					product: "/store",
+					// [/bd:store]
+					blog: "/updates",
+				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),
 			})
@@ -1182,6 +1293,7 @@ export async function buildMcpManifestResponse(
 	return mcpManifestHandler(config)(request);
 }
 
+// [bd:store]
 export async function buildProductFeedRedirectResponse(): Promise<Response> {
 	const config = getDistributionConfig();
 	if (!config) return new Response("Not found", { status: 404 });
@@ -1190,6 +1302,7 @@ export async function buildProductFeedRedirectResponse(): Promise<Response> {
 		headers: { Location: productFeedUrl(config) },
 	});
 }
+// [/bd:store]
 
 /* ────────────────────────────────────────────────────────────────────
  * Custom-collections demo (todos + todoImages)
@@ -1207,7 +1320,7 @@ export type TodosData = {
 	formSlug: string;
 };
 
-export const getTodosData = createServerFn({ method: "GET" }).handler(
+export const getTodosData = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
 	async (): Promise<TodosData> => {
 		const bd = getBd();
 		const [result, formSchema] = await Promise.all([
@@ -1222,7 +1335,7 @@ export const getTodosData = createServerFn({ method: "GET" }).handler(
 	},
 );
 
-export const submitTodoForm = createServerFn({ method: "POST" })
+export const submitTodoForm = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { values: Record<string, unknown> }) => data)
 	.handler(async ({ data }) => {
 		const bd = getBd();

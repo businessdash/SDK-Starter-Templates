@@ -109,7 +109,14 @@ export default function Index() {
 					<a href="#services">Services</a>
 					<a href="#gallery">Gallery</a>
 					<a href="#blog">Blog</a>
+					{/* [bd:store] */}
 					<Link to="/store">Store</Link>
+					{/* [/bd:store] */}
+					{/* [bd:saas] */}
+					{/* [bd:!store] */}
+					<Link to="/store/subscriptions">Plans</Link>
+					{/* [/bd:!store] */}
+					{/* [/bd:saas] */}
 					<Link to="/reviews">Reviews</Link>
 					<Link to="/book">Book</Link>
 					<Link to="/my-account">Account</Link>

@@ -104,6 +104,7 @@ export type ReviewWallPage = {
 	nextOffset: number | null;
 };
 
+// [bd:store]
 export type Product = {
 	id: string;
 	name: string;
@@ -195,7 +196,9 @@ export type ProductAddon = {
 	imageUrl: string | null;
 };
 export type ProductAddonsPayload = { items: ProductAddon[] };
+// [/bd:store]
 
+// [bd:saas]
 export type Subscription = {
 	id: string;
 	name: string;
@@ -204,8 +207,23 @@ export type Subscription = {
 	amountCents: number;
 	interval: string;
 };
-export type SubscriptionsPayload = { items: Subscription[]; configured?: boolean };
+export type SubscriptionsPayload = {
+	items: Subscription[];
+	configured?: boolean;
+	/** Subscribing needs a signed-in customer. */
+	signedIn?: boolean;
+};
+/** The customer's plan, as the portal reports it. */
+export type CustomerPlan = {
+	hasAccess: boolean;
+	cancelledButActive: boolean;
+	type: string | null;
+	expiresAt: string | null;
+	plan: { name: string } | null;
+};
+// [/bd:saas]
 
+// [bd:store]
 export type CartItem = {
 	id: string;
 	productName: string | null;
@@ -223,6 +241,7 @@ export type CartSnapshot = {
 	subtotal: number;
 	itemCount: number;
 } | null;
+// [/bd:store]
 
 export type BlogPost = {
 	id: string;
@@ -234,6 +253,9 @@ export type BlogPost = {
 
 export type PortalMe = {
 	signedIn: boolean;
+	// [bd:saas]
+	plan?: CustomerPlan | null;
+	// [/bd:saas]
 	user?: { email: string | null; firstName: string | null; lastName: string | null };
 	organizationId?: string;
 	role?: string | null;
@@ -285,6 +307,7 @@ export const bdApi = {
 	home: () => getJson<HomePayload>("/api/bd/home"),
 	blog: () => getJson<{ items: BlogPost[] }>("/api/bd/blog"),
 
+	// [bd:store]
 	products: (cursor?: number | null, categoryId?: string) => {
 		const q = new URLSearchParams();
 		if (cursor != null) q.set("cursor", String(cursor));
@@ -318,9 +341,26 @@ export const bdApi = {
 		),
 	productAddons: (id: string) =>
 		getJson<ProductAddonsPayload>(`/api/bd/store/products/${encodeURIComponent(id)}/addons`),
+	// [/bd:store]
 
+	// [bd:saas]
 	subscriptions: () => getJson<SubscriptionsPayload>("/api/bd/subscriptions"),
+	/** A Stripe URL for the signed-in customer, or where to sign in first. */
+	subscribe: (id: string) =>
+		sendJson<{ url?: string; signIn?: string }>(
+			`/api/bd/subscriptions/${encodeURIComponent(id)}/checkout`,
+			"POST",
+		),
+	/** Cancel at the end of the paid period, or take the cancel back. */
+	changePlan: (intent: "cancel" | "resume") =>
+		sendJson<{ cancelAtPeriodEnd: boolean; accessUntil: string | null }>(
+			"/api/bd/portal/plan",
+			"POST",
+			{ intent },
+		),
+	// [/bd:saas]
 
+	// [bd:store]
 	cart: () => getJson<CartSnapshot>("/api/bd/cart"),
 	addToCart: (productId: string, quantity = 1) =>
 		sendJson<CartSnapshot>("/api/bd/cart/items", "POST", { productId, quantity }),
@@ -333,6 +373,7 @@ export const bdApi = {
 	removeCoupon: () => sendJson<CartSnapshot>("/api/bd/cart/coupon", "DELETE"),
 	clearCart: () => sendJson<CartSnapshot>("/api/bd/cart/clear", "POST"),
 	startCheckout: () => sendJson<{ url: string }>("/api/bd/checkout/start", "POST"),
+	// [/bd:store]
 
 	contact: (input: { name: string; email: string; message: string }) =>
 		sendJson<{ ok: boolean }>("/api/bd/contact", "POST", { slug: "general-inquiry", ...input }),

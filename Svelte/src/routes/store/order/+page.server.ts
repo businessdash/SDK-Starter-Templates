@@ -1,3 +1,4 @@
+// [bd-file:store,saas]
 import type { PageServerLoad } from './$types';
 
 import { bd } from '#lib/server/bd.ts';

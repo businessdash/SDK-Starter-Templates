@@ -41,6 +41,7 @@
 		"@biomejs/biome": "2.4.5",
 		"@solidjs/vite-plugin": "^3.0.1",
 		"@tanstack/devtools-vite": "latest",
+		"@types/node": "^24.19.2",
 		"jsdom": "^28.1.0",
 		"tsx": "^4.22.3",
 		"typescript": "^6.0.2",

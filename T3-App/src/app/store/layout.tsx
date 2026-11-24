@@ -1,7 +1,8 @@
+// [bd-file:store,saas]
 import Link from "next/link";
 
 /**
- * Store layout — wraps every `/store/*` page with a thin sub-nav linking
+ * Store layout — wraps every page under app/store with a thin sub-nav linking
  * products / subscriptions / cart, plus a link back to the home page. Reuses
  * the home page's sticky `app-header` shell so the storefront feels native.
  */
@@ -18,9 +19,15 @@ export default function StoreLayout({
 						Your Business
 					</Link>
 					<nav>
+						{/* [bd:store] */}
 						<Link href="/store">Products</Link>
+						{/* [/bd:store] */}
+						{/* [bd:saas] */}
 						<Link href="/store/subscriptions">Subscriptions</Link>
+						{/* [/bd:saas] */}
+						{/* [bd:store] */}
 						<Link href="/store/cart">Cart</Link>
+						{/* [/bd:store] */}
 						<Link href="/">Home</Link>
 					</nav>
 				</div>

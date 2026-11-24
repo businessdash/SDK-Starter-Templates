@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { useState } from "react";
 import { bd, dollars } from "../lib/bd";
 import type { Loose } from "../lib/bd";

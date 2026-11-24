@@ -1,3 +1,4 @@
+// [bd-file:store]
 import type { StorefrontSort } from '@businessdash/sdk/contracts';
 
 import type { PageServerLoad } from './$types';

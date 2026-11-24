@@ -10,8 +10,10 @@ import 'errors.dart';
 ///
 /// A mobile app **holds its credential in the artifact** — `strings` on an APK
 /// or IPA finds anything you ship. So `BdClient` takes a **publishable
-/// `pk_…` token** and asserts on an `sk_…` key rather than letting a secret
-/// ride to the store.
+/// `pk_…` token** and throws on any other key rather than letting a secret
+/// ride to the store. (Secret keys start with `bd_`; the check is "is it a
+/// `pk_` token", and it is a throw, not an assert, because release builds
+/// drop asserts and release builds are the ones that ship.)
 ///
 /// That is barely limiting: the publishable scope set covers the entire
 /// customer-facing surface — storefront, cart, checkout, blog, marketing
@@ -33,18 +35,21 @@ class BdClient {
     required String publishableKey,
     required this.siteId,
     http.Client? httpClient,
-  })  : assert(
-          !publishableKey.startsWith('sk_'),
-          'BdClient was given a SECRET key. A mobile app ships its '
-          'credential inside the binary, where `strings` finds it — use a '
-          'publishable pk_ token instead, and route anything that genuinely '
-          'needs a secret key through a server you control.',
-        ),
-        _baseUrl = host.replace(
+  })  : _baseUrl = host.replace(
           path: '${host.path.replaceAll(RegExp(r'/$'), '')}/api/package/v1',
         ),
         _apiKey = publishableKey,
-        _http = httpClient ?? http.Client();
+        _http = httpClient ?? http.Client() {
+    final key = publishableKey.trim();
+    if (key.isNotEmpty && !key.startsWith('pk_')) {
+      throw ArgumentError(
+        'BdClient takes a publishable pk_ token only. A mobile app ships its '
+        'credential inside the binary, where `strings` finds it — never put a '
+        'secret key there; route anything that genuinely needs one through a '
+        'server you control.',
+      );
+    }
+  }
 
   final Uri _baseUrl;
   final String _apiKey;

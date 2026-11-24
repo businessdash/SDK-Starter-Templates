@@ -13,6 +13,19 @@ import {
 	isCustomerPortalConfigured,
 	submitCustomerReview,
 } from "~/lib/bd-portal.server";
+// [bd:saas]
+import {
+	getCustomerSubscription,
+	setPlanCancelled,
+} from "~/lib/bd-portal.server";
+// [/bd:saas]
+
+/** Where sign-in returns to: a path on this site, or the account page. */
+function safeNext(raw: string | null): string {
+	return raw?.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\")
+		? raw
+		: "/my-account";
+}
 
 export const meta: MetaFunction = () => [
 	{ title: "My account — Your Business" },
@@ -22,18 +35,26 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const configured = isCustomerPortalConfigured();
 	const session = await getCustomerSession(request);
 	if (!session) {
-		const start = new URL(request.url).searchParams.get("start");
+		const params = new URL(request.url).searchParams;
+		const start = params.get("start");
 		return {
 			configured,
 			signedIn: false as const,
 			start: start === "create" ? ("createAccount" as const) : ("signIn" as const),
+			next: safeNext(params.get("next")),
 		};
 	}
 	const work = await getCustomerWork(request);
+	// [bd:saas]
+	const plan = (await getCustomerSubscription(request))?.subscription ?? null;
+	// [/bd:saas]
 	return {
 		configured,
 		signedIn: true as const,
 		user: session.user,
+		// [bd:saas]
+		plan,
+		// [/bd:saas]
 		unlinked: work?.unlinked ?? true,
 		summary: work?.summary ?? null,
 		jobs: (work?.jobs ?? []).slice(0, 10).map((j) => {
@@ -55,6 +76,24 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
 	const fd = await request.formData();
+	// [bd:saas]
+	const intent = fd.get("intent");
+	if (intent === "cancelPlan" || intent === "resumePlan") {
+		try {
+			const res = await setPlanCancelled(request, intent === "cancelPlan");
+			return {
+				status: "plan" as const,
+				cancelAtPeriodEnd: res.cancelAtPeriodEnd,
+				accessUntil: res.accessUntil,
+			};
+		} catch {
+			return {
+				status: "planError" as const,
+				message: "We couldn't change your plan. Please try again.",
+			};
+		}
+	}
+	// [/bd:saas]
 	const rating = Number.parseInt(String(fd.get("rating") ?? "5"), 10);
 	const title = (String(fd.get("title") ?? "").trim() || undefined) as
 		| string
@@ -116,7 +155,7 @@ export default function MyAccount() {
 							 */}
 							<BdSignIn
 								start={data.start}
-								redirectTo="/my-account"
+								redirectTo={data.next}
 								brand={{ tagline: "Sign in to see your jobs and invoices." }}
 							/>
 						</div>
@@ -170,6 +209,19 @@ export default function MyAccount() {
 								</>
 							)}
 
+							{/* [bd:saas] */}
+							<h2 className="section__subtitle">Your plan</h2>
+							<PlanCard
+								plan={data.plan}
+								change={
+									actionData?.status === "plan" ||
+									actionData?.status === "planError"
+										? actionData
+										: null
+								}
+							/>
+							{/* [/bd:saas] */}
+
 							<h2 className="section__subtitle">Leave a review</h2>
 							{actionData?.status === "success" ? (
 								<p className="muted">{actionData.message}</p>
@@ -221,3 +273,77 @@ export default function MyAccount() {
 		</>
 	);
 }
+
+// [bd:saas]
+type Plan = NonNullable<
+	Awaited<ReturnType<typeof getCustomerSubscription>>
+>["subscription"];
+type PlanChange =
+	| { status: "plan"; cancelAtPeriodEnd: boolean; accessUntil: string | null }
+	| { status: "planError"; message: string };
+
+function formatDate(iso: string): string {
+	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
+		new Date(iso),
+	);
+}
+
+/** The customer's plan, with Cancel, or Keep my plan while a cancel is pending. */
+function PlanCard({ plan, change }: { plan: Plan; change: PlanChange | null }) {
+	if (!plan?.hasAccess) {
+		return (
+			<div className="card">
+				<p className="muted">You don't have a plan yet.</p>
+				<a className="bd-btn" href="/store/subscriptions">
+					See plans
+				</a>
+			</div>
+		);
+	}
+	// What just happened wins over the stored status, which lags until the
+	// payment provider confirms.
+	const cancelPending =
+		change?.status === "plan" ? change.cancelAtPeriodEnd : plan.cancelledButActive;
+	const until =
+		(change?.status === "plan" ? change.accessUntil : null) ?? plan.expiresAt;
+	return (
+		<div className="card">
+			<h3>
+				{plan.plan?.name ?? "Subscription"}{" "}
+				<span className="muted">· {cancelPending ? "Cancelled" : "Active"}</span>
+			</h3>
+			{plan.type === "lifetime" ? (
+				<p className="muted">Yours for good. Nothing renews.</p>
+			) : cancelPending ? (
+				<>
+					<p className="muted">
+						It won't renew. You keep everything
+						{until ? ` until ${formatDate(until)}` : ""}.
+					</p>
+					<Form method="post">
+						<input type="hidden" name="intent" value="resumePlan" />
+						<button className="bd-btn" type="submit">
+							Keep my plan
+						</button>
+					</Form>
+				</>
+			) : (
+				<>
+					<p className="muted">
+						{until ? `Renews ${formatDate(until)}.` : "Renews automatically."}
+					</p>
+					<Form method="post">
+						<input type="hidden" name="intent" value="cancelPlan" />
+						<button className="bd-btn" type="submit">
+							Cancel plan
+						</button>
+					</Form>
+				</>
+			)}
+			{change?.status === "planError" ? (
+				<p className="error">{change.message}</p>
+			) : null}
+		</div>
+	);
+}
+// [/bd:saas]

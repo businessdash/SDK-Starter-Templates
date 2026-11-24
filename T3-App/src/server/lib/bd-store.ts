@@ -1,6 +1,9 @@
+// [bd-file:store,saas]
 import "server-only";
 
+// [bd:store]
 import { cookies } from "next/headers";
+// [/bd:store]
 
 import { env } from "@/env";
 import { getBd, readOrUnavailable } from "@/server/lib/bd";
@@ -14,14 +17,17 @@ import { getBd, readOrUnavailable } from "@/server/lib/bd";
  * mutations use `ensureVisitorToken()` (sets the cookie — Server Actions only).
  */
 
+// [bd:store]
 const VISITOR_COOKIE = "bd_cart_visitor";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
+// [/bd:store]
 
 /** The message a thrown SDK call surfaces (BdApiError carries one). */
 export function sdkErrorMessage(err: unknown): string {
 	return err instanceof Error ? err.message : String(err);
 }
 
+// [bd:store]
 /** Read-only: the current visitor's cart token, or null if none yet. */
 export async function getVisitorToken(): Promise<string | null> {
 	const jar = await cookies();
@@ -43,6 +49,7 @@ export async function ensureVisitorToken(): Promise<string> {
 	});
 	return token;
 }
+// [/bd:store]
 
 /** Whether the SDK is configured at all. Lets the UI show a "store not
  *  connected" state instead of an empty grid. */
@@ -50,6 +57,7 @@ export function isStoreConfigured(): boolean {
 	return getBd() !== null;
 }
 
+// [bd:store]
 export async function listStoreProducts(input?: {
 	limit?: number;
 	cursor?: number | null;
@@ -122,12 +130,18 @@ export async function getStoreProduct(productId: string) {
 	return readOrUnavailable(() => bd.storefront.getProduct(productId), null);
 }
 
+// [/bd:store]
+
+// [bd:saas]
 export async function listStoreSubscriptions() {
 	const bd = getBd();
 	if (!bd) return null;
 	return readOrUnavailable(() => bd.subscriptions.list(), null);
 }
 
+// [/bd:saas]
+
+// [bd:store]
 /** Current cart snapshot, or null when the SDK is unconfigured or no cart
  *  exists yet (no visitor token). */
 export async function getCartSnapshot() {
@@ -144,6 +158,8 @@ export async function getCartSnapshot() {
 		return null;
 	}
 }
+
+// [/bd:store]
 
 export async function getCheckoutStatus(sessionId: string) {
 	const bd = getBd();

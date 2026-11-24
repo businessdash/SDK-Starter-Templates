@@ -30,10 +30,12 @@ export default defineConfig({
 			"/llms.txt": { target: "http://localhost:3000", changeOrigin: true },
 			"/api/mcp": { target: "http://localhost:3000", changeOrigin: true },
 			"/.well-known": { target: "http://localhost:3000", changeOrigin: true },
+			// [bd:store]
 			"/ai/product-feed": {
 				target: "http://localhost:3000",
 				changeOrigin: true,
 			},
+			// [/bd:store]
 		},
 	},
 });

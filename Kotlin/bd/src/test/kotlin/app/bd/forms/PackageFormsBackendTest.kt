@@ -33,6 +33,7 @@ class PackageFormsBackendTest {
     }
 
     @Test fun refusesASecretKey() {
+        assertFailsWith<IllegalArgumentException> { BdPackageFormsBackend("bd_3ZxQf9") }
         assertFailsWith<IllegalArgumentException> { BdPackageFormsBackend("sk_live_oops") }
     }
 

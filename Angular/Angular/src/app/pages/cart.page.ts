@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";

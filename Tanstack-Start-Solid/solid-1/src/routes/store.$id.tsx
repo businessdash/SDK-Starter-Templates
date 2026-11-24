@@ -1,3 +1,4 @@
+// [bd-file:store]
 import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 

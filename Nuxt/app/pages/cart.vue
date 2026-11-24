@@ -1,3 +1,4 @@
+<!-- [bd-file:store] -->
 <script setup lang="ts">
 import { ref } from "vue";
 import BdHeader from "~/components/bd/BdHeader.vue";

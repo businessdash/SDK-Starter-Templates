@@ -1,3 +1,4 @@
+<!-- [bd-file:store,saas] -->
 <script lang="ts">
 	/**
 	 * Compact storefront sub-nav with a cart-count indicator. Reused by
@@ -9,15 +10,21 @@
 
 <nav class="store-nav">
 	<div class="store-nav__links">
+		<!-- [bd:store] -->
 		<a href="/store">Products</a>
+		<!-- [/bd:store] -->
+		<!-- [bd:saas] -->
 		<a href="/store/subscriptions">Subscriptions</a>
+		<!-- [/bd:saas] -->
 	</div>
+	<!-- [bd:store] -->
 	<a class="store-nav__cart" href="/store/cart">
 		Cart
 		{#if cartCount > 0}
 			<span class="store-nav__badge">{cartCount}</span>
 		{/if}
 	</a>
+	<!-- [/bd:store] -->
 </nav>
 
 <style>

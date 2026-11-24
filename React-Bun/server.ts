@@ -27,7 +27,10 @@ import {
 	getTenantSession,
 } from "@businessdash/sdk";
 import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
-import { llmsTxtHandler, productFeedUrl } from "@businessdash/sdk/distribution";
+import { llmsTxtHandler } from "@businessdash/sdk/distribution";
+// [bd:store]
+import { productFeedUrl } from "@businessdash/sdk/distribution";
+// [/bd:store]
 import { mcpHandler, mcpManifestHandler } from "@businessdash/sdk/mcp";
 import { localBusiness, renderJsonLdToHtml, website } from "@businessdash/sdk/seo";
 
@@ -166,8 +169,10 @@ function errResponse(err: unknown): Response {
 	return jsonResponse({ error: errMessage(err) }, 502);
 }
 
+// [bd:store]
 const VISITOR_COOKIE = "bd_cart_visitor";
 const VISITOR_MAX_AGE = 60 * 60 * 24 * 180;
+// [/bd:store]
 const SESSION_COOKIE = "bd_session";
 
 function getCookie(req: Request, name: string): string | null {
@@ -181,6 +186,7 @@ function getCookie(req: Request, name: string): string | null {
 	return null;
 }
 
+// [bd:store]
 function resolveVisitor(req: Request): { token: string; setCookie?: string } {
 	const existing = getCookie(req, VISITOR_COOKIE);
 	if (existing) return { token: existing };
@@ -190,6 +196,7 @@ function resolveVisitor(req: Request): { token: string; setCookie?: string } {
 		setCookie: `${VISITOR_COOKIE}=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${VISITOR_MAX_AGE}`,
 	};
 }
+// [/bd:store]
 
 type Session = {
 	token: string;
@@ -378,6 +385,7 @@ const routes: Record<string, Route> = {
 		},
 	},
 
+	// [bd:store]
 	"GET /api/bd/storefront/products": {
 		handler: async (req) => {
 			if (!bd) return notConfigured();
@@ -438,19 +446,61 @@ const routes: Record<string, Route> = {
 			}
 		},
 	},
-
+	// [/bd:store]
+	// [bd:saas]
 	"GET /api/bd/subscriptions": {
-		handler: async () => {
+		handler: async (req) => {
 			if (!bd) return notConfigured();
 			try {
 				const result = await cached("subscriptions", ["bd:catalog", "bd:subscriptions"], () => bd.subscriptions.list());
-				return jsonResponse(result);
+				// Subscribing needs a signed-in customer; anyone else signs in first.
+				return jsonResponse({ ...result, signedIn: (await getSession(req)) !== null });
 			} catch (err) {
 				return errResponse(err);
 			}
 		},
 	},
-
+	// Hand the signed-in customer to Stripe-hosted Checkout in subscription
+	// mode. A plan is the customer's own, so a visitor gets the sign-in link.
+	"POST /api/bd/subscriptions/checkout": {
+		handler: async (req) => {
+			if (!apiKey || !packageBase) return notConfigured();
+			const session = await getSession(req);
+			if (!session) return jsonResponse({ signIn: "/my-account?next=/subscriptions" });
+			try {
+				const body = (await req.json()) as { planId: string; origin: string };
+				// The session rides as a header, so the checkout is the customer's own.
+				const client = createBdApiClient({
+					apiKey,
+					baseUrl: packageBase,
+					defaultHeaders: { "X-BD-Session-Token": session.token },
+				});
+				const result = await client.subscriptions.startCheckout(body.planId, {
+					successUrl: `${body.origin}/subscriptions?session_id={CHECKOUT_SESSION_ID}`,
+					cancelUrl: `${body.origin}/subscriptions`,
+				});
+				return jsonResponse({ url: result.stripeUrl });
+			} catch (err) {
+				return errResponse(err);
+			}
+		},
+	},
+	// Cancel the plan at the end of the paid period, or take the cancel back.
+	"POST /api/bd/portal/plan": {
+		handler: async (req) => {
+			const session = await getSession(req);
+			if (!session) return jsonResponse({ error: "Please sign in again." }, 401);
+			try {
+				const body = (await req.json()) as { intent: "cancel" | "resume" };
+				const portal = portalFor(session);
+				const result = body.intent === "cancel" ? await portal.cancelSubscription() : await portal.resumeSubscription();
+				return jsonResponse({ cancelAtPeriodEnd: result.cancelAtPeriodEnd, accessUntil: result.accessUntil });
+			} catch (err) {
+				return jsonResponse({ error: errMessage(err) }, 400);
+			}
+		},
+	},
+	// [/bd:saas]
 	"GET /api/bd/reviews": {
 		handler: async (req) => {
 			if (!bd) return notConfigured();
@@ -468,6 +518,7 @@ const routes: Record<string, Route> = {
 		},
 	},
 
+	// [bd:store]
 	"GET /api/bd/cart": {
 		handler: async (req) => {
 			if (!bd) return notConfigured();
@@ -585,13 +636,20 @@ const routes: Record<string, Route> = {
 			}
 		},
 	},
-
+	// [/bd:store]
 	"GET /api/bd/portal/work": {
 		handler: async (req) => {
 			const session = await getSession(req);
 			if (!session) return jsonResponse({ signedIn: false, work: null });
 			try {
-				return jsonResponse({ signedIn: true, user: session.user, work: await portalFor(session).getWork() });
+				let plan = null;
+				// [bd:saas]
+				plan = await portalFor(session)
+					.getSubscription()
+					.then((r) => r.subscription)
+					.catch(() => null);
+				// [/bd:saas]
+				return jsonResponse({ signedIn: true, user: session.user, work: await portalFor(session).getWork(), plan });
 			} catch (err) {
 				return errResponse(err);
 			}
@@ -765,10 +823,12 @@ async function serveMcpManifest(req: Request): Promise<Response> {
 	return mcpManifestHandler(distributionConfig)(req);
 }
 
+// [bd:store]
 async function serveProductFeedRedirect(): Promise<Response> {
 	if (!distributionConfig) return new Response("Not found", { status: 404 });
 	return Response.redirect(productFeedUrl(distributionConfig), 307);
 }
+// [/bd:store]
 
 async function siteJsonLd(origin: string): Promise<string> {
 	if (!bd) return "";
@@ -828,8 +888,11 @@ const server = Bun.serve({
 		if (method === "GET" && pathname === "/llms.txt") return serveLlmsTxt();
 		if (pathname === "/api/mcp") return serveMcp(req, method);
 		if (method === "GET" && pathname === "/.well-known/mcp.json") return serveMcpManifest(req);
+		// [bd:store]
 		if (method === "GET" && pathname === "/ai/product-feed") return serveProductFeedRedirect();
+		// [/bd:store]
 
+		// [bd:store]
 		// Dynamic product detail.
 		const productMatch = pathname.match(/^\/api\/bd\/storefront\/product\/([^/]+)$/);
 		if (method === "GET" && productMatch) {
@@ -890,6 +953,8 @@ const server = Bun.serve({
 				return errResponse(err);
 			}
 		}
+
+		// [/bd:store]
 
 		// Static API routes.
 		const route = routes[`${method} ${pathname}`];

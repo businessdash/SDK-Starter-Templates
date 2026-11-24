@@ -39,6 +39,11 @@ testem.log
 /typings
 __screenshots__/
 
+# Your keys (the README copies .env.example to one of these)
+.env
+.env.local
+.env.*.local
+
 # System files
 .DS_Store
 Thumbs.db

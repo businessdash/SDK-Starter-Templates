@@ -1,8 +1,18 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
+// [bd:saas]
+import { computed } from "@angular/core";
+// [/bd:saas]
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { BdSignInComponent } from "@businessdash/sdk/angular";
 import { bdApi, type PortalMe } from "../lib/bd-api.client";
+
+/** Where sign-in returns to: a path on this site, or the account page. */
+function safeNext(raw: string | null): string {
+	return raw?.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\")
+		? raw
+		: "/my-account";
+}
 
 /**
  * Customer portal. The auth handler (mounted at /api/bd-auth/*) sets an
@@ -27,7 +37,7 @@ import { bdApi, type PortalMe } from "../lib/bd-api.client";
 			} @else if (!me()?.signedIn) {
 				<bd-sign-in
 					[start]="start"
-					redirectTo="/my-account"
+					[redirectTo]="next"
 					[brand]="{ tagline: 'Sign in to see your jobs, quotes, and invoices.' }"
 				/>
 			} @else if (me(); as m) {
@@ -61,6 +71,30 @@ import { bdApi, type PortalMe } from "../lib/bd-api.client";
 						</p>
 					}
 				}
+
+				<!-- [bd:saas] -->
+				<h2 class="section__subtitle">Your plan</h2>
+				@if (m.plan?.hasAccess) {
+					<p>
+						<strong>{{ m.plan?.plan?.name || "Subscription" }}</strong>
+						<span class="muted"> · {{ cancelPending() ? "Cancelled" : "Active" }}</span>
+					</p>
+					@if (m.plan?.type === "lifetime") {
+						<p class="muted">Yours for good. Nothing renews.</p>
+					} @else {
+						<p class="muted">{{ planLine() }}</p>
+						<button class="bd-btn" type="button" [disabled]="planBusy()" (click)="togglePlan()">
+							{{ cancelPending() ? "Keep my plan" : "Cancel plan" }}
+						</button>
+					}
+				} @else {
+					<p class="muted">You don't have a plan yet.</p>
+					<a class="bd-btn" href="/subscriptions">See plans</a>
+				}
+				@if (planFailed()) {
+					<p class="error">We couldn't change your plan. Please try again.</p>
+				}
+				<!-- [/bd:saas] -->
 
 				<h2 class="section__subtitle">Leave a review</h2>
 				@if (reviewStatus() === "sent") {
@@ -97,10 +131,12 @@ import { bdApi, type PortalMe } from "../lib/bd-api.client";
 })
 export class MyAccountPage implements OnInit {
 	readonly me = signal<PortalMe | null>(null);
+	private readonly query = inject(ActivatedRoute).snapshot.queryParamMap;
 	readonly start =
-		inject(ActivatedRoute).snapshot.queryParamMap.get("start") === "create"
+		this.query.get("start") === "create"
 			? ("createAccount" as const)
 			: ("signIn" as const);
+	readonly next = safeNext(this.query.get("next"));
 	readonly state = signal<"loading" | "ready">("loading");
 	readonly reviewStatus = signal<"idle" | "sending" | "sent" | "error">("idle");
 
@@ -114,6 +150,38 @@ export class MyAccountPage implements OnInit {
 		this.me.set(await bdApi.portalMe());
 		this.state.set("ready");
 	}
+
+	// [bd:saas]
+	// What just happened wins over the stored status, which lags until the
+	// payment provider confirms.
+	readonly planChange = signal<{ cancelAtPeriodEnd: boolean; accessUntil: string | null } | null>(
+		null,
+	);
+	readonly planBusy = signal(false);
+	readonly planFailed = signal(false);
+	readonly cancelPending = computed(
+		() => this.planChange()?.cancelAtPeriodEnd ?? this.me()?.plan?.cancelledButActive ?? false,
+	);
+	readonly planLine = computed(() => {
+		const until = this.planChange()?.accessUntil ?? this.me()?.plan?.expiresAt ?? null;
+		const date = until
+			? new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(until))
+			: null;
+		if (this.cancelPending()) {
+			return `It won't renew. You keep everything${date ? ` until ${date}` : ""}.`;
+		}
+		return date ? `Renews ${date}.` : "Renews automatically.";
+	});
+
+	async togglePlan() {
+		this.planBusy.set(true);
+		this.planFailed.set(false);
+		const res = await bdApi.changePlan(this.cancelPending() ? "resume" : "cancel");
+		this.planBusy.set(false);
+		if (res) this.planChange.set(res);
+		else this.planFailed.set(true);
+	}
+	// [/bd:saas]
 
 	async submitReview() {
 		if (this.reviewForm.invalid) return;

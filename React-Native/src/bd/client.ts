@@ -25,8 +25,9 @@ import {
  *
  * `EXPO_PUBLIC_` vars are inlined into the JS bundle at build time, so
  * anything here ships in the app. This app can therefore only hold a
- * **publishable `pk_…` token**, and `createClient` throws on an `sk_…` key
- * rather than letting a secret reach the store.
+ * **publishable `pk_…` token**, and `createClient` throws on any other key
+ * rather than letting a secret reach the store. (Secret keys start with
+ * `bd_`; the check is "is it a `pk_` token", never "is it some secret prefix".)
  *
  * That is barely limiting: the publishable scope set covers the entire
  * customer-facing surface — storefront, cart, checkout, blog, marketing
@@ -61,13 +62,13 @@ export function getBd(): BdClient | null {
     return cached
   }
 
-  if (publishableKey.startsWith('sk_')) {
+  if (!publishableKey.trim().startsWith('pk_')) {
     // Loud, not silent. A secret key in an app bundle is a leaked secret, and
     // the failure mode of shipping one is far worse than a crash in dev.
     throw new Error(
-      'EXPO_PUBLIC_BD_PK is a SECRET key. EXPO_PUBLIC_ vars are compiled ' +
-        'into the app bundle, where `strings` finds them — use a publishable ' +
-        'pk_ token, and route anything needing a secret key through a server ' +
+      'EXPO_PUBLIC_BD_PK must be a publishable pk_ token. EXPO_PUBLIC_ vars ' +
+        'are compiled into the app bundle, where `strings` finds them — never ' +
+        'put a secret key there; route anything needing one through a server ' +
         'you control.',
     )
   }
@@ -88,7 +89,7 @@ export function getBd(): BdClient | null {
 export function getBdDev(): BdApiClient | null {
   if (cachedDev !== undefined) return cachedDev
 
-  if (!siteId || !publishableKey || publishableKey.startsWith('sk_')) {
+  if (!siteId || !publishableKey || !publishableKey.trim().startsWith('pk_')) {
     cachedDev = null
     return cachedDev
   }

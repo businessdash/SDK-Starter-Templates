@@ -11,6 +11,35 @@ import Config
 # unless a template prints it.
 # ═══════════════════════════════════════════════════════════════════════════
 
+# In dev and test, read .env and then .env.local, so `cp .env.example .env`
+# is all the setup there is. A variable already set in the shell wins, an
+# empty value counts as unset (the site's no-credentials fallback still
+# shows), and prod reads neither: a release takes the real environment.
+if config_env() in [:dev, :test] do
+  shell = System.get_env()
+
+  for file <- [".env", ".env.local"], File.exists?(file) do
+    file
+    |> File.read!()
+    |> String.split(~r/\R/)
+    |> Enum.each(fn line ->
+      case Regex.run(~r/^\s*(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/, line) do
+        [_, name, raw] ->
+          value =
+            case Regex.run(~r/^(["'])(.*)\1$/, raw) do
+              [_, _quote, inner] -> inner
+              nil -> String.replace(raw, ~r/\s+#.*$/, "")
+            end
+
+          if value != "" and not Map.has_key?(shell, name), do: System.put_env(name, value)
+
+        nil ->
+          :ok
+      end
+    end)
+  end
+end
+
 config :bd_starter,
   bd_host: System.get_env("BD_HOST", "https://businessdash.us"),
   bd_site_id: System.get_env("BD_SITE_ID"),

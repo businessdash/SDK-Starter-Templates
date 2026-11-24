@@ -3,13 +3,16 @@ import {
 	bdApi,
 	type BannerPayload,
 	type BlogPost,
-	type CartSnapshot,
 	type HomePayload,
-	type Product,
 	type ReviewsAggregate,
-	type Subscription,
 	type UpdateItem,
 } from "./bd-api.client";
+// [bd:store]
+import type { CartSnapshot, Product } from "./bd-api.client";
+// [/bd:store]
+// [bd:saas]
+import type { Subscription } from "./bd-api.client";
+// [/bd:saas]
 
 /**
  * Marketing/state facade over the local BD endpoints.
@@ -115,18 +118,24 @@ export class BdService {
 	}
 
 	// Thin pass-throughs the route components use directly.
+	// [bd:store]
 	products(cursor?: number | null, categoryId?: string) {
 		return bdApi.products(cursor, categoryId);
 	}
 	product(id: string): Promise<Product | null> {
 		return bdApi.product(id);
 	}
+	// [/bd:store]
+	// [bd:saas]
 	subscriptions(): Promise<{ items: Subscription[] } | null> {
 		return bdApi.subscriptions();
 	}
+	// [/bd:saas]
+	// [bd:store]
 	cart(): Promise<CartSnapshot> {
 		return bdApi.cart();
 	}
+	// [/bd:store]
 	reviews(offset?: number, limit?: number) {
 		return bdApi.reviews(offset, limit);
 	}

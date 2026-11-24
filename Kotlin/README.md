@@ -10,7 +10,7 @@ The split is not tidiness. It means the part most likely to be wrong — decodin
 
 ## The one rule that shapes everything here
 
-**A mobile app ships its credential in the artifact.** `strings` on an APK finds anything in `BuildConfig`, so `BdClient` `require`s a **publishable `pk_…` token** and refuses an `sk_…` key at construction.
+**A mobile app ships its credential in the artifact.** `strings` on an APK finds anything in `BuildConfig`, so `BdClient` `require`s a **publishable `pk_…` token** and refuses anything else, including a secret `bd_…` key, at construction.
 
 That turns out to be barely limiting. The publishable scope set covers the entire customer-facing surface:
 
@@ -159,6 +159,7 @@ Built with Gradle 9.8, AGP 8.7, Kotlin 2.0 and JDK 21 (toolchain 17). There is n
 - `gradle :app:assembleDebug` builds, and the Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit.
 - The Shop tab and `BdPackageFormsBackend` against a live site have not been run from this app; they need a real site id and publishable key.
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -198,6 +199,7 @@ Three rules:
   can't be added later, so mint a new key.
 - **Leave the return URLs out.** The donor lands on the hosted thank-you page
   and closes the browser back into the app.
+<!-- [/bd:donations] -->
 
 ## Data: environment, schema, seeding, CRUD
 

@@ -1,3 +1,4 @@
+<!-- [bd-file:store] -->
 <script setup lang="ts">
 import BdHeader from "~/components/bd/BdHeader.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
@@ -61,7 +62,9 @@ useHead({ title: "Store — Your Business" });
 
 				<p class="store-links">
 					<NuxtLink to="/cart">View cart →</NuxtLink>
+					<!-- [bd:saas] -->
 					<NuxtLink to="/subscriptions">Subscriptions →</NuxtLink>
+					<!-- [/bd:saas] -->
 				</p>
 			</section>
 		</main>

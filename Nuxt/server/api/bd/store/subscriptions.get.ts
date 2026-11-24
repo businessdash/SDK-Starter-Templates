@@ -1,3 +1,4 @@
+// [bd-file:saas]
 import {
 	BdPaymentLapsedError,
 	BdServiceSuspendedError,
@@ -14,23 +15,28 @@ import type { SubscriptionOfferingsListResponse } from "@businessdash/sdk/contra
 export type StoreSubscriptionsResult = {
 	items: SubscriptionOfferingsListResponse["items"];
 	suspended: boolean;
+	/** Subscribing needs a signed-in customer; anyone else signs in first. */
+	signedIn: boolean;
 };
 
 export default defineEventHandler(
-	async (): Promise<StoreSubscriptionsResult> => {
+	async (event): Promise<StoreSubscriptionsResult> => {
 		const bd = getBd();
-		if (!bd) return { items: [], suspended: false };
+		if (!bd) return { items: [], suspended: false, signedIn: false };
 		try {
-			const res = await bd.subscriptions.list();
-			return { items: res.items, suspended: false };
+			const [res, session] = await Promise.all([
+				bd.subscriptions.list(),
+				getCustomerSession(event),
+			]);
+			return { items: res.items, suspended: false, signedIn: session !== null };
 		} catch (err) {
 			if (
 				err instanceof BdServiceSuspendedError ||
 				err instanceof BdPaymentLapsedError
 			) {
-				return { items: [], suspended: true };
+				return { items: [], suspended: true, signedIn: false };
 			}
-			return { items: [], suspended: false };
+			return { items: [], suspended: false, signedIn: false };
 		}
 	},
 );

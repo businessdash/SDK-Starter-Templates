@@ -1,3 +1,4 @@
+// [bd-file:store]
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";

@@ -21,7 +21,7 @@ return [
     'site_id' => env('BD_SITE_ID'),
 
     /*
-     * Secret API key (`sk_…`) for authenticated server-side reads.
+     * Secret API key (`bd_…`) for authenticated server-side reads.
      * NEVER print this into a Blade template.
      */
     'api_key' => env('BD_API_KEY'),

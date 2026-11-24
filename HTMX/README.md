@@ -239,6 +239,7 @@ bun run print-schema    # print the resolved schema JSON
 HTMX is the closest shape to BD's own philosophy: the data + the business logic live on the server, the rendered output lives on your domain. Most JS frameworks ship a bundle that re-fetches the same data the server already has. HTMX renders once, swaps fragments on interaction, and never ships a JSON-fetcher. For a service business with mostly static content + a few forms, this is the lightest possible architecture.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -285,6 +286,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

@@ -82,7 +82,9 @@ SDK-Starter-Templates/Remix/
     │   ├── bd.server.ts               # SDK client, config, suspension-error guards
     │   ├── bd-cache.server.ts         # tag-keyed in-memory TTL cache (webhook target)
     │   ├── bd-bundle.server.ts        # marketing bundle fetch + banner/updates/gallery/reviews extractors
+<!-- [bd:store,saas] -->
     │   ├── bd-store.server.ts         # storefront / cart / checkout / subscriptions + visitor cookie
+<!-- [/bd:store,saas] -->
     │   ├── bd-portal.server.ts        # session validation + customer portal (getWork, submitReview)
     │   ├── bd-pages.server.ts         # parallel pages (render/listVariants) + reviews-wall pagination
     │   ├── bd-booking.server.ts       # scheduling: event types, slots, confirm booking
@@ -90,10 +92,14 @@ SDK-Starter-Templates/Remix/
     │   └── sdk-sections.server.ts       # home section loaders (hero/about/services/blog/gallery) + contact
     └── routes/
         ├── _index.tsx                   # home: sections + gallery + banner + JSON-LD
+<!-- [bd:store] -->
         ├── store._index.tsx             # product list
         ├── store.$id.tsx                # product detail + add-to-cart action
         ├── store.cart.tsx              # cart: update/remove/coupon/clear/checkout (intent-dispatched action)
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
         ├── store.subscriptions.tsx     # subscription offerings + subscribe checkout
+<!-- [/bd:saas] -->
         ├── my-account.tsx              # session → user + getWork() + review-submit action
         ├── reviews.tsx                 # reviews wall: aggregate + first page + load-more
         ├── updates._index.tsx          # bundle.updates feed
@@ -109,13 +115,20 @@ SDK-Starter-Templates/Remix/
 
 `.server.ts` is enforced by the bundler: that code never reaches the client bundle. Resource routes (the webhook, auth, sitemap/robots, reviews API) receive a web `Request` and return a web `Response`, which is exactly what the SDK's framework-agnostic handlers (`createAuthHandler`, `createGenericRevalidateHandler`) produce.
 
+<!-- [bd:store] -->
 ## Storefront + cart
 
 `bd-store.server.ts` wraps `storefront` / `cart` / `checkout` / `subscriptions` / `coupons`. The cart is keyed on a visitor token we own — an **httpOnly `bd_cart_visitor` cookie** (`createCookie`), minted on first mutation and attached to the action's response via `Set-Cookie`. Reads parse the token off the request; they never set the cookie.
 
 - `store.$id.tsx` `action` → `addToCart(...)` → `redirect("/store/cart")` (carrying the minted cookie).
 - `store.cart.tsx` has one `action` dispatched by an `intent` field: `update` / `remove` / `apply-coupon` / `remove-coupon` / `clear` / `checkout`. Checkout calls `checkout.forVisitor(token).start({ successUrl, cancelUrl })` and `redirect`s to the returned **Stripe-hosted URL** (`res.stripeUrl`).
-- `store.subscriptions.tsx` lists `subscriptions.list()` and starts a recurring checkout via `subscriptions.startCheckout(id, …)`.
+<!-- [/bd:store] -->
+
+<!-- [bd:saas] -->
+## Plans
+
+`store.subscriptions.tsx` lists `subscriptions.list()` and starts a recurring checkout via `subscriptions.startCheckout(id, …)`. Stripe sends the customer back to the same page.
+<!-- [/bd:saas] -->
 
 ## Auth + customer portal
 
@@ -170,6 +183,7 @@ One-time setup: register `https://your-site/api/bd/revalidate` at BD's `/dashboa
 Every surface no-ops when BD env is unset: section loaders return local defaults, store/auth/booking show a "not connected" notice, sitemap/robots fall back to empty/allow-all, and the webhook/auth resource routes answer with a clear non-200 instead of crashing.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -218,6 +232,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

@@ -189,6 +189,7 @@ export const bd = {
 			});
 		},
 	},
+	// [bd:store]
 	storefront: {
 		/** @param {{ limit?: number; categoryId?: string }} [params] */
 		async listProducts(params = {}) {
@@ -251,11 +252,24 @@ export const bd = {
 			return await getJson(`/api/bd/storefront/product/${encodeURIComponent(id)}/addons`);
 		},
 	},
+	// [/bd:store]
+
+	// [bd:saas]
 	subscriptions: {
 		async list() {
 			return await getJson("/api/bd/subscriptions");
 		},
+		/**
+		 * A Stripe URL for the signed-in customer, or where to sign in first.
+		 * @param {string} planId
+		 * @returns {Promise<{ url?: string; signIn?: string }>}
+		 */
+		async checkout(planId) {
+			return await postJson("/api/bd/subscriptions/checkout", { planId });
+		},
 	},
+	// [/bd:saas]
+
 	reviews: {
 		/** @param {{ limit?: number; offset?: number }} [params] */
 		async list(params = {}) {
@@ -265,6 +279,7 @@ export const bd = {
 			return await getJson(`/api/bd/reviews${query.toString() ? `?${query}` : ""}`);
 		},
 	},
+	// [bd:store]
 	cart: {
 		async get() {
 			return await getJson("/api/bd/cart");
@@ -304,6 +319,8 @@ export const bd = {
 			);
 		},
 	},
+	// [/bd:store]
+
 	portal: {
 		/** @returns {Promise<{ signedIn: boolean; user?: object; work: object | null }>} */
 		async work() {
@@ -313,6 +330,16 @@ export const bd = {
 		async submitReview(input) {
 			return await postJson("/api/bd/portal/submit-review", input);
 		},
+		// [bd:saas]
+		/**
+		 * Cancel at the end of the paid period, or take the cancel back.
+		 * @param {"cancel" | "resume"} intent
+		 * @returns {Promise<{ cancelAtPeriodEnd: boolean; accessUntil: string | null }>}
+		 */
+		async changePlan(intent) {
+			return await postJson("/api/bd/portal/plan", { intent });
+		},
+		// [/bd:saas]
 	},
 	parallelPages: {
 		/** @param {string} [key] */

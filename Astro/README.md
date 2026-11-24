@@ -70,12 +70,12 @@ Composed in `src/pages/index.astro` through the shared `src/layouts/Layout.astro
 | **Booking** | `bd.scheduling.listEventTypes()` + `/api/bd/scheduling/*` island | Hybrid |
 | **Contact form** | `bd.forms.schema(slug)` + `/api/bd/forms/[slug]` island | Hybrid |
 
+<!-- [bd:store] -->
 ### Storefront (`/store`)
 
 - `src/pages/store/index.astro` — product list via `storefront.listProducts()`
 - `src/pages/store/[id].astro` — product detail via `storefront.getProduct(id)` + an add-to-cart island
 - `src/pages/store/cart.astro` — full cart: quantity / remove / coupon / clear / checkout, all driven by islands that POST to the cart endpoints and re-render from the returned `CartSnapshot`
-- `src/pages/store/subscriptions.astro` — recurring offerings via `subscriptions.list()`
 
 Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `checkout/start`. The shopper is identified by a **visitor token** — an httpOnly `bd_cart_visitor` cookie minted on the first mutation (`src/lib/bd-store.ts`):
 
@@ -88,6 +88,13 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 | `POST /api/bd/cart/coupon` | `applyCoupon({ code })` / `removeCoupon()` |
 | `POST /api/bd/cart/clear` | `cart.forVisitor(t).clear()` |
 | `POST /api/bd/checkout/start` | `checkout.forVisitor(t).start({ successUrl, cancelUrl })` → Stripe redirect |
+<!-- [/bd:store] -->
+
+<!-- [bd:saas] -->
+### Plans (`/store/subscriptions`)
+
+- `src/pages/store/subscriptions.astro` — recurring offerings via `subscriptions.list()`
+<!-- [/bd:saas] -->
 
 ### Auth + customer portal
 
@@ -143,7 +150,9 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 │   ├── lib/
 │   │   ├── bd.ts                    # server createBdClient + getBdEnv()
 │   │   ├── bd-bundle.ts             # bundle fetch + banner / updates / reviews extraction
+<!-- [bd:store,saas] -->
 │   │   ├── bd-store.ts              # storefront / cart / checkout / subscriptions helpers
+<!-- [/bd:store,saas] -->
 │   │   ├── bd-portal.ts             # session + customer-portal (getWork / submitReview)
 │   │   ├── bd-seo.ts                # localBusiness + website JSON-LD
 │   │   └── bd-suspension.ts         # payment-lapsed / service-suspended handling
@@ -161,11 +170,17 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 │       ├── my-account.astro           # customer portal
 │       ├── sitemap.xml.ts             # proxy → BD sitemap
 │       ├── robots.txt.ts              # proxy → BD robots
+<!-- [bd:store,saas] -->
 │       ├── store/
+<!-- [bd:store] -->
 │       │   ├── index.astro            # product list
 │       │   ├── [id].astro             # product detail + add-to-cart island
 │       │   ├── cart.astro             # cart (update/remove/coupon/clear/checkout)
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
 │       │   └── subscriptions.astro    # subscription offerings
+<!-- [/bd:saas] -->
+<!-- [/bd:store,saas] -->
 │       ├── services/
 │       │   ├── index.astro            # service-area variant index
 │       │   └── [service]/[area].astro # programmatic service-area page
@@ -177,8 +192,10 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 │               ├── scheduling/        # slots.ts (GET) + bookings.ts (POST)
 │               ├── forms/[slug].ts    # POST — submit a form
 │               ├── portal/submit-review.ts  # POST — customer review via portal
+<!-- [bd:store] -->
 │               ├── cart/              # get / add / update / remove / coupon / clear
 │               └── checkout/start.ts  # POST — start Stripe checkout
+<!-- [/bd:store] -->
 ├── .env.example
 └── package.json
 ```
@@ -205,6 +222,7 @@ export default defineConfig({ output: "server", adapter: cloudflare() });
 The component layer doesn't change — only the runtime where the SDK calls happen.
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -254,6 +272,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 

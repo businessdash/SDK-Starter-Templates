@@ -1,3 +1,4 @@
+// [bd-file:store,saas]
 /**
  * Coercion helpers for the store surface. The SDK types product "extras"
  * (description) as passthrough `unknown` and product-detail variants as

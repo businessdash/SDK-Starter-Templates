@@ -15,12 +15,19 @@ import { RouterLink, RouterLinkActive } from "@angular/router";
 			<a class="brand" routerLink="/">Your Business</a>
 			<nav>
 				<a routerLink="/" routerLinkActive="is-active" [routerLinkActiveOptions]="{ exact: true }">Home</a>
+				<!-- [bd:store] -->
 				<a routerLink="/store" routerLinkActive="is-active">Store</a>
+				<!-- [/bd:store] -->
+				<!-- [bd:saas] -->
+				<a routerLink="/subscriptions" routerLinkActive="is-active">Plans</a>
+				<!-- [/bd:saas] -->
 				<a routerLink="/booking" routerLinkActive="is-active">Book</a>
 				<a routerLink="/reviews" routerLinkActive="is-active">Reviews</a>
 				<a routerLink="/updates" routerLinkActive="is-active">Updates</a>
 				<a routerLink="/todos" routerLinkActive="is-active">Todos</a>
+				<!-- [bd:store] -->
 				<a routerLink="/cart" routerLinkActive="is-active">Cart</a>
+				<!-- [/bd:store] -->
 				<a routerLink="/my-account" routerLinkActive="is-active">Account</a>
 			</nav>
 		</header>

@@ -19,7 +19,7 @@ export const prerender = false;
  *
  * Delete a line and those URLs vanish from the sitemap. That is the correct
  * behaviour for a business that does not have that surface — a mobile mechanic
- * with no storefront should not advertise `/store/{id}` URLs that 404, and the
+ * with no storefront should not advertise product URLs that 404, and the
  * org would fail the entitlement check anyway.
  *
  * A missing URL costs the indexing of one page. A sitemap full of 404s costs
@@ -35,7 +35,12 @@ const STATIC_PATHS = [
 	"/services",
 	"/reviews",
 	"/updates",
+	// [bd:store]
 	"/store",
+	// [/bd:store]
+	// [bd:saas]
+	"/store/subscriptions",
+	// [/bd:saas]
 	"/todos",
 ];
 
@@ -63,7 +68,9 @@ export const GET: APIRoute = async ({ site }) => {
 			// /store/[id]. Change these if you move those routes; delete them if
 			// you drop the surface.
 			blog: "/updates",
+			// [bd:store]
 			product: "/store",
+			// [/bd:store]
 		},
 		onSkip: (section, reason) => {
 			// Worth watching during setup — the difference between a deliberate

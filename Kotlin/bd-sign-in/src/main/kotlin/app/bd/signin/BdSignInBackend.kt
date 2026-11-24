@@ -277,7 +277,10 @@ public class BdServerSignInBackend<S>(
             publishableKey: String,
             host: String = "https://businessdash.us",
         ): BdServerSignInBackend<BdSignInSession> {
-            require(!publishableKey.startsWith("sk_")) { "Use the publishable pk_ key in an app, never a secret sk_ key." }
+            // Allow, don't deny: secret keys start with bd_, so only "is it a pk_
+            // token" catches every one. Empty means the app has no key yet.
+            val key = publishableKey.trim()
+            require(key.isEmpty() || key.startsWith("pk_")) { "Use the publishable pk_ key in an app, never a secret key." }
             return BdServerSignInBackend(
                 baseUrl = host.trimEnd('/') + "/api/package/v1/auth/customer",
                 headers = mapOf("Authorization" to "Bearer $publishableKey"),

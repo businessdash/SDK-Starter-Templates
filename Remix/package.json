@@ -30,6 +30,7 @@
   "devDependencies": {
     "@react-router/dev": "^7.18.0",
     "@react-router/fs-routes": "^7.18.0",
+    "@types/node": "^24.19.2",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "tsx": "^4.22.3",

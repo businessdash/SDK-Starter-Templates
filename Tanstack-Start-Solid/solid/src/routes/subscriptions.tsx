@@ -1,4 +1,8 @@
-import { createFileRoute, Link } from "@tanstack/solid-router";
+// [bd-file:saas]
+import { createFileRoute } from "@tanstack/solid-router";
+// [bd:store]
+import { Link } from "@tanstack/solid-router";
+// [/bd:store]
 import { createSignal, For, Show } from "solid-js";
 
 import { formatMoney, intervalLabel } from "../components/bd/money";
@@ -13,8 +17,13 @@ import {
  */
 export const Route = createFileRoute("/subscriptions")({
 	component: Subscriptions,
+	// Stripe sends the customer back with the checkout session id.
+	validateSearch: (search: Record<string, unknown>): { session_id?: string } =>
+		typeof search.session_id === "string" ? { session_id: search.session_id } : {},
 	loader: () => getSubscriptions(),
 });
+
+const SIGN_IN = "/my-account?next=/subscriptions";
 
 function Subscriptions() {
 	const result = Route.useLoaderData();
@@ -28,6 +37,11 @@ function Subscriptions() {
 		const r = result();
 		return r.ok ? null : r.reason;
 	};
+	const signedIn = () => {
+		const r = result();
+		return r.ok && r.signedIn;
+	};
+	const search = Route.useSearch();
 
 	async function subscribe(id: string) {
 		setBusyId(id);
@@ -37,6 +51,7 @@ function Subscriptions() {
 		});
 		setBusyId(null);
 		if (res.ok) window.location.href = res.url;
+		else if (res.signIn) window.location.href = res.signIn;
 		else setError(res.error);
 	}
 
@@ -50,6 +65,13 @@ function Subscriptions() {
 						Recurring plans billed through Stripe. Cancel anytime.
 					</p>
 				</div>
+
+				<Show when={search().session_id}>
+					<div class="bd-empty">
+						Thanks for subscribing. Your plan is in{" "}
+						<a href="/my-account">your account</a>.
+					</div>
+				</Show>
 
 				<Show
 					when={result().ok && items().length > 0}
@@ -90,15 +112,24 @@ function Subscriptions() {
 										{formatMoney(plan.amountCents)} /{" "}
 										{intervalLabel(plan.interval)}
 									</div>
-									<button
-										type="button"
-										class="bd-btn"
-										style="margin-top: 0.5rem;"
-										disabled={busyId() === plan.id}
-										onClick={() => subscribe(plan.id)}
+									<Show
+										when={signedIn()}
+										fallback={
+											<a class="bd-btn" style="margin-top: 0.5rem;" href={SIGN_IN}>
+												Sign in to subscribe
+											</a>
+										}
 									>
-										{busyId() === plan.id ? "Working…" : "Subscribe"}
-									</button>
+										<button
+											type="button"
+											class="bd-btn"
+											style="margin-top: 0.5rem;"
+											disabled={busyId() === plan.id}
+											onClick={() => subscribe(plan.id)}
+										>
+											{busyId() === plan.id ? "Working…" : "Subscribe"}
+										</button>
+									</Show>
 								</article>
 							)}
 						</For>
@@ -111,11 +142,13 @@ function Subscriptions() {
 					</div>
 				</Show>
 
+				{/* [bd:store] */}
 				<div style="margin-top: 2rem;">
 					<Link to="/store" class="bd-btn bd-btn--ghost">
 						← Back to store
 					</Link>
 				</div>
+				{/* [/bd:store] */}
 			</section>
 		</main>
 	);

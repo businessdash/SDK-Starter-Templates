@@ -63,11 +63,11 @@ unset.
 | Surface | Route(s) / page | SDK calls |
 | --- | --- | --- |
 | **Home sections** | `/` (`sections/*`) | `marketing.getPageBundle`, `gallery.list`, `blog.listPosts`, `scheduling.*`, `forms.*` |
-| **Storefront** | `/store`, `/store/:id` | `storefront.listProductsWithMeta` (sidebar facets: category counts, price range, min-rating, sort), `storefront.listCategories`, `storefront.getProduct`, `storefront.getProductReviews`, `storefront.getRelatedProducts`, `storefront.getProductAddons` |
+| **Storefront** | `/store`, `/store/:id` | `storefront.listProductsWithMeta` (sidebar facets: category counts, price range, min-rating, sort), `storefront.listCategories`, `storefront.getProduct`, `storefront.getProductReviews`, `storefront.getRelatedProducts`, `storefront.getProductAddons` | <!-- [bd-line:store] -->
 | **Newsletter** | About section + footer | `followers.join` via the browser-safe publishable token (`window.__BD_PUBLIC__`), with a `bd.followers.<siteId>` localStorage "already subscribed" hint |
-| **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — visitor token in an httpOnly `bd_cart_visitor` cookie |
-| **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` (→ Stripe URL), `checkout.getStatus` |
-| **Subscriptions** | `/subscriptions` | `subscriptions.list` |
+| **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — visitor token in an httpOnly `bd_cart_visitor` cookie | <!-- [bd-line:store] -->
+| **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` (→ Stripe URL), `checkout.getStatus` | <!-- [bd-line:store] -->
+| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:saas] -->
 | **Reviews wall** | `/reviews` | `reviews.list({ limit, offset })` with "load more" |
 | **News banner + updates** | banner on every page, `/updates` | `bundle.banner`, `bundle.updates` |
 | **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
@@ -123,7 +123,12 @@ One entry in the server route table + one method on the browser client.
 │   ├── sections/                   # Home sections (hero/about/services/gallery/blog/booking/contact-form)
 │   └── pages/                      # Feature pages
 │       ├── _ui.js                  # Shared errBox / pageHead
-│       ├── store.js  product.js  cart.js  subscriptions.js
+<!-- [bd:store] -->
+│       ├── store.js  product.js  cart.js
+<!-- [/bd:store] -->
+<!-- [bd:saas] -->
+│       ├── subscriptions.js
+<!-- [/bd:saas] -->
 │       ├── reviews.js  updates.js  my-account.js
 │       └── services.js  services-area.js
 ├── tsconfig.json                   # Server-only TS settings
@@ -132,6 +137,7 @@ One entry in the server route table + one method on the browser client.
 ```
 
 
+<!-- [bd:donations] -->
 ## Donations
 
 One-time and monthly gifts, paid to the org's own Stripe account. Your app
@@ -177,6 +183,7 @@ Three rules:
 - **Return URLs must be on a verified domain** (Settings → Organization), or
   the call fails with `400 return_url_not_verified`. `localhost` works in
   development.
+<!-- [/bd:donations] -->
 
 ## Where your content comes from
 
