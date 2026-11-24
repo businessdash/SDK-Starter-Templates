@@ -152,7 +152,7 @@ Validated in `src/env.js`, documented in `.env.example`:
 | `BD_SITE_ID` | everything | site UUID |
 | `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://www.businessdash.us` |
 | `BD_REVALIDATION_SECRET` | webhook | `whsec_…` HMAC secret |
-| `BD_AUTH_CALLBACK_URL` | auth / portal | your `/api/bd-auth/callback` URL, registered as a WorkOS redirect URI |
+| `BD_AUTH_CALLBACK_URL` | auth / portal | your `/api/bd-auth/callback` URL, on a domain you've verified in Business Dash Settings → Domain |
 | `NEXT_PUBLIC_SITE_URL` | JSON-LD | production origin; defaults to `https://example.com` |
 
 ## Project layout (BD-relevant only)

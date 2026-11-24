@@ -12,7 +12,7 @@ import { createFileRoute } from "@tanstack/solid-router";
  * method is `(request: Request) => Promise<Response>`, so we hand it the
  * incoming `request` and return its `Response` directly.
  *
- * Requires BD_AUTH_CALLBACK_URL (registered as a WorkOS redirect URI)
+ * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain)
  * plus the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL. When unset,
  * the route 503s so the rest of the site keeps rendering.
  */

@@ -7,7 +7,7 @@ import { createAuthHandler } from "@businessdash/sdk";
  * serves every sub-route under `/api/bd-auth/*`
  * (`sign-in`, `sign-up`, `callback`, `sign-out`, `password-reset`, `me`).
  *
- * Requires BD_AUTH_CALLBACK_URL (registered as a WorkOS redirect URI) plus
+ * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain) plus
  * the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL.
  */
 

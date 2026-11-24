@@ -15,7 +15,7 @@ import { getServerConfig } from "~/lib/bd.server";
  * Plain links drive it — no client SDK needed:
  *   <a href="/api/bd-auth/sign-in">  /sign-up  /sign-out
  *
- * Requires BD_AUTH_CALLBACK_URL (registered as a WorkOS redirect URI) plus
+ * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain) plus
  * the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL.
  */
 

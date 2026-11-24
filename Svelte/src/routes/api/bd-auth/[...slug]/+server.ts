@@ -16,7 +16,7 @@ import type { RequestHandler } from './$types';
  * a SvelteKit `+server.ts` handler returns, so we pass `event.request`
  * straight through.
  *
- * Requires BD_AUTH_CALLBACK_URL (registered as a WorkOS redirect URI)
+ * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain)
  * plus the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL. Returns a
  * 503 when unconfigured so the rest of the site still renders.
  */

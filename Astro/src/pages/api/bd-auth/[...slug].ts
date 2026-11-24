@@ -17,7 +17,7 @@ export const prerender = false;
  * is exactly the framework-agnostic shape `createAuthHandler` returns — so we
  * pass the request straight through.
  *
- * Requires BD_AUTH_CALLBACK_URL (registered as a WorkOS redirect URI) plus
+ * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain) plus
  * BD_API_KEY + BD_PACKAGE_API_BASE_URL.
  */
 

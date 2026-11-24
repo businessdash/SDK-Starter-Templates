@@ -15,7 +15,7 @@ import { createAuthHandler } from "@businessdash/sdk";
  * the handler's Response onto the RequestEvent — the same pattern the
  * revalidate endpoint uses.
  *
- * Requires BD_AUTH_CALLBACK_URL (registered as a WorkOS redirect URI) plus
+ * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain) plus
  * the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL.
  */
 
