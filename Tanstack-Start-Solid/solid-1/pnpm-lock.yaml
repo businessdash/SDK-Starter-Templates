@@ -43,8 +43,8 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.93
-        version: 0.9.93(solid-js@1.9.19)
+        specifier: ^0.9.94
+        version: 0.9.94(solid-js@1.9.19)
       '@fontsource/inter':
         specifier: ^5.1.1
         version: 5.3.0
@@ -298,8 +298,8 @@ packages:
     resolution: {integrity: sha512-0GEz8qJWokkUVYQYRukmkSHIFNoBH8QTreeHrAFbvz1XFYc3Y+puhMs8PQ5x8GNugiC2l5jvDBXKLbBIByeSBw==}
     hasBin: true
 
-  '@businessdash/sdk@0.9.93':
-    resolution: {integrity: sha512-QN3tQaIBRx/UWLx/heqtVS7RjDoXDHRAF5omPvOePzh+HXfuXaVmj/KlN9R2HhernU8ZP8gnOKe6EU2F9whA7w==}
+  '@businessdash/sdk@0.9.94':
+    resolution: {integrity: sha512-flSHB/uPftoE2taTPZk2NIeVpws41p77dY0riuofC3fgB9Dk/t2QC1B8IuYlTPZ6XYeM3IUXKiddVJQN05VuRQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -2299,7 +2299,7 @@ snapshots:
     dependencies:
       css-tree: 3.2.1
 
-  '@businessdash/sdk@0.9.93(solid-js@1.9.19)':
+  '@businessdash/sdk@0.9.94(solid-js@1.9.19)':
     dependencies:
       zod: 4.6.7
     optionalDependencies:

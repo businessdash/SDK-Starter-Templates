@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.93
-        version: 0.9.93
+        specifier: ^0.9.94
+        version: 0.9.94
       tsx:
         specifier: ^4.22.4
         version: 4.23.12
@@ -20,8 +20,8 @@ importers:
 
 packages:
 
-  '@businessdash/sdk@0.9.93':
-    resolution: {integrity: sha512-QN3tQaIBRx/UWLx/heqtVS7RjDoXDHRAF5omPvOePzh+HXfuXaVmj/KlN9R2HhernU8ZP8gnOKe6EU2F9whA7w==}
+  '@businessdash/sdk@0.9.94':
+    resolution: {integrity: sha512-flSHB/uPftoE2taTPZk2NIeVpws41p77dY0riuofC3fgB9Dk/t2QC1B8IuYlTPZ6XYeM3IUXKiddVJQN05VuRQ==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -224,7 +224,7 @@ packages:
 
 snapshots:
 
-  '@businessdash/sdk@0.9.93':
+  '@businessdash/sdk@0.9.94':
     dependencies:
       zod: 4.6.7
 
