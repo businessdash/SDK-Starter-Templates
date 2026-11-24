@@ -20,6 +20,7 @@ import {
 	SITE_ID,
 	authHandler,
 	getBd,
+	getSession,
 	hostBase,
 	revalidateHandler,
 } from "./src/bd";
@@ -28,6 +29,7 @@ import {
 	cartPage,
 	handleCartOp,
 	myAccountPage,
+	signInPage,
 	productPage,
 	reviewsMore,
 	reviewsPage,
@@ -40,6 +42,22 @@ import {
 	todosPage,
 	updatesPage,
 } from "./src/pages";
+import { handleSignInCheck, handleSignInPost, safeNext, signInCss } from "./src/sign-in";
+import { handleFormPost, renderForm } from "./src/form";
+import { contactSection, formPage } from "./src/form-pages";
+import {
+	defaultQuizSource,
+	handleQuizPost,
+	practiceSource,
+	QUIZ_RUN_COOKIE,
+	type QuizResult,
+	type QuizSource,
+	quizDocument,
+	quizPath,
+	quizTimer,
+	renderQuizPage,
+} from "./src/quiz";
+import { render } from "./src/html";
 import { renderAbout } from "./src/sections/about";
 import { renderBlog } from "./src/sections/blog";
 import { renderFooter, renderHeader } from "./src/sections/header";
@@ -79,6 +97,7 @@ const sectionHandlers: Record<string, Handler> = {
 	"GET /sections/reviews-more": async (req) =>
 		reviewsMore(Number(new URL(req.url).searchParams.get("offset") ?? 0)),
 	"GET /sections/banner": () => renderBanner(),
+	"GET /sections/contact": () => contactSection(),
 };
 
 function injectAnalyticsConfig(shell: string): string {
@@ -126,41 +145,6 @@ async function proxySitemap(): Promise<Response> {
 // `page()` head + public/index.html). Graceful empty-string fallback so the
 // template still boots before the SDK is installed.
 const FORMS_CSS_FILE = Bun.file("./node_modules/@businessdash/sdk/dist/bd-forms.css");
-
-// ── SDK sign-in screen ─────────────────────────────────────────────
-// `mountBdSignIn` for the browser. No bundler here, and a bare
-// `@businessdash/sdk/sign-in` import doesn't resolve in a browser — so the
-// server bundles it once (Bun.build, ~10 KB gzipped) and serves it at
-// /_sdk/sign-in.js for /my-account to import.
-let signInBundle: Promise<string | null> | null = null;
-async function serveSdkSignIn(): Promise<Response> {
-	signInBundle ??= (async () => {
-		try {
-			const built = await Bun.build({
-				entrypoints: [Bun.resolveSync("@businessdash/sdk/sign-in", import.meta.dir)],
-				target: "browser",
-				format: "esm",
-				minify: true,
-			});
-			const out = built.outputs.find((o) => o.kind === "entry-point");
-			return built.success && out ? await out.text() : null;
-		} catch (err) {
-			console.error("[bd] couldn't bundle @businessdash/sdk/sign-in", err);
-			return null;
-		}
-	})();
-	const code = await signInBundle;
-	if (!code) {
-		signInBundle = null;
-		return new Response("// @businessdash/sdk/sign-in isn't available\n", {
-			status: 503,
-			headers: { "Content-Type": "text/javascript; charset=utf-8" },
-		});
-	}
-	return new Response(code, {
-		headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "public, max-age=300" },
-	});
-}
 
 async function serveFormsCss(): Promise<Response> {
 	const body = (await FORMS_CSS_FILE.exists()) ? await FORMS_CSS_FILE.text() : "";
@@ -248,49 +232,54 @@ const server = Bun.serve({
 
 		// SDK forms stylesheet (served from node_modules; <link>ed on form pages).
 		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
-		if (method === "GET" && pathname === "/_sdk/sign-in.js") return serveSdkSignIn();
+		// The sign-in screen on /my-account, rendered here (src/sign-in.ts).
+		if (method === "GET" && pathname === "/bd-sign-in.css") return signInCss();
+		if (method === "POST" && pathname === "/my-account/sign-in/check") return handleSignInCheck(req);
+		if (method === "POST" && pathname === "/my-account/sign-in")
+			return handleSignInPost(req, url, (section) => signInPage(url.origin, section));
 
-		// Same-origin proxy for the <bd-form> web component (the contact form).
-		// The browser never sees the bearer key — these run server-side. GET the
-		// schema, POST the submission (mirrors the Vanilla-JS starter).
-		if (method === "GET" && pathname === "/api/bd/forms/schema") {
-			const bd = getBd();
-			if (!bd)
-				return Response.json({ error: "Not configured." }, { status: 503 });
-			const slug = url.searchParams.get("slug");
-			if (!slug)
-				return Response.json({ error: "slug required" }, { status: 400 });
-			try {
-				return Response.json(await bd.forms.schema(slug));
-			} catch (err) {
-				return Response.json(
-					{ error: err instanceof Error ? err.message : "Couldn't load form." },
-					{ status: 502 },
-				);
+		// BusinessDash forms, rendered here (src/form.ts): the page, and each post
+		// from it. htmx swaps the form in place; without JavaScript a post gets
+		// the whole page back.
+		const formMatch = pathname.match(/^\/forms\/([^/]+)$/);
+		if (formMatch) {
+			const slug = decodeURIComponent(formMatch[1]!);
+			if (method === "POST") {
+				const form = await handleFormPost(slug, req);
+				if (req.headers.get("HX-Request") === "true") return htmlResponse(render(form));
+				return htmlResponse(await formPage(url.origin, slug, form));
 			}
+			if (method === "GET") return htmlResponse(await formPage(url.origin, slug, await renderForm(slug)));
 		}
-		if (method === "POST" && pathname === "/api/bd/forms/submit") {
-			const bd = getBd();
-			if (!bd)
-				return Response.json({ error: "Not configured." }, { status: 503 });
-			try {
-				const body = (await req.json()) as {
-					slug: string;
-					data: Record<string, unknown>;
-					submitterEmail?: string;
-					submitterName?: string;
-				};
-				const result = await bd.forms.submit(body.slug, body.data, {
-					submitterEmail: body.submitterEmail,
-					submitterName: body.submitterName,
-				});
-				return Response.json(result);
-			} catch (err) {
-				return Response.json(
-					{ error: err instanceof Error ? err.message : "Submission failed." },
-					{ status: 400 },
-				);
-			}
+
+		// BusinessDash quizzes, rendered here (src/quiz.ts): a practice quiz or
+		// the sample at /quiz, an invitation at /quiz-invite/<token> (the link
+		// BD's invite emails carry when this site is the quiz's invite domain),
+		// and the running clock each page re-reads.
+		const timerMatch = pathname.match(/^\/quiz-timer\/([^/]+)$/);
+		if (method === "GET" && timerMatch) return quizTimer(timerMatch[1]!);
+		const quizMatch = pathname.match(/^\/quiz(?:\/([^/]+))?$/);
+		const inviteMatch = pathname.match(/^\/quiz-invite\/([^/]+)$/);
+		const quizSource: QuizSource | null = inviteMatch
+			? { kind: "invitation", token: decodeURIComponent(inviteMatch[1]!) }
+			: quizMatch
+				? quizMatch[1]
+					? practiceSource(decodeURIComponent(quizMatch[1]))
+					: defaultQuizSource()
+				: null;
+		if (quizSource && (method === "GET" || (method === "POST" && pathname !== "/quiz"))) {
+			const visitor = {
+				session: getCookie(req, SESSION_COOKIE),
+				signInHref: `/my-account?next=${encodeURIComponent(quizPath(quizSource))}`,
+				switchAccountHref: "/api/bd-auth/sign-out",
+			};
+			const result: QuizResult =
+				method === "POST"
+					? await handleQuizPost(quizSource, req, visitor)
+					: await renderQuizPage(quizSource, visitor, getCookie(req, QUIZ_RUN_COOKIE));
+			const headers: Record<string, string> = result.setCookie ? { "Set-Cookie": result.setCookie } : {};
+			if (method === "POST" && req.headers.get("HX-Request") === "true") return htmlResponse(render(result.body), 200, headers);
+			return htmlResponse(await quizDocument(url.origin, result), 200, headers);
 		}
 
 		// Section fragments + reviews "load more".
@@ -372,10 +361,12 @@ const server = Bun.serve({
 			if (pathname === "/todos") return htmlResponse(await todosPage(url.origin));
 			if (pathname === "/services") return htmlResponse(await servicesPage(url.origin));
 			if (svcMatch) return htmlResponse(await serviceAreaPage(url.origin, decodeURIComponent(svcMatch[1]!), decodeURIComponent(svcMatch[2]!)));
-			if (pathname === "/my-account")
-				return htmlResponse(
-					await myAccountPage(url.origin, getCookie(req, SESSION_COOKIE), url.searchParams.get("start") === "create"),
-				);
+			if (pathname === "/my-account") {
+				// Signed in already, with somewhere to go back to (a quiz invitation's sign-in link).
+				const next = safeNext(url.searchParams.get("next"));
+				if (next && (await getSession(getCookie(req, SESSION_COOKIE)))) return Response.redirect(new URL(next, url.origin), 303);
+				return htmlResponse(await myAccountPage(url, getCookie(req, SESSION_COOKIE)));
+			}
 		}
 
 		// Static files from ./public/ (index.html gets analytics injected).

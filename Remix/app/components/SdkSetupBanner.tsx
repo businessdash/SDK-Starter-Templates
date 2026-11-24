@@ -13,7 +13,7 @@ const SITE_ID = import.meta.env["VITE_BD_SITE_ID"] as string | undefined;
 const PK = import.meta.env["VITE_BD_PK"] as string | undefined;
 const BASE_URL =
 	(import.meta.env["VITE_BD_PACKAGE_API_BASE_URL"] as string | undefined) ??
-	"https://www.businessdash.us";
+	"https://businessdash.us";
 
 const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 

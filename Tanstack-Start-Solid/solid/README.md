@@ -122,7 +122,7 @@ No API route file needed for the RPC case — TanStack Start generates the trans
 | --- | --- |
 | `BD_API_KEY` | Server-only bearer key (Site Settings → API Keys). |
 | `BD_SITE_ID` | The site UUID this app represents. |
-| `BD_PACKAGE_API_BASE_URL` | Where BD is hosted (e.g. `https://www.businessdash.us`). |
+| `BD_PACKAGE_API_BASE_URL` | Where BD is hosted (e.g. `https://businessdash.us`). |
 | `BD_REVALIDATION_SECRET` | HMAC secret for the revalidate webhook. |
 | `BD_AUTH_CALLBACK_URL` | Public URL of `/api/bd-auth/callback` — required for auth + portal. |
 
@@ -210,7 +210,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

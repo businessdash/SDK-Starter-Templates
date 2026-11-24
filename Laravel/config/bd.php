@@ -15,7 +15,7 @@ return [
      * Where BD is hosted. The host root — the client appends
      * `/api/package/v1` itself, and the SEO/AEO routes need the bare root.
      */
-    'host' => rtrim(env('BD_HOST', 'https://www.businessdash.us'), '/'),
+    'host' => rtrim(env('BD_HOST', 'https://businessdash.us'), '/'),
 
     /* The site UUID this app renders. Site Builder ▸ Developer ▸ "Site ID". */
     'site_id' => env('BD_SITE_ID'),
@@ -28,9 +28,9 @@ return [
 
     /*
      * Publishable token (`pk_…`): origin-locked, rate-limited, browser-safe.
-     * Only needed if you add a browser island that talks to BD directly.
-     * The bundled <bd-form> island goes through this app's own proxy route
-     * instead, so it stays optional.
+     * Only needed if you add a browser island that talks to BD directly
+     * (the analytics island uses it). Forms and quizzes are drawn on this
+     * server with the secret key, so they don't.
      */
     'publishable_key' => env('BD_PK'),
 
@@ -50,6 +50,19 @@ return [
      * to be the site's real public origin. Defaults to APP_URL.
      */
     'site_origin' => rtrim(env('BD_SITE_ORIGIN', env('APP_URL', 'http://localhost:8000')), '/'),
+
+    /*
+     * The form the home page's contact section shows, drawn on this server
+     * (App\Livewire\BdForm). Until BD is connected it shows the bundled
+     * sample instead (/forms/demo).
+     */
+    'contact_form' => env('BD_CONTACT_FORM', 'general-inquiry'),
+
+    /*
+     * The practice quiz /quiz shows. Unset (or before BD is connected) it's
+     * the bundled sample (/quiz/sample); invitations open at /quiz-invite/{token}.
+     */
+    'quiz' => env('BD_QUIZ'),
 
     /* Seconds to cache marketing/catalog reads. The revalidate webhook busts
      * these by tag the moment content is published, so this is just a floor. */

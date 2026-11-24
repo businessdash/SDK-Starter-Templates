@@ -613,7 +613,11 @@ abstract final class BdFormRules {
     return out;
   }
 
-  static bool isValidUSZip(String zip) => _usZip.hasMatch(BdJS.trim(zip));
+  /// A US ZIP (5 digits or ZIP+4), or nothing: an address left blank has no ZIP to check.
+  static bool isValidUSZip(String zip) {
+    final z = BdJS.trim(zip);
+    return z.isEmpty || _usZip.hasMatch(z);
+  }
 
   static String? emailDomain(String email) {
     final at = email.lastIndexOf('@');

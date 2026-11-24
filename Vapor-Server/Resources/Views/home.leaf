@@ -31,7 +31,7 @@
 
     <section class="contact">
       <h2>Get in touch</h2>
-      <bd-form slug="general-inquiry" submit-label="Send"></bd-form>
+      #unsafeHTML(contactForm)
     </section>
   #endexport
 #endextend

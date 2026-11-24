@@ -13,6 +13,7 @@ export function renderHeader(): string {
 				<a href="/reviews">Reviews</a>
 				<a href="/updates">Updates</a>
 				<a href="/todos">Todos</a>
+				<a href="/quiz">Quiz</a>
 				<a href="/cart">Cart</a>
 				<a href="/my-account">Account</a>
 			</nav>

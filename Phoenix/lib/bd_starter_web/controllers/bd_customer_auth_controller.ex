@@ -1,8 +1,11 @@
 defmodule BdStarterWeb.BdCustomerAuthController do
   @moduledoc """
-  The routes behind the sign-in screen on /my-account, at
-  `/api/bd-auth/customer/*path` — the Elixir twin of the JS SDK's
-  `createAuthHandler` customer routes, so the same screen works here.
+  The customer sign-in routes at `/api/bd-auth/customer/*path` — the Elixir
+  twin of the JS SDK's `createAuthHandler` customer routes, for apps and pages
+  that bring their own screen. The sign-in screen on /my-account
+  (`BdStarterWeb.SignInLive`) runs the same steps through
+  `BdStarter.Bd.CustomerAuth`; the oauth routes here are its
+  "Continue with …" links.
 
       GET  options                      the business's name, colours, providers
       POST sign-in | verify | id-token  → sets the httpOnly `bd_session` cookie
@@ -24,21 +27,11 @@ defmodule BdStarterWeb.BdCustomerAuthController do
 
   alias BdStarter.Bd
   alias BdStarter.Bd.Client
-
-  # path => {method, signs someone in}
-  @routes %{
-    "options" => {"GET", false},
-    "sign-in" => {"POST", true},
-    "sign-up" => {"POST", false},
-    "forgot-password" => {"POST", false},
-    "verify" => {"POST", true},
-    "id-token" => {"POST", true}
-  }
+  alias BdStarter.Bd.CustomerAuth
 
   @providers ~w(apple google github discord)
   @pkce_cookie "bd_oauth_pkce"
   @oauth_path "/api/bd-auth/customer/oauth"
-  @unavailable "Sign-in isn't available just now. Try again in a minute."
 
   def handle(conn, %{"path" => segments}) do
     conn = fetch_cookies(conn)
@@ -47,7 +40,7 @@ defmodule BdStarterWeb.BdCustomerAuthController do
       {nil, _} -> problem(conn, 503, "unavailable", "Sign-in isn't set up yet.")
       {client, ["oauth", "callback"]} -> oauth_callback(conn, client)
       {client, ["oauth", provider]} -> oauth_start(conn, client, provider)
-      {client, [path]} -> customer(conn, client, path, Map.get(@routes, path))
+      {client, [path]} -> customer(conn, client, path, CustomerAuth.route(path))
       _ -> problem(conn, 404, "not_found", "Not found.")
     end
   end
@@ -56,7 +49,7 @@ defmodule BdStarterWeb.BdCustomerAuthController do
 
   defp customer(conn, _client, _path, nil), do: problem(conn, 404, "not_found", "Not found.")
 
-  defp customer(conn, client, path, {method, signs_in}) do
+  defp customer(conn, client, path, {method, _signs_in}) do
     cond do
       conn.method != method ->
         problem(conn, 405, "method_not_allowed", "Use #{method} for customer/#{path}.")
@@ -69,61 +62,27 @@ defmodule BdStarterWeb.BdCustomerAuthController do
         problem(conn, 400, "invalid_json", "Check the form and try again.")
 
       method == "POST" ->
-        client |> Client.once(:post, "auth/customer/" <> path, conn.body_params) |> reply(conn, signs_in)
+        client |> CustomerAuth.forward(path, conn.body_params) |> reply(conn)
 
       true ->
-        client |> Client.once(:get, "auth/customer/" <> path, nil) |> reply(conn, signs_in)
+        client |> CustomerAuth.forward(path) |> reply(conn)
     end
   end
 
-  defp reply({:error, _}, conn, _signs_in), do: problem(conn, 502, "unavailable", @unavailable)
+  defp reply({:answered, body}, conn), do: send_json(conn, 200, body)
+  defp reply({:refused, status, code, message}, conn), do: problem(conn, status, code, message)
 
-  # BD's own answer (wrong password, expired code…), passed on.
-  defp reply({:ok, status, body}, conn, _signs_in) when status not in 200..299 do
-    message =
-      case body["message"] do
-        m when is_binary(m) and m != "" -> m
-        _ when status == 429 -> "That's a lot of tries. Wait a few minutes, then try again."
-        _ -> @unavailable
-      end
-
-    code =
-      case body["error"] do
-        c when is_binary(c) -> c
-        _ when status == 429 -> "too_many_tries"
-        _ -> "unavailable"
-      end
-
-    problem(conn, if(status in 400..599, do: status, else: 502), code, message)
+  defp reply({:signed_in, token, age, body}, conn) do
+    # The token goes in the httpOnly cookie, never to the page.
+    conn
+    |> CustomerAuth.put_session_cookie(token, age)
+    |> send_json(200, %{
+      user: body["user"],
+      organizationId: body["organizationId"],
+      role: body["role"],
+      expiresAt: body["expiresAt"]
+    })
   end
-
-  defp reply({:ok, _status, body}, conn, false), do: send_json(conn, 200, body)
-
-  # Sign-in can answer "confirm your email first" (a code was sent).
-  defp reply({:ok, _status, %{"pendingId" => pending} = body}, conn, true)
-       when is_binary(pending) and not is_map_key(body, "sessionToken"),
-       do: send_json(conn, 200, body)
-
-  defp reply({:ok, _status, %{"sessionToken" => token, "expiresAt" => expires_at} = body}, conn, true)
-       when is_binary(token) and is_binary(expires_at) do
-    case max_age(expires_at) do
-      nil ->
-        problem(conn, 502, "unavailable", @unavailable)
-
-      age ->
-        # The token goes in the httpOnly cookie, never to the page.
-        conn
-        |> session_cookie(token, age)
-        |> send_json(200, %{
-          user: body["user"],
-          organizationId: body["organizationId"],
-          role: body["role"],
-          expiresAt: expires_at
-        })
-    end
-  end
-
-  defp reply({:ok, _status, _body}, conn, true), do: problem(conn, 502, "unavailable", @unavailable)
 
   # ── "Continue with Google / Apple / GitHub / Discord" ──────────────────────
 
@@ -187,8 +146,8 @@ defmodule BdStarterWeb.BdCustomerAuthController do
         with {:ok, status, %{"sessionToken" => token, "expiresAt" => expires_at}}
              when status in 200..299 and is_binary(token) and is_binary(expires_at) <-
                Client.once(client, :post, "auth/customer/oauth/exchange", exchange),
-             age when is_integer(age) <- max_age(expires_at) do
-          conn |> session_cookie(token, age) |> land(return_to, %{})
+             age when is_integer(age) <- CustomerAuth.max_age(expires_at) do
+          conn |> CustomerAuth.put_session_cookie(token, age) |> land(return_to, %{})
         else
           result ->
             land(conn, return_to, %{
@@ -209,23 +168,6 @@ defmodule BdStarterWeb.BdCustomerAuthController do
     do: problem(conn, 405, "method_not_allowed", "Use GET for customer/oauth/callback.")
 
   # ── helpers ────────────────────────────────────────────────────────────────
-
-  defp session_cookie(conn, token, age) do
-    put_resp_cookie(conn, Application.get_env(:bd_starter, :bd_session_cookie, "bd_session"), token,
-      http_only: true,
-      same_site: "Lax",
-      secure: conn.scheme == :https,
-      max_age: age,
-      path: "/"
-    )
-  end
-
-  defp max_age(expires_at) do
-    case DateTime.from_iso8601(expires_at) do
-      {:ok, dt, _offset} -> max(60, DateTime.diff(dt, DateTime.utc_now()))
-      _ -> nil
-    end
-  end
 
   # BD_SITE_ORIGIN, else this request's own origin.
   defp origin(conn, client) do

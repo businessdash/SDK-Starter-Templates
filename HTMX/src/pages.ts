@@ -15,6 +15,7 @@ import {
 import { getBd, getBdDataModel, getSession, portalFor } from "./bd";
 import { cached } from "./cache";
 import { html, raw, render, type Raw } from "./html";
+import { signInSection } from "./sign-in";
 import {
 	SESSION_COOKIE,
 	VISITOR_COOKIE,
@@ -735,30 +736,25 @@ export async function serviceAreaPage(origin: string, service: string, area: str
 
 // ── customer portal ────────────────────────────────────────────────
 
-export async function myAccountPage(
-	origin: string,
-	sessionCookie: string | null,
-	createAccount = false,
-): Promise<string> {
+/** /my-account with the sign-in screen in it — also a no-script form post's answer. */
+export function signInPage(origin: string, section: Raw): Promise<string> {
+	return page({
+		origin,
+		title: "My account",
+		body: html`<header class="page__head"><h1 class="page__title">My account</h1></header>${section}`,
+	});
+}
+
+export async function myAccountPage(url: URL, sessionCookie: string | null): Promise<string> {
+	const origin = url.origin;
 	const session = await getSession(sessionCookie);
 	let body: Raw;
 	if (!session) {
 		// The business's own sign-in screen (name, logo and brand colours from
-		// BD): password, emailed codes, and "Continue with Google / Apple /
-		// GitHub / Discord" — WorkOS underneath, through /api/bd-auth, which
-		// sets the session cookie. Mounts in the browser.
-		const start = createAccount ? "createAccount" : "signIn";
-		body = html`<header class="page__head"><h1 class="page__title">My account</h1></header>
-			<div class="signin-card" id="bd-sign-in" data-start="${start}"></div>
-			<script type="module">
-				import { mountBdSignIn } from "/_sdk/sign-in.js";
-				const host = document.getElementById("bd-sign-in");
-				mountBdSignIn(host, {
-					start: host.dataset.start,
-					redirectTo: "/my-account",
-					brand: { tagline: "Sign in to see your jobs and invoices." },
-				});
-			</script>`;
+		// BD), rendered here: password, emailed codes, and "Continue with
+		// Google / Apple / GitHub / Discord" — WorkOS underneath, through
+		// /api/bd-auth, which sets the session cookie. See src/sign-in.ts.
+		return signInPage(origin, await signInSection(origin, url));
 	} else {
 		let work: any = {};
 		try {

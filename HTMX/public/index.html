@@ -12,10 +12,18 @@
 		<!-- SDK forms stylesheet (file-upload box, multi-step header, choice chips).
 		     Served by the Bun server from node_modules; see server.ts → serveFormsCss. -->
 		<link rel="stylesheet" href="/bd-forms.css" />
+		<link rel="stylesheet" href="/forms.css" />
 		<!-- HTMX from a CDN; pin the version in production. -->
 		<script
 			src="https://unpkg.com/htmx.org@2.0.4"
 			integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+			crossorigin="anonymous"
+		></script>
+		<!-- htmx's morph swap: the contact form, re-rendered while you type, keeps
+		     what's in the box you're in. -->
+		<script
+			src="https://unpkg.com/idiomorph@0.7.4/dist/idiomorph-ext.min.js"
+			integrity="sha384-SsScJKzATF/w6suEEdLbgYGsYFLzeKfOA6PY+/C5ZPxOSuA+ARquqtz/BZz9JWU8"
 			crossorigin="anonymous"
 		></script>
 	</head>
@@ -34,14 +42,10 @@
 			<div hx-get="/sections/about" hx-trigger="load" hx-swap="outerHTML"></div>
 			<div hx-get="/sections/services" hx-trigger="load" hx-swap="outerHTML"></div>
 			<div hx-get="/sections/blog" hx-trigger="load" hx-swap="outerHTML"></div>
-			<!-- Contact form: the SDK's `<bd-form>` web component, mounted by the
-			     module script below. It renders the full schema (flex rows, the
-			     conditional preferred-method block, the availability picker) — more
-			     than a hand-rolled server fragment can. The bearer key stays server
-			     side via the same-origin /api/bd/forms proxy. -->
-			<section class="section bd-form" id="contact">
-				<div data-bd-contact></div>
-			</section>
+			<!-- Contact form: a BusinessDash form rendered on the server (src/form.ts),
+			     the same engine as the SDK's <bd-form>: conditions, steps and checks
+			     run on each post, and the key never leaves the server. -->
+			<div hx-get="/sections/contact" hx-trigger="load" hx-swap="outerHTML"></div>
 		</main>
 		<div hx-get="/sections/footer" hx-trigger="load" hx-swap="outerHTML"></div>
 		<!-- BD analytics. Config is injected by the Bun server (see
@@ -51,64 +55,13 @@
 			const cfg = window.__BD_ANALYTICS__;
 			if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
 				const { initBdAnalytics } = await import(
-					"https://esm.sh/@businessdash/sdk@0.9.95/analytics-core"
+					"https://esm.sh/@businessdash/sdk@0.9.96/analytics-core"
 				);
 				initBdAnalytics({
 					siteId: cfg.siteId,
 					baseUrl: cfg.baseUrl,
 					apiKey: cfg.apiKey,
 				});
-			}
-		</script>
-		<!-- Contact form. The `<bd-form>` web component (loaded from the CDN —
-		     this server-rendered starter has no bundler) renders the full schema
-		     client-side and submits through the same-origin /api/bd/forms proxy,
-		     so the bearer key never reaches the browser. We create the element
-		     AFTER registering the proxy client so it never upgrades clientless. -->
-		<script type="module">
-			const { setBdFormClient } = await import(
-				"https://esm.sh/@businessdash/sdk@0.9.95/element"
-			);
-			setBdFormClient({
-				forms: {
-					async schema(slug) {
-						const res = await fetch(
-							`/api/bd/forms/schema?slug=${encodeURIComponent(slug)}`,
-						);
-						if (!res.ok) throw new Error(`forms.schema ${res.status}`);
-						return await res.json();
-					},
-					async submit(slug, data, opts = {}) {
-						const res = await fetch("/api/bd/forms/submit", {
-							method: "POST",
-							headers: { "Content-Type": "application/json" },
-							body: JSON.stringify({
-								slug,
-								data,
-								submitterEmail: opts.submitterEmail,
-								submitterName: opts.submitterName,
-							}),
-						});
-						const body = await res.json().catch(() => null);
-						if (body && typeof body.ok === "boolean") return body;
-						if (res.ok) return { ok: true, status: res.status, ...(body ?? {}) };
-						return {
-							ok: false,
-							status: res.status,
-							reason: "server_error",
-							message: body?.error ?? `Submission failed (${res.status}).`,
-						};
-					},
-				},
-			});
-			const mount = document.querySelector("[data-bd-contact]");
-			if (mount) {
-				const form = document.createElement("bd-form");
-				form.setAttribute("slug", "general-inquiry");
-				form.setAttribute("submit-label", "Send message");
-				form.setAttribute("auto-complete", "true");
-				form.className = "bd-card contact";
-				mount.replaceWith(form);
 			}
 		</script>
 	</body>

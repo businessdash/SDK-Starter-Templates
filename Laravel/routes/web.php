@@ -4,7 +4,7 @@ use App\Http\Controllers\BdAuthController;
 use App\Http\Controllers\BdCustomerAuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\FormProxyController;
+use App\Http\Controllers\FormPageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PortalController;
 use App\Http\Controllers\SeoController;
@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Route;
  * render, server-side in Blade.
  *
  * Route groups, top to bottom: pages, store + cart, portal, custom data,
- * SEO/AEO files, and the two machine endpoints (forms proxy, webhook).
+ * forms and quizzes, SEO/AEO files, and the publish webhook.
  */
 
 // ── Pages ──────────────────────────────────────────────────────────────────
@@ -57,8 +57,9 @@ Route::get('/todos', [TodosController::class, 'index'])->name('todos');
 Route::post('/todos', [TodosController::class, 'store'])->name('todos.store');
 
 // ── Auth + customer portal ─────────────────────────────────────────────────
-// The sign-in screen on /my-account talks to these (password, emailed codes,
-// "Continue with Google / Apple / GitHub / Discord"). Before {action} below.
+// Customer sign-in as JSON, for apps and pages that bring their own screen,
+// and the "Continue with Google / Apple / GitHub / Discord" links the screen
+// on /my-account (App\Livewire\SignIn) uses. Before {action} below.
 Route::match(['get', 'post'], '/api/bd-auth/customer/{path}', BdCustomerAuthController::class)
     ->where('path', 'options|sign-in|sign-up|forgot-password|verify|id-token|oauth/[a-z]+')
     ->name('bd.auth.customer');
@@ -69,6 +70,16 @@ Route::match(['get', 'post'], '/api/bd-auth/{action}', BdAuthController::class)
 
 Route::get('/my-account', [PortalController::class, 'index'])->name('portal');
 Route::post('/my-account/review', [PortalController::class, 'submitReview'])->name('portal.review');
+
+// ── Forms and quizzes, drawn here by the forms engine (app/Bd/Forms) ──────
+// Any form from your dashboard; the home page's contact section is one. A
+// practice quiz or the sample at /quiz (BD_QUIZ), any practice quiz at
+// /quiz/{slug}, an invitation at /quiz-invite/{token}: the link BD's invite
+// emails carry when this site is the quiz's invite domain.
+Route::get('/forms/{slug}', [FormPageController::class, 'form'])->name('forms.show');
+Route::get('/quiz', [FormPageController::class, 'quiz'])->name('quiz');
+Route::get('/quiz/{slug}', [FormPageController::class, 'quiz'])->name('quiz.practice');
+Route::get('/quiz-invite/{token}', [FormPageController::class, 'invitation'])->name('quiz.invitation');
 
 // ── Newsletter ─────────────────────────────────────────────────────────────
 Route::post('/subscribe', [HomeController::class, 'subscribe'])->name('subscribe');
@@ -81,11 +92,6 @@ Route::get('/robots.txt', [SeoController::class, 'robots']);
 Route::get('/llms.txt', [SeoController::class, 'llmsTxt']);
 
 // ── Machine endpoints ──────────────────────────────────────────────────────
-// Same-origin proxy for the <bd-form> web component: the browser gets the
-// schema and posts submissions without ever seeing the bearer key.
-Route::get('/api/bd/forms/{slug}', [FormProxyController::class, 'schema']);
-Route::post('/api/bd/forms/{slug}', [FormProxyController::class, 'submit']);
-
 // Publish webhook. CSRF is exempted in bootstrap/app.php — this is a
 // server-to-server call authenticated by HMAC, not by session.
 Route::post('/api/bd/revalidate', WebhookController::class);

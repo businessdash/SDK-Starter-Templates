@@ -60,31 +60,35 @@ defmodule BdStarterWeb.Router do
     post "/api/bd-auth/:action", BdAuthController, :handle
 
     get "/my-account", PortalController, :index
+    # The sign-in screen (SignInLive) hands a finished sign-in here to set the cookie.
+    post "/my-account/session", PortalController, :sign_in_handoff
     post "/my-account/review", PortalController, :submit_review
 
     post "/subscribe", PageController, :subscribe
 
+    # ── Forms and quizzes, drawn here by the forms engine (BdStarter.Forms) ─
+    # Any form at /forms/:slug (the home page's contact section is one), the
+    # practice quiz or the sample at /quiz (BD_QUIZ), any practice quiz at
+    # /quiz/:slug, an invitation at /quiz-invite/:token: the link BD's invite
+    # emails carry when this site is the quiz's invite domain.
+    get "/forms/:slug", FormPageController, :form
+    get "/quiz", FormPageController, :quiz
+    get "/quiz/:slug", FormPageController, :quiz
+    get "/quiz-invite/:token", FormPageController, :invitation
+
     # ── The LiveView showcase ──────────────────────────────────────────────
-    # Front Desk chat. Everything else on this site is a dead view on purpose —
-    # tying the storefront and SEO pages to a socket buys nothing and costs
-    # uptime. Chat is the one surface where a shared server-side poller beats
-    # every browser polling for itself.
+    # Front Desk chat. The storefront and SEO pages are dead views on purpose —
+    # tying them to a socket buys nothing and costs uptime. Chat is the one
+    # surface where a shared server-side poller beats every browser polling
+    # for itself. (Forms, quizzes and sign-in are LiveViews embedded in dead
+    # pages: they hold a visitor's answers while they work.)
     live "/chat", ChatLive, :index
   end
 
-  # ── Machine endpoints ────────────────────────────────────────────────────
-  scope "/", BdStarterWeb do
-    pipe_through :api
-
-    # Same-origin proxy for the <bd-form> web component: the browser gets the
-    # schema and posts submissions without ever seeing the bearer key.
-    get "/api/bd/forms/:slug", BdFormController, :schema
-    post "/api/bd/forms/:slug", BdFormController, :submit
-  end
-
-  # The sign-in screen on /my-account talks to these (password, emailed codes,
-  # "Continue with Google / Apple / GitHub / Discord"). JSON-only POSTs and no
-  # session yet, so not through :browser's CSRF check.
+  # Customer sign-in as JSON, for apps and pages that bring their own screen,
+  # and the "Continue with Google / Apple / GitHub / Discord" links the screen
+  # on /my-account uses. JSON-only POSTs and no session yet, so not through
+  # :browser's CSRF check.
   scope "/api/bd-auth/customer", BdStarterWeb do
     get "/*path", BdCustomerAuthController, :handle
     post "/*path", BdCustomerAuthController, :handle

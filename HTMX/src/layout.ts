@@ -143,6 +143,7 @@ function navBar(): Raw {
 			<a href="/reviews">Reviews</a>
 			<a href="/updates">Updates</a>
 			<a href="/todos">Todos</a>
+			<a href="/quiz">Quiz</a>
 			<a href="/cart">Cart</a>
 			<a href="/my-account">Account</a>
 		</nav>
@@ -202,6 +203,20 @@ export async function page(opts: {
 	<link rel="stylesheet" href="/styles.css" />
 	<!-- SDK forms stylesheet (file-upload box, multi-step header, choice chips). -->
 	<link rel="stylesheet" href="/bd-forms.css" />
+	<!-- Forms and quizzes rendered on this server (src/form.ts, src/quiz.ts). -->
+	<link rel="stylesheet" href="/forms.css" />
+	<!-- HTMX, as on the home page: the review form, cart and sign-in post with it. -->
+	<script
+		src="https://unpkg.com/htmx.org@2.0.4"
+		integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+"
+		crossorigin="anonymous"
+	></script>
+	<!-- htmx's morph swap: a form re-rendered while you type keeps what's in the box you're in. -->
+	<script
+		src="https://unpkg.com/idiomorph@0.7.4/dist/idiomorph-ext.min.js"
+		integrity="sha384-SsScJKzATF/w6suEEdLbgYGsYFLzeKfOA6PY+/C5ZPxOSuA+ARquqtz/BZz9JWU8"
+		crossorigin="anonymous"
+	></script>
 	${raw(jsonLd)}
 </head>
 <body>

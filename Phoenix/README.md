@@ -60,13 +60,18 @@ lib/bd_starter/bd/
   auth.ex            session validation / sign-out / older hosted page
   webhook.ex         HMAC verification for the publish webhook
   chat_session.ex    ONE poller per conversation, fanned out over PubSub
+lib/bd_starter/forms/  the form + quiz engine, ported from the SDK (see below)
   resources/         storefront cart checkout blog forms marketing
                      parallel_pages portal data_model reviews
                      subscriptions followers donations
 lib/bd_starter/bd.ex     app-facing entry: cache tags + fallbacks
 lib/bd_starter_web/
   plugs/cache_body_reader.ex the raw-body stash (see below)
-  live/chat_live.ex          the one LiveView
+  live/chat_live.ex          Front Desk chat
+  live/form_live.ex          a form   ┐ LiveViews embedded in dead pages,
+  live/quiz_live.ex          a quiz   │ drawn by the forms engine
+  live/sign_in_live.ex       sign-in  ┘
+  components/form_components.ex  a form's fields, in the SDK's bd-* classes
   controllers/               one per surface, all dead views
 ```
 
@@ -82,23 +87,45 @@ lib/bd_starter_web/
 | **Blog** | `/blog`, `/blog/:slug` | `blog.list`, `get`, `comments` |
 | **Reviews wall** | `/reviews` | `reviews.list` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallel_pages.variants`, `render` |
-| **Auth + portal** | `/my-account` (sign-in screen), `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.*`, `portal.work`, `submit_review` |
+| **Auth + portal** | `/my-account` (sign-in screen, a LiveView: `SignInLive`, words, checks and brand colours in `BdStarter.Bd.SignInCore`), `/my-account/session`, `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.*`, `portal.work`, `submit_review` |
 | **Custom database** | `/todos` | `data_model.list` + `forms.submit` |
 | **Front Desk chat** | `/chat` (LiveView) | `chatbot/messages` via one shared poller |
+| **Forms** | `/forms/:slug`, the home page's contact section (`BD_CONTACT_FORM`) | `forms/{slug}` — schema, collection options, uploads, submit (`BdStarterWeb.FormLive`) |
+| **Quizzes** | `/quiz` (`BD_QUIZ`, or a sample), `/quiz/:slug`, `/quiz-invite/:token` | `quizzes/{slug}`, `quizzes/invitations/{token}` and their actions (`BdStarterWeb.QuizLive`) |
 | **SEO / AEO** | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | proxied |
 | **Revalidation** | `POST /api/bd/revalidate` | HMAC verify → PubSub purge |
+
+## Forms and quizzes
+
+Forms and quizzes are drawn on this server. `lib/bd_starter/forms/` is the
+SDK's form and quiz engine in Elixir — conditions, steps, calculations,
+validation, uploads and submission; quizzes, their clock and grading — and two
+LiveViews draw it, embedded in ordinary pages:
+`live_render(@conn, BdStarterWeb.FormLive, session: %{"slug" => "…"})` and
+`BdStarterWeb.QuizLive` (see `FormPageController`). They use the SDK's
+`bd-form__*` / `bd-quiz__*` classes, styled by `bd-forms.css` and
+`priv/static/forms.css`, and each change and button goes back over the socket
+so the page updates in place.
+
+- **It's checked against the SDK.** `test/fixtures/*-parity.json` are the
+  TypeScript engine's answers to the same inputs, and `forms_data.ex` its data
+  tables; `pnpm gen:native-forms` in BD's `sdk/` writes them. `mix test` fails
+  if the Elixir drifts. Fix a difference in the Elixir, not the fixtures.
+- **The secret key stays here.** Uploads and submissions go through this server
+  with `BD_API_KEY`; the browser never talks to BD. A picked file uploads to
+  this server at once and waits in a temporary file until the form is sent,
+  then goes to BD with it.
+- **A timed quiz runs out on the server.** `QuizLive` ticks once a second while
+  the clock runs, and submits at zero even if the taker stopped clicking.
+- **Invitation links.** Set the quiz's invite domain (in BD's quiz builder) to
+  this site and BD's invite emails link to `/quiz-invite/<token>`. One that
+  needs the invited account sends the visitor to `/my-account?next=…` and back.
 
 ## Five things that will bite you
 
 **1. The webhook needs the RAW body.** `Plug.Parsers` reads the body stream to exhaustion, and re-encoding the decoded map produces different bytes — different key order, different whitespace — so the HMAC never matches. It fails looking *exactly* like a wrong secret. `Plugs.CacheBodyReader` stashes the raw payload for that one path; it's wired via `body_reader:` in `endpoint.ex`. This is the single most common way a Phoenix webhook integration fails.
 
-**2. LiveView and web components fight over the DOM.** `<bd-form>` mutates its own subtree; LiveView's patcher wants to own those nodes. In a dead view (every page here except `/chat`) that never comes up. If you move a form into a LiveView, wrap it:
-
-```heex
-<div id="contact-form" phx-update="ignore">
-  <bd-form slug="general-inquiry"></bd-form>
-</div>
-```
+**2. A quiz run lives in one node's memory.** A practice run (or the sample) is kept for 3 hours in an ETS table (`BdStarter.Forms.QuizRuns`) and found again by the `bd_quiz_run` cookie, so a reload picks up where it was. Behind several nodes without sticky sessions, a reload can land on a node that never saw the run and start over. Invitations don't have this problem: BD keeps their answers and clock, and they're read from BD on every page.
 
 **3. Money has two shapes.** Product, subscription, and checkout amounts are **integer cents**; cart `unitPrice`/`subtotal` arrive **decimal**. `Money.cents/2` and `Money.amount/2` exist so you pick deliberately — mixing them is a 100× error in either direction.
 
@@ -108,11 +135,10 @@ lib/bd_starter_web/
 
 ## The CDN pin
 
-`root.html.heex` imports the `<bd-form>` element and its stylesheet from esm.sh at an **exact version**, not `@latest`. A CDN import has no lockfile: `@latest` would roll this page forward on somebody else's release, with no PR and no way to pin a rollback. Bump it deliberately, in step with `package.json`.
+`root.html.heex` links the SDK's forms stylesheet (`bd-forms.css`) from esm.sh at an **exact version**, not `@latest`. A CDN import has no lockfile: `@latest` would roll this page forward on somebody else's release, with no PR and no way to pin a rollback. Bump it deliberately, in step with `package.json`.
 
 ## What this starter does not do
 
-- **No native form renderer.** The `<bd-form>` component handles conditional blocks, availability pickers and uploads; reimplementing that in HEEx is its own project.
 - **No typed structs.** Responses are maps with string keys. Real structs would be the natural next step if this graduates from a starter to a Hex package.
 - **No shipping / address / coupons-admin surfaces.** The endpoints exist; the client covers what these pages use.
 - **`/chat` assumes a session already exists.** Minting one (`chatbot/session`) and the human-handoff queue are wired in the API but not in this UI.
@@ -123,7 +149,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 `BdStarter.Bd.Resources.Donations`; like every resource here it returns
 `{:ok, body}` or `{:error, reason}` and never raises:

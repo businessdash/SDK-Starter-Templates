@@ -111,6 +111,34 @@ is forgetting the token: BD's tokens are signed, not stored.
 
 **5. `ignoreUnknownKeys = true` is load-bearing.** The platform returns a superset that grows release to release. Without it, one new column breaks the app on somebody else's deploy.
 
+## Quizzes
+
+A BD quiz is a form with an answer key, and `BdQuiz` (in `:bd-forms`) runs one the way BD's hosted quiz page does. It covers:
+
+- **Questions**: lettered multiple choice, plus "I don't know" when the quiz allows it. Open answers go in a text field or text area. An open answer can match any accepted wording, or wait for BD's AI grader.
+- **Feedback**: a verdict and rationale after each answer, or everything at the end.
+- **Timing**: elapsed time, or a countdown that submits on its own when it runs out.
+- **Results**: a score with per-question review, a thank-you when the org hides scores, or "sign in to see your results".
+
+```kotlin
+val quizzes = BdQuizzes.packageApi(BuildConfig.BD_PK, BuildConfig.BD_HOST, sessionToken = session?.sessionToken)
+
+BdQuiz(BdQuizSource.Invitation(token), quizzes, onSignIn = { showSignIn = true })
+BdQuiz(BdQuizSource.Practice("food-safety", questionLimit = 10), quizzes)
+```
+
+The Quiz tab shows a bundled sample (`app/src/main/assets/bd-demo-quiz.json`), graded on the device, until you set `bd.quiz` in `local.properties` to a practice quiz's slug.
+
+- **Invitations**: an invitation that must be taken by the invited account shows "Sign in to begin" and calls `onSignIn`. Pass a `BdQuizzes` with the new session (`withSession`) and the quiz reloads. The taker sees the same question and choice order on every visit, because the invitation seeds the shuffle. BD grades every answer, and the app never receives the answer key.
+- **Practice**: BD grades it and records nothing, open answers included. The clock pauses while a verdict is on screen, and each retake gets a new order.
+- **Local quizzes**: give the fields their answer keys and grade on the device with `BdQuiz(BdQuizController(BdQuizOptions(fields, feedbackMode = BdQuizFeedbackMode.IMMEDIATE), scope))`.
+- **Order**: `shuffleChoices` and `shuffleQuestions` come from the quiz's settings in BD, and a question marked "keep these choices in order" (for "All of the above") is never shuffled.
+- **Reword or localize** with `words =` (`BdQuizWords`). Looks follow `style =` (`BdFormStyle`), and the app's Material theme.
+- **Your own UI**: collect `BdQuizController.screen`, which holds exactly what to show, texts included, and call `choose`, `setAnswer` and `perform`.
+- **Rotation and leaving**: `BdQuiz` keeps the quiz in a ViewModel, and a submit runs in the quiz's own scope, so it finishes even if the screen goes away.
+
+The quiz engine is a port of the JS SDK's `forms-core/quiz.ts`. `./gradlew :bd:test` replays its fixtures (`bd/src/test/resources/quiz-parity.json`): every screen and state of nine scripted quizzes, the seeded shuffle, scoring, and the page around the quiz.
+
 ## Chat is polling, and that's the API
 
 There is no SSE or WebSocket anywhere in the Package API. The platform's guidance is `chatbot/messages` every 3–5 seconds while a widget is open. `ChatFeed` wraps that in a **cold** `Flow`, so the poll starts when someone collects and stops when the collecting coroutine is cancelled — `delay` is cancellable, so leaving a screen halts the network work at the next suspension point. Nothing to unregister, nothing to leak.
@@ -137,7 +165,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 `bd/…/Donations.kt`, on the publishable token you already use:
 

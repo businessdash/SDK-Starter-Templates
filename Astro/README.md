@@ -128,7 +128,7 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 | --- | --- | --- |
 | `BD_API_KEY` | everything | Server-side bearer key; never exposed to the browser |
 | `BD_SITE_ID` | everything | The site UUID this app represents |
-| `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://www.businessdash.us` (normalized to `…/api/package/v1`) |
+| `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://businessdash.us` (normalized to `…/api/package/v1`) |
 | `BD_REVALIDATION_SECRET` | revalidate webhook | `whsec_…` from Settings → Integrations |
 | `BD_AUTH_CALLBACK_URL` | auth + portal | Public `…/api/bd-auth/callback`, with its host proven once in Business Dash → Developer & API keys → Sign-in |
 | `PUBLIC_BD_SITE_ID` / `PUBLIC_BD_PACKAGE_API_BASE_URL` / `PUBLIC_BD_PUBLIC_KEY` | client analytics | Optional; boots `initBdAnalytics` in the browser |
@@ -211,7 +211,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

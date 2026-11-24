@@ -2687,6 +2687,39 @@
         "id": "f",
         "label": "Field",
         "required": true,
+        "type": "address"
+      },
+      "value": {
+        "line1": "",
+        "line2": "",
+        "city": "",
+        "state": "",
+        "zip": ""
+      },
+      "empty": true,
+      "reason": null
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
+        "type": "address"
+      },
+      "value": {
+        "line1": "1 Main",
+        "city": "Austin",
+        "state": "TX",
+        "zip": " "
+      },
+      "empty": false,
+      "reason": null
+    },
+    {
+      "field": {
+        "id": "f",
+        "label": "Field",
+        "required": true,
         "type": "name"
       },
       "value": {

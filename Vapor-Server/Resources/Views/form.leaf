@@ -1,0 +1,6 @@
+#extend("base"):
+  #export("title"):#(title)#endexport
+  #export("content"):
+    <div class="form-page">#unsafeHTML(form)</div>
+  #endexport
+#endextend

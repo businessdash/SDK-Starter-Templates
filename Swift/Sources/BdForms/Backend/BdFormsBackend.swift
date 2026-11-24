@@ -1,4 +1,7 @@
 import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
 
 /// Where a form comes from and where it goes. The default is
 /// ``BdPackageFormsBackend`` (BD's Package API with a publishable key), but an
@@ -208,7 +211,8 @@ public struct BdFormsError: Error, LocalizedError, Sendable {
 /// and passing one traps in debug builds rather than letting it ride along.
 public struct BdPackageFormsBackend: BdFormsBackend {
     public let baseURL: URL
-    let publishableKey: String
+    /// Sent with every BD call: the key, and anything the endpoint wants.
+    let headers: [String: String]
     let session: URLSession
 
     /// - Parameters:
@@ -219,13 +223,24 @@ public struct BdPackageFormsBackend: BdFormsBackend {
         // ship the key inside the binary, so they're the ones that must stop.
         precondition(!publishableKey.hasPrefix("sk_"), "BdForms: never ship a secret key in an app; use a pk_ key.")
         self.baseURL = host.appendingPathComponent("api/package/v1")
-        self.publishableKey = publishableKey
+        self.headers = ["Authorization": "Bearer \(publishableKey)"]
+        self.session = session
+    }
+
+    /// Another way to BD: the app's own server, or — on a server, never in an
+    /// app — BD itself with the server's secret key
+    /// (`["Authorization": "Bearer bd_…"]`). `endpoint` is what
+    /// `/forms/<slug>` hangs off, e.g. `https://businessdash.us/api/package/v1`.
+    public init(endpoint: URL, headers: [String: String] = [:], session: URLSession = .shared) {
+        self.baseURL = endpoint
+        self.headers = headers
         self.session = session
     }
 
     func url(_ form: String, _ suffix: String = "", query: [URLQueryItem] = []) -> URL {
-        var url = baseURL.appendingPathComponent("forms").appendingPathComponent(form)
-        if !suffix.isEmpty { url.appendPathComponent(suffix) }
+        // The slug is one segment, even with a "/" in it (encodeURIComponent).
+        var url = baseURL.appending(component: "forms").appending(component: form, directoryHint: .notDirectory)
+        if !suffix.isEmpty { url.append(component: suffix, directoryHint: .notDirectory) }
         guard !query.isEmpty, var comps = URLComponents(url: url, resolvingAgainstBaseURL: false) else { return url }
         comps.queryItems = query
         return comps.url ?? url
@@ -234,7 +249,7 @@ public struct BdPackageFormsBackend: BdFormsBackend {
     func request(_ url: URL, method: String = "GET", json: Data? = nil) -> URLRequest {
         var r = URLRequest(url: url)
         r.httpMethod = method
-        r.setValue("Bearer \(publishableKey)", forHTTPHeaderField: "Authorization")
+        for (name, value) in headers { r.setValue(value, forHTTPHeaderField: name) }
         r.setValue("application/json", forHTTPHeaderField: "Accept")
         r.setValue("swift-forms/1", forHTTPHeaderField: "X-BD-Client")
         if let json {

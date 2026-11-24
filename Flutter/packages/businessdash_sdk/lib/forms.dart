@@ -1,5 +1,5 @@
 /// BusinessDash forms, natively: the schema, the rules engine and a headless
-/// controller.
+/// controller, plus quizzes (forms with an answer key).
 ///
 /// BD's form rules (conditions, required fields, validation, formulas,
 /// calculations, units, the submission payload) ported from the TypeScript
@@ -17,6 +17,13 @@ export 'src/forms/controller.dart';
 export 'src/forms/dates.dart';
 export 'src/forms/formula.dart';
 export 'src/forms/json.dart';
+export 'src/forms/quiz.dart';
+export 'src/forms/quiz_backend.dart';
+export 'src/forms/quiz_controller.dart';
+export 'src/forms/quiz_page.dart';
+export 'src/forms/quiz_screen.dart';
+export 'src/forms/quiz_scoring.dart' hide quizPresent;
+export 'src/forms/quiz_words.dart';
 export 'src/forms/rules.dart';
 export 'src/forms/schema.dart';
 export 'src/forms/units.dart';

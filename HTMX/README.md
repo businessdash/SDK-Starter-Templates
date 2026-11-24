@@ -31,9 +31,9 @@ Five sections render server-side with the BD data:
 - **Blog** lists posts via `bd.blog.listPosts(...)`
 - **Header / Footer** are pure static
 
-One section is browser-interactive — and HTMX handles it without a single line of JS:
+One section is interactive — and HTMX handles it without a single line of your own JS:
 
-- **ContactForm** — the SDK's `<bd-form>` web component (loaded from the CDN, mounted in `public/index.html`). It renders the full `general-inquiry` schema client-side — flex-row layout, the conditional preferred-method block, the availability picker — which a hand-rolled server fragment can't. Schema + submit go through the same-origin `/api/bd/forms/{schema,submit}` proxy in `server.ts`, so the bearer key stays server-side.
+- **Contact** — a BusinessDash form rendered on this server (`src/form.ts`), with no web view and no form bundle. Every change posts the form back (`hx-post`); the server runs the SDK's form engine over it and swaps the new HTML in. Steps, show-if conditions, required checks, calculations, repeating rows and file uploads all behave as they do in the web form, and with JavaScript off it still works as plain posts. The secret key never leaves the server.
 
 Analytics boots from a tiny `<script type="module">` that dynamically imports `@businessdash/sdk/analytics-core` from esm.sh once the page loads. Config is injected into the HTML shell server-side, so no env-reading code lives in the static file.
 
@@ -65,9 +65,15 @@ SDK-Starter-Templates/HTMX/
 ├── server.ts                  # Bun server — sections, feature pages, auth, webhook, SEO
 ├── public/
 │   ├── index.html             # HTMX shell — banner + every region is hx-get-driven
-│   └── styles.css             # shared section + feature-page styles
+│   ├── styles.css             # shared section + feature-page styles
+│   └── forms.css              # the bd-* form classes src/form.ts renders
 └── src/
     ├── bd.ts                # SDK client + auth handler + session + webhook (server-only)
+    ├── form.ts                # BD forms rendered on the server (the SDK's form engine → HTML)
+    ├── form-pages.ts          # the contact section + the /forms/<slug> page
+    ├── forms/demo-form.json   # the sample form shown before BD is set up
+    ├── quiz.ts                # BD quizzes rendered on the server (the SDK's quiz engine → HTML)
+    ├── forms/demo-quiz.json   # the sample quiz at /quiz before BD_QUIZ is set
     ├── cache.ts               # in-memory tag cache (the webhook's target)
     ├── html.ts                # tag template helper with auto-escaping
     ├── layout.ts              # page shell, nav, banner, JSON-LD, money/cookie helpers
@@ -77,11 +83,8 @@ SDK-Starter-Templates/HTMX/
         └── hero.ts  about.ts  services.ts  blog.ts  subscribe.ts
 ```
 
-> The contact form is the SDK's `<bd-form>` web component (loaded from the CDN
-> and mounted in `public/index.html`), backed by the same-origin
-> `/api/bd/forms/{schema,submit}` proxy in `server.ts` — so it renders the full
-> `general-inquiry` schema (conditional fields, availability picker) that a
-> hand-rolled server fragment couldn't.
+> The contact form is rendered on the server by `src/form.ts`, from the form's
+> schema in BD: a field added in the dashboard shows up here without a deploy.
 
 ## How a section renders
 
@@ -123,7 +126,39 @@ export async function renderHero(): Promise<string> {
 
 The browser posts to the server, the Bun handler calls the SDK, and the server returns a fragment HTMX swaps in place. If you've used Rails or Django server-rendered forms, the pattern feels identical — except the server is Bun + the BD SDK.
 
-**Rich forms — the `<bd-form>` web component.** The contact form's `general-inquiry` schema has conditional fields and an availability picker, which need client interactivity a server fragment can't provide. So `public/index.html` mounts the SDK's `<bd-form>` (loaded from the CDN) and registers a same-origin proxy client; the element fetches the schema, renders every field type, validates, and submits through `/api/bd/forms/{schema,submit}` — the bearer key never leaves the server.
+**Forms you build in BD — rendered on the server.** `renderForm(slug)` in `src/form.ts` draws any form from your dashboard as plain HTML, and `/forms/<slug>` is a page for one (`/forms/general-inquiry`, say). Each request runs the SDK's form controller (`createFormController` from `@businessdash/sdk/forms`) over what the browser sent, so the rules are the web form's own, not a second copy:
+
+```html
+<form hx-post="/forms/general-inquiry" hx-trigger="submit" hx-target="this"
+      hx-ext="morph" hx-swap="morph:{ignoreActiveValue:true}" hx-sync="this:replace">
+  <div hx-post="/forms/general-inquiry" hx-trigger="change"
+       hx-target="closest form" hx-sync="closest form:replace">
+    …every step's fields, the ones you're not on hidden…
+    <button type="submit" name="_action" value="next">Next</button>
+  </div>
+</form>
+```
+
+- A change to any field re-renders the form, so a show-if field appears, a calculation updates and an error clears once the answer is right.
+- The swap is htmx's morph ([idiomorph](https://github.com/bigskysoftware/idiomorph), loaded next to htmx), so the box you're typing in keeps what you've typed while the rest of the form updates, and a newer change cancels an older one still on its way.
+- Changes post from the `<div>`, buttons from the `<form>`: htmx sends the last button clicked with its form's later posts, so a change posted by the form itself would repeat "Add a row".
+- **Next** checks the step, **Back** and the step dots move between steps, and **Submit** checks everything and sends it to BD with the server's key.
+- Values travel with each post, so nothing is kept between requests — except a picked file, which waits in memory until Submit uploads it.
+- With JavaScript off, the same form works as full-page posts.
+
+The contact section shows `BD_CONTACT_FORM` (default `general-inquiry`). Before BD is set up it shows a sample form bundled with the starter (`src/forms/demo-form.json`), which is checked but never sent. Schedule, signature, payment, icon and image fields aren't drawn on the server yet; a form that has one says so in its place.
+
+## Quizzes
+
+`src/quiz.ts` renders BD's quizzes the same way — the quiz BD's hosted page shows (one question at a time with lettered choices, "I don't know" when the quiz offers it, the verdict and why after each answer or all at the end, a timer, the results), from the SDK's quiz engine (`createQuizController` in `@businessdash/sdk/forms`):
+
+| Route | What |
+| --- | --- |
+| `/quiz` | `BD_QUIZ` — one of your quizzes with **Practice on your site** on — or, before that's set, a sample graded on this server (`src/forms/demo-quiz.json`) |
+| `/quiz/<slug>` | any practice quiz: graded by BD, retakeable, never recorded |
+| `/quiz-invite/<token>` | an invitation. Pick this site as the quiz's **invite domain** in the builder, and the invite emails link here. A quiz that needs the invited account sends the taker to sign in (`/my-account?next=…`) and back. |
+
+A run lives on this server between requests — the engine holds the answers, the verdicts and the clock — and the page carries its id, so a reload picks up where it was. Answers post on change and buttons post their action, as in a form. While the clock runs, the timer re-reads itself once a second (`/quiz-timer/<run>`), and a timed quiz submits itself at zero on the server, whether or not the page is still open. Without JavaScript it's plain posts; the time shown is the time at each page.
 
 ## How analytics get loaded
 
@@ -164,13 +199,15 @@ below is server-rendered HTML and degrades gracefully when BD env is unset.
 | Surface | Route(s) | SDK calls |
 | --- | --- | --- |
 | **Home sections** | `/` (`hx-get /sections/*`) | `marketing.getPageBundle`, `storefront.listProducts`, `blog.listPosts`, `forms.*` |
+| **Forms** | `/forms/:slug`, the contact section | `createFormController` (`@businessdash/sdk/forms`) over `forms.schema`, `forms.uploadFile`, `forms.submit` |
+| **Quizzes** | `/quiz`, `/quiz/:slug`, `/quiz-invite/:token` | `createQuizController` (`@businessdash/sdk/forms`) over `quizzes.practice` / `checkPracticeAnswer` / `scorePractice` and `quizzes.withSession(token).invitation` / `startInvitation` / `lockInvitationAnswer` / `submitInvitation` |
 | **Storefront** | `/store`, `/store/:id` | `storefront.listProducts`, `storefront.getProduct` |
 | **Cart** | `/cart` + `hx-post /cart/*` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie; mutations return the `#cart-region` fragment |
 | **Checkout** | `POST /cart/checkout` → Stripe | `checkout.forVisitor(token).start` (303 redirect) |
 | **Subscriptions** | `/subscriptions` | `subscriptions.list` |
 | **Reviews wall** | `/reviews` + `hx-get /sections/reviews-more` | `reviews.list({ limit, offset })` |
 | **News banner + updates** | `hx-get /sections/banner`, `/updates` | `bundle.banner`, `bundle.updates` |
-| **Auth + portal** | `/api/bd-auth/*`, `/my-account`, `POST /account/review` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
+| **Auth + portal** | `/api/bd-auth/*`, `/my-account` (sign-in screen rendered on the server: `src/sign-in.ts`), `POST /account/review` | `createAuthHandler`, `@businessdash/sdk/sign-in-core` (words, checks, brand colours), `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelPages.listVariants`, `parallelPages.render` |
 | **SEO files** | `/sitemap.xml`, `/robots.txt` | proxied from BD; JSON-LD via `@businessdash/sdk/seo` |
 | **Revalidation webhook** | `POST /api/bd/revalidate` | `createGenericRevalidateHandler` → busts `src/cache.ts` |
@@ -185,6 +222,8 @@ just HTMX attributes (`hx-post` / `hx-get` + `hx-target` + `hx-swap`).
 | `BD_API_KEY` / `BD_SITE_ID` / `BD_PACKAGE_API_BASE_URL` | for live data | Server-side SDK credentials |
 | `BD_REVALIDATION_SECRET` | for webhook | HMAC secret verifying publish events |
 | `BD_AUTH_CALLBACK_URL` | for auth/portal | This server's `/api/bd-auth/callback` URL (register in WorkOS) |
+| `BD_CONTACT_FORM` | no | The form the home page's contact section shows. Defaults to `general-inquiry` |
+| `BD_QUIZ` | no | The practice quiz at `/quiz`. Unset: a bundled sample |
 | `PORT` | no | Defaults to 3000 |
 
 ### Schema CLI
@@ -206,7 +245,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

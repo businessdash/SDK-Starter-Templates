@@ -2,8 +2,11 @@ import Vapor
 
 enum PageController {
     static func home(req: Request) async throws -> View {
+        let contactForm = await FormPage.render(FormRoutes.contactSlug, bd: req.bd, options: .init(submitLabel: "Send"))
         guard let bd = req.bd else {
-            return try await req.view.render("home", HomeContext.fallback)
+            var context = HomeContext.fallback
+            context.contactForm = contactForm
+            return try await req.view.render("home", context)
         }
 
         let bundle = await req.bdCache.fetch(
@@ -20,7 +23,8 @@ enum PageController {
             subhead: bundle.string("sections", "hero", "subhead") ?? HomeContext.fallback.subhead,
             aboutTitle: bundle.string("sections", "about", "title") ?? HomeContext.fallback.aboutTitle,
             aboutBody: bundle.string("sections", "about", "body") ?? HomeContext.fallback.aboutBody,
-            products: products.map(ProductCard.init)
+            products: products.map(ProductCard.init),
+            contactForm: contactForm
         ))
     }
 

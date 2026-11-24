@@ -6,13 +6,16 @@ The same generic business site every BD starter renders, built on **Laravel + Bl
 
 This is the first starter that **cannot use `@businessdash/sdk`**. The SDK is TypeScript, and Laravel is PHP — so instead of wrapping it, this starter talks to the Package API directly.
 
-That turns out to be a small job, because the platform surface is plain REST with a bearer key. `app/Bd/` is roughly 700 lines and covers everything the twelve pages here need. What it deliberately does *not* do is reimplement the parts of the SDK that are genuinely hard:
+That turns out to be a small job, because the platform surface is plain REST with a bearer key. The client in `app/Bd/` is roughly 700 lines and covers everything the twelve pages here need. What it deliberately does *not* do is reimplement the parts of the SDK that are genuinely hard:
 
 | Hard part | How this starter avoids porting it |
 | --- | --- |
-| The form renderer (conditional blocks, availability pickers, uploads) | `<bd-form>` from esm.sh, pointed at this app's own `/api/bd/forms` proxy |
 | Analytics beacon | `analytics-core` from esm.sh, one module script in the layout |
 | Schema + data-model CLI, and its canonical checksum | `npm run sync-schema` runs the real `bd` CLI against the TypeScript config files |
+
+Forms and quizzes used to be on that list. They're native now: the SDK's form
+and quiz engine ported to PHP and drawn by Livewire, checked against the
+TypeScript original — see [Forms and quizzes](#forms-and-quizzes).
 
 Node is **not** a runtime dependency. `package.json` exists only so `npx bd` can resolve; `php artisan serve` needs nothing but PHP.
 
@@ -60,11 +63,13 @@ app/Bd/
   Resources/          Storefront Cart Checkout Blog Forms Marketing
                       ParallelPages Portal DataModel Reviews
                       Subscriptions Followers Donations
+  Forms/              the form + quiz engine, ported from the SDK (see below)
 app/Http/Controllers/ one per surface
+app/Livewire/         SignIn, BdForm, BdQuiz
 app/Support/Money.php cents vs decimal — see the note below
 config/bd.php       every knob, all server-side
 routes/web.php        twelve pages + four machine endpoints
-resources/views/      layout.blade.php + pages/
+resources/views/      layout.blade.php, pages/, livewire/, forms/, quiz/
 ```
 
 ## Feature parity
@@ -80,12 +85,40 @@ resources/views/      layout.blade.php + pages/
 | **Reviews wall** | `/reviews` | `reviews.list({limit, offset})` |
 | **Updates** | `/updates` | `bundle.updates` |
 | **Programmatic SEO** | `/services`, `/services/{service}/{area}` | `parallelPages.listVariants`, `render` |
-| **Auth + portal** | `/my-account` (sign-in screen), `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.{me,signOut}`, `portal.{getWork,submitReview}` |
+| **Auth + portal** | `/my-account` (sign-in screen, a Livewire component: `App\Livewire\SignIn`, words, checks and brand colours in `App\Bd\SignInCore`; `?next=/path` comes back after), `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.{me,signOut}`, `portal.{getWork,submitReview}` |
 | **Custom database** | `/todos` | `dataModel.listRecords` + `forms.submit` |
 | **Newsletter** | `POST /subscribe` | `followers.join` (site action) |
 | **SEO / AEO** | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | proxied |
-| **Forms proxy** | `/api/bd/forms/{slug}` | `forms.schema`, `forms.submit` |
+| **Forms** | `/forms/{slug}`, the home page's contact section (`BD_CONTACT_FORM`) | `forms/{slug}` — schema, collection options, uploads, submit (`App\Livewire\BdForm`) |
+| **Quizzes** | `/quiz` (`BD_QUIZ`, or a sample), `/quiz/{slug}`, `/quiz-invite/{token}` | `quizzes/{slug}`, `quizzes/invitations/{token}` and their actions (`App\Livewire\BdQuiz`) |
 | **Revalidation** | `POST /api/bd/revalidate` | HMAC verify → drop cache tags |
+
+## Forms and quizzes
+
+Forms and quizzes are drawn on this server. `app/Bd/Forms` is the SDK's form
+and quiz engine in PHP — conditions, steps, calculations, validation, uploads
+and submission; quizzes, their clock and grading — and two Livewire components
+draw it: `<livewire:bd-form slug="…" />` and
+`<livewire:bd-quiz source="practice" ref="…" />`. They use the SDK's
+`bd-form__*` / `bd-quiz__*` classes, styled by `bd-forms.css` and
+`public/forms.css`, and Livewire sends each change and button back so the page
+updates in place.
+
+- **It's checked against the SDK.** `tests/Fixtures/*-parity.json` are the
+  TypeScript engine's answers to the same inputs, and `FormsData.php` its data
+  tables; `pnpm gen:native-forms` in BD's `sdk/` writes them. `composer test`
+  fails if the PHP drifts. Fix a difference in the PHP, not the fixtures.
+- **The secret key stays here.** Uploads and submissions go through this server
+  with `BD_API_KEY`; the browser never talks to BD. A picked file is held by
+  Livewire until the form is sent, then uploaded to BD and submitted with it.
+- **Quiz runs live in the cache.** A practice run (or the sample) is kept for
+  3 hours under `bd.quiz.run.*` and found again by the `bd_quiz_run` cookie, so
+  a reload picks up where it was. Behind several instances, use a shared cache
+  (`redis`). Invitations are read from BD on every page — BD keeps their
+  answers and clock.
+- **Invitation links.** Set the quiz's invite domain (in BD's quiz builder) to
+  this site and BD's invite emails link to `/quiz-invite/<token>`. One that
+  needs the invited account sends the visitor to `/my-account?next=…` and back.
 
 ## Four things that will bite you
 
@@ -99,7 +132,7 @@ resources/views/      layout.blade.php + pages/
 
 ## The CDN pin
 
-`layout.blade.php` and `pages/home.blade.php` import the SDK islands from esm.sh at an **exact version**, not `@latest`. A CDN import has no lockfile: `@latest` would roll this page forward on somebody else's release, with no PR and no way to pin a rollback. Bump it deliberately, and keep it in step with `package.json`.
+`layout.blade.php` imports the analytics island, and `forms/styles.blade.php` the forms stylesheet, from esm.sh at an **exact version**, not `@latest`. A CDN import has no lockfile: `@latest` would roll this page forward on somebody else's release, with no PR and no way to pin a rollback. Bump it deliberately, and keep it in step with `package.json`.
 
 ## What this starter does not do
 
@@ -113,7 +146,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 `App\Bd\Resources\Donations`, reached through `Bd::client()`:
 

@@ -1,0 +1,757 @@
+import Foundation
+
+// Quizzes: the forms engine taking a graded assessment.
+//
+// A port of the TypeScript forms-core's `quiz.ts`. A BD quiz IS a form: its
+// questions are ordinary fields carrying an answer key, and the quiz adds how
+// it's taken: immediate or end-of-quiz feedback, an elapsed or countdown
+// timer, choices and questions as written or in a seeded shuffle, "I don't
+// know", and results (or a thank-you, or "sign in to see your results").
+//
+// Everything here is pure: `BdQuizState` in, a new `BdQuizState` out, and
+// `BdQuizEngine.screen` turns it into exactly what a screen shows, texts
+// included. `BdQuizController` adds the async parts (BD calls, the clock,
+// autosave) and `BdQuiz` draws it in SwiftUI. Times are epoch milliseconds,
+// as in JavaScript, so a state can travel to and from a server unchanged.
+
+// MARK: - Options and config
+
+public enum BdQuizFeedbackMode: String, Codable, Sendable, Hashable {
+    /// Each answer locks and its verdict shows before moving on.
+    case immediate
+    /// Every verdict shows after the whole quiz is submitted.
+    case end
+}
+
+public enum BdQuizLayout: String, Codable, Sendable, Hashable {
+    /// One question at a time.
+    case single
+    /// Every question on one page (end feedback only).
+    case all
+}
+
+/// How a quiz is shown and taken.
+public struct BdQuizOptions: Sendable {
+    /// The quiz's fields: the question document.
+    public var fields: [BdFormField]
+    /// Which fields are questions. Nil: every field with an answer key.
+    public var questionFieldIds: [String]?
+    public var feedbackMode: BdQuizFeedbackMode
+    /// Percent needed to pass (local runs; BD decides for invited quizzes).
+    public var passingScore: Double?
+    public var showTimer: Bool
+    /// A countdown; the quiz submits itself at zero.
+    public var timeLimitMinutes: Double?
+    /// False = interview mode: the taker gets a thank-you, never a score.
+    public var showScore: Bool
+    /// Results wait for the invited account: show a sign-in prompt instead.
+    public var resultsLocked: Bool
+    /// Where that prompt sends the taker. `BdQuiz` sets one when given `onSignIn`.
+    public var signInHref: String?
+    /// Multiple-choice options in a shuffled order (off: as written).
+    public var shuffleChoices: Bool
+    /// Questions in a shuffled order (off: as written).
+    public var shuffleQuestions: Bool
+    /// What the shuffle is built from: one taker, one order. An invitation
+    /// uses its id. Nil: a new order each time a local run starts.
+    public var seed: String?
+    /// Local runs: ask only this many questions (after any shuffle).
+    public var questionLimit: Int?
+    /// Offer "I don't know" on multiple-choice questions that aren't required.
+    public var allowDontKnow: Bool
+    /// End feedback only: one question at a time, or all on one page.
+    public var layout: BdQuizLayout
+    /// Graded here: the fields carry answer keys (or a practice run).
+    public var local: Bool?
+    /// Offer "Retake" when it ends. Nil: local runs can.
+    public var canRestart: Bool?
+    public var words: BdQuizWords
+
+    public init(
+        fields: [BdFormField],
+        questionFieldIds: [String]? = nil,
+        feedbackMode: BdQuizFeedbackMode = .end,
+        passingScore: Double? = nil,
+        showTimer: Bool = false,
+        timeLimitMinutes: Double? = nil,
+        showScore: Bool = true,
+        resultsLocked: Bool = false,
+        signInHref: String? = nil,
+        shuffleChoices: Bool = false,
+        shuffleQuestions: Bool = false,
+        seed: String? = nil,
+        questionLimit: Int? = nil,
+        allowDontKnow: Bool = false,
+        layout: BdQuizLayout = .single,
+        local: Bool? = nil,
+        canRestart: Bool? = nil,
+        words: BdQuizWords = BdQuizWords()
+    ) {
+        self.fields = fields
+        self.questionFieldIds = questionFieldIds
+        self.feedbackMode = feedbackMode
+        self.passingScore = passingScore
+        self.showTimer = showTimer
+        self.timeLimitMinutes = timeLimitMinutes
+        self.showScore = showScore
+        self.resultsLocked = resultsLocked
+        self.signInHref = signInHref
+        self.shuffleChoices = shuffleChoices
+        self.shuffleQuestions = shuffleQuestions
+        self.seed = seed
+        self.questionLimit = questionLimit
+        self.allowDontKnow = allowDontKnow
+        self.layout = layout
+        self.local = local
+        self.canRestart = canRestart
+        self.words = words
+    }
+}
+
+extension BdQuizOptions: Decodable {
+    enum CodingKeys: String, CodingKey {
+        case fields, questionFieldIds, feedbackMode, passingScore, showTimer, timeLimitMinutes
+        case showScore, resultsLocked, signInHref, shuffleChoices, shuffleQuestions, seed
+        case questionLimit, allowDontKnow, layout, local, canRestart
+    }
+
+    /// Reads the TypeScript `QuizOptions` JSON (words aside), as leniently as
+    /// the TypeScript reads it.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        func opt<T: Decodable>(_ t: T.Type, _ k: CodingKeys) -> T? { (try? c.decodeIfPresent(t, forKey: k)) ?? nil }
+        self.init(
+            fields: try c.decode([BdFormField].self, forKey: .fields),
+            questionFieldIds: opt([String].self, .questionFieldIds),
+            feedbackMode: opt(String.self, .feedbackMode) == "immediate" ? .immediate : .end,
+            passingScore: opt(Double.self, .passingScore),
+            showTimer: opt(Bool.self, .showTimer) ?? false,
+            timeLimitMinutes: opt(Double.self, .timeLimitMinutes),
+            showScore: opt(Bool.self, .showScore) ?? true,
+            resultsLocked: opt(Bool.self, .resultsLocked) ?? false,
+            signInHref: opt(String.self, .signInHref),
+            shuffleChoices: opt(Bool.self, .shuffleChoices) ?? false,
+            shuffleQuestions: opt(Bool.self, .shuffleQuestions) ?? false,
+            seed: opt(String.self, .seed),
+            questionLimit: opt(Double.self, .questionLimit).flatMap { $0.isFinite ? Int($0.rounded(.down)) : nil },
+            allowDontKnow: opt(Bool.self, .allowDontKnow) ?? false,
+            layout: opt(String.self, .layout) == "all" ? .all : .single,
+            local: opt(Bool.self, .local),
+            canRestart: opt(Bool.self, .canRestart)
+        )
+    }
+}
+
+/// `BdQuizOptions`, resolved: questions arranged, defaults filled in.
+public struct BdQuizConfig: Sendable {
+    public let questions: [BdFormField]
+    public let feedbackMode: BdQuizFeedbackMode
+    public let passingScore: Double
+    public let timerEnabled: Bool
+    public let timeLimitMinutes: Int?
+    public let showScore: Bool
+    public let resultsLocked: Bool
+    public let signInHref: String?
+    public let allowDontKnow: Bool
+    public let layout: BdQuizLayout
+    public let local: Bool
+    public let canRestart: Bool
+    public let words: BdQuizWords
+
+    public init(_ options: BdQuizOptions, seed: String) {
+        let limit = options.timeLimitMinutes.flatMap { $0.isFinite && $0 > 0 ? Int($0.rounded(.down)) : nil }
+        let local = options.local ?? false
+        questions = BdQuizArrange.questions(options, seed: seed, local: local)
+        feedbackMode = options.feedbackMode
+        passingScore = options.passingScore.flatMap { $0.isFinite ? $0 : nil } ?? BdQuizScoring.defaultPassingGrade
+        timerEnabled = options.showTimer || limit != nil
+        timeLimitMinutes = limit
+        showScore = options.showScore
+        resultsLocked = options.resultsLocked
+        signInHref = options.signInHref
+        allowDontKnow = options.allowDontKnow
+        layout = options.feedbackMode == .end && options.layout == .all ? .all : .single
+        self.local = local
+        canRestart = options.canRestart ?? false
+        words = options.words
+    }
+}
+
+// MARK: - Questions, choices and order
+
+public enum BdQuizArrange {
+    /// Field types asked as multiple choice: lettered cards, shuffle-able.
+    public static let multipleChoiceTypes: Set<String> = ["radio", "checkbox", "multi_select", "choice_cards"]
+
+    public static func isMultipleChoice(_ field: BdFormField) -> Bool {
+        multipleChoiceTypes.contains(field.type) && !BdQuizScoring.optionLabels(field).isEmpty
+    }
+
+    /// Several answers may be picked.
+    public static func isMultiSelect(_ field: BdFormField) -> Bool {
+        field.type == "checkbox" || field.type == "multi_select"
+            || (field.type == "choice_cards" && field.choiceConfig?.mode == "multi")
+    }
+
+    /// A, B, C … Z, then 27, 28 …
+    public static func choiceLetter(_ index: Int) -> String {
+        index < 26 ? String(UnicodeScalar(UInt8(65 + index))) : String(index + 1)
+    }
+
+    /// The questions in document order: listed ids, or fields with answer keys.
+    public static func questionFields(_ fields: [BdFormField], ids: [String]?) -> [BdFormField] {
+        let explicit = ids.map(Set.init)
+        var out: [BdFormField] = []
+        func walk(_ nodes: [BdFormField]) {
+            for field in nodes {
+                let id = field.raw["id"]?.stringValue ?? ""
+                if !id.isEmpty, explicit?.contains(id) ?? BdQuizScoring.truthy(field.raw["quizAnswerKey"]) {
+                    out.append(field)
+                }
+                if let children = field.children { walk(children) }
+            }
+        }
+        walk(fields)
+        return out
+    }
+
+    /// FNV-1a over the text's UTF-8 bytes: the shuffle's seed.
+    public static func seedHash(_ text: String) -> UInt32 {
+        var hash: UInt32 = 0x811C_9DC5
+        for byte in text.utf8 {
+            hash = (hash ^ UInt32(byte)) &* 0x0100_0193
+        }
+        return hash
+    }
+
+    /// A shuffled order of `0..<count` (Fisher–Yates over mulberry32), the
+    /// same for the same seed in every port.
+    public static func seededOrder(_ count: Int, seed: String) -> [Int] {
+        var order = Array(0..<count)
+        var state = seedHash(seed)
+        func next() -> UInt32 {
+            state = state &+ 0x6D2B_79F5
+            var t = state
+            t = (t ^ (t >> 15)) &* (t | 1)
+            t = t ^ (t &+ ((t ^ (t >> 7)) &* (t | 61)))
+            return t ^ (t >> 14)
+        }
+        var i = count - 1
+        while i > 0 {
+            let j = Int((UInt64(next()) * UInt64(i + 1)) >> 32)
+            order.swapAt(i, j)
+            i -= 1
+        }
+        return order
+    }
+
+    static func reorder(_ items: [BdJSON], _ order: [Int]) -> [BdJSON] {
+        items.count == order.count ? order.map { items[$0] } : items
+    }
+
+    /// One question with its options shuffled: labels, card content and the
+    /// grading ids move together, so answers still score the same. A
+    /// question marked "keep these choices in order" stays as written.
+    public static func shuffledChoices(_ field: BdFormField, seed: String) -> BdFormField {
+        guard isMultipleChoice(field), !field.quizKeepChoiceOrder, var raw = field.raw.objectValue else { return field }
+        let order = seededOrder(BdQuizScoring.optionLabels(field).count, seed: "\(seed):\(field.id)")
+        if field.type == "choice_cards", var config = raw["choiceConfig"]?.objectValue, let cards = config["options"]?.arrayValue {
+            config["options"] = .array(reorder(cards, order))
+            raw["choiceConfig"] = .object(config)
+        } else if let options = raw["options"]?.arrayValue {
+            raw["options"] = .array(reorder(options, order))
+        }
+        if let ids = raw["quizOptionIds"]?.arrayValue {
+            raw["quizOptionIds"] = .array(reorder(ids, order))
+        }
+        return BdFormField.decode(.object(raw)) ?? field
+    }
+
+    /// A seed for a run that wasn't given one.
+    public static func randomSeed() -> String {
+        (0..<8).map { _ in String(format: "%02x", UInt8.random(in: 0...255)) }.joined()
+    }
+
+    /// The questions as this taker gets them: picked, ordered (shuffled when
+    /// asked), limited (local runs), with options shuffled when asked.
+    public static func questions(_ options: BdQuizOptions, seed: String, local: Bool) -> [BdFormField] {
+        var questions = questionFields(options.fields, ids: options.questionFieldIds)
+        if options.shuffleQuestions {
+            let order = seededOrder(questions.count, seed: "\(seed):questions")
+            questions = order.map { questions[$0] }
+        }
+        if local, let limit = options.questionLimit, limit > 0 {
+            questions = Array(questions.prefix(limit))
+        }
+        return options.shuffleChoices ? questions.map { shuffledChoices($0, seed: seed) } : questions
+    }
+}
+
+extension BdFormField {
+    /// A field from its JSON.
+    static func decode(_ json: BdJSON) -> BdFormField? {
+        guard let data = try? JSONEncoder().encode(json) else { return nil }
+        return try? JSONDecoder().decode(BdFormField.self, from: data)
+    }
+}
+
+// MARK: - State
+
+public enum BdQuizPending: String, Codable, Sendable, Hashable { case start, lock, submit }
+
+/// A finished attempt as the taker sees it. The numbers are nil when BD
+/// withheld them (scores hidden, or results waiting for the invited account).
+public struct BdQuizCompletion: Codable, Sendable, Hashable {
+    /// `scored` or `pending_ai_review`.
+    public var status: String
+    public var results: [BdQuizQuestionResult]
+    public var pointsEarned: Double?
+    public var pointsPossible: Double?
+    public var scorePercent: Double?
+    public var provisionalScorePercent: Double?
+    public var passed: Bool?
+    public var id: String?
+    /// An ISO string from BD, or epoch ms.
+    public var submittedAt: BdJSON?
+    public var timedOut: Bool?
+    public var durationSeconds: Double?
+
+    public init(
+        status: String, results: [BdQuizQuestionResult],
+        pointsEarned: Double?, pointsPossible: Double?, scorePercent: Double?,
+        provisionalScorePercent: Double?, passed: Bool?,
+        id: String? = nil, submittedAt: BdJSON? = nil, timedOut: Bool? = nil, durationSeconds: Double? = nil
+    ) {
+        self.status = status
+        self.results = results
+        self.pointsEarned = pointsEarned
+        self.pointsPossible = pointsPossible
+        self.scorePercent = scorePercent
+        self.provisionalScorePercent = provisionalScorePercent
+        self.passed = passed
+        self.id = id
+        self.submittedAt = submittedAt
+        self.timedOut = timedOut
+        self.durationSeconds = durationSeconds
+    }
+
+    init(_ score: BdQuizScore, timedOut: Bool?, durationSeconds: Double?) {
+        self.init(
+            status: score.status, results: score.results,
+            pointsEarned: score.pointsEarned, pointsPossible: score.pointsPossible,
+            scorePercent: score.scorePercent, provisionalScorePercent: score.provisionalScorePercent,
+            passed: score.passed, timedOut: timedOut, durationSeconds: durationSeconds
+        )
+    }
+}
+
+/// BD's answer to "start the clock". Times are ISO strings or epoch ms.
+public struct BdQuizStartInfo: Codable, Sendable, Hashable {
+    public var startedAt: BdJSON
+    public var deadlineAt: BdJSON?
+    public var serverNow: Double
+
+    public init(startedAt: BdJSON, deadlineAt: BdJSON?, serverNow: Double) {
+        self.startedAt = startedAt
+        self.deadlineAt = deadlineAt
+        self.serverNow = serverNow
+    }
+}
+
+/// What a resumed quiz already has (from BD's invitation, or a saved run).
+public struct BdQuizInitial: Codable, Sendable, Hashable {
+    public var answers: [String: BdJSON]?
+    public var results: [BdQuizQuestionResult]?
+    public var completion: BdQuizCompletion?
+    public var startedAt: BdJSON?
+    public var deadlineAt: BdJSON?
+    public var serverNow: Double?
+    public var dontKnow: [String]?
+
+    public init(
+        answers: [String: BdJSON]? = nil, results: [BdQuizQuestionResult]? = nil,
+        completion: BdQuizCompletion? = nil, startedAt: BdJSON? = nil, deadlineAt: BdJSON? = nil,
+        serverNow: Double? = nil, dontKnow: [String]? = nil
+    ) {
+        self.answers = answers
+        self.results = results
+        self.completion = completion
+        self.startedAt = startedAt
+        self.deadlineAt = deadlineAt
+        self.serverNow = serverNow
+        self.dontKnow = dontKnow
+    }
+}
+
+/// Everything that changes while a quiz is taken. Plain JSON: a server can
+/// keep it between requests.
+public struct BdQuizState: Codable, Sendable, Hashable {
+    /// The question on screen (single layout).
+    public var index: Int
+    public var answers: [String: BdJSON]
+    /// Questions answered "I don't know".
+    public var dontKnow: [String]
+    /// Locked answers' verdicts (immediate feedback), in question order.
+    public var results: [BdQuizQuestionResult]
+    /// Immediate feedback: the current question's verdict is on screen.
+    public var revealed: Bool
+    public var completion: BdQuizCompletion?
+    /// Server-clock ms.
+    public var startedAt: Double?
+    public var deadlineAt: Double?
+    /// Server clock minus this device's clock, ms.
+    public var clockOffset: Double
+    /// Local runs: time verdicts have been on screen (the clock stops).
+    public var pausedMs: Double
+    public var revealStartedAt: Double?
+    public var pending: BdQuizPending?
+    public var error: String?
+    /// Field id → message, for required questions left empty.
+    public var fieldErrors: [String: String]
+    /// The deadline was reached and the quiz is (being) submitted.
+    public var timeUp: Bool
+}
+
+/// What `advance` asks of the host: nothing, a lock, or a submission.
+public enum BdQuizStep: Sendable {
+    case none(BdQuizState)
+    case lock(BdQuizState, fieldId: String, answer: BdJSON)
+    case submit(BdQuizState, answers: [String: BdJSON])
+
+    public var state: BdQuizState {
+        switch self {
+        case .none(let s), .lock(let s, _, _), .submit(let s, _): return s
+        }
+    }
+}
+
+// MARK: - Steps
+
+public enum BdQuizEngine {
+    /// Epoch ms from an ISO string or epoch ms; nil when missing or bad.
+    public static func timestamp(_ value: BdJSON?) -> Double? {
+        switch value {
+        case .number(let n)?: return n.isFinite ? n : nil
+        case .string(let s)? where !s.isEmpty:
+            let styles = [Date.ISO8601FormatStyle(includingFractionalSeconds: true), Date.ISO8601FormatStyle()]
+            for style in styles {
+                if let date = try? Date(s, strategy: style) {
+                    return (date.timeIntervalSince1970 * 1000).rounded()
+                }
+            }
+            return nil
+        default: return nil
+        }
+    }
+
+    static func result(_ state: BdQuizState, _ fieldId: String) -> BdQuizQuestionResult? {
+        state.results.first { $0.fieldId == fieldId }
+    }
+
+    /// A fresh (or resumed) quiz. `now` is this device's clock, epoch ms.
+    public static func initialState(_ config: BdQuizConfig, _ initial: BdQuizInitial = .init(), now: Double) -> BdQuizState {
+        let results = initial.results ?? []
+        let locked = Set(results.map(\.fieldId))
+        let count = config.questions.count
+        let firstOpen = config.questions.firstIndex { !locked.contains($0.id) }
+        let allLocked = count > 0 && firstOpen == nil
+        return BdQuizState(
+            index: allLocked ? count - 1 : (firstOpen ?? 0),
+            answers: initial.answers ?? [:],
+            dontKnow: initial.dontKnow ?? [],
+            results: results,
+            revealed: config.feedbackMode == .immediate && allLocked,
+            completion: initial.completion,
+            startedAt: timestamp(initial.startedAt),
+            deadlineAt: timestamp(initial.deadlineAt),
+            clockOffset: initial.serverNow.map { $0 - now } ?? 0,
+            pausedMs: 0,
+            revealStartedAt: nil,
+            pending: nil,
+            error: nil,
+            fieldErrors: [:],
+            timeUp: false
+        )
+    }
+
+    /// The server clock now.
+    public static func clock(_ state: BdQuizState, now: Double) -> Double { now + state.clockOffset }
+
+    static func busy(_ state: BdQuizState) -> Bool { state.pending != nil || state.completion != nil }
+
+    static func isLocked(_ config: BdQuizConfig, _ state: BdQuizState, _ fieldId: String) -> Bool {
+        config.feedbackMode == .immediate && result(state, fieldId) != nil
+    }
+
+    static func emptyAnswer(_ field: BdFormField) -> BdJSON {
+        BdQuizArrange.isMultiSelect(field) ? .array([]) : .string("")
+    }
+
+    /// The taker answered (or changed) a question.
+    public static func setAnswer(_ config: BdQuizConfig, _ state: BdQuizState, fieldId: String, value: BdJSON) -> BdQuizState {
+        if busy(state) || isLocked(config, state, fieldId) { return state }
+        guard config.questions.contains(where: { $0.id == fieldId }) else { return state }
+        var next = state
+        next.answers[fieldId] = value
+        next.dontKnow.removeAll { $0 == fieldId }
+        next.fieldErrors[fieldId] = nil
+        next.error = nil
+        return next
+    }
+
+    /// Whether "I don't know" is offered on this question.
+    public static func offersDontKnow(_ config: BdQuizConfig, _ field: BdFormField) -> Bool {
+        config.allowDontKnow && BdQuizArrange.isMultipleChoice(field) && !field.required
+    }
+
+    /// "I don't know": the answer is left empty and marked as such.
+    public static func chooseDontKnow(_ config: BdQuizConfig, _ state: BdQuizState, fieldId: String) -> BdQuizState {
+        guard let field = config.questions.first(where: { $0.id == fieldId }), offersDontKnow(config, field) else { return state }
+        if busy(state) || isLocked(config, state, fieldId) { return state }
+        var next = state
+        next.answers[fieldId] = emptyAnswer(field)
+        next.dontKnow.removeAll { $0 == fieldId }
+        next.dontKnow.append(fieldId)
+        next.fieldErrors[fieldId] = nil
+        next.error = nil
+        return next
+    }
+
+    /// Required questions in `fields` left empty → field id → message.
+    public static func missing(_ config: BdQuizConfig, _ state: BdQuizState, _ fields: [BdFormField]) -> [String: String] {
+        var errors: [String: String] = [:]
+        for field in fields where field.required && BdFormRules.isEmpty(field, state.answers[field.id]) {
+            errors[field.id] = BdQuizWords.fill(config.words.required, ["label": field.label.isEmpty ? "This question" : field.label])
+        }
+        return errors
+    }
+
+    /// The main button. Immediate: lock the answer, then move on (or finish).
+    /// End, single: next question (or submit). End, all: submit.
+    public static func advance(_ config: BdQuizConfig, _ state: BdQuizState, now: Double) -> BdQuizStep {
+        if busy(state) || (config.timerEnabled && state.startedAt == nil) { return .none(state) }
+        let count = config.questions.count
+        guard state.index >= 0, state.index < count else { return .none(state) }
+        let question = config.questions[state.index]
+        let last = state.index >= count - 1
+
+        if config.feedbackMode == .immediate {
+            if state.revealed {
+                var resumed = endRevealPause(state, now: now)
+                if last {
+                    resumed.pending = .submit
+                    resumed.error = nil
+                    return .submit(resumed, answers: state.answers)
+                }
+                resumed.index = state.index + 1
+                resumed.revealed = false
+                return .none(resumed)
+            }
+            let errors = missing(config, state, [question])
+            var next = state
+            if !errors.isEmpty {
+                next.fieldErrors = errors
+                return .none(next)
+            }
+            next.pending = .lock
+            next.error = nil
+            next.fieldErrors = [:]
+            let answer = state.answers[question.id]
+            return .lock(next, fieldId: question.id, answer: answer == nil || answer == .null ? emptyAnswer(question) : answer!)
+        }
+
+        let checking = config.layout == .all ? config.questions : [question]
+        let errors = missing(config, state, checking)
+        var next = state
+        if !errors.isEmpty {
+            next.fieldErrors = errors
+            return .none(next)
+        }
+        next.fieldErrors = [:]
+        next.error = nil
+        if config.layout == .single && !last {
+            next.index = state.index + 1
+            return .none(next)
+        }
+        next.pending = .submit
+        return .submit(next, answers: state.answers)
+    }
+
+    /// End feedback, one at a time: the previous question.
+    public static func back(_ config: BdQuizConfig, _ state: BdQuizState) -> BdQuizState {
+        if busy(state) || config.feedbackMode != .end || config.layout != .single { return state }
+        guard state.index > 0 else { return state }
+        var next = state
+        next.index -= 1
+        next.fieldErrors = [:]
+        next.error = nil
+        return next
+    }
+
+    /// The clock was started (from BD, or a local start).
+    public static func started(_ state: BdQuizState, _ info: BdQuizStartInfo, now: Double) -> BdQuizState {
+        var next = state
+        next.pending = nil
+        next.error = nil
+        next.clockOffset = info.serverNow - now
+        next.startedAt = timestamp(info.startedAt)
+        next.deadlineAt = timestamp(info.deadlineAt)
+        return next
+    }
+
+    /// A local start: now, with the deadline the time limit sets.
+    public static func localStart(_ config: BdQuizConfig, now: Double) -> BdQuizStartInfo {
+        BdQuizStartInfo(
+            startedAt: .number(now),
+            deadlineAt: config.timeLimitMinutes.map { .number(now + Double($0) * 60_000) },
+            serverNow: now
+        )
+    }
+
+    /// A locked answer's verdict arrived: show it (and stop a local clock).
+    public static func locked(
+        _ config: BdQuizConfig, _ state: BdQuizState, fieldId: String, answer: BdJSON,
+        result: BdQuizQuestionResult, now: Double
+    ) -> BdQuizState {
+        var next = state
+        next.pending = nil
+        next.error = nil
+        next.answers[fieldId] = answer
+        next.results = state.results.filter { $0.fieldId != fieldId } + [result]
+        next.revealed = true
+        if config.local { next.revealStartedAt = clock(state, now: now) }
+        return next
+    }
+
+    /// The verdict is closing: a local clock runs again.
+    public static func endRevealPause(_ state: BdQuizState, now: Double) -> BdQuizState {
+        guard let since = state.revealStartedAt else { return state }
+        var next = state
+        next.pausedMs += max(0, clock(state, now: now) - since)
+        next.revealStartedAt = nil
+        return next
+    }
+
+    public static func completed(_ state: BdQuizState, _ completion: BdQuizCompletion) -> BdQuizState {
+        var next = state
+        next.pending = nil
+        next.error = nil
+        next.completion = completion
+        return next
+    }
+
+    public static func failed(_ state: BdQuizState, _ message: String) -> BdQuizState {
+        var next = state
+        next.pending = nil
+        next.error = message
+        return next
+    }
+
+    /// How long a run took and whether it ran out of time (local runs).
+    public static func localTiming(_ state: BdQuizState, now: Double) -> (timedOut: Bool, durationSeconds: Double?) {
+        let clock = clock(state, now: now)
+        return (
+            state.deadlineAt.map { clock >= $0 + state.pausedMs } ?? false,
+            state.startedAt.map { max(0, ((clock - $0) / 1000).jsRounded) }
+        )
+    }
+
+    /// Grade a local run: every question, with timing.
+    public static func localCompletion(
+        _ config: BdQuizConfig, _ state: BdQuizState, answers: [String: BdJSON], now: Double
+    ) -> BdQuizCompletion {
+        let score = BdQuizScoring.score(fields: config.questions, answers: answers, passingScore: config.passingScore)
+        let timing = localTiming(state, now: now)
+        return BdQuizCompletion(score, timedOut: timing.timedOut, durationSeconds: timing.durationSeconds)
+    }
+
+    /// Grade one question locally (immediate feedback, local run).
+    public static func localResult(_ config: BdQuizConfig, fieldId: String, answer: BdJSON) -> BdQuizQuestionResult? {
+        guard let field = config.questions.first(where: { $0.id == fieldId }) else { return nil }
+        return BdQuizScoring.score(fields: [field], answers: [fieldId: answer], passingScore: config.passingScore).results.first
+    }
+
+    static func revealPauseNow(_ config: BdQuizConfig, _ state: BdQuizState, now: Double) -> Double {
+        guard config.local, let since = state.revealStartedAt else { return 0 }
+        return max(0, clock(state, now: now) - since)
+    }
+
+    /// The deadline everything counts down to; a local run adds paused time.
+    public static func effectiveDeadline(_ config: BdQuizConfig, _ state: BdQuizState, now: Double) -> Double? {
+        guard let deadline = state.deadlineAt else { return nil }
+        return config.local ? deadline + state.pausedMs + revealPauseNow(config, state, now: now) : deadline
+    }
+
+    /// Time's up: the host should submit now. True once, until `timeUp` records it.
+    public static func deadlinePassed(_ config: BdQuizConfig, _ state: BdQuizState, now: Double) -> Bool {
+        guard let deadline = effectiveDeadline(config, state, now: now) else { return false }
+        return clock(state, now: now) >= deadline && state.completion == nil && state.pending == nil && !state.timeUp
+    }
+
+    public static func timeUp(_ state: BdQuizState) -> BdQuizState {
+        var next = state
+        next.timeUp = true
+        next.pending = .submit
+        next.error = nil
+        return next
+    }
+
+    // MARK: Display helpers
+
+    /// `m:ss`, or `h:mm:ss` from an hour.
+    public static func durationLabel(_ totalSeconds: Double) -> String {
+        let seconds = max(0, Int(totalSeconds.rounded(.down)))
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        let rest = seconds % 60
+        func pad(_ n: Int) -> String { n < 10 ? "0\(n)" : "\(n)" }
+        return hours > 0 ? "\(hours):\(pad(minutes)):\(pad(rest))" : "\(minutes):\(pad(rest))"
+    }
+
+    /// The order an answer object's parts are read in. JavaScript keeps an
+    /// object's key order and Swift dictionaries don't, so BD's composite
+    /// answers (names, addresses, measurements) are read in BD's part order,
+    /// then any other keys alphabetically.
+    static let answerPartOrder = [
+        "prefix", "first", "middle", "last", "suffix", "nicknames", "full", "short",
+        "line1", "line2", "city", "state", "zip", "country", "value", "unit", "url", "start", "end",
+    ]
+
+    /// An answer as one line of text.
+    public static func answerText(_ value: BdJSON?, words: BdQuizWords = BdQuizWords()) -> String {
+        switch value {
+        case .array(let items)?:
+            return items.isEmpty ? words.noAnswer : items.map { answerText($0, words: words) }.joined(separator: ", ")
+        case nil, .null?:
+            return words.noAnswer
+        case .string(let s)? where s.isEmpty:
+            return words.noAnswer
+        case .bool(let b)?:
+            return b ? words.yes : words.no
+        case .object(let o)?:
+            let known = answerPartOrder.filter { o[$0] != nil }
+            let rest = o.keys.filter { !answerPartOrder.contains($0) }.sorted()
+            let parts: [String] = (known + rest).compactMap { key in
+                switch o[key] {
+                case .string(let s)? where !BdQuizScoring.jsTrim(s).isEmpty: return s
+                case .number(let n)?: return BdJS.string(n)
+                default: return nil
+                }
+            }
+            return parts.isEmpty ? words.noAnswer : parts.joined(separator: ", ")
+        default:
+            let text = BdQuizScoring.jsTrim(BdQuizScoring.stripTags(BdJS.string(value)))
+            return text.isEmpty ? words.noAnswer : text
+        }
+    }
+
+    /// Whole percent, rounded half up (JavaScript's `Math.round`).
+    public static func percent(_ value: Double) -> Int { Int(value.jsRounded) }
+
+    static func number(_ n: Int) -> String { String(n) }
+}
+
+extension Double {
+    /// JavaScript's `Math.round`: half rounds up, toward +∞.
+    var jsRounded: Double { (self + 0.5).rounded(.down) }
+}

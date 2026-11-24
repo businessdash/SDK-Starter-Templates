@@ -506,8 +506,10 @@ public enum BdFormRules {
         return out
     }
 
+    /// A US ZIP (5 digits or ZIP+4), or nothing: an address left blank has no ZIP to check.
     public static func isValidUSZip(_ zip: String) -> Bool {
-        zip.trimmingCharacters(in: BdJS.jsWhitespace).wholeMatch(of: usZipRegex) != nil
+        let z = zip.trimmingCharacters(in: BdJS.jsWhitespace)
+        return z.isEmpty || z.wholeMatch(of: usZipRegex) != nil
     }
 
     public static func emailDomain(_ email: String) -> String? {

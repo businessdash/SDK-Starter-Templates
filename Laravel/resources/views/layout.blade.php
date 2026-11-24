@@ -3,12 +3,12 @@
 
     1. The setup banner — shown until BD_SITE_ID is set, so a fresh clone
        tells you what to do instead of rendering a mysteriously empty site.
-    2. The two browser islands, both loaded from esm.sh as ES modules. That
-       is the whole reason this starter needs no bundler and no npm at
-       runtime: <bd-form> renders the full form schema client-side, and
-       the analytics module records page views.
+    2. The analytics island, loaded from esm.sh as an ES module, which
+       records page views. Forms and quizzes are drawn on this server
+       (App\Livewire\BdForm and BdQuiz), so this starter still needs no
+       bundler and no npm at runtime.
 
-    The islands are pinned to an exact SDK version on purpose. A CDN import
+    The island is pinned to an exact SDK version on purpose. A CDN import
     has no lockfile, so `@latest` would silently roll this page forward on
     someone else's release. Bump it deliberately, alongside package.json.
 --}}
@@ -43,6 +43,7 @@
             <a href="{{ route('reviews') }}">Reviews</a>
             <a href="{{ route('subscriptions') }}">Plans</a>
             <a href="{{ route('todos') }}">Todos</a>
+            <a href="{{ route('quiz') }}">Quiz</a>
             <a href="{{ route('cart') }}">Cart</a>
             <a href="{{ route('portal') }}">My account</a>
         </nav>
@@ -71,7 +72,7 @@
 
     @if (\App\Bd\Bd::configured())
         <script type="module">
-            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.95/analytics-core";
+            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.96/analytics-core";
             createAnalytics({
                 siteId: @json(config('bd.site_id')),
                 baseUrl: @json(rtrim(config('bd.host'), '/') . '/api/package/v1'),

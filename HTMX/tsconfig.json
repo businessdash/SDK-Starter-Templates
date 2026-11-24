@@ -3,7 +3,7 @@
 		"target": "ES2022",
 		"module": "ESNext",
 		"moduleResolution": "bundler",
-		"types": ["bun-types"],
+		"types": ["bun"],
 		"lib": ["ESNext", "DOM"],
 		"strict": true,
 		"noImplicitOverride": true,

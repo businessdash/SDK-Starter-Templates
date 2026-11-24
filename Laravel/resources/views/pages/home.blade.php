@@ -55,34 +55,19 @@
         </section>
     @endif
 
-    <section class="contact">
+    <section class="contact" id="contact">
         <h2>Get in touch</h2>
         {{--
-            The <bd-form> web component, pointed at this app's own proxy.
-            It renders the whole `general-inquiry` schema — flex rows, the
-            conditional preferred-method block, the availability picker —
-            which a hand-written Blade fragment can't reproduce. The bearer
-            key stays server-side because the component only ever talks to
-            /api/bd/forms/*.
+            A form from your dashboard (BD_CONTACT_FORM, `general-inquiry` by
+            default), drawn on this server by App\Livewire\BdForm: flex rows,
+            the conditional preferred-method block, the availability picker,
+            checked by the same engine as the web form and sent with the key
+            that never leaves PHP. Until BD is connected it's the bundled sample.
         --}}
-        <bd-form slug="general-inquiry" submit-label="Send"></bd-form>
+        <livewire:bd-form :slug="\App\Bd\Forms\Forms::contactSlug()" submit-label="Send" />
     </section>
 @endsection
 
 @push('head')
-    <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.95/bd-forms.css">
-@endpush
-
-@push('scripts')
-    <script type="module">
-        import { setBdFormClient } from "https://esm.sh/@businessdash/sdk@0.9.95/element";
-
-        // The element can't take a client through an HTML attribute, so set
-        // a DI default once. `baseUrl` is this app's proxy, not BD — the
-        // proxy injects the real key server-side.
-        setBdFormClient({
-            baseUrl: "/api/bd/forms",
-            apiKey: "browser-proxy",
-        });
-    </script>
+    @include('forms.styles')
 @endpush

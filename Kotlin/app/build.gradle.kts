@@ -36,6 +36,8 @@ android {
         buildConfigField("String", "BD_PK", "\"${properties.getProperty("bd.publishableKey") ?: ""}\"")
         // A Live form's slug for the Form tab. Empty: a bundled sample form.
         buildConfigField("String", "BD_FORM", "\"${properties.getProperty("bd.form") ?: ""}\"")
+        // A practice quiz's slug for the Quiz tab. Empty: a bundled sample quiz.
+        buildConfigField("String", "BD_QUIZ", "\"${properties.getProperty("bd.quiz") ?: ""}\"")
     }
 
     buildFeatures {

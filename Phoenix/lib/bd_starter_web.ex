@@ -6,7 +6,7 @@ defmodule BdStarterWeb do
       use BdStarterWeb, :html
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico)
+  def static_paths, do: ~w(assets fonts images favicon.ico bd-sign-in.css forms.css)
 
   def router do
     quote do
@@ -48,7 +48,8 @@ defmodule BdStarterWeb do
 
   defp html_helpers do
     quote do
-      use Phoenix.HTML
+      # phoenix_html 4 dropped `use Phoenix.HTML`; `raw/1` and friends come from the import.
+      import Phoenix.HTML
 
       import BdStarterWeb.Bundle
       import BdStarterWeb.Money

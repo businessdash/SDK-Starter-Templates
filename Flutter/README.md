@@ -120,6 +120,33 @@ The **Form tab** (`lib/ui/form_page.dart`) shows the Live form named by `--dart-
 
 Styling, localization, custom renderers, the headless `BdFormController` and card collection are covered in [Native Forms (Flutter)](https://businessdash.us/docs/developer/byFeature/forms/native-flutter).
 
+## Quizzes
+
+A BD quiz is a form with an answer key, and `BdQuiz` (in `businessdash_forms`) runs one the way BD's hosted quiz page does, drawn like `BdForm` (Material on Android, Cupertino on iOS). It covers:
+
+- **Questions**: lettered multiple choice, plus "I don't know" when the quiz allows it. Open answers go in a text field or text area. An open answer can match any accepted wording, or wait for BD's AI grader.
+- **Feedback**: a verdict and rationale after each answer, or everything at the end.
+- **Timing**: elapsed time, or a countdown that submits on its own when it runs out.
+- **Results**: a score with per-question review, a thank-you when the org hides scores, or "sign in to see your results".
+
+```dart
+final quizzes = BdQuizzes.packageApi(publishableKey: const String.fromEnvironment('BD_PK'), sessionToken: session?.sessionToken);
+
+BdQuiz(source: BdQuizSource.invitation(token), quizzes: quizzes, onSignIn: showSignIn)
+BdQuiz(source: BdQuizSource.practice('food-safety', questionLimit: 10), quizzes: quizzes)
+```
+
+The **Quiz tab** (`lib/ui/quiz_page.dart`) shows a bundled sample (`lib/forms/demo_quiz.dart`), graded on the device, until you run with `--dart-define=BD_QUIZ=<slug>` for one of your practice quizzes.
+
+- **Invitations**: an invitation that must be taken by the invited account shows "Sign in to continue" and calls `onSignIn`. Pass a `BdQuizzes` with the new session (`withSession`) and the quiz reloads. The taker sees the same question and choice order on every visit, because the invitation seeds the shuffle. BD grades every answer, and the app never receives the answer key.
+- **Practice**: BD grades it and records nothing, open answers included. The clock pauses while a verdict is on screen, and each retake gets a new order.
+- **Local quizzes**: give the fields their answer keys and grade on the device with `BdQuiz.controller(BdQuizController(BdQuizOptions(fields: fields, feedbackMode: BdQuizFeedbackMode.immediate)))`. The controller is yours to dispose.
+- **Order**: `shuffleChoices` and `shuffleQuestions` come from the quiz's settings in BD, and a question marked "keep these choices in order" (for "All of the above") is never shuffled.
+- **Reword or localize** with `words:` (`BdQuizWords`). Looks follow `style:` (`BdFormStyle`) and the app's theme.
+- **Your own UI**: listen to `BdQuizController` and read its `screen`, which holds exactly what to show, texts included; call `choose`, `setAnswer` and `perform`.
+
+The quiz engine lives in `businessdash_sdk` (pure Dart) and is a port of the JS SDK's `forms-core/quiz.ts`.
+
 ## Sign-in
 
 The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in screen, `BdSignIn` from `businessdash_forms` — the same screen as `<BdSignIn>` on the web and the Swift / Kotlin starters' native ones, drawn like `BdForm` (Material on Android, Cupertino on iOS): the business's name, logo and brand colours from BD (primary on the button, secondary on links), each box checked when you leave it and all of them when you press the button, password sign-in, create account and reset with an emailed code. Every step is BD's `auth/customer/*` routes with the publishable key; WorkOS is underneath.
@@ -147,9 +174,9 @@ The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in s
 
 ## Verification
 
-`dart test` passes in `packages/businessdash_sdk`. The client tests cover the parts most likely to break silently: the 200-with-`available:false` gate, a real 4xx, `stripeUrl`, nil-query dropping, the bearer + site path, the cart header, both relation shapes, cents-vs-decimal, and empty-string-as-missing. The forms tests replay the fixtures `pnpm gen:native-forms` generates from the TypeScript forms engine, so the Dart port agrees with the web, Swift and Kotlin ones.
+`dart test` passes in `packages/businessdash_sdk`. The client tests cover the parts most likely to break silently: the 200-with-`available:false` gate, a real 4xx, `stripeUrl`, nil-query dropping, the bearer + site path, the cart header, both relation shapes, cents-vs-decimal, and empty-string-as-missing. The forms tests replay the fixtures `pnpm gen:native-forms` generates from the TypeScript forms engine, so the Dart port agrees with the web, Swift and Kotlin ones. The quiz tests replay `test/fixtures/quiz-parity.json` the same way: every screen and state of nine scripted quizzes, the seeded shuffle, scoring, and the page around the quiz.
 
-`flutter test` passes in `packages/businessdash_forms`: rendering, validation, submit, conditions, steps, Cupertino and Material controls, sheets, repeaters, collections, retry, the leave guard, custom renderers, and hosting in a `CupertinoApp`.
+`flutter test` passes in `packages/businessdash_forms`: rendering, validation, submit, conditions, steps, Cupertino and Material controls, sheets, repeaters, collections, retry, the leave guard, custom renderers, and hosting in a `CupertinoApp`. The quiz widget tests take a quiz through choices, typed answers, verdicts, a countdown that runs out, results and a retake, and load practice quizzes and invitations from a mocked BD.
 
 The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`).
 
@@ -159,7 +186,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 `businessdash_sdk/lib/src/donations.dart`, on the publishable token you already
 use. Opening the URL needs `url_launcher` in the app's `pubspec.yaml`:

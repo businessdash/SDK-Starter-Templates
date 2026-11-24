@@ -150,7 +150,7 @@ Validated in `src/env.js`, documented in `.env.example`:
 | --- | --- | --- |
 | `BD_API_KEY` | everything | secret site key (server-only) |
 | `BD_SITE_ID` | everything | site UUID |
-| `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://www.businessdash.us` |
+| `BD_PACKAGE_API_BASE_URL` | everything | e.g. `https://businessdash.us` |
 | `BD_REVALIDATION_SECRET` | webhook | `whsec_…` HMAC secret |
 | `BD_AUTH_CALLBACK_URL` | auth / portal | your `/api/bd-auth/callback` URL, with its host proven once in Business Dash → Developer & API keys → Sign-in |
 | `NEXT_PUBLIC_SITE_URL` | JSON-LD | production origin; defaults to `https://example.com` |
@@ -207,7 +207,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

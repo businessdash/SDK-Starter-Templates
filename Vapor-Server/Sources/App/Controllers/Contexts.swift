@@ -26,6 +26,8 @@ struct HomeContext: Content {
     let aboutTitle: String
     let aboutBody: String
     let products: [ProductCard]
+    /// The contact section's form, rendered by `FormPage`.
+    var contactForm = ""
 
     static let fallback = HomeContext(
         configured: false,

@@ -4,11 +4,11 @@ import Vapor
 /// `/my-account` and the routes behind its sign-in screen.
 ///
 /// Signed out, the page shows the business's own sign-in screen (its name,
-/// logo and brand colours from BD) — the SDK's `mountBdSignIn`, from esm.sh
-/// like `<bd-form>`. It has password sign-in, emailed codes, and "Continue with
-/// Google / Apple / GitHub / Discord", and talks only to
-/// `/api/bd-auth/customer/*` here — the Swift twin of the JS SDK's
-/// `createAuthHandler` customer routes:
+/// logo and brand colours from BD), rendered on this server by
+/// `SignInController`: password sign-in, emailed codes, and "Continue with
+/// Google / Apple / GitHub / Discord". Its steps go through `forward` below,
+/// and these JSON routes — the Swift twin of the JS SDK's `createAuthHandler`
+/// customer routes — stay for apps and pages that bring their own screen:
 ///
 ///     GET  options                      the business's name, colours, providers
 ///     POST sign-in | verify | id-token  → sets the httpOnly `bd_session` cookie
@@ -26,7 +26,7 @@ enum AccountController {
     static let sessionCookie = "bd_session"
     private static let pkceCookie = "bd_oauth_pkce"
     private static let oauthPath = "/api/bd-auth/customer/oauth"
-    private static let unavailable = "Sign-in isn't available just now. Try again in a minute."
+    static let unavailable = "Sign-in isn't available just now. Try again in a minute."
     private static let providers: Set<String> = ["apple", "google", "github", "discord"]
 
     /// path → the method it takes, and whether it signs someone in.
@@ -41,8 +41,7 @@ enum AccountController {
 
     // MARK: - The page
 
-    static func page(req: Request) async throws -> View {
-        let start = (try? req.query.get(String.self, at: "start")) == "create" ? "createAccount" : "signIn"
+    static func page(req: Request) async throws -> Response {
         let configured = req.application.bdConfigured
 
         guard
@@ -52,9 +51,12 @@ enum AccountController {
             me["user"] != nil
         else {
             return try await req.view.render("account", AccountContext(
-                configured: configured, signedIn: false, start: start, email: "", jobs: []
-            ))
+                configured: configured, signedIn: false, signIn: await SignInController.section(req: req), email: "", jobs: []
+            )).encodeResponse(for: req)
         }
+
+        // Signed in already, with somewhere to go back to (a quiz invitation's sign-in link).
+        if let next = SignInController.safeNext(req.query[String.self, at: "next"]) { return land(next, [:]) }
 
         let portal = PortalResource(client: bd, sessionToken: token, organizationId: me.string("organizationId"))
         var jobs: [AccountJob] = []
@@ -65,10 +67,10 @@ enum AccountController {
         return try await req.view.render("account", AccountContext(
             configured: configured,
             signedIn: true,
-            start: start,
+            signIn: "",
             email: me.string("user", "email") ?? "a customer",
             jobs: jobs
-        ))
+        )).encodeResponse(for: req)
     }
 
     static func signOut(req: Request) async throws -> Response {
@@ -177,36 +179,61 @@ enum AccountController {
             body = parsed
         }
 
+        switch await forward(bd, path[0], body: body) {
+        case .answered(let body):
+            return json(.ok, body)
+        case .refused(let status, let code, let message):
+            return problem(HTTPResponseStatus(statusCode: status), code, message)
+        case .signedIn(let token, let expires, let body):
+            // The token goes in the httpOnly cookie, never to the page.
+            let response = json(.ok, .object([
+                "user": body["user"] ?? .null,
+                "organizationId": body["organizationId"] ?? .null,
+                "role": body["role"] ?? .null,
+                "expiresAt": body["expiresAt"] ?? .null,
+            ]))
+            response.cookies[sessionCookie] = session(req, token, expires)
+            return response
+        }
+    }
+
+    /// BD's answer to one customer step.
+    enum CustomerAnswer: Sendable {
+        /// The business's options, a code on its way (`pendingId`), or —
+        /// from sign-in — "confirm your email first" (a code was sent).
+        case answered(JSONValue)
+        /// Someone is signed in: the token for the httpOnly cookie.
+        case signedIn(token: String, expires: Date, body: JSONValue)
+        /// BD's own refusal (wrong password, expired code…), or unreachable.
+        case refused(status: Int, code: String, message: String)
+    }
+
+    /// One `auth/customer/*` step at BD (which runs it through WorkOS). The
+    /// JSON route above and the server-rendered screen (`SignInController`)
+    /// both go through here.
+    static func forward(_ bd: BdClient, _ path: String, body: JSONValue? = nil) async -> CustomerAnswer {
+        guard let route = routes[path] else { return .refused(status: 404, code: "not_found", message: "Not found.") }
         let result: (status: Int, body: JSONValue)
         do {
-            result = try await bd.once(route.method, "auth/customer/\(path[0])", body: body)
+            result = try await bd.once(route.method, "auth/customer/\(path)", body: body)
         } catch {
-            return problem(.badGateway, "unavailable", unavailable)
+            return .refused(status: 502, code: "unavailable", message: unavailable)
         }
-        guard (200..<300).contains(result.status) else { return refused(result) }
-        guard route.signsIn else { return json(.ok, result.body) }
+        guard (200..<300).contains(result.status) else { return refusal(result) }
+        guard route.signsIn else { return .answered(result.body) }
 
         // Sign-in can answer "confirm your email first" (a code was sent).
         if result.body.string("pendingId") != nil, result.body["sessionToken"] == nil {
-            return json(.ok, result.body)
+            return .answered(result.body)
         }
         guard
             let token = result.body.string("sessionToken"),
             let expiresAt = result.body.string("expiresAt"),
             let expires = instant(expiresAt)
         else {
-            return problem(.badGateway, "unavailable", unavailable)
+            return .refused(status: 502, code: "unavailable", message: unavailable)
         }
-
-        // The token goes in the httpOnly cookie, never to the page.
-        let response = json(.ok, .object([
-            "user": result.body["user"] ?? .null,
-            "organizationId": result.body["organizationId"] ?? .null,
-            "role": result.body["role"] ?? .null,
-            "expiresAt": .string(expiresAt),
-        ]))
-        response.cookies[sessionCookie] = session(req, token, expires)
-        return response
+        return .signedIn(token: token, expires: expires, body: result.body)
     }
 
     // MARK: - "Continue with Google / Apple / GitHub / Discord"
@@ -297,17 +324,18 @@ enum AccountController {
     // MARK: - Helpers
 
     /// BD's own refusal (wrong password, expired code…), passed on.
-    private static func refused(_ result: (status: Int, body: JSONValue)) -> Response {
+    private static func refusal(_ result: (status: Int, body: JSONValue)) -> CustomerAnswer {
         let fallback = result.status == 429 ? "That's a lot of tries. Wait a few minutes, then try again." : unavailable
         let message = result.body.string("message").flatMap {
             $0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : $0
         } ?? fallback
         let code = result.body.string("error") ?? (result.status == 429 ? "too_many_tries" : "unavailable")
         let status = (400...599).contains(result.status) ? result.status : 502
-        return problem(HTTPResponseStatus(statusCode: status), code, message)
+        return .refused(status: status, code: code, message: message)
     }
 
-    private static func session(_ req: Request, _ token: String, _ expires: Date) -> HTTPCookies.Value {
+    /// The httpOnly `bd_session` cookie for a signed-in token.
+    static func session(_ req: Request, _ token: String, _ expires: Date) -> HTTPCookies.Value {
         HTTPCookies.Value(
             string: token,
             expires: expires,
@@ -389,8 +417,8 @@ enum AccountController {
 struct AccountContext: Content {
     let configured: Bool
     let signedIn: Bool
-    /// "signIn" or "createAccount" — the screen's first view.
-    let start: String
+    /// The sign-in screen's HTML (`SignInController`), when signed out.
+    let signIn: String
     let email: String
     let jobs: [AccountJob]
 }

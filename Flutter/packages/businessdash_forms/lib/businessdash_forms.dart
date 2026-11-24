@@ -14,12 +14,16 @@
 /// [BdSignIn] is the business's own sign-in screen, drawn the same way:
 /// password, emailed codes and "Continue with Google / Apple / GitHub /
 /// Discord", through BD's `auth/customer/*` routes (WorkOS underneath).
+///
+/// [BdQuiz] takes a BD quiz, invited or practice, the same way: lettered
+/// choices, typed answers, a countdown, each answer's verdict and the results.
 library;
 
 export 'package:businessdash_sdk/forms.dart';
 
 export 'src/form.dart' show BdForm, BdFormControllerListenable;
 export 'src/icons.dart' show BdIcon, BdIconStore;
+export 'src/quiz.dart' show BdQuiz, BdQuizInvitationSource, BdQuizPracticeSource, BdQuizSource;
 export 'src/primitives.dart' show BdOption, BdOptionPicker, BdTextInput, BdKeyboard;
 export 'src/style.dart'
     show

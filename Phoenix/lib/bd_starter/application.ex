@@ -10,6 +10,8 @@ defmodule BdStarter.Application do
       # Tag-addressed read cache. Starts before the endpoint so the first
       # request can't race an uninitialised ETS table.
       BdStarter.Bd.Cache,
+      # Quiz runs in progress (BdStarter.Forms.QuizRuns).
+      BdStarter.Forms.QuizRuns,
       # One poller per open Front Desk chat session — see ChatSession.
       {Registry, keys: :unique, name: BdStarter.ChatRegistry},
       {DynamicSupervisor, strategy: :one_for_one, name: BdStarter.ChatSupervisor},

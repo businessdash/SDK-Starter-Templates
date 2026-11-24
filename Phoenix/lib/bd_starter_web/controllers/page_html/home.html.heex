@@ -39,12 +39,15 @@
   </ul>
 </section>
 
-<section class="contact">
+<section class="contact" id="contact">
   <h2>Get in touch</h2>
   <%!--
-    A dead view, so LiveView's DOM patcher isn't involved and the component can
-    own its subtree freely. Under a LiveView this same markup needs a
-    phx-update="ignore" wrapper — see the README.
+    BD_CONTACT_FORM once BD is connected, else the bundled sample: drawn on
+    this server by the forms engine (BdStarterWeb.FormLive), with BD's own
+    rules, and sent to BD with the server's key.
   --%>
-  <bd-form slug="general-inquiry" submit-label="Send"></bd-form>
+  {live_render(@conn, BdStarterWeb.FormLive,
+    session: %{"slug" => BdStarter.Forms.contact_slug(), "submit_label" => "Send"},
+    id: "bd-contact-form"
+  )}
 </section>

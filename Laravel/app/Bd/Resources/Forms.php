@@ -7,15 +7,10 @@ use App\Bd\Client;
 /**
  * Org-defined forms — schema in, submission out.
  *
- * Two ways to render one, and this starter ships both:
- *
- *  1. Server-side. `schema()` here, hand-render the fields in Blade,
- *     `submit()` on POST. Full control, no JS — but you own conditional
- *     blocks, availability pickers and file uploads yourself.
- *  2. The `<bd-form>` web component from the CDN, pointed at this app's
- *     own `/api/bd/forms/*` proxy. It renders the whole schema, including
- *     the parts a hand-rolled server fragment can't, and the bearer key
- *     still never leaves this process.
+ * The raw calls. To show a form, use `<livewire:bd-form slug="…" />`
+ * (App\Livewire\BdForm): it draws the whole schema on this server with the
+ * forms engine in app/Bd/Forms (conditions, steps, calculations, uploads)
+ * and submits through its own client, App\Bd\Forms\PackageBackend.
  *
  * `submit()` also happens to be the documented CREATE path for a custom
  * collection: point a form's output at the collection and POST here.

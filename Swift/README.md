@@ -31,7 +31,7 @@ Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdSt
 
 | Info.plist key | What |
 | --- | --- |
-| `BDHost` | defaults to `https://www.businessdash.us` |
+| `BDHost` | defaults to `https://businessdash.us` |
 | `BDPublishableKey` | `pk_…` — never `sk_…` |
 | `BDSiteID` | the site UUID |
 
@@ -141,7 +141,36 @@ In this starter, `BdFormView(slug:)` does the same with the keys from `BdEnviron
 
 The rules are a port of the JS SDK's `forms-core`, and `swift test` replays the TypeScript implementation's own outputs (`Tests/BdFormsTests/Fixtures/forms-parity.json`, made by `pnpm gen:native-forms` in `sdk/`) so the two can't drift silently.
 
-Full guide: [Native Forms (SwiftUI)](https://www.businessdash.us/docs/developer/byFeature/forms/native-swift).
+Full guide: [Native Forms (SwiftUI)](https://businessdash.us/docs/developer/byFeature/forms/native-swift).
+
+## Quizzes
+
+A BD quiz is a form with an answer key, and `BdQuiz` (also in `BdForms`) takes one the way BD's hosted quiz page does. It covers:
+
+- **Questions**: lettered multiple choice, plus "I don't know" when the quiz allows it. Open answers go in a text box or text area. An open answer can match any accepted wording, or wait for BD's AI grader.
+- **Feedback**: a verdict and rationale after each answer, or everything at the end.
+- **Timing**: elapsed time, or a countdown that submits on its own when it runs out.
+- **Results**: a score with per-question review, a thank-you when the org hides scores, or "sign in to see your results".
+
+```swift
+import BdForms
+
+let quizzes = BdQuizzes(host: host, publishableKey: "pk_live_…", sessionToken: signedIn?.sessionToken)
+
+BdQuiz(.invitation(token: token), quizzes: quizzes, onSignIn: { showSignIn = true })
+BdQuiz(.practice(slug: "food-safety", questionLimit: 10), quizzes: quizzes)
+```
+
+In this starter, `BdQuizView(invitation:)` and `BdQuizView(practice:)` do the same with the keys and session from `BdEnvironment`.
+
+- **Invitations**: an invitation that must be taken by the invited account shows "Sign in to begin" and calls `onSignIn`. Give `BdQuizzes` the new session and the quiz reloads. The taker sees the same question and choice order on every visit, because the invitation seeds the shuffle. BD grades every answer, and the app never receives the answer key.
+- **Practice**: BD grades it and records nothing, open answers included. The clock pauses while a verdict is on screen, and each retake gets a new order.
+- **Local quizzes**: give the fields their answer keys and grade on the device with `BdQuiz(controller: BdQuizController(options: BdQuizOptions(fields: fields, feedbackMode: .immediate)))`.
+- **Order**: `shuffleChoices` and `shuffleQuestions` come from the quiz's settings in BD, and a question marked "keep these choices in order" (for "All of the above") is never shuffled.
+- **Reword or localize** with `words:` (`BdQuizWords`). Looks follow `.bdFormStyle(_:)`.
+- **Your own UI**: observe `BdQuizController.screen`, which holds exactly what to show, texts included, and call `choose`, `setAnswer` and `perform(_:)`.
+
+The quiz engine is a port of the JS SDK's `forms-core/quiz.ts`. `swift test` replays its fixtures (`Tests/BdFormsTests/Fixtures/quiz-parity.json`): every screen and state of nine scripted quizzes, the seeded shuffle, scoring, and the page around the quiz.
 
 ## Chat is polling, and that's the API
 
@@ -171,7 +200,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 `BusinessDashKit/Donations.swift`, on the publishable token you already use:
 

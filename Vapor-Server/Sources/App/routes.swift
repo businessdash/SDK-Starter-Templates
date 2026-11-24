@@ -23,10 +23,12 @@ func routes(_ app: Application) throws {
     app.post("cart", "checkout", use: CartController.checkout)
 
     // ── Customer account ───────────────────────────────────────────────────
-    // /my-account shows the sign-in screen when signed out; the screen talks
-    // to the customer routes (password, emailed codes, Google / Apple /
-    // GitHub / Discord links — WorkOS underneath, through BD).
+    // /my-account shows the sign-in screen when signed out, rendered here
+    // (SignInController): password, emailed codes, Google / Apple / GitHub /
+    // Discord links — WorkOS underneath, through BD's customer routes.
     app.get("my-account", use: AccountController.page)
+    app.post("my-account", "sign-in", use: SignInController.submit)
+    app.post("my-account", "sign-in", "check", use: SignInController.check)
     app.on(.GET, "api", "bd-auth", "customer", "**", use: AccountController.customer)
     app.on(.POST, "api", "bd-auth", "customer", "**", body: .collect(maxSize: "64kb"), use: AccountController.customer)
     app.get("api", "bd-auth", "sign-out", use: AccountController.signOut)
@@ -34,12 +36,22 @@ func routes(_ app: Application) throws {
     app.get("api", "bd-auth", "delete-account", use: AccountController.deleteAccount)
     app.post("api", "bd-auth", "delete-account", use: AccountController.deleteAccount)
 
-    // ── Machine endpoints ──────────────────────────────────────────────────
-    // Same-origin proxy for the <bd-form> web component: the browser gets
-    // the schema and posts submissions without ever seeing the bearer key.
-    app.get("api", "bd", "forms", ":slug", use: BdFormController.schema)
-    app.post("api", "bd", "forms", ":slug", use: BdFormController.submit)
+    // ── Forms and quizzes, rendered here by the BdForms engine ─────────────
+    // Any form from your dashboard; the home page's contact section is one.
+    app.get("forms", ":slug", use: FormRoutes.page)
+    app.on(.POST, "forms", ":slug", body: .collect(maxSize: "32mb"), use: FormRoutes.post)
+    // A practice quiz or the sample at /quiz (BD_QUIZ), any practice quiz at
+    // /quiz/<slug>, an invitation at /quiz-invite/<token> — the link BD's
+    // invite emails carry when this site is the quiz's invite domain — and
+    // the running clock each quiz page re-reads.
+    app.get("quiz", use: QuizRoutes.page)
+    app.get("quiz", ":slug", use: QuizRoutes.page)
+    app.on(.POST, "quiz", ":slug", body: .collect(maxSize: "1mb"), use: QuizRoutes.post)
+    app.get("quiz-invite", ":token", use: QuizRoutes.page)
+    app.on(.POST, "quiz-invite", ":token", body: .collect(maxSize: "1mb"), use: QuizRoutes.post)
+    app.get("quiz-timer", ":run", use: QuizRoutes.timer)
 
+    // ── Machine endpoints ──────────────────────────────────────────────────
     // Authenticated by HMAC over the raw body, not by session.
     app.post("api", "bd", "revalidate", use: WebhookController.handle)
 

@@ -159,7 +159,7 @@ extension BdServerSignInBackend where Session == BdSignInSession {
     /// `pk_…` key, the one the app already ships. No server needed.
     public static func businessDash(
         publishableKey: String,
-        host: URL = URL(string: "https://www.businessdash.us")!,
+        host: URL = URL(string: "https://businessdash.us")!,
         urlSession: URLSession = .shared
     ) -> Self {
         precondition(!publishableKey.hasPrefix("sk_"), "Use the publishable pk_ key in an app, never a secret sk_ key.")

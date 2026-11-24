@@ -5,19 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>#import("title")</title>
   <link rel="stylesheet" href="/styles.css">
-  <!-- The <bd-form> element and its stylesheet come from esm.sh, not this
-       app's asset pipeline. That is why a Vapor consumer never reimplements
-       the form renderer: the component ships the conditional blocks,
-       availability picker and uploads, and talks only to this app's own
-       /api/bd/forms proxy, so the bearer key stays on the server.
-
-       Pinned to an exact version deliberately — a CDN import has no lockfile,
+  <!-- Forms and quizzes are drawn on this server (Sources/App/Forms) in the
+       SDK's bd-* classes: the SDK's own stylesheet, then /forms.css on top.
+       Pinned to an exact version deliberately — a CDN link has no lockfile,
        so @latest would roll this page forward on somebody else's release. -->
-  <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.95/bd-forms.css">
-  <script type="module">
-    import { setBdFormClient } from "https://esm.sh/@businessdash/sdk@0.9.95/element";
-    setBdFormClient({ baseUrl: "/api/bd/forms", apiKey: "browser-proxy" });
-  </script>
+  <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.96/bd-forms.css">
+  <link rel="stylesheet" href="/forms.css">
+  <!-- htmx: the sign-in screen checks boxes and changes steps with it, and a
+       form or quiz re-renders on each change. Its morph swap (idiomorph)
+       keeps what's being typed while the rest of a form updates. -->
+  <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/idiomorph@0.7.4/dist/idiomorph-ext.min.js" integrity="sha384-SsScJKzATF/w6suEEdLbgYGsYFLzeKfOA6PY+/C5ZPxOSuA+ARquqtz/BZz9JWU8" crossorigin="anonymous"></script>
 </head>
 <body>
   #if(!configured):
@@ -38,6 +36,7 @@
       <a href="/reviews">Reviews</a>
       <a href="/subscriptions">Plans</a>
       <a href="/todos">Todos</a>
+      <a href="/quiz">Quiz</a>
       <a href="/cart">Cart</a>
       <a href="/my-account">My account</a>
     </nav>

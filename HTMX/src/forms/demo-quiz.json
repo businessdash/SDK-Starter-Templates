@@ -1,0 +1,97 @@
+{
+  "id": "demo-quiz",
+  "slug": "demo-quiz",
+  "name": "Sample quiz",
+  "fields": [
+    {
+      "id": "q_capital",
+      "type": "radio",
+      "label": "What is the capital of France?",
+      "required": true,
+      "options": [
+        "Paris",
+        "Lyon",
+        "Marseille",
+        "Nice"
+      ],
+      "quizOptionIds": [
+        "o_paris",
+        "o_lyon",
+        "o_marseille",
+        "o_nice"
+      ],
+      "quizAnswerKey": {
+        "answer": {
+          "option_id": "o_paris"
+        },
+        "rationale": {
+          "why_right": "Paris has been the capital since 987.",
+          "why_wrong": "That city isn't the capital.",
+          "why_wrong_by_option_id": {
+            "o_lyon": "Lyon is France's third-largest city."
+          }
+        }
+      }
+    },
+    {
+      "id": "q_primes",
+      "type": "checkbox",
+      "label": "Pick a prime number",
+      "options": [
+        "4",
+        "7",
+        "9",
+        "11"
+      ],
+      "quizOptionIds": [
+        "o4",
+        "o7",
+        "o9",
+        "o11"
+      ],
+      "quizAnswerKey": {
+        "answer": {
+          "option_id": "o7"
+        },
+        "additional_accepted_answers": [
+          {
+            "option_id": "o11"
+          }
+        ],
+        "rationale": {
+          "why_right": "7 and 11 have no divisors but 1 and themselves.",
+          "why_wrong": "It has a divisor other than 1 and itself."
+        }
+      }
+    },
+    {
+      "id": "q_ocean",
+      "type": "text",
+      "label": "What is the largest ocean?",
+      "required": true,
+      "quizAnswerKey": {
+        "answer": {
+          "text": "Pacific"
+        },
+        "additional_accepted_answers": [
+          {
+            "text": "The Pacific Ocean"
+          }
+        ],
+        "reason": "It covers about a third of the Earth's surface."
+      }
+    },
+    {
+      "id": "q_ice",
+      "type": "textarea",
+      "label": "In a sentence or two: why does ice float?",
+      "placeholder": "Your answer",
+      "quizAnswerKey": {
+        "no_wrong_answer": true,
+        "rationale": {
+          "why_right": "Ice is less dense than liquid water: freezing locks the molecules into an open lattice."
+        }
+      }
+    }
+  ]
+}

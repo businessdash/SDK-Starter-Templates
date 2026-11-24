@@ -1,0 +1,313 @@
+import Foundation
+#if canImport(FoundationNetworking)
+import FoundationNetworking
+#endif
+
+// BD's side of a quiz, an invited quiz or a practice run, for
+// `BdQuizController`. `BdQuizzes` reads them from BD's Package API with the
+// app's publishable key (or through the app's own server); an app can supply
+// any `BdQuizBackend` instead (a test double, a quiz bundled offline).
+
+/// What the controller asks of BD. Leave `start`/`saveDraft`/`lockAnswer`
+/// nil where the quiz has no such step.
+public struct BdQuizBackend: Sendable {
+    public var start: (@Sendable () async throws -> BdQuizStartInfo)?
+    public var saveDraft: (@Sendable (_ answers: [String: BdJSON]) async throws -> Void)?
+    public var lockAnswer: (@Sendable (_ fieldId: String, _ answer: BdJSON) async throws -> BdQuizQuestionResult)?
+    /// Finish. `questionFieldIds` are the questions this run asked: all of
+    /// them, or a local run's subset.
+    public var submit: @Sendable (_ answers: [String: BdJSON], _ questionFieldIds: [String]) async throws -> BdQuizCompletion
+
+    public init(
+        start: (@Sendable () async throws -> BdQuizStartInfo)? = nil,
+        saveDraft: (@Sendable ([String: BdJSON]) async throws -> Void)? = nil,
+        lockAnswer: (@Sendable (String, BdJSON) async throws -> BdQuizQuestionResult)? = nil,
+        submit: @escaping @Sendable ([String: BdJSON], [String]) async throws -> BdQuizCompletion
+    ) {
+        self.start = start
+        self.saveDraft = saveDraft
+        self.lockAnswer = lockAnswer
+        self.submit = submit
+    }
+}
+
+// MARK: - Wire types
+
+/// How a quiz is taken: the builder's quiz switches.
+public struct BdQuizTakingSettings: Codable, Sendable, Hashable {
+    public var shuffleChoices: Bool?
+    public var shuffleQuestions: Bool?
+    public var allowDontKnow: Bool?
+}
+
+/// The form settings a quiz reads (others are ignored).
+public struct BdQuizFormSettings: Decodable, Sendable, Hashable {
+    public var quiz: BdQuizTakingSettings?
+
+    public init(from decoder: Decoder) throws {
+        let c = try? decoder.container(keyedBy: CodingKeys.self)
+        quiz = (try? c?.decodeIfPresent(BdQuizTakingSettings.self, forKey: .quiz)) ?? nil
+    }
+
+    enum CodingKeys: String, CodingKey { case quiz }
+}
+
+/// An invited quiz, as its taker's page shows it.
+public struct BdQuizInvitation: Decodable, Sendable, BdQuizInvitationPageInfo {
+    public var id: String
+    public var quizId: String
+    public var name: String
+    public var description: String
+    public var competency: String?
+    public var estimatedMinutes: Double?
+    public var passingScore: Double
+    public var feedbackMode: String
+    public var showScore: Bool
+    public var resultsRequireAccount: Bool
+    public var resultsUnlocked: Bool
+    public var requireAuthentication: Bool
+    /// `required`/`mismatch`: show the sign-in prompt instead of the quiz.
+    public var authenticationStatus: String
+    public var recipientEmailHint: String
+    public var showTimer: Bool
+    public var timeLimitMinutes: Double?
+    public var startedAt: String?
+    public var deadlineAt: String?
+    public var serverNow: Double
+    public var timedOut: Bool
+    public var questionFieldIds: [String]
+    public var fields: [BdFormField]
+    public var settings: BdQuizFormSettings
+    public var recipientName: String?
+    public var recipientEmail: String?
+    public var status: String
+    public var expired: Bool
+    public var active: Bool
+    public var lockedAnswers: [String: BdJSON]
+    public var lockedResults: [BdQuizQuestionResult]
+    public var attempt: BdQuizCompletion?
+}
+
+/// A quiz the org lets its apps and sites run as practice.
+public struct BdPracticeQuiz: Decodable, Sendable, BdQuizPageInfo {
+    public var quizId: String
+    public var slug: String
+    public var name: String
+    public var description: String
+    public var competency: String?
+    public var estimatedMinutes: Double?
+    public var passingScore: Double
+    public var feedbackMode: String
+    public var showTimer: Bool
+    public var timeLimitMinutes: Double?
+    public var questionFieldIds: [String]
+    public var fields: [BdFormField]
+    public var settings: BdQuizFormSettings
+}
+
+// MARK: - From BD to the engine
+
+extension BdQuizOptions {
+    /// An invited quiz. The seed is the invitation, so the taker sees the
+    /// same order on every visit; results lock when BD says they wait for
+    /// the invited account.
+    public init(invitation: BdQuizInvitation, signInHref: String? = nil, words: BdQuizWords = BdQuizWords()) {
+        let taking = invitation.settings.quiz
+        self.init(
+            fields: invitation.fields,
+            questionFieldIds: invitation.questionFieldIds,
+            feedbackMode: invitation.feedbackMode == "immediate" ? .immediate : .end,
+            passingScore: invitation.passingScore,
+            showTimer: invitation.showTimer,
+            timeLimitMinutes: invitation.timeLimitMinutes,
+            showScore: invitation.showScore,
+            resultsLocked: invitation.resultsRequireAccount && !invitation.resultsUnlocked,
+            signInHref: signInHref,
+            shuffleChoices: taking?.shuffleChoices == true,
+            shuffleQuestions: taking?.shuffleQuestions == true,
+            seed: invitation.id,
+            allowDontKnow: taking?.allowDontKnow == true,
+            local: false,
+            canRestart: false,
+            words: words
+        )
+    }
+
+    /// A practice quiz: graded by BD (the app never sees answer keys) but run
+    /// like a local quiz: the clock pauses on a verdict, it can be retaken,
+    /// and a limit asks a subset. A new order each run unless `seed` pins one.
+    public init(practice: BdPracticeQuiz, seed: String? = nil, questionLimit: Int? = nil, words: BdQuizWords = BdQuizWords()) {
+        let taking = practice.settings.quiz
+        self.init(
+            fields: practice.fields,
+            questionFieldIds: practice.questionFieldIds,
+            feedbackMode: practice.feedbackMode == "immediate" ? .immediate : .end,
+            passingScore: practice.passingScore,
+            showTimer: practice.showTimer,
+            timeLimitMinutes: practice.timeLimitMinutes,
+            shuffleChoices: taking?.shuffleChoices == true,
+            shuffleQuestions: taking?.shuffleQuestions == true,
+            seed: seed,
+            questionLimit: questionLimit,
+            allowDontKnow: taking?.allowDontKnow == true,
+            local: true,
+            canRestart: true,
+            words: words
+        )
+    }
+}
+
+extension BdQuizInitial {
+    /// Where an invited quiz was left: locked answers, the clock, a finished attempt.
+    public init(invitation: BdQuizInvitation) {
+        self.init(
+            answers: invitation.lockedAnswers,
+            results: invitation.lockedResults,
+            completion: invitation.attempt,
+            startedAt: invitation.startedAt.map { .string($0) },
+            deadlineAt: invitation.deadlineAt.map { .string($0) },
+            serverNow: invitation.serverNow
+        )
+    }
+}
+
+// MARK: - Client
+
+/// BD's quiz routes. Talks to BD's Package API with the app's publishable
+/// key, adding the signed-in customer's session (from `BdSignIn`) for
+/// invitations that need the invited account:
+///
+/// ```swift
+/// let quizzes = BdQuizzes(host: URL(string: "https://businessdash.us")!,
+///                         publishableKey: "pk_…", sessionToken: session?.sessionToken)
+/// ```
+///
+/// Or point it at the app's own server running the JS SDK's
+/// `createQuizHandler`, which serves the same routes.
+public struct BdQuizzes: Sendable, Hashable {
+    public let baseURL: URL
+    let headers: [String: String]
+    let session: URLSession
+
+    static let sessionHeader = "X-BD-Session-Token"
+
+    /// BD directly. `host` is e.g. `https://businessdash.us`.
+    public init(host: URL, publishableKey: String, sessionToken: String? = nil, session: URLSession = .shared) {
+        // An allowlist, not `!hasPrefix("sk_")`: BD's secret keys start with
+        // `bd_`, so only a publishable `pk_` key may ride inside an app.
+        let key = publishableKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        precondition(key.isEmpty || key.hasPrefix("pk_"), "BdForms: an app takes a publishable pk_ key only, never a secret key.")
+        var headers = ["Authorization": "Bearer \(publishableKey)"]
+        if let sessionToken, !sessionToken.isEmpty { headers[Self.sessionHeader] = sessionToken }
+        self.init(endpoint: host.appendingPathComponent("api/package/v1/quizzes"), headers: headers, session: session)
+    }
+
+    /// The app's own quiz routes, e.g. `https://example.com/api/bd-auth/quizzes`.
+    public init(endpoint: URL, headers: [String: String] = [:], session: URLSession = .shared) {
+        self.baseURL = endpoint
+        self.headers = headers
+        self.session = session
+    }
+
+    /// The signed-in customer's session, if one was given.
+    public var sessionToken: String? { headers[Self.sessionHeader] }
+
+    /// The same client for another signed-in customer (or none).
+    public func withSession(_ token: String?) -> BdQuizzes {
+        var headers = headers
+        headers[Self.sessionHeader] = token.flatMap { $0.isEmpty ? nil : $0 }
+        return BdQuizzes(endpoint: baseURL, headers: headers, session: session)
+    }
+
+    public static func == (a: BdQuizzes, b: BdQuizzes) -> Bool { a.baseURL == b.baseURL && a.headers == b.headers }
+    public func hash(into h: inout Hasher) {
+        h.combine(baseURL)
+        h.combine(headers)
+    }
+
+    /// Each part is one path segment, a `/` in a token included (as the JS
+    /// client's `encodeURIComponent`).
+    func url(_ parts: [String]) -> URL {
+        parts.reduce(baseURL) { $0.appending(component: $1, directoryHint: .notDirectory) }
+    }
+
+    func send<T: Decodable>(_ parts: [String], method: String = "GET", body: BdJSON? = nil, as: T.Type) async throws -> T {
+        var request = URLRequest(url: url(parts))
+        request.httpMethod = method
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        request.setValue("swift-quiz/1", forHTTPHeaderField: "X-BD-Client")
+        for (name, value) in headers { request.setValue(value, forHTTPHeaderField: name) }
+        if let body {
+            request.httpBody = try JSONEncoder().encode(body)
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        }
+        let (data, response) = try await session.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200..<300).contains(status) else {
+            let json = try? JSONDecoder().decode(BdJSON.self, from: data)
+            throw BdFormsError(status: status, message: json?["message"]?.stringValue ?? "BD returned \(status).")
+        }
+        return try JSONDecoder().decode(T.self, from: data)
+    }
+
+    struct Locked: Decodable { let result: BdQuizQuestionResult }
+    struct Saved: Decodable {}
+
+    public func invitation(_ token: String) async throws -> BdQuizInvitation {
+        try await send(["invitations", token], as: BdQuizInvitation.self)
+    }
+
+    public func startInvitation(_ token: String) async throws -> BdQuizStartInfo {
+        try await send(["invitations", token, "start"], method: "POST", as: BdQuizStartInfo.self)
+    }
+
+    public func saveInvitationDraft(_ token: String, answers: [String: BdJSON]) async throws {
+        _ = try await send(["invitations", token, "draft"], method: "POST", body: ["answers": .object(answers)], as: Saved.self)
+    }
+
+    /// Lock one answer for good and get its verdict (immediate feedback).
+    public func lockInvitationAnswer(_ token: String, fieldId: String, answer: BdJSON) async throws -> BdQuizQuestionResult {
+        try await send(
+            ["invitations", token, "lock"], method: "POST",
+            body: ["fieldId": .string(fieldId), "answer": answer], as: Locked.self
+        ).result
+    }
+
+    /// Immediate-feedback quizzes submit what was locked: pass nil.
+    public func submitInvitation(_ token: String, answers: [String: BdJSON]?) async throws -> BdQuizCompletion {
+        let body: BdJSON = answers.map { ["answers": .object($0)] } ?? [:]
+        return try await send(["invitations", token, "submit"], method: "POST", body: body, as: BdQuizCompletion.self)
+    }
+
+    public func practice(_ slug: String) async throws -> BdPracticeQuiz {
+        try await send([slug], as: BdPracticeQuiz.self)
+    }
+
+    public func checkPracticeAnswer(_ slug: String, fieldId: String, answer: BdJSON) async throws -> BdQuizQuestionResult {
+        try await send([slug, "check"], method: "POST", body: ["fieldId": .string(fieldId), "answer": answer], as: BdQuizQuestionResult.self)
+    }
+
+    public func scorePractice(_ slug: String, answers: [String: BdJSON], questionFieldIds: [String]? = nil) async throws -> BdQuizCompletion {
+        var body: [String: BdJSON] = ["answers": .object(answers)]
+        if let questionFieldIds { body["questionFieldIds"] = .array(questionFieldIds.map { .string($0) }) }
+        return try await send([slug, "score"], method: "POST", body: .object(body), as: BdQuizCompletion.self)
+    }
+
+    /// BD's side of an invited quiz.
+    public func invitationBackend(_ token: String) -> BdQuizBackend {
+        BdQuizBackend(
+            start: { try await startInvitation(token) },
+            saveDraft: { try await saveInvitationDraft(token, answers: $0) },
+            lockAnswer: { try await lockInvitationAnswer(token, fieldId: $0, answer: $1) },
+            submit: { answers, _ in try await submitInvitation(token, answers: answers) }
+        )
+    }
+
+    /// BD's side of a practice run: graded there, never recorded.
+    public func practiceBackend(_ slug: String) -> BdQuizBackend {
+        BdQuizBackend(
+            lockAnswer: { try await checkPracticeAnswer(slug, fieldId: $0, answer: $1) },
+            submit: { try await scorePractice(slug, answers: $0, questionFieldIds: $1) }
+        )
+    }
+}

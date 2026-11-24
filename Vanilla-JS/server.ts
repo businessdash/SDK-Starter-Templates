@@ -59,7 +59,7 @@ if (!apiKey || !siteId || !rawBaseUrl) {
 	);
 }
 
-/** Host root (e.g. https://www.businessdash.us) — sitemap/robots live here. */
+/** Host root (e.g. https://businessdash.us) — sitemap/robots live here. */
 const hostBase = rawBaseUrl ? rawBaseUrl.replace(/\/+$/, "") : null;
 /** Package API base (…/api/package/v1) — the SDK transport target. */
 const packageBase = hostBase

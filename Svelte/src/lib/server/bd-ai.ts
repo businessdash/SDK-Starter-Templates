@@ -7,7 +7,7 @@ import { PUBLIC_BD_SITE_ID, PUBLIC_BD_PACKAGE_API_BASE_URL } from '$app/env/publ
  *
  * Unlike the SDK transport (which wants `…/api/package/v1`), the
  * distribution + MCP handlers take the BD app ORIGIN (e.g.
- * `https://www.businessdash.us`) — the public ai-feed and per-site MCP endpoints
+ * `https://businessdash.us`) — the public ai-feed and per-site MCP endpoints
  * live at the host root. No API key involved: these proxy PUBLIC platform
  * artifacts, and the platform enforces the org's AI Distribution
  * entitlement + MCP opt-in upstream.

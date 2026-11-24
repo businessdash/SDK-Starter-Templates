@@ -12,14 +12,17 @@ import Config
 # ═══════════════════════════════════════════════════════════════════════════
 
 config :bd_starter,
-  bd_host: System.get_env("BD_HOST", "https://www.businessdash.us"),
+  bd_host: System.get_env("BD_HOST", "https://businessdash.us"),
   bd_site_id: System.get_env("BD_SITE_ID"),
   bd_api_key: System.get_env("BD_API_KEY"),
   bd_publishable_key: System.get_env("BD_PK"),
   bd_revalidation_secret: System.get_env("BD_REVALIDATION_SECRET"),
   bd_auth_callback_url: System.get_env("BD_AUTH_CALLBACK_URL"),
   bd_site_origin: System.get_env("BD_SITE_ORIGIN", "http://localhost:4000"),
-  bd_cache_ttl: String.to_integer(System.get_env("BD_CACHE_TTL", "300"))
+  bd_cache_ttl: String.to_integer(System.get_env("BD_CACHE_TTL", "300")),
+  # The home page's contact form and the quiz at /quiz (see .env.example).
+  bd_contact_form: System.get_env("BD_CONTACT_FORM"),
+  bd_quiz: System.get_env("BD_QUIZ")
 
 if config_env() == :prod do
   secret_key_base =

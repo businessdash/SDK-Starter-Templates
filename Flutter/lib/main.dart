@@ -6,6 +6,7 @@ import 'ui/bd_scope.dart';
 import 'ui/cart_page.dart';
 import 'ui/chat_page.dart';
 import 'ui/form_page.dart';
+import 'ui/quiz_page.dart';
 import 'ui/storefront_page.dart';
 
 /// Configuration comes from `--dart-define`, not a `.env` file — there is no
@@ -16,10 +17,12 @@ import 'ui/storefront_page.dart';
 ///       --dart-define=BD_SITE_ID=… \
 ///       --dart-define=BD_PK=pk_… \
 ///       --dart-define=BD_FORM=contact   # optional: the Form tab's live form
+///       --dart-define=BD_QUIZ=onboarding   # optional: the Quiz tab's practice quiz
 const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://businessdash.us');
 const _siteId = String.fromEnvironment('BD_SITE_ID');
 const _publishableKey = String.fromEnvironment('BD_PK');
 const _form = String.fromEnvironment('BD_FORM');
+const _quiz = String.fromEnvironment('BD_QUIZ');
 
 void main() => runApp(const BdStarterApp());
 
@@ -67,6 +70,7 @@ class _HomeState extends State<_Home> {
     CartPage(),
     ChatPage(),
     FormPage(host: _host, publishableKey: _publishableKey, form: _form),
+    QuizPage(host: _host, publishableKey: _publishableKey, quiz: _quiz),
     AccountPage(host: _host, publishableKey: _publishableKey),
   ];
 
@@ -107,6 +111,7 @@ class _HomeState extends State<_Home> {
           NavigationDestination(icon: Icon(Icons.shopping_cart), label: 'Cart'),
           NavigationDestination(icon: Icon(Icons.chat_bubble), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.assignment), label: 'Form'),
+          NavigationDestination(icon: Icon(Icons.quiz), label: 'Quiz'),
           NavigationDestination(icon: Icon(Icons.person), label: 'Account'),
         ],
       ),

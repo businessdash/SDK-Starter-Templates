@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Bd\Auth;
 use App\Bd\Bd;
 use App\Bd\Client;
+use App\Bd\SignInCore;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,11 +18,25 @@ class PortalController extends Controller
 {
     public function index(Request $request): View|RedirectResponse
     {
+        // Back to the page that sent the visitor here (an invitation that
+        // needs the invited account), once they're signed in.
+        $next = SignInCore::safeNext($request->query('next'));
         $session = $this->session($request);
+        if ($session && $next !== null) {
+            return redirect($next);
+        }
         if (! $session) {
-            // The business's own sign-in screen, right here.
+            // The business's own sign-in screen, right here (App\Livewire\SignIn).
+            $failed = $request->query('bd_oauth_error');
+            $message = $request->query('bd_oauth_message');
+
             return view('pages.sign-in', [
                 'start' => $request->query('start') === 'create' ? 'createAccount' : 'signIn',
+                // Back from a provider that didn't finish.
+                'problem' => is_string($failed) && $failed !== ''
+                    ? (is_string($message) && $message !== '' ? $message : 'Sign-in didn\'t finish. Try again.')
+                    : null,
+                'next' => $next,
             ]);
         }
 

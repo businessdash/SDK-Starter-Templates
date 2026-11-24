@@ -3,15 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\Bd\Client;
+use App\Bd\CustomerAuth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Symfony\Component\HttpFoundation\Cookie;
 
 /**
- * The routes behind the sign-in screen on /my-account, at
- * `/api/bd-auth/customer/{path}` — the PHP twin of the JS SDK's
- * `createAuthHandler` customer routes, so the same screen works here.
+ * Customer sign-in as JSON, at `/api/bd-auth/customer/{path}` — the PHP twin
+ * of the JS SDK's `createAuthHandler` customer routes, for apps and pages
+ * that bring their own screen — and the "Continue with …" links the screen
+ * on /my-account (`App\Livewire\SignIn`) uses.
  *
  *   GET  options                      the business's name, colours, providers
  *   POST sign-in | verify | id-token  → sets the httpOnly `bd_session` cookie
@@ -30,16 +31,6 @@ use Symfony\Component\HttpFoundation\Cookie;
  */
 class BdCustomerAuthController extends Controller
 {
-    /** path => [method, sets the session cookie] */
-    private const ROUTES = [
-        'options' => ['GET', false],
-        'sign-in' => ['POST', true],
-        'sign-up' => ['POST', false],
-        'forgot-password' => ['POST', false],
-        'verify' => ['POST', true],
-        'id-token' => ['POST', true],
-    ];
-
     private const PROVIDERS = ['apple', 'google', 'github', 'discord'];
 
     private const PKCE_COOKIE = 'bd_oauth_pkce';
@@ -57,11 +48,11 @@ class BdCustomerAuthController extends Controller
             return $this->oauth($request, $client, substr($path, strlen('oauth/')));
         }
 
-        $route = self::ROUTES[$path] ?? null;
+        $route = CustomerAuth::ROUTES[$path] ?? null;
         if (! $route) {
             return $this->problem(404, 'not_found', 'Not found.');
         }
-        [$method, $setsSession] = $route;
+        [$method] = $route;
         if (! $request->isMethod($method)) {
             return $this->problem(405, 'method_not_allowed', "Use {$method} for customer/{$path}.");
         }
@@ -77,51 +68,24 @@ class BdCustomerAuthController extends Controller
             }
         }
 
-        try {
-            $response = $client->once($method, "auth/customer/{$path}", $body);
-        } catch (\Throwable) {
-            return $this->problem(502, 'unavailable', 'Sign-in isn\'t available just now. Try again in a minute.');
-        }
-
-        $reply = $response->json();
-        $reply = is_array($reply) ? $reply : [];
-        if ($response->failed()) {
-            // BD's own answer (wrong password, expired code…), passed on.
-            $status = $response->status();
-            $message = is_string($reply['message'] ?? null) && trim($reply['message']) !== ''
-                ? $reply['message']
-                : ($status === 429
-                    ? 'That\'s a lot of tries. Wait a few minutes, then try again.'
-                    : 'Sign-in isn\'t available just now. Try again in a minute.');
-            $code = is_string($reply['error'] ?? null)
-                ? $reply['error']
-                : ($status === 429 ? 'too_many_tries' : 'unavailable');
-
-            return $this->problem($status >= 400 && $status <= 599 ? $status : 502, $code, $message);
-        }
-
-        if (! $setsSession) {
-            return response()->json($reply)->header('Cache-Control', 'no-store');
-        }
-        // Sign-in can answer "confirm your email first" (a code was sent).
-        if (is_string($reply['pendingId'] ?? null) && ! array_key_exists('sessionToken', $reply)) {
-            return response()->json($reply)->header('Cache-Control', 'no-store');
-        }
-        if (! is_string($reply['sessionToken'] ?? null) || ! is_string($reply['expiresAt'] ?? null)
-            || strtotime($reply['expiresAt']) === false) {
-            return $this->problem(502, 'unavailable', 'Sign-in isn\'t available just now. Try again in a minute.');
+        $answer = CustomerAuth::forward($client, $path, $body);
+        if (! $answer->isSignedIn()) {
+            // The business's options, a code on its way, or BD's own refusal.
+            return $answer->isAnswered()
+                ? response()->json($answer->body)->header('Cache-Control', 'no-store')
+                : $this->problem($answer->status, $answer->code, $answer->message);
         }
 
         // The token goes in the httpOnly cookie, never to the page.
         return response()
             ->json([
-                'user' => $reply['user'] ?? null,
-                'organizationId' => $reply['organizationId'] ?? null,
-                'role' => $reply['role'] ?? null,
-                'expiresAt' => $reply['expiresAt'],
+                'user' => $answer->body['user'] ?? null,
+                'organizationId' => $answer->body['organizationId'] ?? null,
+                'role' => $answer->body['role'] ?? null,
+                'expiresAt' => $answer->expiresAt,
             ])
             ->header('Cache-Control', 'no-store')
-            ->withCookie($this->sessionCookie($request, $reply['sessionToken'], $reply['expiresAt']));
+            ->withCookie(CustomerAuth::sessionCookie($request, $answer->token, $answer->expiresAt));
     }
 
     private function oauth(Request $request, Client $client, string $rest): RedirectResponse|JsonResponse
@@ -173,7 +137,7 @@ class BdCustomerAuthController extends Controller
 
             return $this->land($returnTo, [])
                 ->withCookie($forget)
-                ->withCookie($this->sessionCookie($request, $session['sessionToken'], $session['expiresAt']));
+                ->withCookie(CustomerAuth::sessionCookie($request, $session['sessionToken'], $session['expiresAt']));
         }
 
         if (! in_array($rest, self::PROVIDERS, true)) {
@@ -216,24 +180,6 @@ class BdCustomerAuthController extends Controller
         ));
     }
 
-    private function sessionCookie(Request $request, string $token, string $expiresAt): Cookie
-    {
-        $expires = strtotime($expiresAt) ?: (time() + 60 * 60 * 24 * 7);
-
-        return cookie(
-            name: config('bd.session_cookie'),
-            value: $token,
-            minutes: max(1, (int) round(($expires - time()) / 60)),
-            path: '/',
-            domain: null,
-            secure: $request->isSecure(),
-            httpOnly: true,
-            raw: false,
-            sameSite: 'lax',
-        );
-    }
-
-    /** @param array<string, string> $params */
     private function land(string $path, array $params): RedirectResponse
     {
         $query = $params ? (str_contains($path, '?') ? '&' : '?').http_build_query($params) : '';

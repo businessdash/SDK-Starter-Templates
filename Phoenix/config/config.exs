@@ -13,7 +13,8 @@ config :bd_starter, BdStarterWeb.Endpoint,
   adapter: Bandit.PhoenixAdapter,
   render_errors: [formats: [html: BdStarterWeb.ErrorHTML], layout: false],
   pubsub_server: BdStarter.PubSub,
-  live_view: [signing_salt: "bd-live"]
+  # At least 8 characters, or LiveView refuses to render (the old "bd-live" was 7).
+  live_view: [signing_salt: "bd-live-view"]
 
 config :esbuild,
   version: "0.21.5",

@@ -3,20 +3,16 @@
 <%!--
   The business's own sign-in screen (its name, logo and brand colours from
   BD): password, emailed codes, and "Continue with Google / Apple / GitHub /
-  Discord". It talks to /api/bd-auth/customer/* on this server
-  (BdCustomerAuthController), which runs each step through BD — WorkOS
-  underneath — and sets the httpOnly session cookie.
-
-  Pinned like the <bd-form> import in the root layout: a CDN import has no
-  lockfile.
+  Discord" — a LiveView (BdStarterWeb.SignInLive) that runs each step through
+  BD, WorkOS underneath, and sets the httpOnly session cookie.
 --%>
-<div class="signin-card" id="bd-sign-in" data-start={@start}></div>
-<script type="module">
-  import { mountBdSignIn } from "https://esm.sh/@businessdash/sdk@0.9.95/sign-in";
-  const host = document.getElementById("bd-sign-in");
-  mountBdSignIn(host, {
-    start: host.dataset.start,
-    redirectTo: "/my-account",
-    brand: { tagline: "Sign in to see your jobs and invoices." },
-  });
+<link rel="stylesheet" href={~p"/bd-sign-in.css"} />
+<div class="signin-card">
+  {live_render(@conn, BdStarterWeb.SignInLive, session: %{"start" => @start, "problem" => @problem, "next" => @next})}
+</div>
+<script>
+  // After LiveView's own focus restore, which runs once the update is applied.
+  window.addEventListener("phx:bd-sign-in-focus", (e) =>
+    requestAnimationFrame(() => document.getElementById(e.detail.id)?.focus())
+  );
 </script>

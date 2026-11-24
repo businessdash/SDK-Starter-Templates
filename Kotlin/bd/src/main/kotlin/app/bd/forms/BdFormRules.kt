@@ -527,7 +527,8 @@ public object BdFormRules {
         return out
     }
 
-    public fun isValidUSZip(zip: String): Boolean = usZipRegex.matches(BdJS.trim(zip))
+    /** A US ZIP (5 digits or ZIP+4), or nothing: an address left blank has no ZIP to check. */
+    public fun isValidUSZip(zip: String): Boolean = BdJS.trim(zip).let { it.isEmpty() || usZipRegex.matches(it) }
 
     public fun emailDomain(email: String): String? {
         val at = email.lastIndexOf('@')

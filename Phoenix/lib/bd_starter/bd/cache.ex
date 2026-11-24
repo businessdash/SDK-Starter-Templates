@@ -70,6 +70,25 @@ defmodule BdStarter.Bd.Cache do
     end
   end
 
+  @doc """
+  Read through the cache for `ttl` seconds, passing a failure back instead of
+  a fallback (nothing is cached for it). For callers that tell a visitor what
+  went wrong, like the forms engine's Package API backend.
+  """
+  @spec remember(String.t(), [String.t()], pos_integer(), (-> {:ok, term()} | {:error, term()})) ::
+          {:ok, term()} | {:error, term()}
+  def remember(key, tags, ttl, fun) do
+    case lookup(key) do
+      {:hit, value} ->
+        {:ok, value}
+
+      :miss ->
+        with {:ok, value} <- fun.() do
+          {:ok, put(key, tags, value, ttl)}
+        end
+    end
+  end
+
   @doc "Drop every entry carrying any of `tags`, then tell listeners."
   @spec purge([String.t()]) :: :ok
   def purge([]), do: :ok
@@ -115,8 +134,7 @@ defmodule BdStarter.Bd.Cache do
     end
   end
 
-  defp put(key, tags, value) do
-    ttl = Application.get_env(:bd_starter, :bd_cache_ttl, 300)
+  defp put(key, tags, value, ttl \\ Application.get_env(:bd_starter, :bd_cache_ttl, 300)) do
     :ets.insert(@table, {key, value, System.monotonic_time(:second) + ttl})
     Enum.each(tags, &:ets.insert(@tags, {&1, key}))
     value

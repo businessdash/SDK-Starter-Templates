@@ -130,12 +130,6 @@ struct SubscriptionListResponse: Content {
     var subscriptions: [SubscriptionPlan] { items }
 }
 
-struct FormSubmitInput: Content {
-    let data: [String: String]
-    let submitterEmail: String?
-    let source: String?
-}
-
 struct DataModelRecord: Content {
     let id: String
     let fields: [String: JSONValue]

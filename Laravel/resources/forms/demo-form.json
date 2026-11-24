@@ -1,0 +1,283 @@
+{
+  "id": "demo",
+  "slug": "demo",
+  "name": "Project inquiry",
+  "description": "A sample form bundled with the starter, checked here and never sent. Set BD_CONTACT_FORM and your BD keys to show one of your own.",
+  "settings": {
+    "isConsecutive": true,
+    "showProgress": true,
+    "progressStyle": "steps",
+    "exitConfirm": {
+      "enabled": true
+    }
+  },
+  "actions": [
+    {
+      "type": "coupon",
+      "coupon": {
+        "code": "WELCOME10",
+        "notice": "Coupon {code} takes 10% off your first project."
+      }
+    }
+  ],
+  "fields": [
+    {
+      "id": "s1",
+      "type": "input_group",
+      "label": "About you",
+      "stepTitle": "About you",
+      "children": [
+        {
+          "id": "name",
+          "type": "name",
+          "label": "Your name",
+          "required": true
+        },
+        {
+          "id": "email",
+          "type": "email",
+          "label": "Email",
+          "required": true,
+          "helpText": "We reply within one business day."
+        },
+        {
+          "id": "phone",
+          "type": "phone",
+          "label": "Phone",
+          "phoneConfig": {
+            "showFlags": true
+          }
+        },
+        {
+          "id": "contact_by",
+          "type": "radio",
+          "label": "Best way to reach you",
+          "required": true,
+          "options": [
+            "Email",
+            "Phone call",
+            "Text message"
+          ]
+        },
+        {
+          "id": "call_block",
+          "type": "condition_block",
+          "conditionRule": {
+            "fieldId": "contact_by",
+            "operator": "eq",
+            "value": "Phone call"
+          },
+          "children": [
+            {
+              "id": "call_time",
+              "type": "time_picker",
+              "label": "Best time to call",
+              "timeConfig": {
+                "mode": "simple",
+                "stepMinutes": 30
+              }
+            }
+          ]
+        },
+        {
+          "id": "address",
+          "type": "address",
+          "label": "Business address"
+        }
+      ]
+    },
+    {
+      "id": "s2",
+      "type": "input_group",
+      "label": "Your project",
+      "stepTitle": "Your project",
+      "children": [
+        {
+          "id": "service",
+          "type": "choice_cards",
+          "label": "What do you need?",
+          "required": true,
+          "choiceConfig": {
+            "mode": "single",
+            "options": [
+              {
+                "label": "New website",
+                "description": "Design and build from scratch.",
+                "price": "from $4,000",
+                "icon": "layout-template"
+              },
+              {
+                "label": "Redesign",
+                "description": "Refresh an existing site.",
+                "price": "from $2,500",
+                "icon": "paintbrush"
+              },
+              {
+                "label": "Ongoing care",
+                "description": "Updates, hosting and support.",
+                "price": "$300/mo",
+                "icon": "life-buoy"
+              }
+            ]
+          }
+        },
+        {
+          "id": "features",
+          "type": "checkbox",
+          "label": "Features",
+          "options": [
+            "Online store",
+            "Booking",
+            "Blog",
+            "Member area"
+          ]
+        },
+        {
+          "id": "industry",
+          "type": "select",
+          "label": "Industry",
+          "options": [
+            "Retail",
+            "Restaurant",
+            "Health",
+            "Professional services",
+            "Trades",
+            "Nonprofit",
+            "Education",
+            "Real estate",
+            "Fitness",
+            "Beauty",
+            "Automotive",
+            "Other"
+          ]
+        },
+        {
+          "id": "hours",
+          "type": "number",
+          "label": "Estimated hours",
+          "allowDecimal": false,
+          "allowNegative": false,
+          "validation": {
+            "min": 1,
+            "max": 500
+          }
+        },
+        {
+          "id": "rate",
+          "type": "slider",
+          "label": "Hourly rate",
+          "sliderConfig": {
+            "min": 50,
+            "max": 200,
+            "step": 25,
+            "unit": "currency"
+          }
+        },
+        {
+          "id": "estimate",
+          "type": "calculation",
+          "label": "Estimate",
+          "calculationConfig": {
+            "mode": "formula",
+            "formula": "hours * rate",
+            "inputMap": [
+              {
+                "variable": "hours",
+                "fieldId": "hours"
+              },
+              {
+                "variable": "rate",
+                "fieldId": "rate"
+              }
+            ],
+            "display": {
+              "prefix": "$",
+              "decimals": 2
+            }
+          }
+        },
+        {
+          "id": "start",
+          "type": "date",
+          "label": "Ideal start date"
+        },
+        {
+          "id": "brand",
+          "type": "color_picker",
+          "label": "Brand color",
+          "options": [
+            "#0F172A",
+            "#2563EB",
+            "#16A34A",
+            "#DC2626",
+            "#F59E0B"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "s3",
+      "type": "input_group",
+      "label": "Details",
+      "stepTitle": "Details",
+      "children": [
+        {
+          "id": "pages",
+          "type": "multi_populator",
+          "label": "Pages",
+          "populatorConfig": {
+            "itemLabel": "Page",
+            "maxInstances": 5,
+            "addButtonLabel": "Add a page"
+          },
+          "children": [
+            {
+              "id": "page_name",
+              "type": "text",
+              "label": "Page name",
+              "required": true
+            },
+            {
+              "id": "page_notes",
+              "type": "textarea",
+              "label": "What goes on it?",
+              "textareaConfig": {
+                "rows": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "brief",
+          "type": "rich_text_input",
+          "label": "Anything else?"
+        },
+        {
+          "id": "files",
+          "type": "file_upload",
+          "label": "Attachments",
+          "fileConfig": {
+            "maxFiles": 3
+          }
+        },
+        {
+          "id": "rating",
+          "type": "star_rating",
+          "label": "How easy was this form?"
+        },
+        {
+          "id": "mood",
+          "type": "happiness_rating",
+          "label": "How do you feel about the project?"
+        },
+        {
+          "id": "consent",
+          "type": "boolean",
+          "label": "Terms",
+          "placeholder": "I agree to be contacted about this inquiry",
+          "mustBeTrue": true
+        }
+      ]
+    }
+  ]
+}

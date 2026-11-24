@@ -49,7 +49,7 @@ For production: `pnpm build` then `pnpm start`.
 | --- | --- | --- |
 | `BD_API_KEY` | yes | Server bearer key. Never sent to the browser. |
 | `BD_SITE_ID` | yes | The BD site UUID. |
-| `BD_PACKAGE_API_BASE_URL` | yes | API origin (e.g. `https://www.businessdash.us`). Normalised to `…/api/package/v1`. |
+| `BD_PACKAGE_API_BASE_URL` | yes | API origin (e.g. `https://businessdash.us`). Normalised to `…/api/package/v1`. |
 | `BD_PUBLIC_KEY` | no | Narrower analytics-only key (defaults to `BD_API_KEY`). |
 | `BD_REVALIDATION_SECRET` | no | `whsec_…` HMAC secret for the revalidation webhook. |
 | `BD_AUTH_CALLBACK_URL` | no | Public `/api/bd-auth/callback` URL; enables customer auth + portal. |
@@ -176,7 +176,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

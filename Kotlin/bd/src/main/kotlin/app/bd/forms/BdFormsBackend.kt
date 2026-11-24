@@ -192,7 +192,8 @@ public class BdPackageFormsBackend(
         this.method = method
         url {
             takeFrom(baseUrl)
-            appendPathSegments("forms", form)
+            // The slug is one segment, even with a "/" in it (encodeURIComponent).
+            appendPathSegments("forms", form, encodeSlash = true)
             if (suffix != null) appendPathSegments(suffix)
         }
         query.forEach { (k, v) -> parameter(k, v) }

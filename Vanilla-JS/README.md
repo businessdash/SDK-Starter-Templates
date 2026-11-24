@@ -92,7 +92,7 @@ bun run print-schema    # print the resolved schema JSON
 | --- | --- | --- |
 | `BD_API_KEY` | for live data | Server-side bearer key |
 | `BD_SITE_ID` | for live data | Your site UUID |
-| `BD_PACKAGE_API_BASE_URL` | for live data | BD host (e.g. `https://www.businessdash.us`) |
+| `BD_PACKAGE_API_BASE_URL` | for live data | BD host (e.g. `https://businessdash.us`) |
 | `BD_PK` | for newsletter | Browser-safe publishable token (`pk_…`, `followers:self`). Injected as `window.__BD_PUBLIC__`; unset → subscribe form shows a "coming soon" placeholder |
 | `BD_REVALIDATION_SECRET` | for webhook | HMAC secret (`whsec_…`) verifying publish events |
 | `BD_AUTH_CALLBACK_URL` | for auth/portal | This server's `/api/bd-auth/callback` URL (register in WorkOS) |
@@ -138,7 +138,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

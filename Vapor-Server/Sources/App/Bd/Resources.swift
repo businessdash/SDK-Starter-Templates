@@ -85,15 +85,8 @@ extension BdClient {
         )
     }
 
-    // MARK: Forms + custom database
-
-    func formSchema(slug: String) async throws -> JSONValue {
-        try await get("forms/\(slug.pathEscaped)")
-    }
-
-    func submitForm(slug: String, input: FormSubmitInput) async throws -> JSONValue {
-        try await post("forms/\(slug.pathEscaped)", body: input)
-    }
+    // MARK: Custom database
+    // (Forms are Sources/App/Forms: the BdForms engine talks to BD itself.)
 
     func records(object: String, limit: Int = 200, cursor: String? = nil) async throws -> DataModelRecordsResponse {
         try await get(sitePath("data-model/records"), query: [

@@ -72,7 +72,7 @@ These run the SDK CLI via `tsx` against `bd.config.ts` (the marketing schema + b
 | --- | --- | --- |
 | `BD_API_KEY` | yes | Per-site package key. **Server-side only.** |
 | `BD_SITE_ID` | yes | Your site uuid. |
-| `BD_PACKAGE_API_BASE_URL` | yes | BD origin (default `https://www.businessdash.us`). |
+| `BD_PACKAGE_API_BASE_URL` | yes | BD origin (default `https://businessdash.us`). |
 | `BD_REVALIDATION_SECRET` | for webhook | HMAC secret (`whsec_…`) for `/api/bd/revalidate`. |
 | `BD_AUTH_CALLBACK_URL` | for auth | Public URL of `/api/bd-auth/callback` (prove its host once in Business Dash → Developer & API keys → Sign-in). |
 | `BD_PUBLIC_ANALYTICS_KEY` | optional | The **only** key ever sent to the browser, for client analytics. Leave blank to keep analytics off. |
@@ -178,7 +178,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 > `client.donations` needs `@businessdash/sdk` 0.9.91 or later, which this
 > starter pins. An app made from an older copy upgrades zod in the same step,

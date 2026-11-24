@@ -66,7 +66,10 @@ Sources/App/
     Resources.swift      the call surface
     Donations.swift      giving page + checkout (see Donations below)
   Controllers/           one per surface + Contexts.swift
+  Forms/                 forms + quizzes, drawn here (FormPage, QuizPage)
+Sources/BdForms/         BD's forms + quiz engine — a generated copy, see below
 Resources/Views/         Leaf templates
+Resources/Forms/         the sample form + quiz shown until BD is connected
 ```
 
 ## Feature parity
@@ -82,10 +85,34 @@ Resources/Views/         Leaf templates
 | **Reviews wall** | `/reviews` | `reviews` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelVariants`, `renderParallelPage` |
 | **Custom database** | `/todos` | `allRecords` |
-| **Sign-in + account** | `/my-account`, `/api/bd-auth/customer/*`, `/api/bd-auth/sign-out` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord), `auth/me`, `customer-portal/work` — `bd_session` httpOnly cookie |
+| **Sign-in + account** | `/my-account` (the sign-in screen, rendered in Swift: `SignInController`, `Bd/SignInCore.swift`; `?next=/path` comes back after), `/api/bd-auth/customer/*`, `/api/bd-auth/sign-out` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord), `auth/me`, `customer-portal/work` — `bd_session` httpOnly cookie |
 | **SEO / AEO** | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | proxied |
-| **Forms proxy** | `/api/bd/forms/:slug` | `formSchema`, `submitForm` |
+| **Forms** | `/forms/:slug`, the home page's contact section (`BD_CONTACT_FORM`) | `forms/:slug` — schema, collection options, uploads, submit (`FormPage`) |
+| **Quizzes** | `/quiz` (`BD_QUIZ`, or a sample), `/quiz/:slug`, `/quiz-invite/:token`, `/quiz-timer/:run` | `quizzes/practice/*`, `quizzes/invitations/*` (`QuizPage`) |
 | **Revalidation** | `POST /api/bd/revalidate` | HMAC verify → purge cache tags |
+
+## Forms and quizzes
+
+Forms and quizzes are drawn on this server by the engine the Swift app starter
+uses. `Sources/BdForms` is that starter's `BdForms` without its SwiftUI views —
+conditions, steps, calculations, validation, uploads and submission; quizzes,
+their clock and grading. `FormPage` and `QuizPage` turn the engine's state into
+HTML with the SDK's `bd-form__*` / `bd-quiz__*` classes (styled by
+`bd-forms.css` and `Public/forms.css`), and htmx posts each change and button
+back so the page updates in place. Without JavaScript they're plain form posts.
+
+- **The engine is a generated copy.** Don't edit `Sources/BdForms` here: change
+  the Swift starter's and run `pnpm gen:native-forms` in BD's `sdk/`.
+- **The secret key stays here.** Uploads and submissions go through this server
+  with `BD_API_KEY`; the browser never talks to BD.
+- **Quiz runs live in this process.** A practice run (or the sample) is kept in
+  memory for 3 hours and found again by the `bd_quiz_run` cookie, and a timed
+  quiz submits itself at zero even if the tab was closed. Behind several
+  instances, pin each visitor to one (sticky sessions). Invitations are read
+  from BD on every page — BD keeps their answers and clock.
+- **Invitation links.** Set the quiz's invite domain (in BD's quiz builder) to
+  this site and BD's invite emails link to `/quiz-invite/<token>`. One that
+  needs the invited account sends the visitor to `/my-account?next=…` and back.
 
 ## Five things that will bite you
 
@@ -101,13 +128,12 @@ Resources/Views/         Leaf templates
 
 ## What this starter does not do
 
-- **No native form renderer.** `<bd-form>` from esm.sh handles conditional blocks, availability pickers and uploads, pointed at this app's own `/api/bd/forms` proxy so the key stays server-side.
 - **A small customer portal only.** `/my-account` has the sign-in screen (password, emailed codes, Google / Apple / GitHub / Discord — WorkOS underneath, through BD's `auth/customer/*`) and, signed in, the customer's jobs. The rest of `PortalResource` is there to build on.
 - **No tests.** The client is exercised by running it; a `XCTVapor` suite would be the natural next step.
 
 ## Verification
 
-`swift build` passes under **Swift 6 language mode**. The server has not been run against a live BD site from this machine.
+`swift build` passes under **Swift 6 language mode**, and `Sources/BdForms` also builds on Linux (Swift 6.0). The forms and quizzes were driven in a browser against the bundled samples and a stand-in for BD's API: a form's steps, validation, uploads and submit; practice, timed and invitation quizzes, including sign-in and back. The server has not been run against a live BD site from this machine.
 
 ## Donations
 
@@ -115,7 +141,7 @@ One-time and monthly gifts, paid to the org's own Stripe account. Your app
 reads the giving page, posts the gift, and sends the donor to the Stripe URL it
 gets back; BusinessDash records the gift, adds the donor as a contact, notifies
 the org and emails the receipt. The full guide, with this starter's code in its
-own tab: [Donations](https://www.businessdash.us/docs/developer/byFeature/donations).
+own tab: [Donations](https://businessdash.us/docs/developer/byFeature/donations).
 
 `Bd/Donations.swift` adds two calls to the app's client
 (`req.application.bd`, nil until configured):

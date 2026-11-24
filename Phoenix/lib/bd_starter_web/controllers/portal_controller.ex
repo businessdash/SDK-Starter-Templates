@@ -3,24 +3,53 @@ defmodule BdStarterWeb.PortalController do
 
   alias BdStarter.Bd
   alias BdStarter.Bd.Auth
+  alias BdStarter.Bd.CustomerAuth
 
   @doc """
   Customer portal. Everything here is per-customer, so nothing is cached — a
   cached portal read would serve one customer's jobs to the next.
   """
   def index(conn, params) do
+    # Where a page that sent the visitor here (a quiz for invited accounts) wants them back.
+    next = BdStarter.Bd.SignInCore.safe_next(params["next"])
+
     case session(conn) do
       nil ->
-        # The business's own sign-in screen, right here.
+        # The business's own sign-in screen, right here (BdStarterWeb.SignInLive).
         render(conn, :sign_in,
-          start: if(params["start"] == "create", do: "createAccount", else: "signIn")
+          next: next,
+          start: if(params["start"] == "create", do: "createAccount", else: "signIn"),
+          # Back from a provider that didn't finish.
+          problem:
+            if(params["bd_oauth_error"],
+              do: present(params["bd_oauth_message"]) || "Sign-in didn't finish. Try again."
+            )
         )
+
+      _session when next != nil ->
+        redirect(conn, to: next)
 
       session ->
         render(conn, :index,
           user: Map.get(session, "user"),
           work: Bd.portal_work(token(conn), Map.get(session, "organizationId"))
         )
+    end
+  end
+
+  @doc """
+  The sign-in screen's finished sign-in: a LiveView can't set a cookie, so it
+  submits the session here, encrypted and good for a minute, and this sets the
+  httpOnly `bd_session` cookie.
+  """
+  def sign_in_handoff(conn, params) do
+    case BdStarterWeb.SignInLive.open_handoff(params["token"] || "") do
+      {:ok, token, age} ->
+        next = BdStarter.Bd.SignInCore.safe_next(params["next"]) || ~p"/my-account"
+        conn |> CustomerAuth.put_session_cookie(token, age) |> redirect(to: next)
+
+      :error ->
+        redirect(conn, to: ~p"/my-account")
     end
   end
 
@@ -74,4 +103,7 @@ defmodule BdStarterWeb.PortalController do
       _ -> default
     end
   end
+
+  defp present(value) when is_binary(value) and value != "", do: value
+  defp present(_), do: nil
 end

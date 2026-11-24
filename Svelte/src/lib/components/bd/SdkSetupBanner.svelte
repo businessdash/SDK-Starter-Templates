@@ -18,7 +18,7 @@
 	const DISMISS_KEY = 'bd-sdk-setup-banner-dismissed';
 	const siteId = PUBLIC_BD_SITE_ID;
 	const pk = PUBLIC_BD_PUBLIC_KEY;
-	const baseUrl = PUBLIC_BD_PACKAGE_API_BASE_URL || 'https://www.businessdash.us';
+	const baseUrl = PUBLIC_BD_PACKAGE_API_BASE_URL || 'https://businessdash.us';
 
 	let hidden = $state(true);
 

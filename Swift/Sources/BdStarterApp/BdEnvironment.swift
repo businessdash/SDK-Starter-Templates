@@ -1,3 +1,4 @@
+import BdForms
 import BdSignIn
 import BusinessDashKit
 import Foundation
@@ -105,6 +106,18 @@ public final class BdEnvironment {
     public var cart: CartResource? {
         guard let client, !visitorToken.isEmpty else { return nil }
         return client.cart(visitorToken: visitorToken)
+    }
+
+    /// Quizzes: BD with the publishable key, plus the signed-in customer's
+    /// session for invitations that need the invited account. A new value
+    /// after sign-in or sign-out, so an open `BdQuiz` reloads.
+    public var quizzes: BdQuizzes? {
+        guard let configuration else { return nil }
+        return BdQuizzes(
+            host: configuration.host,
+            publishableKey: configuration.publishableKey,
+            sessionToken: sessionToken
+        )
     }
 
     public var portal: PortalResource? {

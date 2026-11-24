@@ -7,6 +7,14 @@
 /storage/framework/sessions/*
 /storage/framework/views/*
 /storage/logs/*
+/bootstrap/cache/*
+# Keep the empty folders Laravel writes to: without them a fresh clone's
+# `composer install` (package:discover) and its first page fail.
+!/bootstrap/cache/.gitkeep
+!/storage/framework/cache/.gitkeep
+!/storage/framework/sessions/.gitkeep
+!/storage/framework/views/.gitkeep
+!/storage/logs/.gitkeep
 /vendor
 .env
 .env.backup

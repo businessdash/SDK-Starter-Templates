@@ -275,7 +275,7 @@ public class BdServerSignInBackend<S>(
          */
         public fun businessDash(
             publishableKey: String,
-            host: String = "https://www.businessdash.us",
+            host: String = "https://businessdash.us",
         ): BdServerSignInBackend<BdSignInSession> {
             require(!publishableKey.startsWith("sk_")) { "Use the publishable pk_ key in an app, never a secret sk_ key." }
             return BdServerSignInBackend(

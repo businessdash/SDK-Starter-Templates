@@ -1,0 +1,6 @@
+#extend("base"):
+  #export("title"):#(title)#endexport
+  #export("content"):
+    <div class="quiz-page">#unsafeHTML(quiz)</div>
+  #endexport
+#endextend

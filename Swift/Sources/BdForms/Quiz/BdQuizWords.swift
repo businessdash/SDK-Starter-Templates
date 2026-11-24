@@ -1,0 +1,110 @@
+import Foundation
+
+/// Every word a quiz screen shows. Replace any to reword or localize:
+///
+/// ```swift
+/// var words = BdQuizWords()
+/// words.start = "Begin"
+/// BdQuiz(.practice(slug: "capitals"), quizzes: quizzes, words: words)
+/// ```
+///
+/// The defaults are the TypeScript forms-core's `QUIZ_WORDS`, which BD's
+/// hosted quiz shows; `QuizParityTests` fails if one drifts. `{name}`
+/// placeholders are filled in by ``fill(_:_:)``.
+public struct BdQuizWords: Sendable, Hashable {
+    public var empty = "This quiz has no questions yet."
+    public var readyTitle = "Ready to begin?"
+    public var readyLimitOne = "You have 1 minute. The quiz submits automatically when time expires, and unanswered questions are marked incorrect."
+    public var readyLimitMany = "You have {minutes} minutes. The quiz submits automatically when time expires, and unanswered questions are marked incorrect."
+    public var readyElapsed = "The elapsed timer begins when you press Start. It does not impose a deadline."
+    public var start = "Start quiz"
+    public var starting = "Starting…"
+    public var timeRemaining = "Time remaining"
+    public var elapsedTime = "Elapsed time"
+    public var paused = "Paused"
+    public var questionOf = "Question {number} of {total}"
+    public var answeredOf = "{answered} of {total} answered"
+    public var locksWhenChecked = "Answers lock when checked"
+    public var endNotice = "Answers and rationale appear after the complete quiz is submitted."
+    public var endNoticeHidden = "Your answers are reviewed after you submit."
+    public var checkAnswer = "Check answer"
+    public var lockAnswer = "Lock answer & check"
+    public var checking = "Checking…"
+    public var next = "Next"
+    public var nextQuestion = "Next question"
+    public var back = "Back"
+    public var seeResults = "See results"
+    public var finish = "Finish quiz"
+    public var submit = "Submit quiz"
+    public var submitting = "Submitting…"
+    public var dontKnow = "I don't know"
+    public var required = "{label} is required."
+    public var correct = "Correct"
+    public var partiallyCorrect = "Partially correct"
+    public var incorrect = "Incorrect"
+    public var pendingAi = "AI review pending"
+    public var unscored = "Not scored"
+    public var accurate = "{percent}% accurate"
+    public var yourAnswer = "Your answer"
+    public var acceptedAnswer = "Accepted answer"
+    public var why = "Why"
+    public var whyAccepted = "Why the accepted answer is correct"
+    public var whyOthers = "Why the other choices are wrong"
+    public var noAnswer = "No answer"
+    public var yes = "Yes"
+    public var no = "No"
+    public var resultsEyebrow = "Quiz results"
+    public var provisional = "Provisional score · AI review is still pending"
+    public var passed = "Passing score achieved"
+    public var notPassed = "Passing score not achieved"
+    public var tally = "{correct} / {total} correct"
+    public var timeLimitReached = "Time limit reached"
+    public var completed = "Completed"
+    public var inDuration = "{label} in {duration}"
+    public var messageExcellent = "Excellent. You know this material well."
+    public var messageSolid = "Solid. Review the ones you missed."
+    public var messageGettingThere = "Getting there. Review the ones you missed and try again."
+    public var messageKeepGoing = "Keep going. Study the material and try again."
+    public var retake = "Retake"
+    public var submittedEyebrow = "Quiz submitted"
+    public var submittedTitle = "Thanks — your responses are in."
+    public var submittedBody = "The team will review your answers and follow up with next steps."
+    public var lockedEyebrow = "Quiz complete"
+    public var lockedTitle = "Your results are ready."
+    public var lockedBody = "Sign in — or create a free account with the email this invitation was sent to — to see how you did."
+    public var lockedAction = "Sign in to see your results"
+    public var startFailed = "Couldn't start quiz."
+    public var lockFailed = "Couldn't lock answer."
+    public var submitFailed = "Couldn't submit quiz."
+    public var draftFailed = "Couldn't save quiz progress."
+    public var timedSubmitFailed = "Couldn't submit the timed quiz."
+    public var unscorable = "The answer could not be scored."
+    public var loading = "Loading your quiz…"
+    public var loadFailed = "We couldn't load your quiz just now. Your progress is saved."
+    public var tryAgain = "Try again"
+    public var invalid = "This quiz invitation isn't valid or has been withdrawn."
+    public var expired = "This quiz invitation has expired."
+    public var closed = "This quiz is not currently accepting responses."
+    public var signInTitle = "Sign in to begin"
+    public var switchAccountTitle = "Different account required"
+    public var accountBody = "This invitation must be completed by the account matching {email}."
+    public var signInAction = "Sign in to continue"
+    public var switchAccountAction = "Sign out and switch account"
+    public var eyebrow = "Competency quiz"
+    public var practiceEyebrow = "Practice quiz"
+    public var forRecipient = "For {name}"
+    public var aboutMinutes = "About {minutes} minutes"
+    public var minuteLimit = "{minutes} minute limit"
+    public var authenticatedResponse = "Authenticated response"
+    public var oneResponse = "One response per invitation"
+    public var practiceNote = "Practice — nothing is recorded"
+
+    public init() {}
+
+    /// `{name}` → value; unknown names stay as written.
+    public static func fill(_ template: String, _ values: [String: String]) -> String {
+        template.replacing(/\{([a-zA-Z]+)\}/) { match in
+            values[String(match.output.1)] ?? String(match.output.0)
+        }
+    }
+}
