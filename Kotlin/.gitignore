@@ -8,3 +8,5 @@ captures/
 .externalNativeBuild/
 .cxx/
 /node_modules
+# Kotlin 2 writes its compiler sessions and error logs here.
+.kotlin/

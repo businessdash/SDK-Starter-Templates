@@ -51,6 +51,37 @@ canonicalisation byte for byte.
 Seeding is language-neutral: `bd-records/` is plain JSON, identical across
 every starter. Only the *schema* files are TypeScript.
 
+## PHP version
+
+PHP **8.2.36, 8.3.37, 8.4.28 or 8.5.13**, or later: the 19 November 2026
+security releases. Every earlier build of those branches has critical holes,
+including remote code execution through the session extension
+(CVE-2026-126714, CVE-2026-115560, CVE-2026-129481) and request smuggling in
+PHP-FPM (CVE-2026-129289), on top of October's "PHP2Shell" (CVE-2026-109618,
+CVE-2026-109619). PHP 8.1 and older get no fixes at all.
+
+- `composer install` refuses an older PHP (`require.php` in `composer.json`).
+- The site checks again when it runs (`App\Support\PhpSecurity`), because a
+  server can run an older PHP than the one that installed it: a warning in the
+  log once a day, and a banner when `APP_ENV=local`. Never a public banner,
+  which would tell attackers.
+- It tells BusinessDash the PHP it runs on: every request sends
+  `X-BD-Client: laravel/1 php/8.4.28 laravel-framework/12.73.0`, and nothing
+  else about the app. When a PHP release fixes something serious, your org's
+  admins get a security advisory (Developer → Security) listing the sites
+  still on an older build, until each one reports a fixed version.
+- Check with `php -v` on the server that serves the site, and restart PHP-FPM's
+  workers after updating. Some distributions backport the fixes under the old
+  version number; if yours does, the warning is a false alarm, so check its
+  security advisory.
+- Can't update today? php.net says updating is the only complete fix. Its
+  stopgap for the session upload-progress path is
+  `session.upload_progress.enabled=0` in `php.ini` (or the FPM pool), then a
+  restart of every worker; `ini_set()` and `.user.ini` apply too late.
+
+PHP 8.2's security fixes end on 31 December 2026, and the check flags it after
+that. Use 8.4 or later for anything new.
+
 ## The shape, file-by-file
 
 ```

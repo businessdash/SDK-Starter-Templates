@@ -55,7 +55,9 @@ Node is **not** a runtime dependency — Phoenix ships a standalone esbuild bina
 
 ```
 lib/bd_starter/bd/
-  client.ex          transport: bearer, Origin, access gate, query encoding
+  client.ex          transport: bearer, Origin, access gate, query encoding;
+                     sends X-BD-Client (Elixir, OTP and Phoenix versions) so
+                     BD can send your admins security advisories
   cache.ex           ETS + tag index; purge broadcasts on PubSub
   auth.ex            session validation / sign-out / older hosted page
   webhook.ex         HMAC verification for the publish webhook

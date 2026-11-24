@@ -2,6 +2,7 @@
 
 namespace App\Bd\Forms;
 
+use App\Bd\Client;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
@@ -39,7 +40,7 @@ final class Quizzes
         $headers = [
             'Accept' => 'application/json',
             'Origin' => $this->origin,
-            'X-BD-Client' => 'laravel-quiz/1',
+            'X-BD-Client' => Client::clientHeader(),
         ];
         if ($this->sessionToken !== null) {
             $headers['X-BD-Session-Token'] = $this->sessionToken;

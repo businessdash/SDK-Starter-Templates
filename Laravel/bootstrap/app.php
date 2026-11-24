@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\PhpSecurity;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -24,4 +25,9 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    // A PHP with known critical security holes is logged once a day
+    // (App\Support\PhpSecurity). composer.json refuses to install on one,
+    // but a server can run an older PHP than the one that installed it.
+    ->booted(fn () => PhpSecurity::warnOnce())
+    ->create();

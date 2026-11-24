@@ -98,7 +98,7 @@ defmodule BdStarter.Bd.Client do
         method: method,
         url: client.base_url <> "/" <> String.trim_leading(path, "/"),
         auth: {:bearer, client.api_key},
-        headers: [{"accept", "application/json"}, {"origin", client.origin}],
+        headers: [{"accept", "application/json"}, {"origin", client.origin}, {"x-bd-client", client_header()}],
         receive_timeout: 15_000,
         retry: false
       ]
@@ -115,6 +115,17 @@ defmodule BdStarter.Bd.Client do
     e -> {:error, e}
   end
 
+  @doc """
+  What this app runs, sent with every request so BusinessDash can tell the
+  org's admins when it needs a security update (Developer → Security): the
+  starter, and the Elixir, Erlang/OTP and Phoenix versions. Nothing else.
+  """
+  @spec client_header() :: String.t()
+  def client_header do
+    phoenix = to_string(Application.spec(:phoenix, :vsn) || "")
+    "phoenix/1 elixir/#{System.version()} otp/#{System.otp_release()} phoenix-framework/#{phoenix}"
+  end
+
   @doc "The site's public origin (`BD_SITE_ORIGIN`), e.g. https://www.example.com."
   @spec site_origin(t()) :: String.t()
   def site_origin(client), do: client.origin
@@ -125,7 +136,7 @@ defmodule BdStarter.Bd.Client do
 
   defp request(client, method, path, opts) do
     headers =
-      [{"accept", "application/json"}, {"origin", client.origin}] ++
+      [{"accept", "application/json"}, {"origin", client.origin}, {"x-bd-client", client_header()}] ++
         Keyword.get(opts, :headers, [])
 
     opts =

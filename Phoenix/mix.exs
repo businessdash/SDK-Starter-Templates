@@ -5,7 +5,7 @@ defmodule BdStarter.MixProject do
     [
       app: :bd_starter,
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.16",
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       deps: deps()
@@ -24,17 +24,17 @@ defmodule BdStarter.MixProject do
 
   defp deps do
     [
-      {:phoenix, "~> 1.7.14"},
-      {:phoenix_html, "~> 4.1"},
-      {:phoenix_live_view, "~> 1.0"},
+      {:phoenix, "~> 1.7.25"},
+      {:phoenix_html, "~> 4.4"},
+      {:phoenix_live_view, "~> 1.0 and >= 1.0.20"},
       {:jason, "~> 1.4"},
-      {:bandit, "~> 1.5"},
+      {:bandit, "~> 1.14 and >= 1.14.1"},
       # The only client dependency. There is no Elixir BD package — the
       # Package API is plain REST with a bearer key.
-      {:req, "~> 0.5"},
+      {:req, "~> 0.6 and >= 0.6.1"},
       # For Ecto.UUID.generate/0 only (cart visitor + chat session ids). No
       # repo, no database — this starter stores nothing locally.
-      {:ecto, "~> 3.11"},
+      {:ecto, "~> 3.14 and >= 3.14.3"},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
       {:phoenix_live_reload, "~> 1.5", only: :dev}
     ]

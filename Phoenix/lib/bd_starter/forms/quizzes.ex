@@ -29,7 +29,7 @@ defmodule BdStarter.Forms.Quizzes do
     url = q.endpoint <> "/" <> Enum.map_join(parts, "/", &URI.encode(&1, fn c -> URI.char_unreserved?(c) end))
 
     headers =
-      [{"accept", "application/json"}, {"origin", q.origin}, {"x-bd-client", "phoenix-quiz/1"}] ++
+      [{"accept", "application/json"}, {"origin", q.origin}, {"x-bd-client", BdStarter.Bd.Client.client_header()}] ++
         if(q.session_token, do: [{"x-bd-session-token", q.session_token}], else: []) ++
         if(body != nil, do: [{"content-type", "application/json"}], else: [])
 

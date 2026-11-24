@@ -13,7 +13,7 @@
 		"print-data-model": "bun node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
 	},
 	"dependencies": {
-		"@businessdash/sdk": "^0.9.96",
+		"@businessdash/sdk": "^0.9.97",
 		"zod": "^4.6.7"
 	},
 	"devDependencies": {

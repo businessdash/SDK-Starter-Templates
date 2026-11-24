@@ -14,10 +14,11 @@ use App\Bd\Resources\Marketing;
 use App\Bd\Resources\Notifications;
 use App\Bd\Resources\ParallelPages;
 use App\Bd\Resources\Portal;
-use App\Bd\Resources\Scheduling;
 use App\Bd\Resources\Reviews;
+use App\Bd\Resources\Scheduling;
 use App\Bd\Resources\Storefront;
 use App\Bd\Resources\Subscriptions;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
@@ -135,6 +136,7 @@ class Client
             ->withHeaders([
                 'Accept' => 'application/json',
                 'Origin' => $this->siteOrigin,
+                'X-BD-Client' => self::clientHeader(),
             ])
             ->timeout(15);
 
@@ -278,6 +280,16 @@ class Client
 
     // ── Internals ──────────────────────────────────────────────────────────
 
+    /**
+     * What this app runs, sent with every request so BusinessDash can tell
+     * the org's admins when it needs a security update (Developer →
+     * Security): the starter, and the PHP and Laravel versions. Nothing else.
+     */
+    public static function clientHeader(): string
+    {
+        return 'laravel/1 php/'.PHP_VERSION.' laravel-framework/'.Application::VERSION;
+    }
+
     /** @param array<string, string> $headers */
     private function pending(array $headers): PendingRequest
     {
@@ -287,6 +299,7 @@ class Client
                 // Server-to-server calls carry no browser Origin, but the
                 // platform gates on it. Send the site's real public origin.
                 'Origin' => $this->siteOrigin,
+                'X-BD-Client' => self::clientHeader(),
             ], $headers))
             ->timeout(15)
             ->retry(2, 200, throw: false);

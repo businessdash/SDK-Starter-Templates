@@ -3,6 +3,8 @@
 
     1. The setup banner — shown until BD_SITE_ID is set, so a fresh clone
        tells you what to do instead of rendering a mysteriously empty site.
+       Locally, a PHP with known security holes gets one too (never in
+       production, where it would tell attackers; it's logged there).
     2. The analytics island, loaded from esm.sh as an ES module, which
        records page views. Forms and quizzes are drawn on this server
        (App\Livewire\BdForm and BdQuiz), so this starter still needs no
@@ -22,6 +24,12 @@
     @stack('head')
 </head>
 <body>
+    @if (app()->environment('local') && ($phpProblem = \App\Support\PhpSecurity::problem()))
+        <div class="banner banner-setup" role="alert">
+            <strong>Update PHP.</strong> {{ $phpProblem }}
+            See <code>README.md</code>, “PHP version”.
+        </div>
+    @endif
     @unless (\App\Bd\Bd::configured())
         <div class="banner banner-setup">
             <strong>Not connected to BD.</strong>
@@ -72,7 +80,7 @@
 
     @if (\App\Bd\Bd::configured())
         <script type="module">
-            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.96/analytics-core";
+            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.97/analytics-core";
             createAnalytics({
                 siteId: @json(config('bd.site_id')),
                 baseUrl: @json(rtrim(config('bd.host'), '/') . '/api/package/v1'),

@@ -38,7 +38,7 @@ defmodule BdStarter.Forms.PackageBackend do
         # Server-to-server calls carry no browser Origin, but the platform
         # gates on it. Send the site's real public origin.
         {"origin", b.origin},
-        {"x-bd-client", "phoenix-forms/1"}
+        {"x-bd-client", BdStarter.Bd.Client.client_header()}
       ],
       receive_timeout: 15_000,
       retry: false,
@@ -51,7 +51,7 @@ defmodule BdStarter.Forms.PackageBackend do
   # A JSON body, encoded the way JavaScript would (5.0 is 5).
   defp post(b, url, body), do: request(b, :post, url, body: Json.encode!(body), headers: json_headers(b))
 
-  defp json_headers(b), do: [{"accept", "application/json"}, {"origin", b.origin}, {"x-bd-client", "phoenix-forms/1"}, {"content-type", "application/json"}]
+  defp json_headers(b), do: [{"accept", "application/json"}, {"origin", b.origin}, {"x-bd-client", BdStarter.Bd.Client.client_header()}, {"content-type", "application/json"}]
 
   defp decode(body) do
     Json.decode!(body)

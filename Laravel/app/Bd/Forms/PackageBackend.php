@@ -2,6 +2,7 @@
 
 namespace App\Bd\Forms;
 
+use App\Bd\Client;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -48,7 +49,7 @@ final class PackageBackend implements Backend
                 // Server-to-server calls carry no browser Origin, but the
                 // platform gates on it. Send the site's real public origin.
                 'Origin' => $this->origin,
-                'X-BD-Client' => 'laravel-forms/1',
+                'X-BD-Client' => Client::clientHeader(),
             ])
             ->timeout(15);
     }
