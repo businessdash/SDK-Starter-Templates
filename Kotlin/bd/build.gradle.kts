@@ -11,7 +11,7 @@ plugins {
 // and verifies. `sdk` rather than `bd` because the package rename already
 // happened everywhere else — see BusinessDashKit on the Swift side.
 group = "us.businessdash"
-version = "0.9.93"
+version = "0.9.94"
 
 kotlin {
     jvmToolchain(17)
