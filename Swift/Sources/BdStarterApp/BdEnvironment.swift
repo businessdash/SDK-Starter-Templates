@@ -46,9 +46,9 @@ public final class BdEnvironment {
     }
 
     /// For the native sign-in screen (`BdSignInView`): BD's customer sign-in
-    /// routes, called with the publishable key. The account is the customer's
-    /// own at this business, with its own password; no other business's sign-in
-    /// knows it.
+    /// routes, called with the publishable key — WorkOS underneath. What the
+    /// customer sees once signed in is this business's alone; the login is one
+    /// WorkOS user per email, shared with any other business on BD.
     public var signInBackend: BdServerSignInBackend<BdSignInSession>? {
         guard let configuration else { return nil }
         return .businessDash(publishableKey: configuration.publishableKey, host: configuration.host)

@@ -10,6 +10,10 @@
 /// and runs every rule through the engine in `businessdash_sdk`
 /// (re-exported here): validation, conditions, steps, calculations,
 /// uploads and submission behave exactly as they do on the web.
+///
+/// [BdSignIn] is the business's own sign-in screen, drawn the same way:
+/// password, emailed codes and "Continue with Google / Apple / GitHub /
+/// Discord", through BD's `auth/customer/*` routes (WorkOS underneath).
 library;
 
 export 'package:businessdash_sdk/forms.dart';
@@ -33,3 +37,7 @@ export 'src/style.dart'
         BdLinkOpener,
         bdDefaultHost;
 export 'src/tree.dart' show BdFieldControl;
+
+// The business's own sign-in screen, and the logic behind it.
+export 'src/sign_in.dart' show BdSignIn;
+export 'src/sign_in_core.dart';

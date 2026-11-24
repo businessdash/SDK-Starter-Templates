@@ -735,18 +735,30 @@ export async function serviceAreaPage(origin: string, service: string, area: str
 
 // ── customer portal ────────────────────────────────────────────────
 
-export async function myAccountPage(origin: string, sessionCookie: string | null): Promise<string> {
+export async function myAccountPage(
+	origin: string,
+	sessionCookie: string | null,
+	createAccount = false,
+): Promise<string> {
 	const session = await getSession(sessionCookie);
 	let body: Raw;
 	if (!session) {
+		// The business's own sign-in screen (name, logo and brand colours from
+		// BD): password, emailed codes, and "Continue with Google / Apple /
+		// GitHub / Discord" — WorkOS underneath, through /api/bd-auth, which
+		// sets the session cookie. Mounts in the browser.
+		const start = createAccount ? "createAccount" : "signIn";
 		body = html`<header class="page__head"><h1 class="page__title">My account</h1></header>
-			<div class="signin-card">
-				<p>You're not signed in.</p>
-				<div class="signin-card__actions">
-					<a class="btn btn--primary" href="/api/bd-auth/sign-in">Sign in</a>
-					<a class="btn btn--ghost" href="/api/bd-auth/sign-up">Create account</a>
-				</div>
-			</div>`;
+			<div class="signin-card" id="bd-sign-in" data-start="${start}"></div>
+			<script type="module">
+				import { mountBdSignIn } from "/_sdk/sign-in.js";
+				const host = document.getElementById("bd-sign-in");
+				mountBdSignIn(host, {
+					start: host.dataset.start,
+					redirectTo: "/my-account",
+					brand: { tagline: "Sign in to see your jobs and invoices." },
+				});
+			</script>`;
 	} else {
 		let work: any = {};
 		try {

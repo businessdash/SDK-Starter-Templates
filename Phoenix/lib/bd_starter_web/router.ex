@@ -82,6 +82,14 @@ defmodule BdStarterWeb.Router do
     post "/api/bd/forms/:slug", BdFormController, :submit
   end
 
+  # The sign-in screen on /my-account talks to these (password, emailed codes,
+  # "Continue with Google / Apple / GitHub / Discord"). JSON-only POSTs and no
+  # session yet, so not through :browser's CSRF check.
+  scope "/api/bd-auth/customer", BdStarterWeb do
+    get "/*path", BdCustomerAuthController, :handle
+    post "/*path", BdCustomerAuthController, :handle
+  end
+
   scope "/", BdStarterWeb do
     pipe_through :webhook
     post "/api/bd/revalidate", WebhookController, :handle

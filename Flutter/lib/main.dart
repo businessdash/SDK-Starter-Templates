@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:businessdash_sdk/businessdash_sdk.dart';
+import 'ui/account_page.dart';
 import 'ui/bd_scope.dart';
 import 'ui/cart_page.dart';
 import 'ui/chat_page.dart';
@@ -66,6 +67,7 @@ class _HomeState extends State<_Home> {
     CartPage(),
     ChatPage(),
     FormPage(host: _host, publishableKey: _publishableKey, form: _form),
+    AccountPage(host: _host, publishableKey: _publishableKey),
   ];
 
   @override
@@ -105,6 +107,7 @@ class _HomeState extends State<_Home> {
           NavigationDestination(icon: Icon(Icons.shopping_cart), label: 'Cart'),
           NavigationDestination(icon: Icon(Icons.chat_bubble), label: 'Chat'),
           NavigationDestination(icon: Icon(Icons.assignment), label: 'Form'),
+          NavigationDestination(icon: Icon(Icons.person), label: 'Account'),
         ],
       ),
     );

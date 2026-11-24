@@ -7,10 +7,12 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Mounts the whole tenant-auth flow at `/api/bd-auth/{action}`.
+ * `/api/bd-auth/{action}`: sign-out, and the older hosted sign-in page.
  *
- * `BD_AUTH_CALLBACK_URL` must point at this route's `callback` action and
- * be registered as a redirect URI on the BD site, or `auth/start` refuses.
+ * Signing in happens on /my-account (BdCustomerAuthController). The hosted
+ * page runs only when `BD_AUTH_CALLBACK_URL` points at this route's
+ * `callback` action and is registered as a redirect URI on the BD site;
+ * otherwise sign-in / sign-up links land on /my-account.
  */
 class BdAuthController extends Controller
 {
@@ -19,6 +21,10 @@ class BdAuthController extends Controller
         $auth = Auth::fromConfig();
         if (! $auth) {
             return response('BD auth is not configured.', 503);
+        }
+
+        if (in_array($action, ['sign-in', 'sign-up'], true) && ! $auth->hasHostedPage()) {
+            return redirect($action === 'sign-up' ? '/my-account?start=create' : '/my-account');
         }
 
         return match ($action) {

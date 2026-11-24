@@ -11,12 +11,10 @@
 		</nav>
 		<div class="app-header__account">
 			<!--
-				Plain links work for any stack: the `/api/bd-auth/*` handler
-				owns the WorkOS redirect dance and the `bd_session` cookie.
-				`/my-account` reads the session server-side and shows sign-in
-				when signed out, so we keep the header link simple.
+				`/my-account` reads the session server-side and shows the sign-in
+				screen when signed out, so the header links stay simple.
 			-->
-			<a class="bd-btn bd-btn--ghost app-header__signin" href="/api/bd-auth/sign-in">
+			<a class="bd-btn bd-btn--ghost app-header__signin" href="/my-account">
 				Sign in
 			</a>
 			<a class="bd-btn app-header__account-btn" href="/my-account">My account</a>

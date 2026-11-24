@@ -9,6 +9,7 @@ import {
 } from "@builder.io/qwik-city";
 
 import type { CustomerWorkBundle } from "@businessdash/sdk/contracts";
+import { BdSignIn } from "@businessdash/sdk/qwik";
 
 import { Footer } from "../../components/bd/Footer";
 import { SiteHeader } from "../../components/bd/SiteHeader";
@@ -24,13 +25,24 @@ import {
  *
  *  - `routeLoader$` reads the `bd_session` cookie via `getCustomerSession`
  *    (which calls `getTenantSession`), then loads the work bundle (`getWork`).
- *  - When signed out, we render sign-in / sign-up links to the auth handler.
+ *  - When signed out, we render the business's own sign-in screen
+ *    (`<BdSignIn>`: name, logo and brand colours from BD; password, emailed
+ *    codes, and "Continue with Google / Apple / GitHub / Discord" — WorkOS
+ *    underneath, through /api/bd-auth, which sets the cookie).
  *  - `routeAction$` submits a customer review through the portal.
  */
-export const useAccount = routeLoader$(async ({ cookie }) => {
+export const useAccount = routeLoader$(async ({ cookie, url }) => {
 	const session = await getCustomerSession(cookie);
 	if (!session) {
-		return { configured: isCustomerPortalConfigured(), session: null, work: null };
+		return {
+			configured: isCustomerPortalConfigured(),
+			session: null,
+			work: null,
+			start:
+				url.searchParams.get("start") === "create"
+					? ("createAccount" as const)
+					: ("signIn" as const),
+		};
 	}
 	const work = await getCustomerWork(cookie);
 	return {
@@ -131,20 +143,16 @@ export default component$(() => {
 
 					{!data.value.configured ? (
 						<div class="bd-empty">
-							Customer accounts aren't connected yet. Set
-							<code> BD_AUTH_CALLBACK_URL</code> (see .env.example).
+							Customer accounts aren't connected yet. Set the BD keys (see
+							.env.example).
 						</div>
 					) : !signedIn ? (
-						<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
-							<p>Sign in to view your jobs, quotes, and invoices.</p>
-							<div style="display: flex; gap: 0.75rem;">
-								<a class="bd-btn" href="/api/bd-auth/sign-in">
-									Sign in
-								</a>
-								<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">
-									Create account
-								</a>
-							</div>
+						<div class="bd-card" style="padding: 2rem 1.25rem;">
+							<BdSignIn
+								start={"start" in data.value ? data.value.start : "signIn"}
+								redirectTo="/my-account"
+								brand={{ tagline: "Sign in to view your jobs, quotes, and invoices." }}
+							/>
 						</div>
 					) : (
 						<div style="display: flex; flex-direction: column; gap: 2rem;">

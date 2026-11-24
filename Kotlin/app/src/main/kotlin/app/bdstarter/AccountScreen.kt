@@ -85,8 +85,8 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
 
 /**
  * Signed out, the SDK's native sign-in (`BdSignIn`): the business's name from
- * BD and the app's `brand_logo` drawable, never BD's. A customer's account here
- * is their own at this business, with its own password.
+ * BD and the app's `brand_logo` drawable, never BD's. What a customer sees here
+ * is this business's alone; the login (WorkOS) is one per email.
  */
 @Composable
 fun AccountScreen(modifier: Modifier = Modifier) {

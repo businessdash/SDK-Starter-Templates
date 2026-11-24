@@ -5,12 +5,13 @@ plugins {
 }
 
 // Native sign-in for a business's customers, in the business's brand:
-// `BdSignIn(brand = BdSignInBrand("Acme", logo = …), backend = …)`.
+// `BdSignIn(brand = BdSignInBrand(logo = …), backend = …)`.
 //
-// Email and password, codes by email, and Google through the app's own
-// Credential Manager call. Talks to BD through the app's server
-// (`BdServerSignInBackend`): a native app holds no key. Depends on nothing
-// but Compose.
+// Email and password, codes by email, and "Continue with Google / Apple /
+// GitHub / Discord" (a Custom Tab, back through BdSignInRedirectActivity on
+// the app's own scheme; Google can use the app's Credential Manager call
+// instead). WorkOS underneath, through BD's `auth/customer/` routes, on the
+// publishable key or the app's server. Depends on nothing but Compose.
 android {
     namespace = "app.bd.signin"
     compileSdk = 35
@@ -43,4 +44,6 @@ dependencies {
     // BackHandler.
     implementation(libs.androidx.activity.compose)
     implementation(libs.kotlinx.coroutines.core)
+
+    testImplementation(kotlin("test-junit"))
 }

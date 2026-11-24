@@ -1,3 +1,4 @@
+import { BdSignIn } from "@businessdash/sdk/react";
 import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
 import type {
 	ActionFunctionArgs,
@@ -21,7 +22,12 @@ export async function loader({ request }: LoaderFunctionArgs) {
 	const configured = isCustomerPortalConfigured();
 	const session = await getCustomerSession(request);
 	if (!session) {
-		return { configured, signedIn: false as const };
+		const start = new URL(request.url).searchParams.get("start");
+		return {
+			configured,
+			signedIn: false as const,
+			start: start === "create" ? ("createAccount" as const) : ("signIn" as const),
+		};
 	}
 	const work = await getCustomerWork(request);
 	return {
@@ -96,21 +102,23 @@ export default function MyAccount() {
 
 					{!data.configured ? (
 						<p className="muted">
-							Customer accounts aren't connected yet. Set BD_AUTH_CALLBACK_URL
-							to enable sign-in.
+							Customer accounts aren't connected yet. Set the BD API key and
+							base URL to enable sign-in.
 						</p>
 					) : !data.signedIn ? (
 						<div className="card">
-							<p>You're not signed in.</p>
-							{/* Auth endpoints are resource routes — use plain links. */}
-							<p>
-								<a className="bd-btn" href="/api/bd-auth/sign-in">
-									Sign in
-								</a>{" "}
-								<a className="muted" href="/api/bd-auth/sign-up">
-									or create an account
-								</a>
-							</p>
+							{/*
+							 * The business's own sign-in screen (name, logo and brand
+							 * colours from BD): password, emailed codes, and "Continue
+							 * with Google / Apple / GitHub / Discord" — WorkOS
+							 * underneath, through /api/bd-auth, which sets the
+							 * session cookie. Mounts in the browser.
+							 */}
+							<BdSignIn
+								start={data.start}
+								redirectTo="/my-account"
+								brand={{ tagline: "Sign in to see your jobs and invoices." }}
+							/>
 						</div>
 					) : (
 						<>

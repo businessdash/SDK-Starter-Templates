@@ -81,6 +81,44 @@ defmodule BdStarter.Bd.Client do
     request(client, :delete, path, headers: headers)
   end
 
+  @doc """
+  One call, once: no retries, and BD's answer as sent — `{:ok, status, body}`
+  for any status, `{:error, reason}` only when BD couldn't be reached. For the
+  sign-in routes, where a retry would send a second code or count a second
+  password attempt, and BD's own refusal (wrong password, expired code) is
+  passed on to the screen as is.
+  """
+  @spec once(t() | nil, :get | :post, String.t(), map() | nil) ::
+          {:ok, integer(), map()} | {:error, term()}
+  def once(nil, _method, _path, _body), do: {:error, :not_configured}
+
+  def once(client, method, path, body) do
+    opts =
+      [
+        method: method,
+        url: client.base_url <> "/" <> String.trim_leading(path, "/"),
+        auth: {:bearer, client.api_key},
+        headers: [{"accept", "application/json"}, {"origin", client.origin}],
+        receive_timeout: 15_000,
+        retry: false
+      ]
+      |> then(&if(body, do: Keyword.put(&1, :json, body), else: &1))
+
+    case Req.request(opts) do
+      {:ok, %Req.Response{status: status, body: body}} ->
+        {:ok, status, if(is_map(body), do: body, else: %{})}
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+  rescue
+    e -> {:error, e}
+  end
+
+  @doc "The site's public origin (`BD_SITE_ORIGIN`), e.g. https://www.example.com."
+  @spec site_origin(t()) :: String.t()
+  def site_origin(client), do: client.origin
+
   # ── Internals ─────────────────────────────────────────────────────────────
 
   defp request(nil, _method, _path, _opts), do: {:error, {:transport, :not_configured}}

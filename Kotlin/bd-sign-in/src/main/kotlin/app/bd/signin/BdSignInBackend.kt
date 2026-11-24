@@ -8,9 +8,10 @@ import java.net.HttpURLConnection
 import java.net.URL
 
 /**
- * Where sign-in goes. A business's customers have their own account at that
- * business: their own password, their own codes, nothing shared with another
- * business on BD. These calls are BD's `auth/customer/` routes.
+ * Where sign-in goes: BD's `auth/customer/` routes, which run every password,
+ * code and provider sign-in through WorkOS — the same accounts as BD's hosted
+ * sign-in, so a password, Google, Apple, GitHub and Discord all reach one
+ * person.
  *
  * Those routes take the business's **publishable** key (`tenant_auth:public`
  * is in the publishable scope set), so an app can call BD directly with
@@ -21,7 +22,11 @@ import java.net.URL
 public interface BdSignInBackend<S> {
     /** The business's name and which ways to sign in it offers. */
     public suspend fun options(): BdSignInOptions
-    public suspend fun signIn(email: String, password: String): S
+    /**
+     * Signed in — or, when WorkOS wants the email confirmed first, a code sent
+     * to it (finish with [verify], no new password).
+     */
+    public suspend fun signIn(email: String, password: String): BdPasswordSignIn<S>
     /** Emails a code. The account is made when the code comes back ([verify]). */
     public suspend fun startSignUp(email: String, password: String, firstName: String?, lastName: String?): BdCodeSent
     /** Emails a code for a new password. Unknown emails get the same answer, so nobody can probe who has an account. */
@@ -30,20 +35,59 @@ public interface BdSignInBackend<S> {
     public suspend fun verify(pendingId: String, code: String, newPassword: String?): S
     /** An ID token from Sign in with Google (Credential Manager) or Apple, checked by BD against the business's app. */
     public suspend fun signIn(provider: BdSignInProvider, idToken: String, nonce: String?, firstName: String?, lastName: String?): S
+
+    /**
+     * "Continue with …": WorkOS's link for [provider]. The sign-in comes back to
+     * [redirectUri] (the app's own scheme) with `bd_oauth_code`.
+     */
+    public suspend fun startOAuth(provider: BdOAuthProvider, redirectUri: String, codeChallenge: String): String =
+        throw BdSignInException.unavailable()
+
+    /** Redeems a provider sign-in's `bd_oauth_code` with the PKCE verifier behind its challenge. */
+    public suspend fun finishOAuth(code: String, codeVerifier: String): S = throw BdSignInException.unavailable()
+}
+
+/** What a password sign-in comes to. */
+public sealed interface BdPasswordSignIn<out S> {
+    public data class SignedIn<S>(val session: S) : BdPasswordSignIn<S>
+    /** WorkOS wants the email confirmed first and has emailed a code. */
+    public data class ConfirmEmail(val sent: BdCodeSent) : BdPasswordSignIn<Nothing>
 }
 
 public data class BdSignInOptions(
     /** The business's name, as BD knows it. */
     val name: String? = null,
     val password: Boolean = true,
+    /** Google / Apple from the app's own sign-in (an ID token; the business listed its apps). */
     val apple: Boolean = false,
     val google: Boolean = false,
+    /** "Continue with …" links, through WorkOS, in BD's order. */
+    val oauth: List<BdOAuthProvider> = emptyList(),
+    /**
+     * The business's brand colours (Settings → Branding), `#rrggbb`: the
+     * primary for the main button, the secondary for links. Null (or an
+     * older BD that doesn't send them): the app's own.
+     */
+    val primaryColor: String? = null,
+    val secondaryColor: String? = null,
+    /** The business's logo (https), shown when the app gives none. */
+    val logoUrl: String? = null,
 )
 
 /** A code is on its way (or would be, for an email with no account). */
 public data class BdCodeSent(val pendingId: String, val expiresAt: String)
 
+/** The providers whose ID token the app can get itself (Credential Manager for Google). */
 public enum class BdSignInProvider(public val wire: String) { Apple("apple"), Google("google") }
+
+/** The "Continue with …" providers, in the order the screen shows them. */
+public enum class BdOAuthProvider(public val wire: String) {
+    Apple("apple"), Google("google"), GitHub("github"), Discord("discord");
+
+    public companion object {
+        public fun fromWire(wire: String): BdOAuthProvider? = entries.firstOrNull { it.wire == wire }
+    }
+}
 
 /** An ID token from the app's own Google sign-in, with the raw nonce if it set one. */
 public data class BdIdToken(val idToken: String, val nonce: String? = null)
@@ -107,7 +151,10 @@ public data class BdSignInSession(
  * its key, and answers with:
  *
  * - `sign-up`, `forgot-password`: `{ pendingId, expiresAt }`
- * - `sign-in`, `verify`, `id-token`: its own session, read by [readSession]
+ * - `sign-in`: its own session, read by [readSession] — or `{ pendingId,
+ *   expiresAt }` when the email must be confirmed first
+ * - `verify`, `id-token`, `oauth/exchange`: its own session
+ * - `oauth/start`: `{ url }`
  * - a problem: `{ error, message }` with a 4xx or 5xx status
  */
 public class BdServerSignInBackend<S>(
@@ -118,16 +165,40 @@ public class BdServerSignInBackend<S>(
 ) : BdSignInBackend<S> {
 
     override suspend fun options(): BdSignInOptions = call("options", null).let { o ->
+        fun text(name: String) = o.optString(name).takeIf { o.has(name) && !o.isNull(name) && it.isNotEmpty() }
+        val links = o.optJSONArray("oauth")
         BdSignInOptions(
-            name = o.optString("name").takeIf { o.has("name") && !o.isNull("name") },
+            name = text("name"),
             password = o.optBoolean("password", true),
             apple = o.optBoolean("apple", false),
             google = o.optBoolean("google", false),
+            oauth = (0 until (links?.length() ?: 0)).mapNotNull { BdOAuthProvider.fromWire(links!!.optString(it)) }.distinct(),
+            primaryColor = text("primaryColor"),
+            secondaryColor = text("secondaryColor"),
+            logoUrl = text("logoUrl"),
         )
     }
 
-    override suspend fun signIn(email: String, password: String): S =
-        session("sign-in", JSONObject().put("email", email).put("password", password))
+    override suspend fun signIn(email: String, password: String): BdPasswordSignIn<S> {
+        val text = send("sign-in", JSONObject().put("email", email).put("password", password))
+        val o = runCatching { JSONObject(text) }.getOrNull()
+        if (o != null && o.optString("pendingId").isNotEmpty() && !o.has("sessionToken")) {
+            return BdPasswordSignIn.ConfirmEmail(sent(o))
+        }
+        return BdPasswordSignIn.SignedIn(runCatching { readSession(text) }.getOrElse { throw BdSignInException.unavailable() })
+    }
+
+    override suspend fun startOAuth(provider: BdOAuthProvider, redirectUri: String, codeChallenge: String): String {
+        val url = call(
+            "oauth/start",
+            JSONObject().put("provider", provider.wire).put("redirectUri", redirectUri).put("codeChallenge", codeChallenge),
+        ).optString("url")
+        if (url.isEmpty()) throw BdSignInException.unavailable()
+        return url
+    }
+
+    override suspend fun finishOAuth(code: String, codeVerifier: String): S =
+        session("oauth/exchange", JSONObject().put("code", code).put("codeVerifier", codeVerifier))
 
     override suspend fun startSignUp(email: String, password: String, firstName: String?, lastName: String?): BdCodeSent =
         sent(call("sign-up", JSONObject().put("email", email).put("password", password).putOpt("firstName", firstName).putOpt("lastName", lastName)))

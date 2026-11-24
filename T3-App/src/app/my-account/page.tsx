@@ -1,7 +1,8 @@
 import type { CustomerJobSummary } from "@businessdash/sdk/contracts";
 import type { Metadata } from "next";
 
-import { AuthButtons, SignOutLink } from "@/app/_components/bd/AuthButtons";
+import { SignOutLink } from "@/app/_components/bd/AuthButtons";
+import { SignInScreen } from "@/app/_components/bd/SignInScreen";
 import { BdFooter } from "@/app/_components/bd/Footer";
 import { ReviewForm } from "@/app/_components/bd/ReviewForm";
 import {
@@ -73,7 +74,12 @@ function JobCard({
 	);
 }
 
-export default async function MyAccountPage() {
+export default async function MyAccountPage({
+	searchParams,
+}: {
+	searchParams: Promise<{ start?: string }>;
+}) {
+	const { start } = await searchParams;
 	const configured = isCustomerPortalConfigured();
 	const session = configured ? await getCustomerSession() : null;
 
@@ -95,14 +101,14 @@ export default async function MyAccountPage() {
 
 				{!configured ? (
 					<div className="bd-empty">
-						Accounts aren&apos;t available right now — set
-						BD_AUTH_CALLBACK_URL (and the BD API key + base URL) to enable
-						customer sign-in.
+						Accounts aren&apos;t available right now — set the BD API key
+						and base URL to enable customer sign-in.
 					</div>
 				) : !session ? (
 					<div className="bd-card account__signedout">
-						<p>Sign in to see your jobs, quotes, and invoices.</p>
-						<AuthButtons />
+						<SignInScreen
+							start={start === "create" ? "createAccount" : "signIn"}
+						/>
 					</div>
 				) : (
 					<AccountWork />

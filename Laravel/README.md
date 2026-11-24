@@ -23,7 +23,7 @@ composer install
 cp .env.example .env
 php artisan key:generate
 
-# Fill BD_SITE_ID, BD_API_KEY, BD_AUTH_CALLBACK_URL
+# Fill BD_SITE_ID, BD_API_KEY (sign-in on /my-account needs nothing more)
 php artisan serve
 ```
 
@@ -54,7 +54,7 @@ every starter. Only the *schema* files are TypeScript.
 app/Bd/
   Client.php          transport: bearer, Origin, access gate, query encoding
   Bd.php            app-facing entry: memoised client, tagged cache, fallbacks
-  Auth.php            sign-in / callback / sign-out / session validation
+  Auth.php            session validation / sign-out / older hosted page
   Webhook.php         HMAC verification for the publish webhook
   BdException.php   BdApiException + BdAccessRejectedException
   Resources/          Storefront Cart Checkout Blog Forms Marketing
@@ -80,7 +80,7 @@ resources/views/      layout.blade.php + pages/
 | **Reviews wall** | `/reviews` | `reviews.list({limit, offset})` |
 | **Updates** | `/updates` | `bundle.updates` |
 | **Programmatic SEO** | `/services`, `/services/{service}/{area}` | `parallelPages.listVariants`, `render` |
-| **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `auth.{start,exchange,me,signOut}`, `portal.{getWork,submitReview}` |
+| **Auth + portal** | `/my-account` (sign-in screen), `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.{me,signOut}`, `portal.{getWork,submitReview}` |
 | **Custom database** | `/todos` | `dataModel.listRecords` + `forms.submit` |
 | **Newsletter** | `POST /subscribe` | `followers.join` (site action) |
 | **SEO / AEO** | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | proxied |

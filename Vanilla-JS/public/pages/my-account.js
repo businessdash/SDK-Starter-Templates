@@ -15,16 +15,19 @@ export default async function render(root) {
 	const nodes = [pageHead("My account")];
 
 	if (!data?.signedIn) {
-		nodes.push(
-			el("div", { class: "signin-card" }, [
-				el("p", {}, ["You're not signed in."]),
-				el("div", { class: "signin-card__actions" }, [
-					el("a", { class: "btn btn--primary", href: "/api/bd-auth/sign-in" }, ["Sign in"]),
-					el("a", { class: "btn btn--ghost", href: "/api/bd-auth/sign-up" }, ["Create account"]),
-				]),
-			]),
-		);
+		// The business's own sign-in screen (name, logo and brand colours from
+		// BD): password, emailed codes, and "Continue with Google / Apple /
+		// GitHub / Discord" — WorkOS underneath, through the server's
+		// /api/bd-auth, which sets the session cookie.
+		const { mountBdSignIn } = await import("/_sdk/sign-in.js");
+		const card = el("div", { class: "signin-card" });
+		nodes.push(card);
 		root.replaceChildren(...nodes);
+		mountBdSignIn(card, {
+			start: new URLSearchParams(location.search).get("start") === "create" ? "createAccount" : "signIn",
+			redirectTo: "/my-account",
+			brand: { tagline: "Sign in to see your jobs and invoices." },
+		});
 		return;
 	}
 

@@ -1,11 +1,11 @@
 "use client";
 
-import { SignIn, SignOut, SignUp, useUser } from "@businessdash/sdk/react";
+import { SignOut, useUser } from "@businessdash/sdk/react";
 
 /**
- * WorkOS-backed BD auth entry points. Each renders an anchor to the
- * `/api/bd-auth/*` handler, which redirects to the hosted WorkOS page and
- * sets the `bd_session` cookie on return.
+ * The header's account links. Signing in happens on /my-account, the
+ * business's own sign-in screen (`<BdSignIn>`); signing out clears the
+ * `bd_session` cookie through the `/api/bd-auth` handler.
  *
  * `useUser()` reads the current session from the handler's `/me` route, so the
  * header can swap between "Sign in / Create account" and "My account / Sign
@@ -31,12 +31,12 @@ export function HeaderAuth() {
 
 	return (
 		<span className="header-auth">
-			<SignIn className="header-auth__link" returnTo="/my-account">
+			<a className="header-auth__link" href="/my-account">
 				Sign in
-			</SignIn>
-			<SignUp className="bd-btn header-auth__cta" returnTo="/my-account">
+			</a>
+			<a className="bd-btn header-auth__cta" href="/my-account?start=create">
 				Create account
-			</SignUp>
+			</a>
 		</span>
 	);
 }
@@ -45,23 +45,5 @@ export function HeaderAuth() {
 export function SignOutLink({ className }: { className?: string }) {
 	return (
 		<SignOut className={className ?? "header-auth__link"}>Sign out</SignOut>
-	);
-}
-
-/** Sign-in + create-account block for the my-account signed-out state. */
-export function AuthButtons({
-	returnTo = "/my-account",
-}: {
-	returnTo?: string;
-}) {
-	return (
-		<div className="auth-buttons">
-			<SignIn className="bd-btn" returnTo={returnTo}>
-				Sign in
-			</SignIn>
-			<SignUp className="bd-btn bd-btn--ghost" returnTo={returnTo}>
-				Create an account
-			</SignUp>
-		</div>
 	);
 }

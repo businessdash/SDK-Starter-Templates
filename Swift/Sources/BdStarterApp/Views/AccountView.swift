@@ -15,8 +15,8 @@ import AppKit
 /// fact that makes a native BD app practical.
 ///
 /// Signed out, it's the SDK's native sign-in (`BdSignInView`): the business's
-/// name from BD and the app's "BrandLogo" image, never BD's. A customer's
-/// account here is their own at this business, with its own password.
+/// name from BD and the app's "BrandLogo" image, never BD's. What a customer
+/// sees here is this business's alone; the login (WorkOS) is one per email.
 struct AccountView: View {
     @Environment(BdEnvironment.self) private var bd
 
@@ -33,6 +33,9 @@ struct AccountView: View {
         .navigationTitle("Account")
     }
 
+    /// The app's own scheme for provider sign-ins: its bundle id.
+    private static let oauthScheme = (Bundle.main.bundleIdentifier ?? "bdstarter").lowercased()
+
     @ViewBuilder
     private var signedOut: some View {
         if let backend = bd.signInBackend {
@@ -41,7 +44,10 @@ struct AccountView: View {
                     logo: Self.brandLogo,
                     tagline: "Sign in to see your jobs, quotes and invoices."
                 ),
-                backend: backend
+                backend: backend,
+                // "Continue with Google / GitHub / Discord" come back here,
+                // in the system's sign-in sheet (no Info.plist entry needed).
+                oauthCallbackScheme: Self.oauthScheme
             ) { signedIn in
                 Task { await bd.adopt(signedIn) }
             }

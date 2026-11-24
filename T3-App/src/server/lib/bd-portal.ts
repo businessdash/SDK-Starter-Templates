@@ -39,7 +39,7 @@ function baseConfig(): BaseConfig | null {
 
 /** True when BD customer auth can run (API key + base URL + callback set). */
 export function isCustomerPortalConfigured(): boolean {
-	return baseConfig() !== null && !!env.BD_AUTH_CALLBACK_URL;
+	return baseConfig() !== null;
 }
 
 export type CustomerSession = {

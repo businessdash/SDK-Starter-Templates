@@ -82,17 +82,22 @@ bd/src/main/kotlin/app/bd/
 ## Sign-in
 
 The Account tab is the SDK's native sign-in (`:bd-sign-in`, `BdSignIn`): the
-business's own screen, with its name from BD and your `brand_logo` drawable,
-never BD's. Customers make an account with an email and password, confirmed
-by a 6-digit emailed code, and reset a forgotten password the same way. The
-account is theirs at this business alone: its own password, not shared with
-any other business on BD.
+business's own screen, with its name, logo and brand colours from BD
+(Settings → Branding) — or your `brand_logo` drawable — never BD's.
+Customers make an account with an email and password, confirmed by a 6-digit
+emailed code, reset a forgotten password the same way, or continue with
+Google, Apple, GitHub or Discord. Every box is checked as the person leaves
+it and again on submit.
 
-It runs on the publishable key (`BdServerSignInBackend.businessDash`), so
-there's no deep-link callback and no server. `SessionStore` keeps the session
-token encrypted with an Android Keystore key, and `tenantSession` checks it
-on launch. Signing out is forgetting the token: BD's tokens are signed, not
-stored.
+It's WorkOS underneath, through BD — the same accounts as BD's hosted
+sign-in, so a password and each provider reach one person. It runs on the
+publishable key (`BdServerSignInBackend.businessDash`), with no server.
+Provider sign-ins open in a Custom Tab and come back to
+`{applicationId}://bd-oauth`, which `:bd-sign-in`'s manifest claims for you
+(`BdSignInRedirectActivity`) — keep the `applicationId` lowercase, as URL
+schemes are. `SessionStore` keeps the session token encrypted with an
+Android Keystore key, and `tenantSession` checks it on launch. Signing out
+is forgetting the token: BD's tokens are signed, not stored.
 
 ## Five things that will bite you
 
@@ -122,7 +127,7 @@ The loop also de-duplicates on message id: `since` is only as good as what the s
 Built with Gradle 9.8, AGP 8.7, Kotlin 2.0 and JDK 21 (toolchain 17). There is no Gradle wrapper in the repo; a system `gradle` works, or let Android Studio add one.
 
 - `gradle :bd:test` passes, including the forms parity suite that replays the TypeScript forms-core fixtures. It needs no Android SDK.
-- `gradle :bd-forms:testDebugUnitTest` passes.
+- `gradle :bd-forms:testDebugUnitTest` and `gradle :bd-sign-in:testDebugUnitTest` pass.
 - `gradle :app:assembleDebug` builds, and the Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit.
 - The Shop tab and `BdPackageFormsBackend` against a live site have not been run from this app; they need a real site id and publishable key.
 

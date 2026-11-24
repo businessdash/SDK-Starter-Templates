@@ -2,19 +2,22 @@ import { createAuthHandler } from "@businessdash/sdk";
 import { createFileRoute } from "@tanstack/solid-router";
 
 /**
- * BD customer-auth handler (catch-all). Proxies WorkOS-hosted
- * sign-in / sign-up / callback / sign-out / password-reset / me for
- * the org bound to BD_API_KEY and sets the `bd_session` httpOnly
- * cookie on this domain.
+ * BD customer-auth handler (catch-all) for the org bound to BD_API_KEY.
+ * Behind the sign-in screen on /my-account (`<BdSignIn>`): `customer/*`
+ * (password, emailed codes) and `customer/oauth/*` ("Continue with Google /
+ * Apple / GitHub / Discord"), all WorkOS underneath through BD. It sets the
+ * `bd_session` httpOnly cookie on this domain; `me` and `sign-out` round it
+ * out.
  *
  * Mounted as a splat server route so it serves every sub-route under
  * `/api/bd-auth/*`. The SDK's handler is framework-agnostic — each
  * method is `(request: Request) => Promise<Response>`, so we hand it the
  * incoming `request` and return its `Response` directly.
  *
- * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain)
- * plus the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL. When unset,
- * the route 503s so the rest of the site keeps rendering.
+ * Needs BD_API_KEY + BD_PACKAGE_API_BASE_URL; when unset, the route 503s
+ * so the rest of the site keeps rendering. BD_AUTH_CALLBACK_URL is only
+ * for the older hosted page (`sign-in` / `sign-up` redirects).
+ * When set, its domain must be verified in Business Dash Settings → Domain.
  */
 
 function normalizeBaseUrl(input: string): string {
@@ -31,11 +34,11 @@ const apiKey = process.env.BD_API_KEY ?? "";
 const callbackUrl = process.env.BD_AUTH_CALLBACK_URL ?? "";
 
 const handler =
-	rawBaseUrl && apiKey && callbackUrl
+	rawBaseUrl && apiKey
 		? createAuthHandler({
 				baseUrl: normalizeBaseUrl(rawBaseUrl),
 				apiKey,
-				callbackUrl,
+				...(callbackUrl ? { callbackUrl } : {}),
 				basePath: "/api/bd-auth",
 				defaultReturnTo: "/my-account",
 				signOutReturnTo: "/",

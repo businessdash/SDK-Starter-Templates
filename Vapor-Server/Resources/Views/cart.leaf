@@ -15,7 +15,7 @@
         #endfor
       </ul>
 
-      #(""" Totals arrive DECIMAL; product prices arrive in integer cents. """)
+      <!-- Totals arrive DECIMAL; product prices arrive in integer cents. -->
       <p class="total">Subtotal: #(subtotal)</p>
 
       <form method="post" action="/cart/clear">

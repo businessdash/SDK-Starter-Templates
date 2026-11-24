@@ -30,9 +30,9 @@ const sessionCookie = createCookie("bd_session", {
 	path: "/",
 });
 
-/** True when BD customer auth can run (API key + base URL + callback set). */
+/** True when BD customer auth can run (API key + base URL set). */
 export function isCustomerPortalConfigured(): boolean {
-	return getServerConfig() !== null && !!process.env["BD_AUTH_CALLBACK_URL"];
+	return getServerConfig() !== null;
 }
 
 export type CustomerSession = {

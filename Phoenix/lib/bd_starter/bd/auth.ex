@@ -1,6 +1,11 @@
 defmodule BdStarter.Bd.Auth do
   @moduledoc """
-  Tenant sign-in / sign-up / sign-out.
+  Sessions (`auth/me`), sign-out, and the older hosted sign-in page.
+
+  Signing in normally happens on /my-account — the business's own sign-in
+  screen, backed by `BdStarterWeb.BdCustomerAuthController`
+  (`/api/bd-auth/customer/*`). The hosted page below needs
+  `BD_AUTH_CALLBACK_URL`; nothing else here does:
 
       GET  /api/bd-auth/sign-in?returnTo=/my-account
            → POST auth/start → 302 to the platform-hosted auth page
@@ -21,6 +26,9 @@ defmodule BdStarter.Bd.Auth do
   alias BdStarter.Bd.Client
 
   def callback_url, do: Application.get_env(:bd_starter, :bd_auth_callback_url)
+
+  @doc "The older hosted page is available (a callback URL is set)."
+  def hosted_page?, do: callback_url() not in [nil, ""]
 
   @doc "Where to send the browser to begin. `intent` is \"sign-in\" or \"sign-up\"."
   def start_url(client, intent, return_to, login_hint \\ nil) do

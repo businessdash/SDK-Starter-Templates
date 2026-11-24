@@ -31,9 +31,9 @@ export type CustomerSession = {
 	role: string | null;
 };
 
-/** True when BD customer auth can run (API key + base URL + callback set). */
+/** True when BD customer auth can run (API key + base URL set). */
 export function isCustomerPortalConfigured(): boolean {
-	return getBdBaseConfig() !== null && getAuthCallbackUrl() !== null;
+	return getBdBaseConfig() !== null;
 }
 
 /** Read + validate the current customer session from the `bd_session` cookie. */

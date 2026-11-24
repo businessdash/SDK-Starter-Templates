@@ -1,19 +1,19 @@
 import Foundation
 
 /// One tag for a document `<head>`.
-public struct HeadTag: Sendable, Hashable {
-    public let tag: String
-    public let attributes: [(String, String)]
+struct HeadTag: Sendable, Hashable {
+    let tag: String
+    let attributes: [(String, String)]
     /// Text content — the title string, or a JSON-LD payload.
-    public let children: String?
+    let children: String?
 
-    public static func == (lhs: HeadTag, rhs: HeadTag) -> Bool {
+    static func == (lhs: HeadTag, rhs: HeadTag) -> Bool {
         lhs.tag == rhs.tag && lhs.children == rhs.children
             && lhs.attributes.map(\.0) == rhs.attributes.map(\.0)
             && lhs.attributes.map(\.1) == rhs.attributes.map(\.1)
     }
 
-    public func hash(into hasher: inout Hasher) {
+    func hash(into hasher: inout Hasher) {
         hasher.combine(tag)
         hasher.combine(children)
     }
@@ -42,9 +42,9 @@ public struct HeadTag: Sendable, Hashable {
 ///   consolidates ranking onto the wrong page.
 /// - `robots` is always emitted, both ways. Absence means "index", so relying
 ///   on absence to express noindex is catastrophic.
-public enum Seo {
+enum Seo {
     /// Read the SEO block off a decoded page bundle.
-    public static func headTags(
+    static func headTags(
         from seo: [String: JSONValue]?,
         baseURL: String? = nil
     ) -> [HeadTag] {
@@ -111,7 +111,7 @@ public enum Seo {
     }
 
     /// Ready-to-inject HTML, for a WKWebView or a server-rendered template.
-    public static func render(from seo: [String: JSONValue]?, baseURL: String? = nil) -> String {
+    static func render(from seo: [String: JSONValue]?, baseURL: String? = nil) -> String {
         headTags(from: seo, baseURL: baseURL).map { tag in
             let attrs = tag.attributes
                 .map { "\($0.0)=\"\(escape($0.1))\"" }

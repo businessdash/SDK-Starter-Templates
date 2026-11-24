@@ -45,6 +45,7 @@ const apiKey = process.env.BD_API_KEY;
 // public/private split to consolidate here.
 const siteId = process.env.BD_SITE_ID;
 const rawBaseUrl = process.env.BD_PACKAGE_API_BASE_URL;
+// Only for the older hosted sign-in page; the sign-in screen doesn't need it.
 const callbackUrl = process.env.BD_AUTH_CALLBACK_URL;
 const revalidationSecret = process.env.BD_REVALIDATION_SECRET;
 /** Browser-safe publishable token (`pk_…`, origin-locked, `followers:self`). */
@@ -119,12 +120,16 @@ function publicConfigScript(): string {
 }
 
 /** WorkOS-backed sign-in/up/out + callback, mounted at /api/bd-auth/*. */
+// Behind the sign-in screen on /my-account (<bd-sign-in>): customer/*
+// (password, emailed codes) and customer/oauth/* ("Continue with Google /
+// Apple / GitHub / Discord"), WorkOS underneath through BD. It sets the
+// httpOnly session cookie; me and sign-out round it out.
 const authHandler =
-	apiKey && packageBase && callbackUrl
+	apiKey && packageBase
 		? createAuthHandler({
 				baseUrl: packageBase,
 				apiKey,
-				callbackUrl,
+				...(callbackUrl ? { callbackUrl } : {}),
 				defaultReturnTo: "/my-account",
 				signOutReturnTo: "/",
 			})
@@ -971,6 +976,42 @@ async function serveStatic(pathname: string): Promise<Response | null> {
  * never 404s a stylesheet. The template owns the container background — this
  * sheet leaves it transparent.
  */
+/**
+ * The SDK's sign-in screen (`mountBdSignIn`) for the browser. Pages here load
+ * plain ES modules with no bundler, and a bare `@businessdash/sdk/sign-in`
+ * import doesn't resolve in a browser — so the server bundles it once
+ * (Bun.build, ~10 KB gzipped) and serves it at /_sdk/sign-in.js.
+ */
+let signInBundle: Promise<string | null> | null = null;
+async function serveSdkSignIn(): Promise<Response> {
+	signInBundle ??= (async () => {
+		try {
+			const built = await Bun.build({
+				entrypoints: [Bun.resolveSync("@businessdash/sdk/sign-in", import.meta.dir)],
+				target: "browser",
+				format: "esm",
+				minify: true,
+			});
+			const out = built.outputs.find((o) => o.kind === "entry-point");
+			return built.success && out ? await out.text() : null;
+		} catch (err) {
+			console.error("[bd] couldn't bundle @businessdash/sdk/sign-in", err);
+			return null;
+		}
+	})();
+	const code = await signInBundle;
+	if (!code) {
+		signInBundle = null;
+		return new Response("// @businessdash/sdk/sign-in isn't available\n", {
+			status: 503,
+			headers: { "Content-Type": "text/javascript; charset=utf-8" },
+		});
+	}
+	return new Response(code, {
+		headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "public, max-age=300" },
+	});
+}
+
 async function serveFormsCss(): Promise<Response> {
 	const file = Bun.file("./node_modules/@businessdash/sdk/dist/bd-forms.css");
 	const body = (await file.exists()) ? file : "/* @businessdash/sdk/bd-forms.css not installed yet */\n";
@@ -1038,6 +1079,7 @@ const server = Bun.serve({
 
 		// SDK form stylesheet (served from the installed package).
 		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
+		if (method === "GET" && pathname === "/_sdk/sign-in.js") return serveSdkSignIn();
 
 		// Exact API routes.
 		const exact = routes[`${method} ${pathname}`];

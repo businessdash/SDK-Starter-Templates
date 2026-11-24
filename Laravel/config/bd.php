@@ -38,8 +38,9 @@ return [
     'revalidation_secret' => env('BD_REVALIDATION_SECRET'),
 
     /*
-     * Public, fully-qualified URL of this app's auth callback. Register it as
-     * a redirect URI in your BD site's auth settings.
+     * Optional, only for the older hosted sign-in page: the public URL of
+     * this app's /api/bd-auth/callback, registered as a redirect URI in your
+     * BD site's auth settings. The sign-in screen on /my-account doesn't use it.
      */
     'auth_callback_url' => env('BD_AUTH_CALLBACK_URL'),
 

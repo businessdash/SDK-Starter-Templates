@@ -147,8 +147,8 @@ function navBar(): Raw {
 			<a href="/my-account">Account</a>
 		</nav>
 		<span class="docnav__auth">
-			<a href="/api/bd-auth/sign-in">Sign in</a>
-			<a href="/api/bd-auth/sign-up" class="docnav__cta">Sign up</a>
+			<a href="/my-account">Sign in</a>
+			<a href="/my-account?start=create" class="docnav__cta">Sign up</a>
 		</span>
 	</header>`;
 }

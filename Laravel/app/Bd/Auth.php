@@ -3,9 +3,11 @@
 namespace App\Bd;
 
 /**
- * Tenant sign-in / sign-up / sign-out.
+ * Sessions (`auth/me`), sign-out, and the older hosted sign-in page.
  *
- * The flow, end to end:
+ * Signing in normally happens on /my-account — the business's own sign-in
+ * screen, backed by CustomerAuth (`/api/bd-auth/customer/*`). The hosted
+ * page below needs `BD_AUTH_CALLBACK_URL`; nothing else here does:
  *
  *   GET  /api/bd-auth/sign-in?returnTo=/my-account
  *        → POST auth/start → 302 to the platform-hosted auth page
@@ -26,20 +28,26 @@ class Auth
 {
     public function __construct(
         private readonly Client $client,
-        private readonly string $callbackUrl,
+        private readonly ?string $callbackUrl = null,
     ) {
     }
 
     public static function fromConfig(?Client $client = null): ?self
     {
         $client ??= Client::fromConfig();
-        $callback = config('bd.auth_callback_url');
-
-        if (! $client || ! $callback) {
+        if (! $client) {
             return null;
         }
 
-        return new self($client, $callback);
+        $callback = config('bd.auth_callback_url');
+
+        return new self($client, is_string($callback) && $callback !== '' ? $callback : null);
+    }
+
+    /** The older hosted page is available (a callback URL is set). */
+    public function hasHostedPage(): bool
+    {
+        return $this->callbackUrl !== null;
     }
 
     /**
@@ -49,6 +57,10 @@ class Auth
      */
     public function startUrl(string $intent, string $returnTo, ?string $loginHint = null): string
     {
+        if ($this->callbackUrl === null) {
+            throw new \RuntimeException('BD_AUTH_CALLBACK_URL is not set.');
+        }
+
         $response = $this->client->post('auth/start', array_filter([
             'intent' => $intent === 'sign-up' ? 'sign-up' : 'sign-in',
             'returnTo' => $this->absolutize($returnTo),
@@ -66,6 +78,10 @@ class Auth
      */
     public function exchange(string $code, string $state): array
     {
+        if ($this->callbackUrl === null) {
+            throw new \RuntimeException('BD_AUTH_CALLBACK_URL is not set.');
+        }
+
         $response = $this->client->post('auth/exchange', [
             'code' => $code,
             'state' => $state,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { BdSignIn } from "@businessdash/sdk/vue";
 import { computed } from "vue";
 import BdHeader from "~/components/bd/BdHeader.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
@@ -9,10 +10,16 @@ import type { PortalContext } from "../../server/api/bd/portal/context.get";
 /**
  * Customer account page. Reads the validated session + work bundle from
  * `/api/bd/portal/context` (which checks the `bd_session` cookie
- * server-side). Sign-in / sign-up / sign-out are plain links to the
- * catch-all auth handler at `/api/bd-auth/*` — no client SDK needed.
+ * server-side). Signed out, it shows the business's own sign-in screen
+ * (`<BdSignIn>`: name, logo and brand colours from BD; password, emailed
+ * codes, and "Continue with Google / Apple / GitHub / Discord" — WorkOS
+ * underneath, through the `/api/bd-auth/*` handler, which sets the cookie).
  */
 const { data } = await useFetch<PortalContext>("/api/bd/portal/context");
+const route = useRoute();
+const start = computed(() =>
+	route.query.start === "create" ? "createAccount" : "signIn",
+);
 
 const session = computed(() => data.value?.session ?? null);
 const work = computed(() => data.value?.work ?? null);
@@ -38,26 +45,24 @@ useHead({ title: "My account — Your Business" });
 						<h1 class="bd-section__title">My account</h1>
 					</div>
 					<div class="bd-empty">
-						Customer accounts aren't connected yet. Set
-						<code>NUXT_BD_AUTH_CALLBACK_URL</code> (and the other BD env
-						vars) to enable sign-in.
+						Customer accounts aren't connected yet. Set the BD env vars
+						(<code>NUXT_BD_API_KEY</code>, <code>NUXT_BD_PACKAGE_API_BASE_URL</code>)
+						to enable sign-in.
 					</div>
 				</template>
 
-				<!-- Configured but signed out: show auth links. -->
+				<!-- Configured but signed out: the sign-in screen. -->
 				<template v-else-if="!session">
-					<div class="bd-section__lead">
-						<span class="bd-section__eyebrow">Account</span>
-						<h1 class="bd-section__title">Sign in</h1>
-						<p class="bd-section__sub">
-							Access your jobs, quotes, invoices, and leave a review.
-						</p>
-					</div>
-					<div class="bd-card account-auth">
-						<a class="bd-btn" href="/api/bd-auth/sign-in">Sign in</a>
-						<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">
-							Create account
-						</a>
+					<div class="bd-card account-signin">
+						<ClientOnly>
+							<BdSignIn
+								:start="start"
+								redirect-to="/my-account"
+								:brand="{
+									tagline: 'Access your jobs, quotes, invoices, and leave a review.',
+								}"
+							/>
+						</ClientOnly>
 					</div>
 				</template>
 

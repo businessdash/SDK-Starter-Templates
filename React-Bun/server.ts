@@ -7,7 +7,8 @@
  *      `@businessdash/sdk` — storefront, cart, checkout, subscriptions, reviews,
  *      customer portal, parallel pages, plus the baseline marketing/gallery/
  *      blog/scheduling/forms surfaces.
- *   2. Mounts the WorkOS auth handler (`/api/bd-auth/*`) and the revalidation
+ *   2. Mounts the auth handler (`/api/bd-auth/*`, behind the sign-in screen on
+ *      /my-account — WorkOS underneath, through BD) and the revalidation
  *      webhook (backed by a real in-memory tag cache), and proxies
  *      `/sitemap.xml` + `/robots.txt`.
  *   3. Serves the Vite-built `dist/` in production (with JSON-LD injected into
@@ -45,7 +46,11 @@ const siteId = process.env.VITE_BD_SITE_ID ?? process.env.BD_SITE_ID;
 const rawBaseUrl =
 	process.env.VITE_BD_PACKAGE_API_BASE_URL ??
 	process.env.BD_PACKAGE_API_BASE_URL;
+// Only for the older hosted sign-in page; the sign-in screen doesn't need it.
 const callbackUrl = process.env.BD_AUTH_CALLBACK_URL;
+// The site's own origin, where provider sign-ins come back (in dev, Vite's
+// http://localhost:5173 — the proxy otherwise reports this server's port).
+const siteOrigin = process.env.BD_SITE_ORIGIN;
 const revalidationSecret = process.env.BD_REVALIDATION_SECRET;
 
 if (!apiKey || !siteId || !rawBaseUrl) {
@@ -84,11 +89,12 @@ const distributionConfig = (() => {
 })();
 
 const authHandler =
-	apiKey && packageBase && callbackUrl
+	apiKey && packageBase
 		? createAuthHandler({
 				baseUrl: packageBase,
 				apiKey,
-				callbackUrl,
+				...(callbackUrl ? { callbackUrl } : {}),
+				...(siteOrigin ? { siteOrigin } : {}),
 				defaultReturnTo: "/my-account",
 				signOutReturnTo: "/",
 			})

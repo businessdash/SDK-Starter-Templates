@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\BdAuthController;
+use App\Http\Controllers\BdCustomerAuthController;
 use App\Http\Controllers\BlogController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\FormProxyController;
@@ -56,6 +57,12 @@ Route::get('/todos', [TodosController::class, 'index'])->name('todos');
 Route::post('/todos', [TodosController::class, 'store'])->name('todos.store');
 
 // ── Auth + customer portal ─────────────────────────────────────────────────
+// The sign-in screen on /my-account talks to these (password, emailed codes,
+// "Continue with Google / Apple / GitHub / Discord"). Before {action} below.
+Route::match(['get', 'post'], '/api/bd-auth/customer/{path}', BdCustomerAuthController::class)
+    ->where('path', 'options|sign-in|sign-up|forgot-password|verify|id-token|oauth/[a-z]+')
+    ->name('bd.auth.customer');
+
 Route::match(['get', 'post'], '/api/bd-auth/{action}', BdAuthController::class)
     ->where('action', 'sign-in|sign-up|callback|sign-out')
     ->name('bd.auth');

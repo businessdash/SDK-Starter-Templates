@@ -11,17 +11,17 @@ import Foundation
 
 /// One resolved social profile: which platform, what to call it, and where it
 /// points once the org's raw value has been turned into a real URL.
-public struct SocialProfile: Sendable, Hashable, Identifiable {
-    public let key: String
-    public let label: String
+struct SocialProfile: Sendable, Hashable, Identifiable {
+    let key: String
+    let label: String
     /// A simple-icons slug, or nil for platforms with no icon in that set.
-    public let iconSlug: String?
-    public let url: String
+    let iconSlug: String?
+    let url: String
 
-    public var id: String { key }
+    var id: String { key }
 }
 
-public enum Socials {
+enum Socials {
     /// Normalise one stored value into a real URL.
     ///
     /// Orgs type these by hand, so the same field arrives as
@@ -32,7 +32,7 @@ public enum Socials {
     ///     left alone — the org meant that link;
     ///   - a known platform prefixes its handle, dropping a leading `@`;
     ///   - anything else is assumed to be a bare domain and gets `https://`.
-    public static func href(for value: String, platform: SocialPlatform) -> String {
+    static func href(for value: String, platform: SocialPlatform) -> String {
         let v = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if let scheme = v.range(of: "^(https?://|mailto:|tel:)", options: [.regularExpression, .caseInsensitive]),
            scheme.lowerBound == v.startIndex {
@@ -51,7 +51,7 @@ public enum Socials {
     /// reshuffle itself when the org edits an unrelated field. Empty values and
     /// unknown keys are dropped, and the first value wins if a platform somehow
     /// appears twice.
-    public static func resolve(_ socials: [String: String]?) -> [SocialProfile] {
+    static func resolve(_ socials: [String: String]?) -> [SocialProfile] {
         guard let socials else { return [] }
 
         var present: [String: String] = [:]
@@ -76,7 +76,7 @@ public enum Socials {
 
     /// Case-insensitive lookup, because these keys come from stored JSON where
     /// `twitterX`, `twitterx` and `TWITTERX` are all plausible.
-    public static func platform(forKey key: String) -> SocialPlatform? {
+    static func platform(forKey key: String) -> SocialPlatform? {
         let needle = key.lowercased()
         return SocialPlatforms.all.first { $0.key.lowercased() == needle }
     }
@@ -85,7 +85,7 @@ public enum Socials {
 /// `[String: JSONValue]` is what a decoded bundle actually hands you; this
 /// keeps the string-only `resolve` above usable without a manual conversion.
 extension Socials {
-    public static func resolve(_ socials: [String: JSONValue]?) -> [SocialProfile] {
+    static func resolve(_ socials: [String: JSONValue]?) -> [SocialProfile] {
         guard let socials else { return [] }
         var flat: [String: String] = [:]
         for (key, value) in socials {

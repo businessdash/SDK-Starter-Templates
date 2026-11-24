@@ -87,7 +87,8 @@ is unset.
 | --- | --- | --- |
 | `BD_API_KEY` / `BD_SITE_ID` / `BD_PACKAGE_API_BASE_URL` | for live data | Server-side SDK credentials (proxy only) |
 | `BD_REVALIDATION_SECRET` | for webhook | HMAC secret verifying publish events |
-| `BD_AUTH_CALLBACK_URL` | for auth/portal | The proxy's `/api/bd-auth/callback` URL (register in WorkOS) |
+| `BD_SITE_ORIGIN` | dev | The site's own origin (`http://localhost:5173` in dev), where "Continue with Google / Apple / GitHub / Discord" comes back |
+| `BD_AUTH_CALLBACK_URL` | no | Only for the older hosted sign-in page; the sign-in screen on /my-account doesn't use it |
 | `VITE_BD_SITE_ID` / `VITE_BD_PACKAGE_API_BASE_URL` / `VITE_BD_PUBLIC_KEY` | optional | Client-side analytics (`<BDAnalytics />`) — the public analytics key only |
 
 ### Schema CLI

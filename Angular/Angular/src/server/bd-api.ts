@@ -105,7 +105,7 @@ function ensureVisitorToken(req: ExRequest, res: ExResponse): string {
 // createAuthHandler returns web-standard (request: Request) => Response
 // handlers. We build a web Request from the Express req, run the handler,
 // then write the web Response back to the Express res — preserving the
-// 302 redirects and Set-Cookie headers the WorkOS flow depends on.
+// redirects and Set-Cookie headers the provider sign-ins depend on.
 
 function nodeToWebRequest(req: ExRequest): Request {
 	const proto = (req.headers["x-forwarded-proto"] as string) || req.protocol || "http";
@@ -900,12 +900,16 @@ export function mountBdApi(app: Express): void {
 		res.json(out.ok ? out.data : { variants: [] });
 	});
 
-	// ---- Auth handler (WorkOS) --------------------------------------
-	if (env?.authCallbackUrl) {
+	// ---- Auth handler ------------------------------------------------
+	// Behind the sign-in screen on /my-account (<bd-sign-in>): customer/*
+	// (password, emailed codes) and customer/oauth/* ("Continue with Google /
+	// Apple / GitHub / Discord"), WorkOS underneath through BD. It sets the
+	// httpOnly session cookie; me and sign-out round it out.
+	if (env) {
 		const auth = createAuthHandler({
 			baseUrl: env.baseUrl,
 			apiKey: env.apiKey,
-			callbackUrl: env.authCallbackUrl,
+			...(env.authCallbackUrl ? { callbackUrl: env.authCallbackUrl } : {}),
 			basePath: "/api/bd-auth",
 			defaultReturnTo: "/my-account",
 			signOutReturnTo: "/",

@@ -33,7 +33,7 @@ export const SiteHeader = component$<{ signedIn?: boolean; cartCount?: number }>
 								<a href="/api/bd-auth/sign-out">Sign out</a>
 							</>
 						) : (
-							<a href="/api/bd-auth/sign-in">Sign in</a>
+							<Link href="/my-account">Sign in</Link>
 						)}
 					</nav>
 				</div>

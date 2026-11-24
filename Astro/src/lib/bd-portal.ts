@@ -21,13 +21,9 @@ import { getBdEnv } from "./bd";
 
 const SESSION_COOKIE = "bd_session";
 
-const callbackUrl =
-	import.meta.env.BD_AUTH_CALLBACK_URL ??
-	process.env.BD_AUTH_CALLBACK_URL;
-
-/** True when BD customer auth can run (API key + base URL + callback set). */
+/** True when BD customer auth can run (API key + base URL set). */
 export function isCustomerPortalConfigured(): boolean {
-	return getBdEnv() !== null && !!callbackUrl;
+	return getBdEnv() !== null;
 }
 
 export type CustomerSession = {

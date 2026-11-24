@@ -8,10 +8,13 @@ defmodule BdStarterWeb.PortalController do
   Customer portal. Everything here is per-customer, so nothing is cached — a
   cached portal read would serve one customer's jobs to the next.
   """
-  def index(conn, _params) do
+  def index(conn, params) do
     case session(conn) do
       nil ->
-        redirect(conn, to: "/api/bd-auth/sign-in?returnTo=/my-account")
+        # The business's own sign-in screen, right here.
+        render(conn, :sign_in,
+          start: if(params["start"] == "create", do: "createAccount", else: "signIn")
+        )
 
       session ->
         render(conn, :index,
@@ -27,7 +30,7 @@ defmodule BdStarterWeb.PortalController do
 
     case session(conn) do
       nil ->
-        redirect(conn, to: "/api/bd-auth/sign-in?returnTo=/my-account")
+        redirect(conn, to: ~p"/my-account")
 
       _session when body == "" ->
         conn |> put_flash(:error, "A review needs some text.") |> redirect(to: ~p"/my-account")

@@ -2,8 +2,8 @@ import Foundation
 import Vapor
 
 /// Percent-encode a path segment. The server client has no shared escape
-/// helper, unlike the app one.
-private func esc(_ value: String) -> String {
+/// helper, unlike the app one, so this one is shared (PortalResources uses it).
+func esc(_ value: String) -> String {
     value.addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? value
 }
 

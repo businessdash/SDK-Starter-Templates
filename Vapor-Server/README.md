@@ -82,6 +82,7 @@ Resources/Views/         Leaf templates
 | **Reviews wall** | `/reviews` | `reviews` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelVariants`, `renderParallelPage` |
 | **Custom database** | `/todos` | `allRecords` |
+| **Sign-in + account** | `/my-account`, `/api/bd-auth/customer/*`, `/api/bd-auth/sign-out` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord), `auth/me`, `customer-portal/work` — `bd_session` httpOnly cookie |
 | **SEO / AEO** | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | proxied |
 | **Forms proxy** | `/api/bd/forms/:slug` | `formSchema`, `submitForm` |
 | **Revalidation** | `POST /api/bd/revalidate` | HMAC verify → purge cache tags |
@@ -101,7 +102,7 @@ Resources/Views/         Leaf templates
 ## What this starter does not do
 
 - **No native form renderer.** `<bd-form>` from esm.sh handles conditional blocks, availability pickers and uploads, pointed at this app's own `/api/bd/forms` proxy so the key stays server-side.
-- **No customer portal.** The endpoints exist and the tenant-auth flow is the same three calls the other starters make; it isn't wired here.
+- **A small customer portal only.** `/my-account` has the sign-in screen (password, emailed codes, Google / Apple / GitHub / Discord — WorkOS underneath, through BD's `auth/customer/*`) and, signed in, the customer's jobs. The rest of `PortalResource` is there to build on.
 - **No tests.** The client is exercised by running it; a `XCTVapor` suite would be the natural next step.
 
 ## Verification

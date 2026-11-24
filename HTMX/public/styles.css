@@ -904,11 +904,6 @@ form textarea {
 	background: var(--card);
 	max-width: 32rem;
 }
-.signin-card__actions {
-	display: flex;
-	gap: 0.75rem;
-	margin-top: 0.75rem;
-}
 .account-head {
 	display: flex;
 	align-items: center;

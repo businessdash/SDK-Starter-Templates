@@ -48,6 +48,11 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(
+            name: "BdSignInTests",
+            dependencies: ["BdSignIn"],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .testTarget(
             name: "BdFormsTests",
             dependencies: ["BdForms"],
             resources: [.copy("Fixtures")],

@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { BdSignIn } from '@businessdash/sdk/svelte';
 	import { enhance } from '$app/forms';
+	import { page } from '$app/state';
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
@@ -13,6 +15,7 @@
 	const review = $derived(form?.review as ReviewState | undefined);
 	const user = $derived(data.session?.user);
 	const work = $derived(data.work);
+	const start = $derived(page.url.searchParams.get('start') === 'create' ? 'createAccount' : 'signIn');
 
 	function displayName(): string {
 		if (!user) return '';
@@ -28,17 +31,23 @@
 <main class="bd-section bd-section--narrow">
 	{#if !data.configured}
 		<div class="bd-empty">
-			Customer accounts aren't configured. Set <code>BD_AUTH_CALLBACK_URL</code>
-			(plus the API key + base URL) to enable sign-in.
+			Customer accounts aren't configured. Set the BD API key and base URL to enable
+			sign-in.
 		</div>
 	{:else if !data.session}
+		<!--
+			The business's own sign-in screen (name, logo and brand colours from BD):
+			password, emailed codes, and "Continue with Google / Apple / GitHub /
+			Discord" — WorkOS underneath, through /api/bd-auth, which sets the cookie.
+		-->
 		<div class="bd-card account-signin">
-			<h1 class="bd-section__title">My account</h1>
-			<p>Sign in to view your jobs, quotes and invoices, and to leave a review.</p>
-			<div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
-				<a class="bd-btn" href="/api/bd-auth/sign-in">Sign in</a>
-				<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">Create account</a>
-			</div>
+			{#key start}
+				<BdSignIn
+					{start}
+					redirectTo="/my-account"
+					brand={{ tagline: 'Sign in to view your jobs, quotes and invoices, and to leave a review.' }}
+				/>
+			{/key}
 		</div>
 	{:else}
 		<div class="bd-section__lead" style="text-align: left;">

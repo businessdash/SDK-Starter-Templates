@@ -8,7 +8,10 @@
  * `/api/bd/portal/submit-review`, which calls the portal submit as the
  * signed-in customer.
  *
- * When signed out, prompts a sign-in. When BD auth is unconfigured, says so.
+ * When signed out, shows the business's own sign-in screen (`<bd-sign-in>`:
+ * name, logo and brand colours from BD; password, emailed codes, and
+ * "Continue with Google / Apple / GitHub / Discord" — WorkOS underneath,
+ * through /api/bd-auth). When BD auth is unconfigured, says so.
  */
 import {
 	getCustomerSession,
@@ -20,6 +23,8 @@ import Layout from "../layouts/Layout.astro";
 export const prerender = false;
 
 const configured = isCustomerPortalConfigured();
+const start =
+	Astro.url.searchParams.get("start") === "create" ? "createAccount" : "signIn";
 const session = configured ? await getCustomerSession(Astro.cookies) : null;
 const work = session ? await getCustomerWork(Astro.cookies) : null;
 
@@ -48,27 +53,16 @@ function money(n: number): string {
 				<div class="bd-card account-card">
 					<h2 class="bd-section__title">Accounts aren't connected yet</h2>
 					<p>
-						Set <code>BD_AUTH_CALLBACK_URL</code> (plus the BD keys) and
-						verify the callback's domain in Business Dash Settings → Domain. See{" "}
-						<code>.env.example</code>.
+						Set the BD keys to turn on sign-in. See <code>.env.example</code>.
 					</p>
 				</div>
 			) : !session ? (
 				<div class="bd-card account-card">
-					<span class="bd-badge">Customer portal</span>
-					<h2 class="bd-section__title">Sign in to your account</h2>
-					<p>
-						See your jobs, quotes, and invoices — and leave a review for work
-						we've done.
-					</p>
-					<div style="display: flex; gap: 0.75rem; margin-top: 0.5rem;">
-						<a class="bd-btn" href="/api/bd-auth/sign-in">
-							Sign in
-						</a>
-						<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">
-							Create account
-						</a>
-					</div>
+					<bd-sign-in
+						start={start}
+						redirect-to="/my-account"
+						tagline="See your jobs, quotes, and invoices — and leave a review."
+					/>
 				</div>
 			) : (
 				<>
@@ -287,4 +281,9 @@ function money(n: number): string {
 			}
 		}
 	});
+</script>
+
+<script>
+	// Registers <bd-sign-in>: the screen mounts in the browser.
+	import "@businessdash/sdk/element";
 </script>

@@ -22,6 +22,16 @@ func routes(_ app: Application) throws {
     app.post("cart", "clear", use: CartController.clear)
     app.post("cart", "checkout", use: CartController.checkout)
 
+    // ── Customer account ───────────────────────────────────────────────────
+    // /my-account shows the sign-in screen when signed out; the screen talks
+    // to the customer routes (password, emailed codes, Google / Apple /
+    // GitHub / Discord links — WorkOS underneath, through BD).
+    app.get("my-account", use: AccountController.page)
+    app.on(.GET, "api", "bd-auth", "customer", "**", use: AccountController.customer)
+    app.on(.POST, "api", "bd-auth", "customer", "**", body: .collect(maxSize: "64kb"), use: AccountController.customer)
+    app.get("api", "bd-auth", "sign-out", use: AccountController.signOut)
+    app.post("api", "bd-auth", "sign-out", use: AccountController.signOut)
+
     // ── Machine endpoints ──────────────────────────────────────────────────
     // Same-origin proxy for the <bd-form> web component: the browser gets
     // the schema and posts submissions without ever seeing the bearer key.

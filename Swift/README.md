@@ -55,12 +55,17 @@ struct MyApp: App {
 ```
 
 Sign-in is native (`BdSignIn`): the Account tab shows the business's own
-sign-in screen, with its name from BD and your "BrandLogo" image from the
-asset catalog. Customers make an account with an email and password,
-confirmed by a 6-digit emailed code, and reset a forgotten password the
-same way. The account is theirs at this business alone: its own password,
-not shared with any other business on BD. It runs on the publishable key,
-so there's no callback URL to register and no server to run.
+sign-in screen, with its name, logo and brand colours from BD (Settings →
+Branding) — or your "BrandLogo" image from the asset catalog. Customers make
+an account with an email and password, confirmed by a 6-digit emailed code,
+reset a forgotten password the same way, or continue with Apple (Apple's own
+sheet), Google, GitHub or Discord (the system's sign-in sheet). Every box is
+checked as the person leaves it and again on submit.
+
+It's WorkOS underneath, through BD — the same accounts as BD's hosted
+sign-in, so a password and each provider reach one person. It runs on the
+publishable key: no server to run, and the provider sign-ins come back to
+the app's bundle id as a URL scheme, with no Info.plist entry needed.
 
 For the schema + custom-database flows:
 

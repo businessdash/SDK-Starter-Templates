@@ -5,10 +5,12 @@ defmodule BdStarterWeb.BdAuthController do
   alias BdStarter.Bd.Auth
 
   @doc """
-  The whole tenant-auth flow, mounted at `/api/bd-auth/:action`.
+  `/api/bd-auth/:action`: sign-out, and the older hosted sign-in page.
 
-  `BD_AUTH_CALLBACK_URL` must point at this route's `callback` action AND be
-  registered as a redirect URI on the BD site, or `auth/start` refuses.
+  Signing in happens on /my-account (`BdCustomerAuthController`). The hosted
+  page runs only when `BD_AUTH_CALLBACK_URL` points at this route's `callback`
+  action and is registered as a redirect URI on the BD site; otherwise
+  sign-in / sign-up links land on /my-account.
   """
   def handle(conn, %{"action" => action} = params) do
     case {Bd.client(), action} do
@@ -16,7 +18,11 @@ defmodule BdStarterWeb.BdAuthController do
         send_resp(conn, 503, "BD auth is not configured.")
 
       {client, a} when a in ["sign-in", "sign-up"] ->
-        start(conn, client, a, params)
+        if Auth.hosted_page?() do
+          start(conn, client, a, params)
+        else
+          redirect(conn, to: if(a == "sign-up", do: "/my-account?start=create", else: "/my-account"))
+        end
 
       {client, "callback"} ->
         callback(conn, client, params)

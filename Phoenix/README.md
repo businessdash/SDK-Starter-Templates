@@ -23,7 +23,7 @@ The same shape applies to the revalidation webhook: instead of busting a local c
 ```sh
 mix deps.get
 cp .env.example .env
-# Fill BD_SITE_ID, BD_API_KEY, BD_AUTH_CALLBACK_URL
+# Fill BD_SITE_ID, BD_API_KEY (sign-in on /my-account needs nothing more)
 
 mix phx.server
 ```
@@ -57,7 +57,7 @@ Node is **not** a runtime dependency — Phoenix ships a standalone esbuild bina
 lib/bd_starter/bd/
   client.ex          transport: bearer, Origin, access gate, query encoding
   cache.ex           ETS + tag index; purge broadcasts on PubSub
-  auth.ex            sign-in / callback / sign-out / session validation
+  auth.ex            session validation / sign-out / older hosted page
   webhook.ex         HMAC verification for the publish webhook
   chat_session.ex    ONE poller per conversation, fanned out over PubSub
   resources/         storefront cart checkout blog forms marketing
@@ -82,7 +82,7 @@ lib/bd_starter_web/
 | **Blog** | `/blog`, `/blog/:slug` | `blog.list`, `get`, `comments` |
 | **Reviews wall** | `/reviews` | `reviews.list` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallel_pages.variants`, `render` |
-| **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `auth.*`, `portal.work`, `submit_review` |
+| **Auth + portal** | `/my-account` (sign-in screen), `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.*`, `portal.work`, `submit_review` |
 | **Custom database** | `/todos` | `data_model.list` + `forms.submit` |
 | **Front Desk chat** | `/chat` (LiveView) | `chatbot/messages` via one shared poller |
 | **SEO / AEO** | `/sitemap.xml`, `/robots.txt`, `/llms.txt` | proxied |

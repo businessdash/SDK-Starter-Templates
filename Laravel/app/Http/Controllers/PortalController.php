@@ -19,7 +19,10 @@ class PortalController extends Controller
     {
         $session = $this->session($request);
         if (! $session) {
-            return redirect('/api/bd-auth/sign-in?returnTo=/my-account');
+            // The business's own sign-in screen, right here.
+            return view('pages.sign-in', [
+                'start' => $request->query('start') === 'create' ? 'createAccount' : 'signIn',
+            ]);
         }
 
         $token = $request->cookie(config('bd.session_cookie'));
@@ -44,7 +47,7 @@ class PortalController extends Controller
 
         $session = $this->session($request);
         if (! $session) {
-            return redirect('/api/bd-auth/sign-in?returnTo=/my-account');
+            return redirect('/my-account');
         }
 
         $token = $request->cookie(config('bd.session_cookie'));

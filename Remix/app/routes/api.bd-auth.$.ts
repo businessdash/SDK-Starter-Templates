@@ -5,18 +5,17 @@ import { createAuthHandler } from "@businessdash/sdk";
 import { getServerConfig } from "~/lib/bd.server";
 
 /**
- * BD customer-auth handler (catch-all resource route).
+ * BD customer-auth handler (catch-all resource route) for the org bound to
+ * BD_API_KEY. It serves the sign-in screen on /my-account (`<BdSignIn>`):
+ * `customer/*` (password, emailed codes) and `customer/oauth/*` ("Continue
+ * with Google / Apple / GitHub / Discord"), all WorkOS underneath through
+ * BD. It sets the `bd_session` httpOnly cookie on this domain and keeps the
+ * token out of page scripts. The splat (`$`) makes one route serve every
+ * sub-path under `/api/bd-auth/*`; `me` and `sign-out` round it out.
  *
- * Proxies WorkOS-hosted sign-in / sign-up / callback / sign-out / me /
- * password-reset for the org bound to BD_API_KEY and sets the
- * `bd_session` httpOnly cookie on this domain. The splat (`$`) makes one
- * route serve every sub-path under `/api/bd-auth/*`.
- *
- * Plain links drive it — no client SDK needed:
- *   <a href="/api/bd-auth/sign-in">  /sign-up  /sign-out
- *
- * Requires BD_AUTH_CALLBACK_URL (on a domain you've verified in Business Dash Settings → Domain) plus
- * the existing BD_API_KEY + BD_PACKAGE_API_BASE_URL.
+ * Needs BD_API_KEY + BD_PACKAGE_API_BASE_URL. BD_AUTH_CALLBACK_URL is only
+ * for the older hosted page (`sign-in` / `sign-up` redirects).
+ * When set, its domain must be verified in Business Dash Settings → Domain.
  */
 
 function buildHandler() {
@@ -25,7 +24,9 @@ function buildHandler() {
 	return createAuthHandler({
 		baseUrl: cfg.baseUrl,
 		apiKey: cfg.apiKey,
-		callbackUrl: process.env["BD_AUTH_CALLBACK_URL"] ?? "",
+		...(process.env["BD_AUTH_CALLBACK_URL"]
+			? { callbackUrl: process.env["BD_AUTH_CALLBACK_URL"] }
+			: {}),
 		basePath: "/api/bd-auth",
 		defaultReturnTo: "/my-account",
 		signOutReturnTo: "/",

@@ -1,0 +1,32 @@
+#extend("base"):
+  #export("title"):My account#endexport
+  #export("content"):
+    <h1>My account</h1>
+    #if(signedIn):
+      <p>Signed in as #(email). <a href="/api/bd-auth/sign-out">Sign out</a></p>
+      <section>
+        <h2>Your work</h2>
+        #if(count(jobs) > 0):
+          <ul>
+            #for(job in jobs):
+              <li>#(job.name) — #(job.status)</li>
+            #endfor
+          </ul>
+        #else:
+          <p class="muted">Nothing here yet.</p>
+        #endif
+      </section>
+    #else:
+      <div class="signin-card" id="bd-sign-in" data-start="#(start)"></div>
+      <script type="module">
+        import { mountBdSignIn } from "https://esm.sh/@businessdash/sdk@0.9.94/sign-in";
+        const host = document.getElementById("bd-sign-in");
+        mountBdSignIn(host, {
+          start: host.dataset.start,
+          redirectTo: "/my-account",
+          brand: { tagline: "Sign in to see your jobs and invoices." },
+        });
+      </script>
+    #endif
+  #endexport
+#endextend

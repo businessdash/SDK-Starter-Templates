@@ -23,6 +23,8 @@ dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.0
+  # SHA-256 for the sign-in screen's PKCE challenge (provider sign-ins).
+  crypto: ^3.0.6
   # The font behind CupertinoIcons, for the iOS controls.
   cupertino_icons: ^1.0.8
 

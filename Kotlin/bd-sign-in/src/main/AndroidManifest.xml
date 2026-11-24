@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!--
+            "Continue with Google / Apple / GitHub / Discord" comes back here:
+            {applicationId}://bd-oauth?bd_oauth_code=… (or bd_oauth_error=…).
+            The code is useless without the PKCE verifier the screen kept, so
+            another app claiming the same scheme gets nothing it can use.
+        -->
+        <activity
+            android:name="app.bd.signin.BdSignInRedirectActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.Translucent.NoTitleBar">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:host="bd-oauth"
+                    android:scheme="${applicationId}" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Button, StyleSheet, Text, View } from 'react-native'
 
-import { signIn } from '@/bd/auth'
 import { getBdDev } from '@/bd/client'
-import { clearSessionToken, getSessionToken } from '@/bd/session'
+import { clearSessionToken, getSessionToken, setSessionToken } from '@/bd/session'
+import { SignInScreen } from '@/components/SignInScreen'
 
 /**
  * Customer portal.
@@ -12,10 +12,15 @@ import { clearSessionToken, getSessionToken } from '@/bd/session'
  * `customer_portal:self` and `tenant_auth:public` are both publishable-safe —
  * so this needs no backend-for-frontend. That is the fact that makes a native
  * BD app practical at all.
+ *
+ * Signed out, it's the business's own sign-in screen (`SignInScreen`): its
+ * name, logo and brand colours from BD; password, emailed codes, and
+ * "Continue with Google / Apple / GitHub / Discord" — WorkOS underneath,
+ * through BD's `auth/customer/*` routes. The session token goes to the
+ * Keychain / Keystore (`expo-secure-store`).
  */
 export default function AccountScreen() {
-  const [session, setSession] = useState<{ email?: string | null } | null>(null)
-  const [message, setMessage] = useState<string | null>(null)
+  const [session, setSession] = useState<{ email?: string | null } | null | undefined>(undefined)
 
   async function refresh() {
     const bd = getBdDev()
@@ -40,37 +45,33 @@ export default function AccountScreen() {
     void refresh()
   }, [])
 
-  async function handleSignIn() {
-    const outcome = await signIn()
-    setMessage(outcome.status === 'failed' ? outcome.message : null)
-    if (outcome.status === 'signed-in') await refresh()
-  }
-
   async function handleSignOut() {
     await clearSessionToken()
     setSession(null)
   }
 
+  if (session === undefined) return <View style={styles.screen} />
+
+  if (!session) {
+    return (
+      <SignInScreen
+        tagline="Sign in to see your jobs, quotes and invoices."
+        onSignedIn={async (signedIn) => {
+          if (signedIn.sessionToken) await setSessionToken(signedIn.sessionToken)
+          setSession({ email: signedIn.user.email })
+        }}
+      />
+    )
+  }
+
   return (
     <View style={styles.screen}>
-      {session ? (
-        <>
-          <Text>Signed in as {session.email ?? 'a customer'}.</Text>
-          <Button title="Sign out" onPress={handleSignOut} />
-        </>
-      ) : (
-        <>
-          <Text style={styles.blurb}>Sign in to see your jobs, quotes and invoices.</Text>
-          <Button title="Sign in" onPress={handleSignIn} />
-        </>
-      )}
-      {message ? <Text style={styles.error}>{message}</Text> : null}
+      <Text>Signed in as {session.email ?? 'a customer'}.</Text>
+      <Button title="Sign out" onPress={handleSignOut} />
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: 24, gap: 12, justifyContent: 'center' },
-  blurb: { color: '#6b7280', textAlign: 'center' },
-  error: { color: '#991b1b', fontSize: 12 },
 })

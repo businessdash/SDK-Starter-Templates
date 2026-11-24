@@ -892,16 +892,7 @@ main {
 	text-align: left;
 }
 .account__signedout {
-	padding: 2rem;
-	display: flex;
-	flex-direction: column;
-	gap: 1.25rem;
-	align-items: flex-start;
-}
-.auth-buttons {
-	display: flex;
-	gap: 0.75rem;
-	flex-wrap: wrap;
+	padding: 2rem 1.25rem;
 }
 .account__work {
 	display: flex;

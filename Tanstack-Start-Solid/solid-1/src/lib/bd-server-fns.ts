@@ -859,7 +859,7 @@ export type MyAccountData = {
 export const getMyAccount = createServerFn({ method: "GET" }).handler(
 	async (): Promise<MyAccountData> => {
 		const cfg = bdRawConfig();
-		const configured = cfg !== null && !!process.env.BD_AUTH_CALLBACK_URL;
+		const configured = cfg !== null;
 		const session = await readCustomerSession();
 		if (!session) return { configured, session: null, work: null };
 		let work: CustomerWorkBundle | null = null;

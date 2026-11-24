@@ -1,3 +1,4 @@
+import { BdSignIn } from "@businessdash/sdk/solid";
 import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, Show } from "solid-js";
 
@@ -6,12 +7,17 @@ import { getMyAccount, submitCustomerReview } from "../lib/bd-server-fns";
 /**
  * Customer portal home. The loader reads the `bd_session` cookie via
  * `getTenantSession` and, when signed in, pulls the customer's work
- * bundle (`getWork()`). Sign-in / sign-up / sign-out are plain links to
- * the `/api/bd-auth/*` catch-all handler — no client SDK needed. A
- * signed-in customer can submit a review (lands pending for moderation).
+ * bundle (`getWork()`). Signed out, it shows the business's own sign-in
+ * screen (`<BdSignIn>`: name, logo and brand colours from BD; password,
+ * emailed codes, and "Continue with Google / Apple / GitHub / Discord" —
+ * WorkOS underneath, through the `/api/bd-auth/*` handler, which sets the
+ * cookie). A signed-in customer can submit a review (lands pending for
+ * moderation).
  */
 export const Route = createFileRoute("/my-account")({
 	component: MyAccount,
+	validateSearch: (search: Record<string, unknown>): { start?: "create" } =>
+		search.start === "create" ? { start: "create" } : {},
 	loader: () => getMyAccount(),
 });
 
@@ -19,6 +25,7 @@ function MyAccount() {
 	const data = Route.useLoaderData();
 	const session = () => data().session;
 	const work = () => data().work;
+	const search = Route.useSearch();
 
 	return (
 		<main>
@@ -32,31 +39,22 @@ function MyAccount() {
 					when={data().configured}
 					fallback={
 						<div class="bd-empty">
-							Customer accounts aren't connected yet. Set{" "}
-							<code>BD_AUTH_CALLBACK_URL</code> (plus the BD API key + base
-							URL) in <code>.env</code>.
+							Customer accounts aren't connected yet. Set the BD API key and
+							base URL in <code>.env</code>.
 						</div>
 					}
 				>
 					<Show
 						when={session()}
 						fallback={
-							<div
-								class="bd-card"
-								style="padding: 2rem; text-align: center; display: flex; flex-direction: column; gap: 1rem; align-items: center;"
-							>
-								<p>Sign in to view your jobs, quotes, and invoices.</p>
-								<div style="display: flex; gap: 0.75rem;">
-									<a class="bd-btn" href="/api/bd-auth/sign-in">
-										Sign in
-									</a>
-									<a
-										class="bd-btn bd-btn--ghost"
-										href="/api/bd-auth/sign-up"
-									>
-										Create account
-									</a>
-								</div>
+							<div class="bd-card" style="padding: 2rem 1.25rem;">
+								<BdSignIn
+									start={search().start === "create" ? "createAccount" : "signIn"}
+									redirectTo="/my-account"
+									brand={{
+										tagline: "Sign in to view your jobs, quotes, and invoices.",
+									}}
+								/>
 							</div>
 						}
 					>

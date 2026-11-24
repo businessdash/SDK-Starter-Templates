@@ -1,19 +1,23 @@
-import { ChangeDetectionStrategy, Component, OnInit, signal } from "@angular/core";
+import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
+import { ActivatedRoute } from "@angular/router";
+import { BdSignInComponent } from "@businessdash/sdk/angular";
 import { bdApi, type PortalMe } from "../lib/bd-api.client";
 
 /**
  * Customer portal. The auth handler (mounted at /api/bd-auth/*) sets an
  * httpOnly session cookie; the server reads it and returns the signed-in
  * user plus their work bundle (open jobs etc.) from `/api/bd/portal/me`.
- * Signed-out visitors get sign-in / sign-up links (plain hrefs — the handler
- * 302s through WorkOS). Signed-in customers can submit a review (reactive
+ * Signed-out visitors get the business's own sign-in screen (<bd-sign-in>:
+ * name, logo and brand colours from BD; password, emailed codes, and
+ * "Continue with Google / Apple / GitHub / Discord" — WorkOS underneath,
+ * through the handler). Signed-in customers can submit a review (reactive
  * form → `/api/bd/portal/review`).
  */
 @Component({
 	selector: "bd-my-account-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ReactiveFormsModule],
+	imports: [ReactiveFormsModule, BdSignInComponent],
 	template: `
 		<section class="section">
 			<h1 class="section__title">My account</h1>
@@ -21,11 +25,11 @@ import { bdApi, type PortalMe } from "../lib/bd-api.client";
 			@if (state() === "loading") {
 				<p class="muted">Loading…</p>
 			} @else if (!me()?.signedIn) {
-				<p class="muted">Sign in to see your jobs, quotes, and invoices.</p>
-				<p class="account-links">
-					<a class="bd-btn" href="/api/bd-auth/sign-in">Sign in</a>
-					<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-up">Create account</a>
-				</p>
+				<bd-sign-in
+					[start]="start"
+					redirectTo="/my-account"
+					[brand]="{ tagline: 'Sign in to see your jobs, quotes, and invoices.' }"
+				/>
 			} @else if (me(); as m) {
 				<p>
 					Signed in as <strong>{{ m.user?.firstName || m.user?.email }}</strong>
@@ -92,6 +96,10 @@ import { bdApi, type PortalMe } from "../lib/bd-api.client";
 })
 export class MyAccountPage implements OnInit {
 	readonly me = signal<PortalMe | null>(null);
+	readonly start =
+		inject(ActivatedRoute).snapshot.queryParamMap.get("start") === "create"
+			? ("createAccount" as const)
+			: ("signIn" as const);
 	readonly state = signal<"loading" | "ready">("loading");
 	readonly reviewStatus = signal<"idle" | "sending" | "sent" | "error">("idle");
 

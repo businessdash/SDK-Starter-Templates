@@ -14,7 +14,8 @@
  *   BD_SITE_ID                 your site uuid
  *   BD_PACKAGE_API_BASE_URL    your BD origin (default https://www.businessdash.us)
  *   BD_REVALIDATION_SECRET     HMAC secret for the revalidate webhook
- *   BD_AUTH_CALLBACK_URL       public URL of /api/bd-auth/callback
+ *   BD_AUTH_CALLBACK_URL       optional: /api/bd-auth/callback, only for the
+ *                              older hosted sign-in page
  *
  * Everything no-ops gracefully when env is unset: `getBd()` returns null,
  * and the JSON endpoints answer with empty/placeholder shapes so the site

@@ -19,6 +19,7 @@ use App\Bd\Resources\Reviews;
 use App\Bd\Resources\Storefront;
 use App\Bd\Resources\Subscriptions;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -118,6 +119,36 @@ class Client
         }
 
         return $decoded;
+    }
+
+    /**
+     * One call, once: no retries, and the response as BD sent it (status
+     * and body). For the sign-in routes, where a retry would send a second
+     * code or count a second password attempt, and BD's own refusal (wrong
+     * password, expired code) is passed on to the screen as is.
+     *
+     * @param  array<string, mixed>|null  $body
+     */
+    public function once(string $method, string $path, ?array $body = null): Response
+    {
+        $request = Http::withToken($this->apiKey)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Origin' => $this->siteOrigin,
+            ])
+            ->timeout(15);
+
+        return $request->send(
+            $method,
+            $this->baseUrl.'/'.ltrim($path, '/'),
+            $body === null ? [] : ['json' => $body],
+        );
+    }
+
+    /** The site's public origin (`BD_SITE_ORIGIN`), e.g. https://www.example.com. */
+    public function siteOrigin(): string
+    {
+        return rtrim($this->siteOrigin, '/');
     }
 
     /** @param array<string, mixed> $query */

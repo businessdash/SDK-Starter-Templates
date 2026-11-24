@@ -127,6 +127,41 @@ async function proxySitemap(): Promise<Response> {
 // template still boots before the SDK is installed.
 const FORMS_CSS_FILE = Bun.file("./node_modules/@businessdash/sdk/dist/bd-forms.css");
 
+// ── SDK sign-in screen ─────────────────────────────────────────────
+// `mountBdSignIn` for the browser. No bundler here, and a bare
+// `@businessdash/sdk/sign-in` import doesn't resolve in a browser — so the
+// server bundles it once (Bun.build, ~10 KB gzipped) and serves it at
+// /_sdk/sign-in.js for /my-account to import.
+let signInBundle: Promise<string | null> | null = null;
+async function serveSdkSignIn(): Promise<Response> {
+	signInBundle ??= (async () => {
+		try {
+			const built = await Bun.build({
+				entrypoints: [Bun.resolveSync("@businessdash/sdk/sign-in", import.meta.dir)],
+				target: "browser",
+				format: "esm",
+				minify: true,
+			});
+			const out = built.outputs.find((o) => o.kind === "entry-point");
+			return built.success && out ? await out.text() : null;
+		} catch (err) {
+			console.error("[bd] couldn't bundle @businessdash/sdk/sign-in", err);
+			return null;
+		}
+	})();
+	const code = await signInBundle;
+	if (!code) {
+		signInBundle = null;
+		return new Response("// @businessdash/sdk/sign-in isn't available\n", {
+			status: 503,
+			headers: { "Content-Type": "text/javascript; charset=utf-8" },
+		});
+	}
+	return new Response(code, {
+		headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "public, max-age=300" },
+	});
+}
+
 async function serveFormsCss(): Promise<Response> {
 	const body = (await FORMS_CSS_FILE.exists()) ? await FORMS_CSS_FILE.text() : "";
 	return new Response(body, {
@@ -213,6 +248,7 @@ const server = Bun.serve({
 
 		// SDK forms stylesheet (served from node_modules; <link>ed on form pages).
 		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
+		if (method === "GET" && pathname === "/_sdk/sign-in.js") return serveSdkSignIn();
 
 		// Same-origin proxy for the <bd-form> web component (the contact form).
 		// The browser never sees the bearer key — these run server-side. GET the
@@ -336,7 +372,10 @@ const server = Bun.serve({
 			if (pathname === "/todos") return htmlResponse(await todosPage(url.origin));
 			if (pathname === "/services") return htmlResponse(await servicesPage(url.origin));
 			if (svcMatch) return htmlResponse(await serviceAreaPage(url.origin, decodeURIComponent(svcMatch[1]!), decodeURIComponent(svcMatch[2]!)));
-			if (pathname === "/my-account") return htmlResponse(await myAccountPage(url.origin, getCookie(req, SESSION_COOKIE)));
+			if (pathname === "/my-account")
+				return htmlResponse(
+					await myAccountPage(url.origin, getCookie(req, SESSION_COOKIE), url.searchParams.get("start") === "create"),
+				);
 		}
 
 		// Static files from ./public/ (index.html gets analytics injected).

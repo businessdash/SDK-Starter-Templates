@@ -1,3 +1,4 @@
+import { BdSignIn } from "@businessdash/sdk/react";
 import { useState } from "react";
 import { bd } from "../lib/bd";
 import type { Loose } from "../lib/bd";
@@ -48,15 +49,17 @@ export function MyAccount() {
 			<main className="page">
 				<PageHead title="My account" />
 				<div className="signin-card">
-					<p>You're not signed in.</p>
-					<div className="signin-card__actions">
-						<a className="btn btn--primary" href="/api/bd-auth/sign-in">
-							Sign in
-						</a>
-						<a className="btn btn--ghost" href="/api/bd-auth/sign-up">
-							Create account
-						</a>
-					</div>
+					{/*
+					 * The business's own sign-in screen (name, logo and brand colours
+					 * from BD): password, emailed codes, and "Continue with Google /
+					 * Apple / GitHub / Discord" — WorkOS underneath, through the Bun
+					 * server's /api/bd-auth, which sets the session cookie.
+					 */}
+					<BdSignIn
+						start={new URLSearchParams(window.location.search).get("start") === "create" ? "createAccount" : "signIn"}
+						redirectTo="/my-account"
+						brand={{ tagline: "Sign in to see your jobs and invoices." }}
+					/>
 				</div>
 			</main>
 		);

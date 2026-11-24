@@ -120,8 +120,28 @@ The **Form tab** (`lib/ui/form_page.dart`) shows the Live form named by `--dart-
 
 Styling, localization, custom renderers, the headless `BdFormController` and card collection are covered in [Native Forms (Flutter)](https://businessdash.us/docs/developer/byFeature/forms/native-flutter).
 
+## Sign-in
+
+The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in screen, `BdSignIn` from `businessdash_forms` — the same screen as `<BdSignIn>` on the web and the Swift / Kotlin starters' native ones, drawn like `BdForm` (Material on Android, Cupertino on iOS): the business's name, logo and brand colours from BD (primary on the button, secondary on links), each box checked when you leave it and all of them when you press the button, password sign-in, create account and reset with an emailed code. Every step is BD's `auth/customer/*` routes with the publishable key; WorkOS is underneath.
+
+"Continue with Google / Apple / GitHub / Discord" (whichever the business has switched on) opens WorkOS's page for the provider with `flutter_web_auth_2` — ASWebAuthenticationSession on iOS, a Custom Tab on Android — and comes back to `bdstarter://bd-oauth` with a one-time code only this sign-in's PKCE verifier can redeem. iOS needs no setup. On Android, add the plugin's callback activity to `android/app/src/main/AndroidManifest.xml`, inside `<application>`:
+
+```xml
+<activity
+  android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
+  android:exported="true"
+  android:taskAffinity="">
+  <intent-filter android:label="flutter_web_auth_2">
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.DEFAULT" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="bdstarter" />
+  </intent-filter>
+</activity>
+```
+
 ## What this starter does not do
-- **No sign-in / customer portal UI.** The scopes allow it (`tenant_auth:public`, `customer_portal:self`); the hosted auth flow needs a deep-link callback the way the Swift starter does.
+- **The session isn't persisted.** Keep `session.sessionToken` in `flutter_secure_storage` so a sign-in survives a relaunch; the customer-portal screens are yours to build on it.
 - **The visitor token isn't persisted.** See above — one line with `shared_preferences`.
 - **No widget tests for the shop, cart and chat screens.** The forms package has them; the app screens don't.
 

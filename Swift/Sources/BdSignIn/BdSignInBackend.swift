@@ -1,8 +1,9 @@
 import Foundation
 
-/// Where sign-in goes. A business's customers have their own account at that
-/// business: their own password, their own codes, nothing shared with another
-/// business on BD. These calls are BD's `auth/customer/*` routes.
+/// Where sign-in goes: BD's `auth/customer/*` routes, which run every
+/// password, code and provider sign-in through WorkOS — the same accounts as
+/// BD's hosted sign-in, so a password, Apple, Google, GitHub and Discord all
+/// reach one person.
 ///
 /// Those routes take the business's **publishable** key (`tenant_auth:public`
 /// is in the publishable scope set), so an app can call BD directly with
@@ -17,7 +18,9 @@ public protocol BdSignInBackend: Sendable {
 
     /// The business's name and which ways to sign in it offers.
     func options() async throws -> BdSignInOptions
-    func signIn(email: String, password: String) async throws -> Session
+    /// Signed in — or, when WorkOS wants the email confirmed first, a code sent
+    /// to it (finish with ``verify(pendingId:code:newPassword:)``, no new password).
+    func signIn(email: String, password: String) async throws -> BdPasswordSignIn<Session>
     /// Emails a code. A new account is made when the code comes back (``verify(pendingId:code:newPassword:)``).
     func startSignUp(email: String, password: String, firstName: String?, lastName: String?) async throws -> BdCodeSent
     /// Emails a code for a new password. Unknown emails get the same answer, so nobody can probe who has an account.
@@ -26,20 +29,64 @@ public protocol BdSignInBackend: Sendable {
     func verify(pendingId: String, code: String, newPassword: String?) async throws -> Session
     /// An ID token from Sign in with Apple or Google, checked by BD against the business's app.
     func signIn(provider: BdSignInProvider, idToken: String, nonce: String?, firstName: String?, lastName: String?) async throws -> Session
+    /// "Continue with …": WorkOS's link for the provider. The sign-in comes back
+    /// to `redirectURI` (the app's own scheme) with `bd_oauth_code`.
+    func startOAuth(provider: BdOAuthProvider, redirectURI: String, codeChallenge: String) async throws -> URL
+    /// Redeems a provider sign-in's `bd_oauth_code` with the PKCE verifier behind its challenge.
+    func finishOAuth(code: String, codeVerifier: String) async throws -> Session
+}
+
+extension BdSignInBackend {
+    public func startOAuth(provider: BdOAuthProvider, redirectURI: String, codeChallenge: String) async throws -> URL {
+        throw BdSignInError.unavailable
+    }
+
+    public func finishOAuth(code: String, codeVerifier: String) async throws -> Session {
+        throw BdSignInError.unavailable
+    }
+}
+
+/// What a password sign-in comes to.
+public enum BdPasswordSignIn<Session: Sendable>: Sendable {
+    case signedIn(Session)
+    /// WorkOS wants the email confirmed first and has emailed a code.
+    case confirmEmail(BdCodeSent)
 }
 
 public struct BdSignInOptions: Codable, Sendable, Equatable {
     /// The business's name, as BD knows it.
     public var name: String?
     public var password: Bool
+    /// Apple / Google from the app's own sheet (the business listed its app ids).
     public var apple: Bool
     public var google: Bool
+    /// "Continue with …" links, through WorkOS, as BD lists them. Read
+    /// ``oauthProviders`` — unknown names are skipped there.
+    public var oauth: [String]?
+    /// The business's brand colours (Settings → Branding), `#rrggbb`: the
+    /// primary for the main button, the secondary for links. nil (or an older
+    /// BD that doesn't send them): the app's own.
+    public var primaryColor: String?
+    public var secondaryColor: String?
+    /// The business's logo (https), shown when the app gives none.
+    public var logoUrl: String?
 
-    public init(name: String? = nil, password: Bool = true, apple: Bool = false, google: Bool = false) {
+    /// The links to offer, in BD's order.
+    public var oauthProviders: [BdOAuthProvider] { (oauth ?? []).compactMap(BdOAuthProvider.init(rawValue:)) }
+
+    public init(
+        name: String? = nil, password: Bool = true, apple: Bool = false, google: Bool = false,
+        oauth: [BdOAuthProvider] = [],
+        primaryColor: String? = nil, secondaryColor: String? = nil, logoUrl: String? = nil
+    ) {
         self.name = name
         self.password = password
         self.apple = apple
         self.google = google
+        self.oauth = oauth.map(\.rawValue)
+        self.primaryColor = primaryColor
+        self.secondaryColor = secondaryColor
+        self.logoUrl = logoUrl
     }
 }
 
@@ -54,8 +101,14 @@ public struct BdCodeSent: Codable, Sendable, Equatable {
     }
 }
 
+/// The providers whose ID token the app can get from the phone's own sheet.
 public enum BdSignInProvider: String, Codable, Sendable {
     case apple, google
+}
+
+/// The "Continue with …" providers, in the order the screen shows them.
+public enum BdOAuthProvider: String, Codable, Sendable, CaseIterable {
+    case apple, google, github, discord
 }
 
 /// What went wrong, in words the person can act on. `code` is BD's
@@ -125,7 +178,10 @@ extension BdServerSignInBackend where Session == BdSignInSession {
 /// `auth/customer/*` with its key, and answers with:
 ///
 /// - `sign-up`, `forgot-password`: `{ pendingId, expiresAt }`
-/// - `sign-in`, `verify`, `id-token`: its own session, decoded as `Session`
+/// - `sign-in`: its own session, decoded as `Session` — or `{ pendingId,
+///   expiresAt }` when the email must be confirmed first
+/// - `verify`, `id-token`, `oauth/exchange`: its own session
+/// - `oauth/start`: `{ url }`
 /// - a problem: `{ error, message }` with a 4xx or 5xx status
 public struct BdServerSignInBackend<Session: Decodable & Sendable>: BdSignInBackend {
     public let baseURL: URL
@@ -142,8 +198,25 @@ public struct BdServerSignInBackend<Session: Decodable & Sendable>: BdSignInBack
         try await call("options", body: nil as Empty?)
     }
 
-    public func signIn(email: String, password: String) async throws -> Session {
-        try await call("sign-in", body: ["email": email, "password": password])
+    public func signIn(email: String, password: String) async throws -> BdPasswordSignIn<Session> {
+        let data = try await send("sign-in", body: ["email": email, "password": password])
+        if let sent = try? JSONDecoder().decode(CodeSentOnly.self, from: data), sent.sessionToken == nil {
+            return .confirmEmail(BdCodeSent(pendingId: sent.pendingId, expiresAt: sent.expiresAt))
+        }
+        return .signedIn(try decode(data))
+    }
+
+    public func startOAuth(provider: BdOAuthProvider, redirectURI: String, codeChallenge: String) async throws -> URL {
+        let reply: OAuthStart = try await call(
+            "oauth/start",
+            body: OAuthStartBody(provider: provider, redirectUri: redirectURI, codeChallenge: codeChallenge)
+        )
+        guard let url = URL(string: reply.url) else { throw BdSignInError.unavailable }
+        return url
+    }
+
+    public func finishOAuth(code: String, codeVerifier: String) async throws -> Session {
+        try await call("oauth/exchange", body: ["code": code, "codeVerifier": codeVerifier])
     }
 
     public func startSignUp(email: String, password: String, firstName: String?, lastName: String?) async throws -> BdCodeSent {
@@ -173,8 +246,23 @@ public struct BdServerSignInBackend<Session: Decodable & Sendable>: BdSignInBack
         let nonce, firstName, lastName: String?
     }
     private struct Problem: Decodable { let error: String?; let message: String? }
+    private struct CodeSentOnly: Decodable { let pendingId, expiresAt: String; let sessionToken: String? }
+    private struct OAuthStartBody: Encodable { let provider: BdOAuthProvider; let redirectUri, codeChallenge: String }
+    private struct OAuthStart: Decodable { let url: String }
 
     private func call<Body: Encodable, Reply: Decodable>(_ path: String, body: Body?) async throws -> Reply {
+        try decode(try await send(path, body: body))
+    }
+
+    private func decode<Reply: Decodable>(_ data: Data) throws -> Reply {
+        do {
+            return try JSONDecoder().decode(Reply.self, from: data)
+        } catch {
+            throw BdSignInError.unavailable
+        }
+    }
+
+    private func send<Body: Encodable>(_ path: String, body: Body?) async throws -> Data {
         var request = URLRequest(url: baseURL.appendingPathComponent(path))
         request.timeoutInterval = 30
         request.setValue("application/json", forHTTPHeaderField: "Accept")
@@ -203,10 +291,6 @@ public struct BdServerSignInBackend<Session: Decodable & Sendable>: BdSignInBack
                 ? BdSignInError(code: "too_many_tries", message: "That's a lot of tries. Wait a few minutes, then try again.")
                 : BdSignInError.unavailable
         }
-        do {
-            return try JSONDecoder().decode(Reply.self, from: data)
-        } catch {
-            throw BdSignInError.unavailable
-        }
+        return data
     }
 }

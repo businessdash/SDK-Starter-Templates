@@ -71,12 +71,14 @@ app/                       expo-router
   (tabs)/index.tsx         shop
   (tabs)/cart.tsx          cart + Stripe hand-off
   (tabs)/chat.tsx          Front Desk
-  (tabs)/account.tsx       sign-in + portal
+  (tabs)/account.tsx       sign-in screen + portal
   product/[id].tsx
 src/bd/
   client.ts    the two clients + the pk_ guard
   session.ts   session token → SecureStore, visitor id → AsyncStorage
-  auth.ts      hosted sign-in via openAuthSessionAsync
+  auth.ts      sign-in backend (BD's auth/customer/*) + provider links
+src/components/
+  SignInScreen.tsx  the business's own sign-in screen
   useChat.ts   the polling chat loop
   useBd.ts   useLoad / useVisitorToken
   money.ts     cents vs decimal
@@ -94,11 +96,11 @@ src/bd/
 
 **5. Two clients, different surfaces.** `createBdClient` is content + commerce. `createBdApiClient` is where `chatbot`, `auth` and the site-scoped `dataModel` live. Both are exposed rather than papered over, because reaching for the wrong one fails as "property is undefined".
 
-## Sign-in is nicer here than on native
+## Sign-in is the app's own screen
 
-`WebBrowser.openAuthSessionAsync` opens the hosted page, closes itself when the redirect fires, and **returns the callback URL to the calling function**. No deep-link listener, no state stashed across an app restart, no race between the browser dismissing and the app reading the URL — all of which the Swift and Kotlin starters have to handle.
+The Account tab shows `SignInScreen` — the same screen as `<BdSignIn>` on the web and the Swift / Kotlin starters' native ones, drawn with this app's BdForm controls: the business's name, logo and brand colours from BD (primary on the button, secondary on links), each box checked when you leave it and all of them when you press the button, password sign-in, create account and reset with an emailed code. It runs on the SDK's `createSignInController` (`@businessdash/sdk/sign-in-core`), against BD's `auth/customer/*` routes with the publishable key. WorkOS is underneath every step.
 
-The redirect URI still has to be registered on the BD site, or `auth/start` refuses. `Linking.createURL('auth/callback')` builds it from the `scheme` in `app.json`.
+"Continue with Google / Apple / GitHub / Discord" (whichever the business has switched on) opens WorkOS's page for the provider with `WebBrowser.openAuthSessionAsync`, which closes itself when the redirect fires and **returns the URL to the calling function** — no deep-link listener, no state stashed across an app restart. It comes back to `bdstarter://bd-oauth` (`Linking.createURL('bd-oauth')`, from the `scheme` in `app.json`) with a one-time code that only this sign-in's PKCE verifier can redeem. Nothing needs registering: BD accepts an app's own scheme.
 
 ## Chat is polling, and that's the API
 

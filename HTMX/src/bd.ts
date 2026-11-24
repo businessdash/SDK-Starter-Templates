@@ -25,6 +25,7 @@ const apiKey = process.env["BD_API_KEY"];
 // vars directly — there's no public/private split to consolidate here.
 const siteId = process.env["BD_SITE_ID"];
 const rawBaseUrl = process.env["BD_PACKAGE_API_BASE_URL"];
+// Only for the older hosted sign-in page; the sign-in screen doesn't need it.
 const callbackUrl = process.env["BD_AUTH_CALLBACK_URL"];
 const revalidationSecret = process.env["BD_REVALIDATION_SECRET"];
 
@@ -85,13 +86,18 @@ export function isUnavailable(err: unknown): boolean {
 
 // ── auth + portal ──────────────────────────────────────────────────
 
-/** WorkOS-backed sign-in/up/out + callback. Null when not configured. */
+/**
+ * Behind the sign-in screen on /my-account: customer/* (password, emailed
+ * codes) and customer/oauth/* ("Continue with Google / Apple / GitHub /
+ * Discord"), WorkOS underneath through BD. Sets the httpOnly session cookie;
+ * me and sign-out round it out. Null when not configured.
+ */
 export const authHandler =
-	apiKey && packageBase && callbackUrl
+	apiKey && packageBase
 		? createAuthHandler({
 				baseUrl: packageBase,
 				apiKey,
-				callbackUrl,
+				...(callbackUrl ? { callbackUrl } : {}),
 				defaultReturnTo: "/my-account",
 				signOutReturnTo: "/",
 			})
