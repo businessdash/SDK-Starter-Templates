@@ -232,6 +232,11 @@ export default component$(() => {
 									</Form>
 								)}
 							</div>
+							<p style="font-size: 0.875rem;">
+								<a href="/api/bd-auth/delete-account" style="color: var(--text-muted);">
+									Delete my account
+								</a>
+							</p>
 						</div>
 					)}
 				</section>

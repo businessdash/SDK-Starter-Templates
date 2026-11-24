@@ -22,7 +22,7 @@ export const env = createEnv({
     BD_PACKAGE_API_BASE_URL: z.string().url().optional(),
     BD_REVALIDATION_SECRET: z.string().optional(),
     // Public URL of your auth handler's /callback route. Required for
-    // sign-in / sign-up / customer portal. Verify its domain in Business Dash Settings → Domain.
+    // sign-in / sign-up / customer portal. Prove its host once in Business Dash → Developer & API keys → Sign-in.
     BD_AUTH_CALLBACK_URL: z.string().url().optional(),
   },
 

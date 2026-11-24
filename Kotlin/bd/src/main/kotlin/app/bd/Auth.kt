@@ -35,3 +35,24 @@ public data class TenantSession(
  */
 public suspend fun BdClient.tenantSession(sessionToken: String): TenantSession? =
     get<TenantSession?>("auth/me", headers = mapOf("x-bd-session" to sessionToken))
+
+/** [deleteAccount]'s answer. `signInKept` when the person's sign-in stays for another business. */
+@Serializable
+public data class AccountDeleted(
+    val deleted: Boolean,
+    val signInKept: Boolean = false,
+)
+
+/**
+ * Deletes the signed-in customer's account with this business: their customer
+ * record, applications, settings and cart, and their sign-in unless another
+ * business still uses it. Orders and invoices stay with the business. The
+ * token stops working. Google Play and the App Store both require every app
+ * that makes accounts to offer this in the app.
+ *
+ * Throws [BdHttpException] with status 401 when the session has already
+ * expired (sign in again, then delete), and [BdException] when BD can't be
+ * reached.
+ */
+public suspend fun BdClient.deleteAccount(sessionToken: String): AccountDeleted =
+    post<AccountDeleted>("auth/customer/delete-account", headers = mapOf("x-bd-session" to sessionToken))

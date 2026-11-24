@@ -81,6 +81,71 @@ enum AccountController {
         return response
     }
 
+    // MARK: - Delete account
+
+    /// `/api/bd-auth/delete-account`. GET asks the customer to confirm; POST
+    /// deletes their account with this business (customer record, settings,
+    /// cart, and their sign-in unless another business still uses it; orders
+    /// and invoices stay with the business) and clears the cookie. App stores
+    /// require every app that makes accounts to offer this.
+    static func deleteAccount(req: Request) async throws -> Response {
+        guard
+            let bd = req.bd,
+            let token = req.cookies[sessionCookie]?.string.nilIfEmpty,
+            let me = try? await bd.get("auth/me", as: JSONValue.self, headers: [("x-bd-session", token)]),
+            me["user"] != nil
+        else {
+            return try await deletePage(req, .signedOut)
+        }
+        if req.method == .GET {
+            return try await deletePage(req, .confirm)
+        }
+        // The cookie is SameSite=Lax, so another site's form can't carry it;
+        // the Origin check makes that plain.
+        guard fromThisSite(req) else {
+            return problem(.forbidden, "forbidden", "Forbidden.")
+        }
+
+        let result: (status: Int, body: JSONValue)
+        do {
+            result = try await bd.once(.POST, "auth/customer/delete-account", body: .object([:]), headers: [("x-bd-session", token)])
+        } catch {
+            return try await deletePage(req, .failed, status: .serviceUnavailable)
+        }
+        switch result.status {
+        case 200..<300: return try await deletePage(req, .deleted, clearCookie: true)
+        case 401: return try await deletePage(req, .signedOut, status: .unauthorized, clearCookie: true)
+        default: return try await deletePage(req, .failed, status: .serviceUnavailable)
+        }
+    }
+
+    private enum DeleteState { case confirm, deleted, failed, signedOut }
+
+    private static func deletePage(
+        _ req: Request,
+        _ state: DeleteState,
+        status: HTTPResponseStatus = .ok,
+        clearCookie: Bool = false
+    ) async throws -> Response {
+        let response = try await req.view.render("delete-account", DeleteAccountContext(
+            confirm: state == .confirm, deleted: state == .deleted, failed: state == .failed
+        )).encodeResponse(for: req)
+        response.status = status
+        response.headers.replaceOrAdd(name: .cacheControl, value: "no-store")
+        if clearCookie { response.cookies[sessionCookie] = expired(req, path: "/") }
+        return response
+    }
+
+    /// No Origin (an older browser), or one naming this host.
+    private static func fromThisSite(_ req: Request) -> Bool {
+        guard let origin = req.headers.first(name: .origin) else { return true }
+        guard let host = req.headers.first(name: .host), let url = URL(string: origin), let name = url.host else {
+            return false
+        }
+        let authority = url.port.map { "\(name):\($0)" } ?? name
+        return authority.lowercased() == host.lowercased()
+    }
+
     // MARK: - The sign-in screen's routes
 
     static func customer(req: Request) async throws -> Response {
@@ -328,6 +393,12 @@ struct AccountContext: Content {
     let start: String
     let email: String
     let jobs: [AccountJob]
+}
+
+struct DeleteAccountContext: Content {
+    let confirm: Bool
+    let deleted: Bool
+    let failed: Bool
 }
 
 struct AccountJob: Content {

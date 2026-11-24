@@ -79,6 +79,22 @@ public final class BdEnvironment {
         if session == nil { await sessions.clearSessionToken() }
     }
 
+    /// Deletes the customer's account with this business, then forgets the
+    /// session here. Throws when BD couldn't do it; they stay signed in. An
+    /// expired session is forgotten too, so they can sign in and try again.
+    public func deleteAccount() async throws {
+        guard let auth, let sessionToken else { return }
+        do {
+            try await auth.deleteAccount(token: sessionToken)
+        } catch BdError.http(401, _, _) {
+            await signOut()
+            throw BdError.http(status: 401, path: "auth/customer/delete-account", message: "Sign in again, then delete your account.")
+        }
+        await sessions.clearSessionToken()
+        session = nil
+        self.sessionToken = nil
+    }
+
     public func signOut() async {
         await auth?.signOut()
         await sessions.clearSessionToken()

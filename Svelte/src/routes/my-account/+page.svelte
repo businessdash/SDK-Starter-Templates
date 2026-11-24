@@ -138,12 +138,22 @@
 				</form>
 			{/if}
 		</div>
+		<p class="account-delete">
+			<a href="/api/bd-auth/delete-account">Delete my account</a>
+		</p>
 	{/if}
 </main>
 
 <Footer />
 
 <style>
+	.account-delete {
+		margin-top: 2rem;
+		font-size: 0.875rem;
+	}
+	.account-delete a {
+		color: var(--text-muted);
+	}
 	.account-signin,
 	.account-card {
 		padding: 2rem;

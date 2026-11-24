@@ -111,7 +111,12 @@ export default async function MyAccountPage({
 						/>
 					</div>
 				) : (
-					<AccountWork />
+					<>
+						<AccountWork />
+						<p className="account__delete">
+							<a href="/api/bd-auth/delete-account">Delete my account</a>
+						</p>
+					</>
 				)}
 			</main>
 			<BdFooter />

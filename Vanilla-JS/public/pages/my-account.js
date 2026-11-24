@@ -51,6 +51,7 @@ export default async function render(root) {
 	}
 
 	nodes.push(reviewForm());
+	nodes.push(el("p", { class: "muted" }, [el("a", { href: "/api/bd-auth/delete-account" }, ["Delete my account"])]));
 	root.replaceChildren(...nodes);
 }
 

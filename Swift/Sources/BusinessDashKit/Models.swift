@@ -283,6 +283,13 @@ public struct CustomerInvoice: Decodable, Sendable, Identifiable, Equatable {
     public let publicPayUrl: String?
 }
 
+/// `auth/customer/delete-account`'s answer. `signInKept` when the person's
+/// sign-in stays because another business or a team still uses it.
+public struct AccountDeleted: Decodable, Sendable, Equatable {
+    public let deleted: Bool
+    public let signInKept: Bool
+}
+
 public struct TenantSession: Decodable, Sendable, Equatable {
     public let user: TenantUser
     public let organizationId: String

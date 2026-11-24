@@ -8,6 +8,7 @@ library;
 export 'src/bundle.dart';
 export 'src/chat.dart';
 export 'src/client.dart';
+export 'src/customer_account.dart';
 export 'src/donations.dart';
 export 'src/errors.dart';
 export 'src/models.dart';

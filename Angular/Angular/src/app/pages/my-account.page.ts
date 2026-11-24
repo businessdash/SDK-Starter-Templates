@@ -34,6 +34,7 @@ import { bdApi, type PortalMe } from "../lib/bd-api.client";
 				<p>
 					Signed in as <strong>{{ m.user?.firstName || m.user?.email }}</strong>
 					· <a href="/api/bd-auth/sign-out">Sign out</a>
+					· <a href="/api/bd-auth/delete-account">Delete my account</a>
 				</p>
 
 				@if (m.work; as work) {

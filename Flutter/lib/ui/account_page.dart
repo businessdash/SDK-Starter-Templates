@@ -1,4 +1,5 @@
 import 'package:businessdash_forms/businessdash_forms.dart';
+import 'package:businessdash_sdk/businessdash_sdk.dart';
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -34,6 +35,61 @@ class _AccountPageState extends State<AccountPage> {
   // (flutter_secure_storage) so a sign-in survives a relaunch, and sends it
   // as `X-BD-Session-Token` on customer-portal calls.
   BdSignInSession? _session;
+
+  // Account calls belong to the business the key is for, not to a site, so
+  // this client needs no site id.
+  late final BdClient? _client = widget.publishableKey.isEmpty
+      ? null
+      : BdClient(host: Uri.parse(widget.host), publishableKey: widget.publishableKey, siteId: '');
+  bool _deleting = false;
+
+  static const _deleteFailed = "Your account couldn't be deleted just now. Please try again in a minute.";
+
+  /// Asks, then deletes the customer's account with this business and signs
+  /// them out here.
+  Future<void> _confirmDelete(BdSignInSession session) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete your account?'),
+        content: const Text(
+          "Your profile, saved settings and cart are deleted and you're signed out. This can't be undone.",
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            child: const Text('Delete account'),
+          ),
+        ],
+      ),
+    );
+    final client = _client;
+    final token = session.sessionToken;
+    if (confirmed != true || !mounted || client == null || token == null) return;
+
+    setState(() => _deleting = true);
+    String? problem;
+    var signedOut = false;
+    try {
+      await client.deleteAccount(token);
+      signedOut = true;
+    } on BdHttpException catch (error) {
+      signedOut = error.status == 401;
+      problem = signedOut ? 'Your sign-in has expired. Sign in again, then delete your account.' : _deleteFailed;
+    } on Exception {
+      problem = _deleteFailed;
+    }
+    if (!mounted) return;
+    setState(() {
+      _deleting = false;
+      if (signedOut) _session = null;
+    });
+    if (problem != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(problem)));
+    }
+  }
 
   /// The browser's own sign-in (ASWebAuthenticationSession / a Custom Tab),
   /// back on [scheme] with the result.
@@ -76,6 +132,17 @@ class _AccountPageState extends State<AccountPage> {
                 FilledButton.tonal(
                   onPressed: () => setState(() => _session = null),
                   child: const Text('Sign out'),
+                ),
+                // Google Play and the App Store require it in the app, not on a website.
+                TextButton(
+                  onPressed: _deleting ? null : () => _confirmDelete(session),
+                  style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                  child: const Text('Delete account'),
+                ),
+                Text(
+                  'Deletes your account with us. Records of past orders and invoices stay with us, as the law asks.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
             ),

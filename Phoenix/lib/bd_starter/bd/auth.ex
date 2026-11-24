@@ -70,6 +70,24 @@ defmodule BdStarter.Bd.Auth do
     end
   end
 
+  @doc """
+  Deletes the signed-in customer's account with this business: their
+  customer record, applications, settings and cart, and their sign-in unless
+  another business still uses it. Orders and invoices stay with the business.
+  App stores require every app that makes accounts to offer this.
+
+  `{:error, :signed_out}` when the session has expired.
+  """
+  def delete_account(nil, _cookie), do: {:error, :not_configured}
+
+  def delete_account(client, cookie) do
+    case Client.post(client, "auth/customer/delete-account", nil, [{"x-bd-session", cookie}]) do
+      {:ok, body} -> {:ok, body}
+      {:error, {:http, 401, _}} -> {:error, :signed_out}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   @doc "Best effort — the cookie is cleared either way."
   def sign_out(nil), do: :ok
 

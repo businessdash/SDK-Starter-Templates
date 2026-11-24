@@ -131,6 +131,10 @@ export default function MyAccount() {
 									<a className="muted" href="/api/bd-auth/sign-out">
 										Sign out
 									</a>
+									{" · "}
+									<a className="muted" href="/api/bd-auth/delete-account">
+										Delete my account
+									</a>
 								</p>
 							</div>
 

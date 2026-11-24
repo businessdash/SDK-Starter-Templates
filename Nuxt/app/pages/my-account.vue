@@ -113,6 +113,10 @@ useHead({ title: "My account — Your Business" });
 					</div>
 
 					<ReviewForm />
+
+					<p class="account-delete">
+						<a href="/api/bd-auth/delete-account">Delete my account</a>
+					</p>
 				</template>
 			</section>
 		</main>

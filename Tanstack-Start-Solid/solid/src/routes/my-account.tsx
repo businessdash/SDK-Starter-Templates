@@ -89,6 +89,12 @@ function MyAccount() {
 						</div>
 
 						<ReviewForm />
+
+						<p style="margin-top: 2rem; font-size: 0.875rem;">
+							<a href="/api/bd-auth/delete-account" style="color: var(--text-muted);">
+								Delete my account
+							</a>
+						</p>
 					</Show>
 				</Show>
 			</section>

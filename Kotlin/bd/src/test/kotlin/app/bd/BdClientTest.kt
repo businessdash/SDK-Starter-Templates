@@ -258,3 +258,16 @@ class DonationsTest {
         assertTrue(request.url.encodedPath.endsWith("/donations/checkout"))
     }
 }
+
+class DeleteAccountTest {
+    @Test
+    fun `delete account posts the auth session header and reads the answer`() = runTest {
+        val stub = Stub("""{"deleted":true,"signInKept":false}""")
+        val result = stub.client.deleteAccount("tok")
+        assertEquals(AccountDeleted(deleted = true, signInKept = false), result)
+        val request = stub.requests.single()
+        assertEquals("POST", request.method.value)
+        assertTrue(request.url.encodedPath.endsWith("/auth/customer/delete-account"))
+        assertEquals("tok", request.headers["x-bd-session"])
+    }
+}

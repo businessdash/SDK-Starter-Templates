@@ -116,6 +116,9 @@ export function MyAccount() {
 				</button>
 				<p className="rf__msg">{msg}</p>
 			</section>
+			<p className="muted">
+				<a href="/api/bd-auth/delete-account">Delete my account</a>
+			</p>
 		</main>
 	);
 }

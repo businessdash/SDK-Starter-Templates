@@ -240,6 +240,21 @@ struct RequestTests {
         _ = await BdAuth(client: client, callbackURL: "a://cb").session(token: "tok")
         #expect(recorder.request?.value(forHTTPHeaderField: "x-bd-session") == "tok")
     }
+
+    @Test("Delete account posts the auth session header and reads the answer")
+    func deleteAccount() async throws {
+        let recorder = StubTransport.Recorder()
+        let client = makeClient(
+            StubTransport(json: #"{"deleted":true,"signInKept":false}"#, recorder: recorder)
+        )
+
+        let result = try await BdAuth(client: client, callbackURL: "a://cb").deleteAccount(token: "tok")
+
+        #expect(result == AccountDeleted(deleted: true, signInKept: false))
+        #expect(recorder.request?.httpMethod == "POST")
+        #expect(recorder.request?.url?.path().hasSuffix("/auth/customer/delete-account") == true)
+        #expect(recorder.request?.value(forHTTPHeaderField: "x-bd-session") == "tok")
+    }
 }
 
 // MARK: - Money

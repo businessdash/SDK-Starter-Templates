@@ -4,6 +4,7 @@
     <h1>My account</h1>
     <p>Signed in as {{ data_get($user, 'email', 'a customer') }}.</p>
     <a href="/api/bd-auth/sign-out">Sign out</a>
+    · <a href="/api/bd-auth/delete-account">Delete my account</a>
 
     @if (session('review_status'))
         <p class="notice">{{ session('review_status') }}</p>

@@ -84,8 +84,13 @@ struct BdClient: Sendable {
     /// One call, once, with BD's answer as sent (status and body) — for the
     /// sign-in routes, where BD's own refusal (wrong password, expired code)
     /// is passed on to the screen as is. Throws only when BD can't be reached.
-    func once(_ method: HTTPMethod, _ path: String, body: JSONValue? = nil) async throws -> (status: Int, body: JSONValue) {
-        let response = try await http.send(method, headers: headers([]), to: URI(string: baseURL + "/" + path)) {
+    func once(
+        _ method: HTTPMethod,
+        _ path: String,
+        body: JSONValue? = nil,
+        headers extra: [(String, String)] = []
+    ) async throws -> (status: Int, body: JSONValue) {
+        let response = try await http.send(method, headers: headers(extra), to: URI(string: baseURL + "/" + path)) {
             if let body { try $0.content.encode(body, as: .json) }
         }
         let decoded = (try? response.content.decode(JSONValue.self)) ?? .null

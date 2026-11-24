@@ -299,4 +299,17 @@ void main() {
       expect((sent['donor'] as Map)['email'], 'ada@example.com');
     });
   });
+
+  group('customer account', () {
+    test('delete account posts the auth session header and reads the answer', () async {
+      final stub = makeClient(jsonEncode({'deleted': true, 'signInKept': false}));
+      final result = await stub.client.deleteAccount('tok');
+      expect(result.deleted, isTrue);
+      expect(result.signInKept, isFalse);
+      final request = stub.requests.single;
+      expect(request.method, 'POST');
+      expect(request.url.path, endsWith('/auth/customer/delete-account'));
+      expect(request.headers['x-bd-session'], 'tok');
+    });
+  });
 }

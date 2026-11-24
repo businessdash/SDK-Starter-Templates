@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Bd\Auth;
+use App\Bd\BdApiException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * `/api/bd-auth/{action}`: sign-out, and the older hosted sign-in page.
+ * `/api/bd-auth/{action}`: sign-out, delete-account, and the older hosted
+ * sign-in page.
  *
  * Signing in happens on /my-account (BdCustomerAuthController). The hosted
  * page runs only when `BD_AUTH_CALLBACK_URL` points at this route's
@@ -31,6 +33,7 @@ class BdAuthController extends Controller
             'sign-in', 'sign-up' => $this->start($request, $auth, $action),
             'callback' => $this->callback($request, $auth),
             'sign-out' => $this->signOut($request, $auth),
+            'delete-account' => $this->deleteAccount($request, $auth),
             default => response('Not found', 404),
         };
     }
@@ -91,6 +94,41 @@ class BdAuthController extends Controller
                 raw: false,
                 sameSite: 'lax',
             ));
+    }
+
+    /**
+     * GET asks the customer to confirm; POST deletes their account and
+     * clears the cookie. The form carries @csrf like every POST here.
+     */
+    private function deleteAccount(Request $request, Auth $auth)
+    {
+        $token = $request->cookie(config('bd.session_cookie'));
+        $signedIn = is_string($token) && $token !== '' && $auth->session($token) !== null;
+
+        if ($request->isMethod('GET')) {
+            return view('pages.delete-account', ['state' => $signedIn ? 'confirm' : 'signed-out']);
+        }
+        if (! $signedIn) {
+            return view('pages.delete-account', ['state' => 'signed-out']);
+        }
+
+        try {
+            $auth->deleteAccount($token);
+        } catch (BdApiException $e) {
+            if ($e->status === 401) {
+                return response()
+                    ->view('pages.delete-account', ['state' => 'signed-out'], 401)
+                    ->withCookie(cookie()->forget(config('bd.session_cookie'), '/'));
+            }
+
+            return response()->view('pages.delete-account', ['state' => 'failed'], 503);
+        } catch (\Throwable) {
+            return response()->view('pages.delete-account', ['state' => 'failed'], 503);
+        }
+
+        return response()
+            ->view('pages.delete-account', ['state' => 'deleted'])
+            ->withCookie(cookie()->forget(config('bd.session_cookie'), '/'));
     }
 
     private function signOut(Request $request, Auth $auth): Response

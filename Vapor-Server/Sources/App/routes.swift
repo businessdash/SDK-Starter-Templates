@@ -31,6 +31,8 @@ func routes(_ app: Application) throws {
     app.on(.POST, "api", "bd-auth", "customer", "**", body: .collect(maxSize: "64kb"), use: AccountController.customer)
     app.get("api", "bd-auth", "sign-out", use: AccountController.signOut)
     app.post("api", "bd-auth", "sign-out", use: AccountController.signOut)
+    app.get("api", "bd-auth", "delete-account", use: AccountController.deleteAccount)
+    app.post("api", "bd-auth", "delete-account", use: AccountController.deleteAccount)
 
     // ── Machine endpoints ──────────────────────────────────────────────────
     // Same-origin proxy for the <bd-form> web component: the browser gets

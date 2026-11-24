@@ -791,7 +791,8 @@ export async function myAccountPage(
 					<button class="btn btn--primary" type="submit">Submit review</button>
 				</form>
 				<p id="review-msg" class="rf__msg"></p>
-			</section>`;
+			</section>
+			<p class="muted"><a href="/api/bd-auth/delete-account">Delete my account</a></p>`;
 	}
 	return page({ origin, title: "My account", body });
 }

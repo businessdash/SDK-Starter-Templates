@@ -114,6 +114,22 @@ class Auth
         }
     }
 
+    /**
+     * Deletes the signed-in customer's account with this business: their
+     * customer record, applications, settings and cart, and their sign-in
+     * unless another business still uses it. Orders and invoices stay with
+     * the business. App stores require every app that makes accounts to
+     * offer this.
+     *
+     * @return array{deleted: bool, signInKept: bool}
+     *
+     * @throws BdApiException 401 when the session has expired
+     */
+    public function deleteAccount(string $sessionToken): array
+    {
+        return $this->client->post('auth/customer/delete-account', null, ['x-bd-session' => $sessionToken]);
+    }
+
     public function signOut(): void
     {
         try {

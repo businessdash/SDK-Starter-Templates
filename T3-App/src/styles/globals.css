@@ -891,6 +891,13 @@ main {
 .account__head .bd-section__lead {
 	text-align: left;
 }
+.account__delete {
+	margin-top: 2rem;
+	font-size: 0.875rem;
+}
+.account__delete a {
+	color: var(--text-muted);
+}
 .account__signedout {
 	padding: 2rem 1.25rem;
 }

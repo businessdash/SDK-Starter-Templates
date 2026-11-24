@@ -5,14 +5,19 @@ import android.app.Application
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
@@ -22,9 +27,11 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import app.bd.BdException
+import app.bd.BdHttpException
 import app.bd.signin.BdSignIn
 import app.bd.signin.BdSignInBrand
 import app.bd.signin.BdSignInSession
+import app.bd.deleteAccount
 import app.bd.tenantSession
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -81,6 +88,43 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
         store.clear()
         _state.value = AccountState.SignedOut
     }
+
+    private val _deleting = MutableStateFlow(false)
+    val deleting: StateFlow<Boolean> = _deleting.asStateFlow()
+    private val _deleteError = MutableStateFlow<String?>(null)
+    val deleteError: StateFlow<String?> = _deleteError.asStateFlow()
+
+    /** Deletes the customer's account with this business, then forgets the token. */
+    fun deleteAccount() {
+        val token = store.token ?: return signOut()
+        val client = BdApp.client() ?: return
+        _deleting.value = true
+        viewModelScope.launch {
+            try {
+                client.deleteAccount(token)
+                signOut()
+            } catch (error: BdHttpException) {
+                if (error.status == 401) {
+                    signOut()
+                    _deleteError.value = "Your sign-in has expired. Sign in again, then delete your account."
+                } else {
+                    _deleteError.value = DELETE_FAILED
+                }
+            } catch (_: BdException) {
+                _deleteError.value = DELETE_FAILED
+            } finally {
+                _deleting.value = false
+            }
+        }
+    }
+
+    fun dismissDeleteError() {
+        _deleteError.value = null
+    }
+
+    private companion object {
+        const val DELETE_FAILED = "Your account couldn't be deleted just now. Please try again in a minute."
+    }
 }
 
 /**
@@ -92,7 +136,33 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
 fun AccountScreen(modifier: Modifier = Modifier) {
     val model: AccountViewModel = viewModel()
     val state by model.state.collectAsState()
+    val deleting by model.deleting.collectAsState()
+    val deleteError by model.deleteError.collectAsState()
+    var confirmingDelete by rememberSaveable { mutableStateOf(false) }
     val backend = remember { BdApp.signInBackend() }
+
+    if (confirmingDelete) {
+        AlertDialog(
+            onDismissRequest = { confirmingDelete = false },
+            title = { Text("Delete your account?") },
+            text = { Text("Your profile, saved settings and cart are deleted and you're signed out. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmingDelete = false
+                    model.deleteAccount()
+                }) { Text("Delete account", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmingDelete = false }) { Text("Cancel") } },
+        )
+    }
+    deleteError?.let { message ->
+        AlertDialog(
+            onDismissRequest = model::dismissDeleteError,
+            title = { Text("Account not deleted") },
+            text = { Text(message) },
+            confirmButton = { TextButton(onClick = model::dismissDeleteError) { Text("OK") } },
+        )
+    }
 
     when {
         backend == null -> Text(
@@ -109,6 +179,15 @@ fun AccountScreen(modifier: Modifier = Modifier) {
         ) {
             Text("Signed in as ${(state as AccountState.SignedIn).name}", style = MaterialTheme.typography.titleMedium)
             OutlinedButton(onClick = model::signOut) { Text("Sign out") }
+            // Google Play and the App Store require it in the app, not on a website.
+            TextButton(onClick = { confirmingDelete = true }, enabled = !deleting) {
+                Text("Delete account", color = MaterialTheme.colorScheme.error)
+            }
+            Text(
+                "Deletes your account with us. Records of past orders and invoices stay with us, as the law asks.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
 
         else -> BdSignIn(

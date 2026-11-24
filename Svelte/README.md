@@ -50,7 +50,7 @@ Declared in `src/env.ts` and read when the app starts. Secrets come from `$app/e
 | `BD_SITE_ID` | everything | The site UUID this app represents. |
 | `BD_PACKAGE_API_BASE_URL` | everything | Where BD is hosted (e.g. `https://www.businessdash.us`). |
 | `BD_REVALIDATION_SECRET` | webhook | `whsec_…` revealed at `/dashboard/settings/integrations`. |
-| `BD_AUTH_CALLBACK_URL` | auth + portal | Public URL of `/api/bd-auth/callback`; verify its domain in Business Dash Settings → Domain. |
+| `BD_AUTH_CALLBACK_URL` | auth + portal | Public URL of `/api/bd-auth/callback`; prove its host once in Business Dash → Developer & API keys → Sign-in. |
 
 ## Surfaces & file map
 

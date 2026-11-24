@@ -5,7 +5,8 @@ defmodule BdStarterWeb.BdAuthController do
   alias BdStarter.Bd.Auth
 
   @doc """
-  `/api/bd-auth/:action`: sign-out, and the older hosted sign-in page.
+  `/api/bd-auth/:action`: sign-out, delete-account, and the older hosted
+  sign-in page.
 
   Signing in happens on /my-account (`BdCustomerAuthController`). The hosted
   page runs only when `BD_AUTH_CALLBACK_URL` points at this route's `callback`
@@ -29,6 +30,9 @@ defmodule BdStarterWeb.BdAuthController do
 
       {client, "sign-out"} ->
         sign_out(conn, client)
+
+      {client, "delete-account"} ->
+        delete_account(conn, client)
 
       _ ->
         send_resp(conn, 404, "Not found")
@@ -89,6 +93,41 @@ defmodule BdStarterWeb.BdAuthController do
     else
       redirect(conn, to: ~p"/")
     end
+  end
+
+  # GET asks the customer to confirm; POST (with the CSRF token, like every
+  # form here) deletes their account and clears the cookie.
+  defp delete_account(conn, client) do
+    conn = fetch_cookies(conn)
+    cookie = conn.req_cookies[cookie_name()]
+    signed_in? = Auth.session(client, cookie) != nil
+
+    cond do
+      not signed_in? ->
+        show_delete(conn, 200, "signed-out")
+
+      conn.method == "GET" ->
+        show_delete(conn, 200, "confirm")
+
+      true ->
+        case Auth.delete_account(client, cookie) do
+          {:ok, _} ->
+            conn |> delete_resp_cookie(cookie_name(), path: "/") |> show_delete(200, "deleted")
+
+          {:error, :signed_out} ->
+            conn |> delete_resp_cookie(cookie_name(), path: "/") |> show_delete(401, "signed-out")
+
+          {:error, _} ->
+            show_delete(conn, 503, "failed")
+        end
+    end
+  end
+
+  defp show_delete(conn, status, state) do
+    conn
+    |> put_status(status)
+    |> put_view(BdStarterWeb.PortalHTML)
+    |> render(:delete_account, state: state)
   end
 
   defp max_age(expires_at) when is_binary(expires_at) do

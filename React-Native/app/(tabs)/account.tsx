@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Button, StyleSheet, Text, View } from 'react-native'
+import { Alert, Button, StyleSheet, Text, View } from 'react-native'
 
 import { getBdDev } from '@/bd/client'
 import { clearSessionToken, getSessionToken, setSessionToken } from '@/bd/session'
@@ -21,6 +21,7 @@ import { SignInScreen } from '@/components/SignInScreen'
  */
 export default function AccountScreen() {
   const [session, setSession] = useState<{ email?: string | null } | null | undefined>(undefined)
+  const [deleting, setDeleting] = useState(false)
 
   async function refresh() {
     const bd = getBdDev()
@@ -50,6 +51,38 @@ export default function AccountScreen() {
     setSession(null)
   }
 
+  function confirmDelete() {
+    Alert.alert(
+      'Delete your account?',
+      "Your profile, saved settings and cart are deleted and you're signed out. This can't be undone.",
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete account', style: 'destructive', onPress: () => void deleteAccount() },
+      ],
+    )
+  }
+
+  /** Deletes the customer's account with this business, then forgets the token. */
+  async function deleteAccount() {
+    const bd = getBdDev()
+    const token = await getSessionToken()
+    if (!bd || !token) return handleSignOut()
+    setDeleting(true)
+    try {
+      await bd.auth.customer.deleteAccount({ sessionToken: token })
+      await handleSignOut()
+    } catch (error) {
+      if ((error as { status?: number }).status === 401) {
+        await handleSignOut()
+        Alert.alert('Account not deleted', 'Your sign-in has expired. Sign in again, then delete your account.')
+      } else {
+        Alert.alert('Account not deleted', "Your account couldn't be deleted just now. Please try again in a minute.")
+      }
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   if (session === undefined) return <View style={styles.screen} />
 
   if (!session) {
@@ -68,10 +101,16 @@ export default function AccountScreen() {
     <View style={styles.screen}>
       <Text>Signed in as {session.email ?? 'a customer'}.</Text>
       <Button title="Sign out" onPress={handleSignOut} />
+      {/* Google Play and the App Store require it in the app, not on a website. */}
+      <Button title="Delete account" color="#b42318" disabled={deleting} onPress={confirmDelete} />
+      <Text style={styles.note}>
+        Deletes your account with us. Records of past orders and invoices stay with us, as the law asks.
+      </Text>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: 24, gap: 12, justifyContent: 'center' },
+  note: { fontSize: 12, color: '#6b7280', textAlign: 'center' },
 })

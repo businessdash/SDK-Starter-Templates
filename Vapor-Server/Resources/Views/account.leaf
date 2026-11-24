@@ -3,7 +3,7 @@
   #export("content"):
     <h1>My account</h1>
     #if(signedIn):
-      <p>Signed in as #(email). <a href="/api/bd-auth/sign-out">Sign out</a></p>
+      <p>Signed in as #(email). <a href="/api/bd-auth/sign-out">Sign out</a> · <a href="/api/bd-auth/delete-account">Delete my account</a></p>
       <section>
         <h2>Your work</h2>
         #if(count(jobs) > 0):

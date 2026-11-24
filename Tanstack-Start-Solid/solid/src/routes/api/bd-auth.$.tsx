@@ -17,7 +17,7 @@ import { createFileRoute } from "@tanstack/solid-router";
  * Needs BD_API_KEY + BD_PACKAGE_API_BASE_URL; when unset, the route 503s
  * so the rest of the site keeps rendering. BD_AUTH_CALLBACK_URL is only
  * for the older hosted page (`sign-in` / `sign-up` redirects).
- * When set, its domain must be verified in Business Dash Settings → Domain.
+ * When set, prove its host once in Business Dash → Developer & API keys → Sign-in.
  */
 
 function normalizeBaseUrl(input: string): string {

@@ -51,7 +51,7 @@ Nuxt maps `NUXT_*` process env onto non-public `runtimeConfig` keys, so none of 
 | `NUXT_BD_SITE_ID` | `bdSiteId` | Site binding. |
 | `NUXT_BD_PACKAGE_API_BASE_URL` | `bdPackageApiBaseUrl` | BD host (default `https://www.businessdash.us`). |
 | `NUXT_BD_REVALIDATION_SECRET` | `bdRevalidationSecret` | Revalidation webhook HMAC. |
-| `NUXT_BD_AUTH_CALLBACK_URL` | `bdAuthCallbackUrl` | Auth handler `/callback` (sign-in/up + customer portal). Verify its domain in Business Dash Settings → Domain: `https://your-site.com/api/bd-auth/callback`. |
+| `NUXT_BD_AUTH_CALLBACK_URL` | `bdAuthCallbackUrl` | Auth handler `/callback` (sign-in/up + customer portal). Prove its host once in Business Dash → Developer & API keys → Sign-in: `https://your-site.com/api/bd-auth/callback`. |
 
 Every surface no-ops gracefully when these are unset — pages still render with placeholder/empty states.
 

@@ -21,6 +21,9 @@ struct AccountView: View {
     @Environment(BdEnvironment.self) private var bd
 
     @State private var model = AccountViewModel()
+    @State private var confirmingDelete = false
+    @State private var deleting = false
+    @State private var deleteError: String?
 
     var body: some View {
         Group {
@@ -81,6 +84,14 @@ struct AccountView: View {
                 }
             }
 
+            // App Store and Google Play require it in the app, not on a website.
+            Section {
+                Button("Delete account", role: .destructive) { confirmingDelete = true }
+                    .disabled(deleting)
+            } footer: {
+                Text("Deletes your account with us. Records of past orders and invoices stay with us, as the law asks.")
+            }
+
             if let state = model.state {
                 switch state {
                 case .loading:
@@ -115,6 +126,31 @@ struct AccountView: View {
                     Text(message).foregroundStyle(.secondary)
                 }
             }
+        }
+        .confirmationDialog("Delete your account?", isPresented: $confirmingDelete, titleVisibility: .visible) {
+            Button("Delete account", role: .destructive) {
+                deleting = true
+                Task {
+                    defer { deleting = false }
+                    do {
+                        try await bd.deleteAccount()
+                    } catch BdError.http(401, _, _) {
+                        deleteError = "Your sign-in has expired. Sign in again, then delete your account."
+                    } catch {
+                        deleteError = "Your account couldn't be deleted just now. Please try again in a minute."
+                    }
+                }
+            }
+        } message: {
+            Text("Your profile, saved settings and cart are deleted and you're signed out. This can't be undone.")
+        }
+        .alert("Account not deleted", isPresented: Binding(
+            get: { deleteError != nil },
+            set: { if !$0 { deleteError = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(deleteError ?? "")
         }
         // Re-keyed on the org: a customer who switches company must not be
         // shown the previous one's work while the new load is in flight.

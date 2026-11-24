@@ -64,7 +64,7 @@ Route::match(['get', 'post'], '/api/bd-auth/customer/{path}', BdCustomerAuthCont
     ->name('bd.auth.customer');
 
 Route::match(['get', 'post'], '/api/bd-auth/{action}', BdAuthController::class)
-    ->where('action', 'sign-in|sign-up|callback|sign-out')
+    ->where('action', 'sign-in|sign-up|callback|sign-out|delete-account')
     ->name('bd.auth');
 
 Route::get('/my-account', [PortalController::class, 'index'])->name('portal');

@@ -76,6 +76,23 @@ public struct BdAuth: Sendable {
         )
     }
 
+    /// Deletes the signed-in customer's account with this business: their
+    /// customer record, applications, settings and cart, and their sign-in
+    /// unless another business still uses it. Orders and invoices stay with
+    /// the business. The token stops working. App Store and Google Play both
+    /// require every app that makes accounts to offer this in the app.
+    ///
+    /// Throws `BdError.http(status: 401, …)` when the session has already
+    /// expired: sign in again, then delete.
+    @discardableResult
+    public func deleteAccount(token: String) async throws -> AccountDeleted {
+        try await client.post(
+            "auth/customer/delete-account",
+            as: AccountDeleted.self,
+            headers: ["x-bd-session": token]
+        )
+    }
+
     /// Best effort — the caller clears the Keychain either way, so a failed
     /// server-side revoke must not strand someone signed in locally.
     public func signOut() async {

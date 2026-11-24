@@ -170,6 +170,10 @@ function money(n: number): string {
 							<div data-review-error hidden></div>
 						</form>
 					</div>
+
+					<p class="account-delete">
+						<a href="/api/bd-auth/delete-account">Delete my account</a>
+					</p>
 				</>
 			)
 		}
@@ -177,6 +181,13 @@ function money(n: number): string {
 </Layout>
 
 <style>
+	.account-delete {
+		margin-top: 2rem;
+		font-size: 0.875rem;
+	}
+	.account-delete a {
+		color: var(--text-muted);
+	}
 	.account-card {
 		padding: 2rem;
 		display: flex;
