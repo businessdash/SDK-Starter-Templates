@@ -3,6 +3,8 @@ package app.bdstarter
 import android.content.Context
 import androidx.core.content.edit
 import app.bd.BdClient
+import app.bd.signin.BdServerSignInBackend
+import app.bd.signin.BdSignInSession
 import java.util.UUID
 
 /**
@@ -37,6 +39,13 @@ object BdApp {
     }
 
     val isConfigured: Boolean get() = client() != null
+
+    /**
+     * For the native sign-in screen: BD's customer sign-in routes, called with
+     * the same publishable key. Null until local.properties has the keys.
+     */
+    fun signInBackend(): BdServerSignInBackend<BdSignInSession>? =
+        if (isConfigured) BdServerSignInBackend.businessDash(BuildConfig.BD_PK, BuildConfig.BD_HOST) else null
 
     /**
      * Stable per-install id for the cart.

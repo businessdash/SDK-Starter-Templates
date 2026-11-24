@@ -20,7 +20,8 @@ let package = Package(
         .library(name: "BdForms", targets: ["BdForms"]),
         // Native sign-in for a business's customers, in the business's own
         // brand: email and password, codes by email, Sign in with Apple and
-        // Google. Depends on nothing; talks to BD through the app's server.
+        // Google. Depends on nothing; talks to BD with the publishable key,
+        // or through the app's own server.
         .library(name: "BdSignIn", targets: ["BdSignIn"])
     ],
     targets: [
@@ -38,7 +39,7 @@ let package = Package(
         ),
         .target(
             name: "BdStarterApp",
-            dependencies: ["BusinessDashKit", "BdForms"],
+            dependencies: ["BusinessDashKit", "BdForms", "BdSignIn"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(

@@ -1,5 +1,11 @@
+import BdSignIn
 import BusinessDashKit
 import SwiftUI
+#if canImport(UIKit)
+import UIKit
+#elseif canImport(AppKit)
+import AppKit
+#endif
 
 /// Customer portal.
 ///
@@ -7,9 +13,12 @@ import SwiftUI
 /// `customer_portal:self` and `tenant_auth:public` are both in the
 /// publishable scope set — so this needs no backend-for-frontend. That is the
 /// fact that makes a native BD app practical.
+///
+/// Signed out, it's the SDK's native sign-in (`BdSignInView`): the business's
+/// name from BD and the app's "BrandLogo" image, never BD's. A customer's
+/// account here is their own at this business, with its own password.
 struct AccountView: View {
     @Environment(BdEnvironment.self) private var bd
-    @Environment(\.openURL) private var openURL
 
     @State private var model = AccountViewModel()
 
@@ -24,20 +33,36 @@ struct AccountView: View {
         .navigationTitle("Account")
     }
 
+    @ViewBuilder
     private var signedOut: some View {
-        ContentUnavailableView {
-            Label("Not signed in", systemImage: "person.crop.circle")
-        } description: {
-            Text("Sign in to see your jobs, quotes and invoices.")
-        } actions: {
-            Button("Sign in") { Task { await startSignIn() } }
-                .buttonStyle(.borderedProminent)
-                .disabled(bd.auth == nil)
-
-            if let signInError = model.signInError {
-                Text(signInError).font(.footnote).foregroundStyle(.secondary)
+        if let backend = bd.signInBackend {
+            BdSignInView(
+                brand: BdSignInBrand(
+                    logo: Self.brandLogo,
+                    tagline: "Sign in to see your jobs, quotes and invoices."
+                ),
+                backend: backend
+            ) { signedIn in
+                Task { await bd.adopt(signedIn) }
+            }
+        } else {
+            ContentUnavailableView {
+                Label("Not connected to BD", systemImage: "person.crop.circle")
+            } description: {
+                Text("Set BDPublishableKey and BDSiteID (BdStarter.xcconfig) to turn on sign-in.")
             }
         }
+    }
+
+    /// The app's "BrandLogo" image, if its asset catalog has one.
+    private static var brandLogo: Image? {
+        #if canImport(UIKit)
+        UIImage(named: "BrandLogo").map(Image.init(uiImage:))
+        #elseif canImport(AppKit)
+        NSImage(named: "BrandLogo").map(Image.init(nsImage:))
+        #else
+        nil
+        #endif
     }
 
     @ViewBuilder
@@ -93,14 +118,4 @@ struct AccountView: View {
         }
     }
 
-    /// Opens the platform-hosted auth page. The callback returns on the app's
-    /// custom URL scheme, which `onOpenURL` in the App body hands to
-    /// `BdEnvironment.completeSignIn(code:state:)`.
-    ///
-    /// The model builds the URL; opening it is a view concern, which is why
-    /// `openURL` stays here.
-    private func startSignIn() async {
-        model.bind(bd)
-        if let url = await model.signInURL() { openURL(url) }
-    }
 }

@@ -27,14 +27,13 @@ swift test
 
 For an actual app: **File ▸ Add Package Dependencies… ▸ Add Local…** and select this directory, then add `BusinessDashKit` and `BdStarterApp` to your target (or just `BdForms`, if forms are all you need).
 
-Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdStarter.xcconfig` has the four keys and how to wire them:
+Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdStarter.xcconfig` has the three keys and how to wire them:
 
 | Info.plist key | What |
 | --- | --- |
 | `BDHost` | defaults to `https://www.businessdash.us` |
 | `BDPublishableKey` | `pk_…` — never `sk_…` |
 | `BDSiteID` | the site UUID |
-| `BDAuthCallbackURL` | e.g. `bdstarter://auth/callback` |
 
 **With no keys at all the app still runs** — screens render their empty states and a setup notice appears. A starter you can't launch before signing up isn't a starter.
 
@@ -50,14 +49,18 @@ struct MyApp: App {
             BdRootView()
                 .environment(bd)
                 .task { await bd.bootstrap() }
-                .onOpenURL { url in
-                    guard let (code, state) = BdAuth.callbackParameters(from: url) else { return }
-                    Task { try? await bd.completeSignIn(code: code, state: state) }
-                }
         }
     }
 }
 ```
+
+Sign-in is native (`BdSignIn`): the Account tab shows the business's own
+sign-in screen, with its name from BD and your "BrandLogo" image from the
+asset catalog. Customers make an account with an email and password,
+confirmed by a 6-digit emailed code, and reset a forgotten password the
+same way. The account is theirs at this business alone: its own password,
+not shared with any other business on BD. It runs on the publishable key,
+so there's no callback URL to register and no server to run.
 
 For the schema + custom-database flows:
 

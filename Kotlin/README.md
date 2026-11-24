@@ -76,7 +76,23 @@ bd/src/main/kotlin/app/bd/
   Bundle.kt       key-path reads for the two schema-driven surfaces
   Money.kt        cents vs decimal — read this before rendering money
   Donations.kt    giving page + checkout, and the cover-fees math
+  Auth.kt         tenantSession(token): who a sign-in token belongs to
 ```
+
+## Sign-in
+
+The Account tab is the SDK's native sign-in (`:bd-sign-in`, `BdSignIn`): the
+business's own screen, with its name from BD and your `brand_logo` drawable,
+never BD's. Customers make an account with an email and password, confirmed
+by a 6-digit emailed code, and reset a forgotten password the same way. The
+account is theirs at this business alone: its own password, not shared with
+any other business on BD.
+
+It runs on the publishable key (`BdServerSignInBackend.businessDash`), so
+there's no deep-link callback and no server. `SessionStore` keeps the session
+token encrypted with an Android Keystore key, and `tenantSession` checks it
+on launch. Signing out is forgetting the token: BD's tokens are signed, not
+stored.
 
 ## Five things that will bite you
 
@@ -86,7 +102,7 @@ bd/src/main/kotlin/app/bd/
 
 **3. Checkout returns `stripeUrl`, not `url`.** Open it in a browser; no card data touches this process, which keeps the app out of PCI scope.
 
-**4. The cart visitor token is generated locally and must be persisted.** There is no endpoint that mints one — `cart/session` is a tokenized iframe embed, a different feature. `BdApp.visitorToken` keeps it in `SharedPreferences`, which is right because it's an opaque id, **not** a secret. A session token would belong in `EncryptedSharedPreferences` instead.
+**4. The cart visitor token is generated locally and must be persisted.** There is no endpoint that mints one — `cart/session` is a tokenized iframe embed, a different feature. `BdApp.visitorToken` keeps it in `SharedPreferences`, which is right because it's an opaque id, **not** a secret. The sign-in's session token is a secret, so `SessionStore` encrypts it with a Keystore key.
 
 **5. `ignoreUnknownKeys = true` is load-bearing.** The platform returns a superset that grows release to release. Without it, one new column breaks the app on somebody else's deploy.
 
@@ -98,8 +114,8 @@ The loop also de-duplicates on message id: `since` is only as good as what the s
 
 ## What this starter does not do
 
-- **No sign-in / customer portal UI.** The scopes allow it (`tenant_auth:public`, `customer_portal:self`); the hosted auth flow needs a deep-link callback the way the Swift starter does.
-- **Two tabs.** Shop + add-to-cart, and a form. Cart, blog and chat are wired in the client and the ViewModel but have no Compose screens yet.
+- **No customer portal UI.** Sign-in is there; the portal's jobs, quotes and invoices (`customer_portal:self`) are wired in the client but have no Compose screen yet.
+- **Three tabs.** Shop + add-to-cart, a form, and the account. Cart, blog and chat are wired in the client and the ViewModel but have no Compose screens yet.
 
 ## ⚠️ Verification status
 

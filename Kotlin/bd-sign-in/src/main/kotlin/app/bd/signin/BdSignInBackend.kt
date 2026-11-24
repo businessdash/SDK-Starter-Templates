@@ -12,9 +12,11 @@ import java.net.URL
  * business: their own password, their own codes, nothing shared with another
  * business on BD. These calls are BD's `auth/customer/` routes.
  *
- * Those routes need a key, and a native app holds no secret, so the usual
- * backend is [BdServerSignInBackend]: the app's own server takes the same
- * JSON, adds its key, and hands back its own session `S`.
+ * Those routes take the business's **publishable** key (`tenant_auth:public`
+ * is in the publishable scope set), so an app can call BD directly with
+ * [BdServerSignInBackend.businessDash]. An app whose server keeps the BD key
+ * instead points [BdServerSignInBackend] at its own routes, which take the
+ * same JSON and hand back the server's own session `S`.
  */
 public interface BdSignInBackend<S> {
     /** The business's name and which ways to sign in it offers. */
@@ -59,7 +61,47 @@ public class BdSignInException(public val code: String, message: String) : Excep
 }
 
 /**
- * Sign-in through the app's own server. It takes BD's request bodies at
+ * What BD's sign-in routes answer: who signed in, at which business, and the
+ * token for `x-bd-session` (`auth/me`, the customer portal, …). Always a
+ * customer session: [role] is null.
+ */
+public data class BdSignInSession(
+    val userId: String,
+    val email: String?,
+    val firstName: String?,
+    val lastName: String?,
+    val organizationId: String,
+    val role: String?,
+    val sessionToken: String,
+    /** ISO 8601. */
+    val expiresAt: String,
+) {
+    /** "First Last", or the email when BD has no name. */
+    public val displayName: String
+        get() = listOfNotNull(firstName, lastName).joinToString(" ").ifEmpty { email.orEmpty() }
+
+    public companion object {
+        /** BD's reply: `{ user: { id, email, firstName, lastName }, organizationId, role, sessionToken, expiresAt }`. */
+        public fun parse(json: String): BdSignInSession {
+            val o = JSONObject(json)
+            val user = o.getJSONObject("user")
+            fun JSONObject.text(name: String): String? = if (has(name) && !isNull(name)) getString(name) else null
+            return BdSignInSession(
+                userId = user.getString("id"),
+                email = user.text("email"),
+                firstName = user.text("firstName"),
+                lastName = user.text("lastName"),
+                organizationId = o.getString("organizationId"),
+                role = o.text("role"),
+                sessionToken = o.getString("sessionToken"),
+                expiresAt = o.text("expiresAt").orEmpty(),
+            )
+        }
+    }
+}
+
+/**
+ * Sign-in through BD ([businessDash]) or the app's own server. It takes BD's request bodies at
  * [baseUrl] + `options` (GET), `sign-in`, `sign-up`, `forgot-password`,
  * `verify` and `id-token` (POST), passes them to BD's `auth/customer/` with
  * its key, and answers with:
@@ -152,6 +194,24 @@ public class BdServerSignInBackend<S>(
             text
         } finally {
             connection.disconnect()
+        }
+    }
+
+    public companion object {
+        /**
+         * Straight to BD's `auth/customer/` routes with the business's
+         * publishable `pk_…` key, the one the app already ships. No server needed.
+         */
+        public fun businessDash(
+            publishableKey: String,
+            host: String = "https://www.businessdash.us",
+        ): BdServerSignInBackend<BdSignInSession> {
+            require(!publishableKey.startsWith("sk_")) { "Use the publishable pk_ key in an app, never a secret sk_ key." }
+            return BdServerSignInBackend(
+                baseUrl = host.trimEnd('/') + "/api/package/v1/auth/customer",
+                headers = mapOf("Authorization" to "Bearer $publishableKey"),
+                readSession = BdSignInSession::parse,
+            )
         }
     }
 }

@@ -1,3 +1,4 @@
+import BdSignIn
 import BusinessDashKit
 import Foundation
 import Observation
@@ -37,9 +38,20 @@ public final class BdEnvironment {
 
     public var client: BdClient? { configuration?.client }
 
+    /// Checks a stored session and signs out. The callback URL only matters to
+    /// BD's hosted sign-in page, which this starter doesn't use.
     public var auth: BdAuth? {
-        guard let client, let callback = configuration?.authCallbackURL else { return nil }
-        return BdAuth(client: client, callbackURL: callback)
+        guard let client else { return nil }
+        return BdAuth(client: client, callbackURL: configuration?.authCallbackURL ?? "")
+    }
+
+    /// For the native sign-in screen (`BdSignInView`): BD's customer sign-in
+    /// routes, called with the publishable key. The account is the customer's
+    /// own at this business, with its own password; no other business's sign-in
+    /// knows it.
+    public var signInBackend: BdServerSignInBackend<BdSignInSession>? {
+        guard let configuration else { return nil }
+        return .businessDash(publishableKey: configuration.publishableKey, host: configuration.host)
     }
 
     /// Call once on launch. Restores the cart visitor id and revalidates any
@@ -59,12 +71,12 @@ public final class BdEnvironment {
         }
     }
 
-    public func completeSignIn(code: String, state: String) async throws {
-        guard let auth else { return }
-        let result = try await auth.exchange(code: code, state: state)
-        await sessions.setSessionToken(result.sessionToken)
-        session = await auth.session(token: result.sessionToken)
-        sessionToken = session == nil ? nil : result.sessionToken
+    /// Keeps the session the sign-in screen got.
+    public func adopt(_ signedIn: BdSignInSession) async {
+        await sessions.setSessionToken(signedIn.sessionToken)
+        session = await auth?.session(token: signedIn.sessionToken)
+        sessionToken = session == nil ? nil : signedIn.sessionToken
+        if session == nil { await sessions.clearSessionToken() }
     }
 
     public func signOut() async {

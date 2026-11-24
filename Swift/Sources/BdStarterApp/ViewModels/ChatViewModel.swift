@@ -67,7 +67,7 @@ final class ChatViewModel: ScreenViewModel {
     }
 }
 
-/// The customer's portal work feed, and signing in.
+/// The customer's portal work feed.
 @MainActor
 @Observable
 final class AccountViewModel: ScreenViewModel {
@@ -76,7 +76,6 @@ final class AccountViewModel: ScreenViewModel {
     /// Null before the first load — distinct from `.loading`, because a
     /// signed-out customer has nothing to load rather than something pending.
     private(set) var state: LoadState<CustomerWorkBundle>?
-    private(set) var signInError: String?
 
     func loadWork() async {
         guard let portal = bd?.portal else {
@@ -84,31 +83,5 @@ final class AccountViewModel: ScreenViewModel {
             return
         }
         state = await LoadState { try await portal.work() }
-    }
-
-    /// The URL to open for hosted sign-in, or nil when it cannot be built.
-    ///
-    /// Returns the URL rather than opening it, so the view keeps the
-    /// `openURL` dependency and this stays testable without a UI.
-    ///
-    /// A production app would present this in `ASWebAuthenticationSession` so
-    /// the browser sheet closes itself and the callback is delivered directly.
-    /// Returning a URL keeps the starter free of AuthenticationServices and
-    /// UIKit presentation-anchor plumbing.
-    func signInURL() async -> URL? {
-        guard let auth = bd?.auth else {
-            signInError = "Set BDAuthCallbackURL in Info.plist to enable sign-in."
-            return nil
-        }
-        do {
-            signInError = nil
-            return try await auth.startURL()
-        } catch let error as BdError {
-            signInError = error.errorDescription
-            return nil
-        } catch {
-            signInError = error.localizedDescription
-            return nil
-        }
     }
 }

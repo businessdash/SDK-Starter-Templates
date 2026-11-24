@@ -47,7 +47,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.graphics.isSpecified
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
@@ -63,12 +64,16 @@ import kotlinx.coroutines.launch
 /** Who the person is signing in to. They see the business, never BD. */
 @Immutable
 public data class BdSignInBrand(
-    val name: String,
+    /** Empty: the business's name as BD knows it. */
+    val name: String = "",
     /** Shown above the title, 88dp square, clipped to a rounded square. */
     val logo: Painter? = null,
     /** A line under the sign-in title. */
     val tagline: String? = null,
-    /** Buttons and links. [Color.Unspecified]: the theme's primary. */
+    /**
+     * Buttons, links and the focused field: everything the theme's primary
+     * would colour. [Color.Unspecified]: the theme's primary.
+     */
     val tint: Color = Color.Unspecified,
 )
 
@@ -78,6 +83,10 @@ public data class BdSignInStrings(
     val signInTitle: String = "Sign in to %s",
     val createTitle: String = "Create your %s account",
     val createSubtitle: String = "An account just for %s, with its own password.",
+    /** The titles while there's no name to show (none given, and BD's not loaded yet). */
+    val signInTitleNoName: String = "Sign in",
+    val createTitleNoName: String = "Create your account",
+    val createSubtitleNoName: String = "An account with its own password.",
     val forgotTitle: String = "Reset your password",
     val forgotSubtitle: String = "Enter your email and we'll send you a code.",
     val codeTitle: String = "Check your email",
@@ -153,9 +162,9 @@ private const val MIN_PASSWORD = 10
  *
  * ```kotlin
  * BdSignIn(
- *     brand = BdSignInBrand("Acme", logo = painterResource(R.drawable.logo)),
- *     backend = BdServerSignInBackend("https://acme.com/api/account") { json -> MySession.parse(json) },
- *     onSignedIn = { session -> store(session) },
+ *     brand = BdSignInBrand(logo = painterResource(R.drawable.logo)),   // the name comes from BD
+ *     backend = BdServerSignInBackend.businessDash(publishableKey = "pk_…"),
+ *     onSignedIn = { session -> store(session.sessionToken) },
  * )
  * ```
  */
@@ -169,6 +178,30 @@ public fun <S> BdSignIn(
     strings: BdSignInStrings = BdSignInStrings(),
     google: (suspend () -> BdIdToken)? = null,
     contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
+) {
+    // The brand's colour stands in for the theme's primary across the whole
+    // screen (buttons, links, the focused field), with text that reads on it.
+    val base = MaterialTheme.colorScheme
+    val scheme = if (brand.tint.isSpecified) {
+        base.copy(primary = brand.tint, onPrimary = if (brand.tint.luminance() > 0.5f) Color.Black else Color.White)
+    } else {
+        base
+    }
+    MaterialTheme(colorScheme = scheme, typography = MaterialTheme.typography, shapes = MaterialTheme.shapes) {
+        SignInScreen(brand, backend, onSignedIn, modifier, start, strings, google, contentPadding)
+    }
+}
+
+@Composable
+private fun <S> SignInScreen(
+    brand: BdSignInBrand,
+    backend: BdSignInBackend<S>,
+    onSignedIn: (S) -> Unit,
+    modifier: Modifier,
+    start: BdSignInStart,
+    strings: BdSignInStrings,
+    google: (suspend () -> BdIdToken)?,
+    contentPadding: PaddingValues,
 ) {
     var step by rememberSaveable(stateSaver = StepSaver) {
         mutableStateOf(if (start == BdSignInStart.CreateAccount) Step.CreateAccount else Step.SignIn)
@@ -185,7 +218,7 @@ public fun <S> BdSignIn(
     var notice by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val focus = LocalFocusManager.current
-    val tint = brand.tint.takeOrElse { MaterialTheme.colorScheme.primary }
+    val tint = MaterialTheme.colorScheme.primary
 
     LaunchedEffect(backend) {
         runCatching { backend.options() }.onSuccess { options = it }
@@ -289,9 +322,13 @@ public fun <S> BdSignIn(
                         modifier = Modifier.size(88.dp).shadow(8.dp, RoundedCornerShape(20.dp)).clip(RoundedCornerShape(20.dp)),
                     )
                 }
+                // The brand's name, or BD's for the business when the brand leaves it empty.
+                val name = brand.name.trim().ifEmpty { options.name?.trim().orEmpty() }.ifEmpty { null }
                 val (title, subtitle) = when (val s = step) {
-                    Step.SignIn -> strings.signInTitle.format(brand.name) to brand.tagline
-                    Step.CreateAccount -> strings.createTitle.format(brand.name) to strings.createSubtitle.format(brand.name)
+                    Step.SignIn -> (name?.let { strings.signInTitle.format(it) } ?: strings.signInTitleNoName) to brand.tagline
+                    Step.CreateAccount ->
+                        (name?.let { strings.createTitle.format(it) } ?: strings.createTitleNoName) to
+                            (name?.let { strings.createSubtitle.format(it) } ?: strings.createSubtitleNoName)
                     Step.Forgot -> strings.forgotTitle to strings.forgotSubtitle
                     is Step.Code -> strings.codeTitle to
                         (if (s.purpose == Purpose.Reset) strings.codeResetSubtitle else strings.codeSubtitle).format(s.email)
@@ -354,7 +391,7 @@ public fun <S> BdSignIn(
                     enabled = !busy,
                     modifier = Modifier.fillMaxWidth().height(52.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = tint),
+                    colors = ButtonDefaults.buttonColors(containerColor = tint, contentColor = MaterialTheme.colorScheme.onPrimary),
                 ) {
                     if (busy) {
                         CircularProgressIndicator(Modifier.size(22.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)

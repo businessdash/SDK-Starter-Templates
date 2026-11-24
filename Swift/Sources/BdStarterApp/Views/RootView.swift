@@ -13,11 +13,6 @@ import SwiftUI
 ///             BdRootView()
 ///                 .environment(bd)
 ///                 .task { await bd.bootstrap() }
-///                 .onOpenURL { url in
-///                     // The auth callback comes back on your custom scheme.
-///                     guard let (code, state) = BdAuth.callbackParameters(from: url) else { return }
-///                     Task { try? await bd.completeSignIn(code: code, state: state) }
-///                 }
 ///         }
 ///     }
 /// }

@@ -4,10 +4,13 @@ import Foundation
 /// business: their own password, their own codes, nothing shared with another
 /// business on BD. These calls are BD's `auth/customer/*` routes.
 ///
-/// Those routes need a key, and a native app holds no secret, so the usual
-/// backend is ``BdServerSignInBackend``: the app's own server takes the same
-/// JSON, adds its key, and hands back its own session. Supply your own
-/// conformance for anything else (a test double, a different transport).
+/// Those routes take the business's **publishable** key (`tenant_auth:public`
+/// is in the publishable scope set), so an app can call BD directly with
+/// ``BdServerSignInBackend/businessDash(publishableKey:host:urlSession:)``.
+/// An app whose server keeps the BD key instead points
+/// ``BdServerSignInBackend`` at its own routes, which take the same JSON and
+/// hand back the server's own session. Supply your own conformance for
+/// anything else (a test double, a different transport).
 public protocol BdSignInBackend: Sendable {
     /// What a successful sign-in gives the app (a token from its server, a session).
     associatedtype Session: Sendable
@@ -73,7 +76,50 @@ public struct BdSignInError: LocalizedError, Sendable, Equatable {
     public static let unavailable = BdSignInError(code: "unavailable", message: "Sign-in isn't available just now. Try again in a minute.")
 }
 
-/// Sign-in through the app's own server. It takes BD's request bodies at
+/// What BD's sign-in routes answer: who signed in, at which business, and the
+/// token for `x-bd-session` (`auth/me`, the customer portal, …). Always a
+/// customer session: `role` is nil.
+public struct BdSignInSession: Decodable, Sendable, Equatable {
+    public struct User: Decodable, Sendable, Equatable {
+        public let id: String
+        public let email: String?
+        public let firstName: String?
+        public let lastName: String?
+
+        /// "First Last", or the email when BD has no name.
+        public var displayName: String {
+            let name = [firstName, lastName].compactMap { $0 }.joined(separator: " ")
+            return name.isEmpty ? (email ?? "") : name
+        }
+    }
+
+    public let user: User
+    public let organizationId: String
+    public let role: String?
+    public let sessionToken: String
+    /// ISO 8601.
+    public let expiresAt: String
+}
+
+extension BdServerSignInBackend where Session == BdSignInSession {
+    /// Straight to BD's `auth/customer/` routes with the business's publishable
+    /// `pk_…` key, the one the app already ships. No server needed.
+    public static func businessDash(
+        publishableKey: String,
+        host: URL = URL(string: "https://www.businessdash.us")!,
+        urlSession: URLSession = .shared
+    ) -> Self {
+        precondition(!publishableKey.hasPrefix("sk_"), "Use the publishable pk_ key in an app, never a secret sk_ key.")
+        return Self(
+            baseURL: host.appending(path: "api/package/v1/auth/customer"),
+            headers: ["Authorization": "Bearer \(publishableKey)"],
+            urlSession: urlSession
+        )
+    }
+}
+
+/// Sign-in through BD (``businessDash(publishableKey:host:urlSession:)``) or
+/// the app's own server. It takes BD's request bodies at
 /// `baseURL` + `options` (GET), `sign-in`, `sign-up`, `forgot-password`,
 /// `verify` and `id-token` (POST), passes them to BD's
 /// `auth/customer/*` with its key, and answers with:

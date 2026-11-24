@@ -4,6 +4,7 @@ import SwiftUI
 
 /// Who the person is signing in to. They see the business, never BD.
 public struct BdSignInBrand {
+    /// Empty: the business's name as BD knows it.
     public var name: String
     /// Shown above the title, about 88 points square. A square image is clipped to a rounded square.
     public var logo: Image?
@@ -12,7 +13,7 @@ public struct BdSignInBrand {
     /// Buttons and links. nil: the app's tint.
     public var tint: Color?
 
-    public init(name: String, logo: Image? = nil, tagline: String? = nil, tint: Color? = nil) {
+    public init(name: String = "", logo: Image? = nil, tagline: String? = nil, tint: Color? = nil) {
         self.name = name
         self.logo = logo
         self.tagline = tagline
@@ -25,6 +26,10 @@ public struct BdSignInStrings: Sendable {
     public var signInTitle = "Sign in to %@"
     public var createTitle = "Create your %@ account"
     public var createSubtitle = "An account just for %@, with its own password."
+    /// The titles while there's no name to show (none given, and BD's not loaded yet).
+    public var signInTitleNoName = "Sign in"
+    public var createTitleNoName = "Create your account"
+    public var createSubtitleNoName = "An account with its own password."
     public var forgotTitle = "Reset your password"
     public var forgotSubtitle = "Enter your email and we'll send you a code."
     public var codeTitle = "Check your email"
@@ -72,10 +77,10 @@ public typealias BdGoogleIDToken = @MainActor () async throws -> (idToken: Strin
 ///
 /// ```swift
 /// BdSignInView(
-///     brand: BdSignInBrand(name: "Acme", logo: Image("Logo")),
-///     backend: BdServerSignInBackend<MySession>(baseURL: URL(string: "https://acme.com/api/account")!)
+///     brand: BdSignInBrand(logo: Image("Logo")),   // the name comes from BD
+///     backend: BdServerSignInBackend.businessDash(publishableKey: "pk_…")
 /// ) { session in
-///     store(session)
+///     store(session.sessionToken)
 /// }
 /// ```
 public struct BdSignInView<Backend: BdSignInBackend>: View {
@@ -188,10 +193,18 @@ public struct BdSignInView<Backend: BdSignInBackend>: View {
         .frame(maxWidth: .infinity)
     }
 
+    /// The brand's name, or BD's for the business when the brand leaves it empty.
+    private var businessName: String? {
+        let given = brand.name.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !given.isEmpty { return given }
+        let fromBD = options.name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return fromBD.isEmpty ? nil : fromBD
+    }
+
     private var title: String {
         switch step {
-        case .signIn: String(format: strings.signInTitle, brand.name)
-        case .createAccount: String(format: strings.createTitle, brand.name)
+        case .signIn: businessName.map { String(format: strings.signInTitle, $0) } ?? strings.signInTitleNoName
+        case .createAccount: businessName.map { String(format: strings.createTitle, $0) } ?? strings.createTitleNoName
         case .forgot: strings.forgotTitle
         case .code: strings.codeTitle
         }
@@ -200,7 +213,7 @@ public struct BdSignInView<Backend: BdSignInBackend>: View {
     private var subtitle: String? {
         switch step {
         case .signIn: brand.tagline
-        case .createAccount: String(format: strings.createSubtitle, brand.name)
+        case .createAccount: businessName.map { String(format: strings.createSubtitle, $0) } ?? strings.createSubtitleNoName
         case .forgot: strings.forgotSubtitle
         case .code(_, let purpose, let email):
             String(format: purpose == .reset ? strings.codeResetSubtitle : strings.codeSubtitle, email)

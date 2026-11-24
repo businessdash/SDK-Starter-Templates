@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Button
@@ -97,13 +98,20 @@ private fun StarterTabs(visitorToken: String) {
                     icon = { Icon(Icons.Filled.Edit, contentDescription = null) },
                     label = { Text("Form") },
                 )
+                NavigationBarItem(
+                    selected = tab == 2,
+                    onClick = { tab = 2 },
+                    icon = { Icon(Icons.Filled.AccountCircle, contentDescription = null) },
+                    label = { Text("Account") },
+                )
             }
         },
     ) { padding ->
         val inner = Modifier.padding(padding).consumeWindowInsets(padding)
         when (tab) {
             0 -> ShopScreen(visitorToken, inner)
-            else -> FormScreen(inner)
+            1 -> FormScreen(inner)
+            else -> AccountScreen(inner)
         }
     }
 }

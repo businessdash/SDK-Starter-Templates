@@ -56,6 +56,7 @@ kotlin {
 dependencies {
     implementation(project(":bd"))
     implementation(project(":bd-forms"))
+    implementation(project(":bd-sign-in"))
 
     implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
