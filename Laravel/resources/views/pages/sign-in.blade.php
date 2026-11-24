@@ -15,7 +15,7 @@
 
 @push('scripts')
     <script type="module">
-        import { mountBdSignIn } from "https://esm.sh/@businessdash/sdk@0.9.94/sign-in";
+        import { mountBdSignIn } from "https://esm.sh/@businessdash/sdk@0.9.95/sign-in";
         const host = document.getElementById("bd-sign-in");
         mountBdSignIn(host, {
             start: host.dataset.start,
