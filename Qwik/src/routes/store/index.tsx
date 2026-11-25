@@ -19,9 +19,11 @@ import type {
 } from "@businessdash/sdk/contracts";
 
 import { Footer } from "../../components/bd/Footer";
+import { ShopStars } from "../../components/bd/ShopStars";
 import { SiteHeader } from "../../components/bd/SiteHeader";
-import { Stars } from "../../components/bd/Stars";
+import { StoreNav } from "../../components/bd/StoreNav";
 import { getBd } from "../../lib/bd";
+import { elementHtml } from "../../lib/bd-elements";
 import {
 	formatMoney,
 	getCartSnapshot,
@@ -64,8 +66,10 @@ function parsePrice(raw: string | undefined): {
  * Storefront product list. `routeLoader$` reads the filterable catalog
  * server-side via `storefront.listProductsWithMeta` (facets + ratings +
  * badges) plus the category list for the sidebar. Filters are driven by URL
- * search params (`q`, `category`, `price`, `rating`, `sort`). Suspension
- * errors degrade to a minimal "unavailable" state instead of crashing.
+ * search params (`q`, `category`, `price`, `rating`, `sort`). Each card saves
+ * to the wishlist or the comparison (`<bd-save-buttons>`), and
+ * `<bd-compare-bar>` shows the picks. Suspension errors degrade to a minimal
+ * "unavailable" state instead of crashing.
  */
 export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 	const bd = getBd();
@@ -163,261 +167,251 @@ export default component$(() => {
 
 	return (
 		<>
-			<SiteHeader signedIn={data.value.signedIn} cartCount={data.value.cartCount} />
-			<main>
-				<section class="bd-section">
-					<div class="bd-section__lead">
-						<span class="bd-section__eyebrow">Shop</span>
-						<h2 class="bd-section__title">Store</h2>
-						<p class="bd-section__sub">
-							Live products from the BD storefront surface. Filter, add to cart,
-							and check out via Stripe.
-						</p>
+			<SiteHeader signedIn={data.value.signedIn} />
+			<StoreNav cartCount={data.value.cartCount} />
+			<main class="bd-page">
+				<div class="bd-section__lead">
+					<span class="bd-section__eyebrow">Shop</span>
+					<h1 class="bd-section__title">Products</h1>
+					<p class="bd-section__sub">
+						Filter, sort, and open a product to choose its options and add it to your cart.
+					</p>
+				</div>
+
+				{data.value.suspended ? (
+					<div class="bd-empty">
+						The store is temporarily unavailable. Please check back soon.
 					</div>
+				) : !data.value.configured ? (
+					<div class="bd-empty">
+						Store isn't connected yet. Set the BD env vars (see
+						<code> .env.example</code>) to go live.
+					</div>
+				) : (
+					<div class="store-layout">
+						<aside aria-label="Product filters" class="store-sidebar">
+							<form
+								preventdefault:submit
+								role="search"
+								onSubmit$={(e) => {
+									const fd = new FormData(e.target as HTMLFormElement);
+									const q = String(fd.get("q") ?? "").trim();
+									setParam("q", q || null);
+								}}
+							>
+								<label class="bd-label" for="store-search">
+									Search
+								</label>
+								<input
+									autoComplete="off"
+									class="bd-input"
+									id="store-search"
+									name="q"
+									placeholder="Search products…"
+									type="search"
+									value={search}
+								/>
+							</form>
 
-					{data.value.suspended ? (
-						<div class="bd-empty">
-							The store is temporarily unavailable. Please check back soon.
-						</div>
-					) : !data.value.configured ? (
-						<div class="bd-empty">
-							Store isn't connected yet. Set the BD env vars (see
-							<code> .env.example</code>) to go live.
-						</div>
-					) : (
-						<div class="store-layout">
-							{/* Sidebar — search, categories, price, rating */}
-							<aside class="store-sidebar">
-								<form
-									class="store-filter"
-									preventdefault:submit
-									onSubmit$={(e) => {
-										const fd = new FormData(e.target as HTMLFormElement);
-										const q = String(fd.get("q") ?? "").trim();
-										setParam("q", q || null);
-									}}
-								>
-									<label class="bd-label" for="store-search">
-										Search
-									</label>
-									<input
-										class="bd-input"
-										id="store-search"
-										name="q"
-										placeholder="Search products…"
-										type="search"
-										value={search}
-									/>
-								</form>
-
-								{data.value.categories.length > 0 ? (
-									<div class="store-filter">
-										<p class="store-filter__title">Category</p>
-										<ul class="store-filter__list">
-											<li>
-												<button
-													aria-pressed={!activeCategory}
-													class="store-filter__link"
-													onClick$={() => setParam("category", null)}
-													type="button"
-												>
-													<span>All products</span>
-												</button>
-											</li>
-											{data.value.categories.map((c) => {
-												const active = activeCategory === c.id;
-												const count = countByCategory.get(c.id) ?? 0;
-												return (
-													<li key={c.id}>
-														<button
-															aria-pressed={active}
-															class="store-filter__link"
-															onClick$={() =>
-																setParam("category", active ? null : c.id)
-															}
-															type="button"
-														>
-															<span>{c.name}</span>
-															<span class="store-filter__count">{count}</span>
-														</button>
-													</li>
-												);
-											})}
-										</ul>
-									</div>
-								) : null}
-
-								<form
-									class="store-filter"
-									preventdefault:submit
-									onSubmit$={() => {
-										const min = minPrice.value.trim();
-										const max = maxPrice.value.trim();
-										setParam("price", min || max ? `${min}-${max}` : null);
-									}}
-								>
-									<p class="store-filter__title">Price</p>
-									<div class="store-filter__price">
-										<input
-											bind:value={minPrice}
-											class="bd-input"
-											inputMode="numeric"
-											placeholder={`$${data.value.priceRange.minDollars}`}
-										/>
-										<span class="store-filter__dash">–</span>
-										<input
-											bind:value={maxPrice}
-											class="bd-input"
-											inputMode="numeric"
-											placeholder={`$${data.value.priceRange.maxDollars}`}
-										/>
-									</div>
-									<button
-										class="bd-btn bd-btn--ghost store-filter__apply"
-										type="submit"
-									>
-										Apply
-									</button>
-								</form>
-
-								<div class="store-filter">
-									<p class="store-filter__title">Rating</p>
-									<ul class="store-filter__list">
-										{[4, 3, 2].map((r) => {
-											const active = activeRating === r;
+							{data.value.categories.length > 0 ? (
+								<div class="store-facet">
+									<p class="store-facet__title">Category</p>
+									<ul class="store-facet__list">
+										<li>
+											<button
+												aria-pressed={!activeCategory}
+												class={`store-facet__item${activeCategory ? "" : " store-facet__item--active"}`}
+												onClick$={() => setParam("category", null)}
+												type="button"
+											>
+												All products
+											</button>
+										</li>
+										{data.value.categories.map((c) => {
+											const active = activeCategory === c.id;
 											return (
-												<li key={r}>
+												<li key={c.id}>
 													<button
 														aria-pressed={active}
-														class="store-filter__link"
-														onClick$={() =>
-															setParam("rating", active ? null : String(r))
-														}
+														class={`store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}`}
+														onClick$={() => setParam("category", active ? null : c.id)}
 														type="button"
 													>
-														<Stars rating={r} />
-														<span class="store-filter__count">&amp; up</span>
+														<span>{c.name}</span>
+														<span class="store-facet__count">
+															{countByCategory.get(c.id) ?? 0}
+														</span>
 													</button>
 												</li>
 											);
 										})}
 									</ul>
 								</div>
+							) : null}
 
-								{hasFilters ? (
-									<button
-										class="store-filter__clear"
-										onClick$={() => nav("/store")}
-										type="button"
-									>
-										Clear all filters
-									</button>
-								) : null}
-							</aside>
-
-							{/* Grid */}
-							<div class="store-results">
-								<div class="store-results__bar">
-									<p class="store-results__count">
-										{data.value.items.length}{" "}
-										{data.value.items.length === 1 ? "product" : "products"}
-									</p>
-									<label class="store-results__sort">
-										<span>Sort</span>
-										<select
-											class="bd-select"
-											onChange$={(e) =>
-												setParam(
-													"sort",
-													(e.target as HTMLSelectElement).value === "featured"
-														? null
-														: (e.target as HTMLSelectElement).value,
-												)
-											}
-											value={activeSort}
-										>
-											{SORT_VALUES.map((s) => (
-												<option key={s} value={s}>
-													{SORT_LABELS[s]}
-												</option>
-											))}
-										</select>
-									</label>
+							<form
+								class="store-facet"
+								preventdefault:submit
+								onSubmit$={() => {
+									const min = minPrice.value.trim();
+									const max = maxPrice.value.trim();
+									setParam("price", min || max ? `${min}-${max}` : null);
+								}}
+							>
+								<p class="store-facet__title">Price</p>
+								<div class="store-price">
+									<input
+										aria-label="Lowest price"
+										bind:value={minPrice}
+										class="bd-input"
+										inputMode="decimal"
+										placeholder={`$${Math.floor(data.value.priceRange.minDollars)}`}
+									/>
+									<span aria-hidden="true" class="store-price__sep">
+										–
+									</span>
+									<input
+										aria-label="Highest price"
+										bind:value={maxPrice}
+										class="bd-input"
+										inputMode="decimal"
+										placeholder={`$${Math.ceil(data.value.priceRange.maxDollars)}`}
+									/>
 								</div>
+								<button class="bd-btn bd-btn--ghost store-price__apply" type="submit">
+									Apply
+								</button>
+							</form>
 
-								{data.value.items.length === 0 ? (
-									<div class="bd-empty">
-										No products match these filters. Try clearing a filter or
-										broadening your search.
-									</div>
-								) : (
-									<div class="bd-grid-3">
-										{data.value.items.map((p) => (
-											<Link
-												class="bd-card service-card store-card"
-												href={`/store/${p.id}`}
-												key={p.id}
-											>
-												<div class="store-card__media">
+							<div class="store-facet">
+								<p class="store-facet__title">Rating</p>
+								<ul class="store-facet__list">
+									{[4, 3, 2].map((r) => {
+										const active = activeRating === r;
+										return (
+											<li key={r}>
+												<button
+													aria-pressed={active}
+													class={`store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}`}
+													onClick$={() => setParam("rating", active ? null : String(r))}
+													type="button"
+												>
+													<ShopStars rating={r} />
+													<span class="store-facet__count">&amp; up</span>
+												</button>
+											</li>
+										);
+									})}
+								</ul>
+							</div>
+
+							{hasFilters ? (
+								<button class="store-clear" onClick$={() => nav("/store")} type="button">
+									Clear all filters
+								</button>
+							) : null}
+						</aside>
+
+						<div class="store-results">
+							<div class="store-results__bar">
+								<p class="bd-loading">
+									{data.value.items.length}{" "}
+									{data.value.items.length === 1 ? "product" : "products"}
+								</p>
+								<div class="store-sort">
+									<label for="store-sort">Sort</label>
+									<select
+										class="bd-select"
+										id="store-sort"
+										onChange$={(e) => {
+											const value = (e.target as HTMLSelectElement).value;
+											setParam("sort", value === "featured" ? null : value);
+										}}
+										value={activeSort}
+									>
+										{SORT_VALUES.map((s) => (
+											<option key={s} value={s}>
+												{SORT_LABELS[s]}
+											</option>
+										))}
+									</select>
+								</div>
+							</div>
+
+							{data.value.items.length === 0 ? (
+								<div class="bd-empty">
+									{hasFilters
+										? "No products match these filters. Try clearing a filter or broadening your search."
+										: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
+								</div>
+							) : (
+								<div class="bd-grid-3">
+									{data.value.items.map((p) => (
+										<div class="bd-card product-card" key={p.id}>
+											<Link class="product-card__link" href={`/store/${p.id}`}>
+												<div class="product-card__media">
 													{p.coverImage ? (
 														<img
 															alt={p.name}
+															class="product-card__img"
 															loading="lazy"
 															referrerPolicy="no-referrer"
 															src={p.coverImage}
 														/>
 													) : (
-														<div class="store-card__placeholder">No image</div>
+														<div class="product-card__noimg">No image</div>
 													)}
-													{p.isBestSeller || p.isNew || p.isOnSale ? (
-														<div class="store-card__badges">
-															{p.isBestSeller ? (
-																<span class="bd-badge">Best seller</span>
-															) : null}
-															{p.isNew ? (
-																<span class="bd-badge">New</span>
-															) : null}
-															{p.isOnSale ? (
-																<span class="bd-badge store-card__badge--sale">
-																	Sale
-																</span>
-															) : null}
+													<div class="product-card__badges">
+														{p.isBestSeller ? <span class="bd-badge">Best seller</span> : null}
+														{p.isNew ? <span class="bd-badge">New</span> : null}
+														{p.isOnSale ? (
+															<span class="bd-badge product-card__badge--sale">Sale</span>
+														) : null}
+													</div>
+												</div>
+												<div class="product-card__body">
+													<h3>{p.name || "Untitled"}</h3>
+													{p.reviewCount > 0 ? (
+														<div class="product-card__rating">
+															<ShopStars rating={p.avgRating} />
+															<span class="product-card__count">({p.reviewCount})</span>
 														</div>
 													) : null}
-												</div>
-												<h3>{p.name}</h3>
-												{p.reviewCount > 0 ? (
-													<div class="store-card__rating">
-														<Stars rating={p.avgRating} />
-														<span class="store-card__reviews">
-															({p.reviewCount})
+													<div class="product-card__price">
+														<span class="product-card__amount">
+															{p.cheapestPriceCents != null
+																? `${p.hasMultipleVariants ? "From " : ""}${formatMoney(p.cheapestPriceCents, "usd")}`
+																: "View details"}
 														</span>
+														{p.isOnSale && p.comparePriceCents != null ? (
+															<span class="product-card__compare">
+																{formatMoney(p.comparePriceCents, "usd")}
+															</span>
+														) : null}
 													</div>
-												) : null}
-												<div class="store-card__price">
-													<span class="service-card__price">
-														{p.hasMultipleVariants ? "From " : ""}
-														{p.cheapestPriceCents != null
-															? formatMoney(p.cheapestPriceCents, "usd")
-															: "—"}
-													</span>
-													{p.isOnSale && p.comparePriceCents != null ? (
-														<span class="store-card__compare">
-															{formatMoney(p.comparePriceCents, "usd")}
-														</span>
-													) : null}
+													{p.isLowStock ? <span class="product-card__lowstock">Low stock</span> : null}
 												</div>
-												{p.isLowStock ? (
-													<span class="store-card__lowstock">Low stock</span>
-												) : null}
 											</Link>
-										))}
-									</div>
-								)}
-							</div>
+											<div
+												class="product-card__save"
+												dangerouslySetInnerHTML={elementHtml("bd-save-buttons", {
+													compact: true,
+													"data-product": JSON.stringify({
+														id: p.id,
+														name: p.name,
+														image: p.coverImage ?? null,
+														priceCents: p.cheapestPriceCents ?? null,
+													}),
+												})}
+											/>
+										</div>
+									))}
+								</div>
+							)}
+							<div dangerouslySetInnerHTML={elementHtml("bd-compare-bar", {})} />
 						</div>
-					)}
-				</section>
+					</div>
+				)}
 			</main>
 			<Footer />
 		</>

@@ -1,4 +1,4 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import { subscribeAction } from "@/app/_actions/plans";
 import { getCustomerSession } from "@/server/lib/bd-portal";
 import {
@@ -68,7 +68,9 @@ export default async function SubscriptionsPage({
 				</p>
 			</div>
 			{error === "checkout" ? (
-				<div className="bd-empty">Couldn&apos;t start checkout. Please try again.</div>
+				<div className="bd-empty">
+					Couldn&apos;t start checkout. Please try again.
+				</div>
 			) : null}
 			<div className="bd-grid-3">
 				{data.items.map((sub) => (
@@ -97,7 +99,10 @@ export default async function SubscriptionsPage({
 									</button>
 								</form>
 							) : (
-								<a className="bd-btn" href="/my-account?next=/store/subscriptions">
+								<a
+									className="bd-btn"
+									href="/my-account?next=/store/subscriptions"
+								>
 									Sign in to subscribe
 								</a>
 							)}

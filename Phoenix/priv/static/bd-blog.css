@@ -1,0 +1,320 @@
+/*
+ * The blog's styles: the post list with its topic filters, and a post with
+ * its likes and comments. Built on the theme tokens in bd-tokens.css.
+ */
+
+/* ── Blog index ────────────────────────────────────────────────── */
+.blog-filters {
+	display: grid;
+	gap: 0.75rem;
+	margin-bottom: 2rem;
+}
+.blog-filters ul {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.blog-filters a {
+	display: inline-block;
+	padding: 0.35rem 0.85rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 9999px;
+	color: var(--title);
+	font-size: 0.88rem;
+}
+.blog-filters__tags a {
+	border-style: dashed;
+	color: var(--text-muted);
+}
+.blog-filters a[aria-current='true'] {
+	border-color: var(--accent);
+	background: var(--accent-bg);
+	color: var(--accent);
+}
+.posts {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+	gap: 1.25rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.post-card {
+	overflow: hidden;
+	padding: 0;
+}
+@media (min-width: 900px) {
+	.post-card--lead {
+		grid-column: 1 / -1;
+	}
+	.post-card--lead .post-card__link {
+		display: grid;
+		grid-template-columns: 1.2fr 1fr;
+	}
+	.post-card--lead .post-card__body {
+		align-content: center;
+	}
+	.post-card--lead .post-card__img {
+		height: 100%;
+		aspect-ratio: auto;
+	}
+	.post-card--lead h2 {
+		font-size: 1.8rem;
+	}
+}
+.post-card__link {
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+	color: inherit;
+	border-bottom: none;
+}
+.post-card__img {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+	background: var(--bg-soft);
+}
+.post-card__body {
+	display: grid;
+	gap: 0.5rem;
+	padding: 1.25rem;
+}
+.post-card__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.35rem;
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 0.82rem;
+}
+.post-card h2 {
+	margin: 0;
+	font-size: 1.2rem;
+	color: var(--title);
+}
+.post-card__excerpt {
+	margin: 0;
+	color: var(--text);
+}
+.post-card__author {
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+}
+.posts__more {
+	margin-top: 2rem;
+	text-align: center;
+}
+
+/* ── Post page ─────────────────────────────────────────────────── */
+.post__back {
+	font-size: 0.9rem;
+	border-bottom: none;
+}
+.post__head h1 {
+	margin: 1rem 0 0.75rem;
+	font-size: clamp(2rem, 5vw, 3rem);
+	line-height: 1.1;
+	color: var(--title);
+}
+.post__meta {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+.post__meta img {
+	width: 2rem;
+	height: 2rem;
+	border-radius: 9999px;
+	object-fit: cover;
+}
+.post__cover {
+	width: 100%;
+	margin: 2rem 0 0;
+	border-radius: 1rem;
+	object-fit: cover;
+	max-height: 32rem;
+}
+.post__body {
+	margin-top: 2rem;
+	color: var(--text);
+	font-size: 1.08rem;
+	line-height: 1.75;
+	overflow-wrap: anywhere;
+}
+.post__body h2,
+.post__body h3 {
+	margin: 2rem 0 0.75rem;
+	color: var(--title);
+	line-height: 1.25;
+}
+/* Sizes, spacing and bullets as a browser draws them by default, stated
+   here so a CSS reset (Tailwind's, for one) doesn't flatten the post. */
+.post__body h2 {
+	font-size: 1.5em;
+	font-weight: 700;
+}
+.post__body h3 {
+	font-size: 1.17em;
+	font-weight: 700;
+}
+.post__body p,
+.post__body ul,
+.post__body ol {
+	margin: 1em 0;
+}
+.post__body ul,
+.post__body ol {
+	padding-left: 1.5em;
+}
+.post__body ul {
+	list-style: disc;
+}
+.post__body ol {
+	list-style: decimal;
+}
+.post__body img {
+	max-width: 100%;
+	height: auto;
+	border-radius: 0.75rem;
+}
+.post__body blockquote {
+	margin: 1.5rem 0;
+	padding-left: 1rem;
+	border-left: 3px solid var(--accent);
+	color: var(--subtitle);
+}
+.post__body pre {
+	overflow-x: auto;
+	padding: 1rem;
+	border-radius: 0.6rem;
+	background: var(--bg-soft);
+	font-family: var(--mono);
+	font-size: 0.9rem;
+}
+.post__body table {
+	display: block;
+	overflow-x: auto;
+	border-collapse: collapse;
+}
+.post__body th,
+.post__body td {
+	padding: 0.5rem 0.75rem;
+	border: 1px solid var(--border);
+}
+.post__cta {
+	display: grid;
+	gap: 0.75rem;
+	justify-items: start;
+	margin-top: 2rem;
+	padding: 1.5rem;
+}
+.post__cta p {
+	margin: 0;
+}
+.post__tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin: 2rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+.post__tags a {
+	color: var(--text-muted);
+	font-size: 0.88rem;
+}
+.post__like {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	margin-top: 2rem;
+	padding-top: 1.5rem;
+	border-top: 1px solid var(--border);
+}
+.like {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	padding: 0.5rem 1rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 9999px;
+	background: var(--card);
+	color: var(--title);
+	font: inherit;
+	cursor: pointer;
+}
+.like--on {
+	border-color: var(--accent);
+	background: var(--accent-bg);
+	color: var(--accent);
+}
+.post__likes {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+.post__error {
+	color: var(--danger);
+	font-size: 0.9rem;
+}
+.comments {
+	margin-top: 3rem;
+}
+.comments h2 {
+	font-size: 1.3rem;
+}
+.comments__signin {
+	margin: 1rem 0 1.5rem;
+}
+.comments__form {
+	display: grid;
+	gap: 0.6rem;
+	justify-items: start;
+	margin: 1rem 0 2rem;
+}
+.comments__form textarea {
+	width: 100%;
+}
+.comments__ok {
+	color: var(--success);
+}
+.comments__list {
+	display: grid;
+	gap: 1rem;
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+.comment {
+	padding: 1rem;
+	border: 1px solid var(--border);
+	border-radius: 0.75rem;
+}
+.comment--reply {
+	margin-left: 1.5rem;
+}
+.comment__head {
+	display: flex;
+	gap: 0.5rem;
+	align-items: baseline;
+	margin: 0 0 0.35rem;
+	color: var(--title);
+}
+.comment__head span {
+	color: var(--text-muted);
+	font-size: 0.82rem;
+}
+.comment__body {
+	margin: 0;
+	white-space: pre-line;
+}

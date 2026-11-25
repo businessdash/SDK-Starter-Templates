@@ -3,6 +3,11 @@ import "@/styles/globals.css";
 // availability/choice chips are unstyled without this. The container
 // background is intentionally transparent; the template owns it.
 import "@businessdash/sdk/bd-forms.css";
+// The shop's and the blog's styles (product list and page, wishlist, compare,
+// posts, likes and comments).
+import "@/styles/bd-shop.css"; // [bd-line:store]
+import "@/styles/bd-blog.css"; // [bd-line:blog]
+import "@/styles/bd-reviews.css";
 
 import { BDAnalytics } from "@businessdash/sdk/react-analytics";
 import { type Metadata } from "next";

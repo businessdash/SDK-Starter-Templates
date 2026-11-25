@@ -74,61 +74,108 @@ SDK-Starter-Templates/Remix/
 ├── .env.example
 └── app/
     ├── root.tsx                         # HTML shell + analytics bootstrap
-    ├── styles.css
+    ├── styles.css                       # site styles + the names the shop/blog styles use
+<!-- [bd:store] -->
+    ├── bd-shop.css                      # shop styles (linked by the store routes)
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+    ├── bd-blog.css                      # blog styles (linked by the blog routes)
+<!-- [/bd:blog] -->
+    ├── bd-reviews.css                   # reviews page styles (linked by reviews.tsx)
     ├── components/
-    │   ├── SiteHeader.tsx               # shared nav + cart badge (non-home routes)
+    │   ├── SiteHeader.tsx               # shared nav (non-home routes)
+<!-- [bd:store,subscriptions] -->
+    │   ├── StoreNav.tsx                 # store bar: products, plans, wishlist, compare, cart count
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:store] -->
+    │   ├── shop/                        # product page, compare table, wishlist, save buttons
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+    │   ├── blog/                        # blog index, post, likes, comments, safePostHtml
+<!-- [/bd:blog] -->
+    │   ├── reviews/                     # reviews page parts + reviews.ts rules
+    │   ├── bd-link.tsx                  # the link the shared components use (React Router's Link)
     │   └── NewsBanner.tsx               # dismissible bundle.banner bar (client)
     ├── lib/
     │   ├── bd.server.ts               # SDK client, config, suspension-error guards
     │   ├── bd-cache.server.ts         # tag-keyed in-memory TTL cache (webhook target)
     │   ├── bd-bundle.server.ts        # marketing bundle fetch + banner/updates/gallery/reviews extractors
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
     │   ├── bd-store.server.ts         # storefront / cart / checkout / subscriptions + visitor cookie
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:store] -->
+    │   ├── shop-client.ts             # add to cart from the browser (POST /api/store/cart)
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+    │   ├── bd-blog.server.ts          # blog posts, categories, tags, likes, comments
+<!-- [/bd:blog] -->
     │   ├── bd-portal.server.ts        # session validation + customer portal (getWork, submitReview)
-    │   ├── bd-pages.server.ts         # parallel pages (render/listVariants) + reviews-wall pagination
+    │   ├── bd-pages.server.ts         # parallel pages (render/listVariants)
+<!-- [bd:booking] -->
     │   ├── bd-booking.server.ts       # scheduling: event types, slots, confirm booking
+<!-- [/bd:booking] -->
     │   ├── bd-seo.server.ts           # localBusiness + website JSON-LD builder
     │   └── sdk-sections.server.ts       # home section loaders (hero/about/services/blog/gallery) + contact
     └── routes/
         ├── _index.tsx                   # home: sections + gallery + banner + JSON-LD
 <!-- [bd:store] -->
-        ├── store._index.tsx             # product list
-        ├── store.$id.tsx                # product detail + add-to-cart action
+        ├── store._index.tsx             # product list: search, category, price, rating, sort
+        ├── store.$id.tsx                # product page (shared ProductDetail)
+        ├── store.wishlist.tsx           # saved products (this browser)
+        ├── store.compare.tsx            # products side by side (?ids=a,b,c)
         ├── store.cart.tsx              # cart: update/remove/coupon/clear/checkout (intent-dispatched action)
+        ├── api.store.cart.ts           # add to cart as JSON (resource route)
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:blog] -->
+        ├── blog._index.tsx             # blog: posts, categories, tags, paging
+        ├── blog.$slug.tsx              # one post: body, likes, comments
+        ├── api.blog.$slug.like.ts      # like or unlike (resource route)
+        ├── api.blog.$slug.comment.ts   # post a comment (resource route)
+<!-- [/bd:blog] -->
+<!-- [bd:subscriptions] -->
         ├── store.subscriptions.tsx     # subscription offerings + subscribe checkout
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
         ├── my-account.tsx              # session → user + getWork() + review-submit action
-        ├── reviews.tsx                 # reviews wall: aggregate + first page + load-more
+        ├── reviews.tsx                 # reviews: rating + bars, platform filter, show more, write one
+        ├── api.reviews.write.ts        # write a review as JSON (resource route)
         ├── updates._index.tsx          # bundle.updates feed
         ├── services._index.tsx         # parallel-page variant index (link list)
         ├── services.$service.$area.tsx # rendered parallel page + per-page meta/canonical
+<!-- [bd:booking] -->
         ├── book.tsx                    # scheduling: pick event type → slot → confirm
+<!-- [/bd:booking] -->
         ├── api.bd.revalidate.ts      # revalidation webhook (resource route)
         ├── api.bd-auth.$.ts          # auth handler catch-all (resource route)
-        ├── api.reviews.ts              # reviews pagination JSON endpoint (resource route)
         ├── [sitemap.xml].ts            # proxy BD's sitemap (resource route)
         └── [robots.txt].ts             # proxy BD's robots.txt (resource route)
 ```
 
-`.server.ts` is enforced by the bundler: that code never reaches the client bundle. Resource routes (the webhook, auth, sitemap/robots, reviews API) receive a web `Request` and return a web `Response`, which is exactly what the SDK's framework-agnostic handlers (`createAuthHandler`, `createGenericRevalidateHandler`) produce.
+`.server.ts` is enforced by the bundler: that code never reaches the client bundle. Resource routes (the webhook, auth, sitemap/robots, review writing) receive a web `Request` and return a web `Response`, which is exactly what the SDK's framework-agnostic handlers (`createAuthHandler`, `createGenericRevalidateHandler`) produce.
 
 <!-- [bd:store] -->
 ## Storefront + cart
 
-`bd-store.server.ts` wraps `storefront` / `cart` / `checkout` / `subscriptions` / `coupons`. The cart is keyed on a visitor token we own — an **httpOnly `bd_cart_visitor` cookie** (`createCookie`), minted on first mutation and attached to the action's response via `Set-Cookie`. Reads parse the token off the request; they never set the cookie.
+The store is the same shop as the Business Dash demo: a product list with search, category, price, rating and sort filters; product pages with photos, options, add-ons, reviews, related and recently viewed products; a wishlist; side-by-side compare; and the cart. The product page, compare table and wishlist are shared components in `app/components/shop/` (they are the same in every React starter); their styles are `app/bd-shop.css`, mapped onto this site's colours in `styles.css`.
 
-- `store.$id.tsx` `action` → `addToCart(...)` → `redirect("/store/cart")` (carrying the minted cookie).
+`bd-store.server.ts` wraps `storefront` / `cart` / `checkout` / `subscriptions` / `coupons`. The cart is keyed on a visitor token we own — an **httpOnly `bd_cart_visitor` cookie** (`createCookie`), minted on first mutation and sent back with that response via `Set-Cookie`. Reads parse the token off the request; they never set the cookie.
+
+- The product list keeps every filter in the URL (`?q`, `?category`, `?min`, `?max`, `?rating`, `?sort`). Categories and ratings are links, search, price and sort are GET forms, so filtering works without JavaScript.
+- The product page adds to the cart through `api.store.cart.ts` (JSON in, `{ ok, itemCount }` out, with the visitor cookie), and the store bar's cart count updates in place. "Show more reviews" is a link (`?reviews=N`).
+- The wishlist and compare picks live in this browser (`localStorage`). `store.compare.tsx` reads `?ids=`, so a comparison can be shared.
 - `store.cart.tsx` has one `action` dispatched by an `intent` field: `update` / `remove` / `apply-coupon` / `remove-coupon` / `clear` / `checkout`. Checkout calls `checkout.forVisitor(token).start({ successUrl, cancelUrl })` and `redirect`s to the returned **Stripe-hosted URL** (`res.stripeUrl`).
 <!-- [/bd:store] -->
 
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 ## Plans
 
 `store.subscriptions.tsx` lists `subscriptions.list()` and starts a recurring checkout via `subscriptions.startCheckout(id, …)`. Stripe sends the customer back to the same page.
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
+
+<!-- [bd:blog] -->
+## Blog
+
+`blog._index.tsx` lists posts newest first (pinned posts lead the first page) with category and tag filters and "Older posts" paging, all in the URL. `blog.$slug.tsx` shows one post: its HTML is rebuilt from an allowlist on the server (`safePostHtml` in `components/blog/blog.ts`) and only that reaches the page. Signed-in customers can like a post and comment through `api.blog.$slug.like.ts` and `api.blog.$slug.comment.ts`, which read the `bd_session` cookie; signed out, those buttons lead to sign-in and back. The home page shows the latest posts with a link to the blog.
+<!-- [/bd:blog] -->
 
 ## Auth + customer portal
 
@@ -142,9 +189,16 @@ SDK-Starter-Templates/Remix/
 
 `my-account.tsx`'s `loader` validates the session with `getTenantSession({ baseUrl, apiKey, cookieValue })` (note: the param is **`cookieValue`** — the raw cookie value, not a token name), then reads the customer's work bundle via `customerPortal(orgId).withSession(token).getWork()`. Its `action` submits a review through `submitReview(...)` (lands `pending` until staff moderates).
 
-## Reviews wall
+## Reviews
 
-`reviews.tsx` renders the aggregate (average + count) and the first page off the bundle (`bundle.reviews`, item shape `{ reviewee, description, date, rating }`), then "load more" calls the `api.reviews.ts` resource route which paginates `reviews.list({ offset })` (wall item shape `{ reviewerName, text, timeCreated, rating }`). The two shapes are mapped to a common UI shape at their own call sites.
+`/reviews` shows the business's reviews from Google, Yelp and the ones added in the dashboard:
+
+- the average and a bar per star, from the marketing bundle's `reviews` (`rating`, `counts`);
+- a platform filter (`?source=google`), and "Show more reviews", which is a link (`?shown=20`);
+- each review with the reviewer's photo or initial, the stars, the date, the text, any photos, the platform, Verified, and a "Read on Google/Yelp" link;
+- "Write a review" for a signed-in customer. It posts JSON to `api.reviews.write.ts`, which checks it again and sends it with `customerPortal(org).withSession(token).submitReview(...)`; it shows once the business approves it. Signed out, it's a link to sign in.
+
+The page parts are `app/components/reviews/` (the same in every React starter): `reviews.ts` holds the rules every BD starter shares, `reviews-page.ts` gathers the page's data with `reviews.list({ limit, offset, source })`, and `ReviewsView.tsx` and `ReviewWriter.tsx` draw it. The styles are `app/bd-reviews.css`.
 
 ## News banner + updates feed
 
@@ -162,9 +216,11 @@ The marketing bundle carries `bundle.banner` (scheduled multi-message bar) and `
 - `services._index.tsx` lists every variant via `parallelPages.listVariants("service-area")`.
 - `services.$service.$area.tsx` renders one via `parallelPages.render("service-area", { service, area })` — `meta` (title/description/canonical/ogImage) feeds the route's `meta` export, `body` renders below. Token expansion happens server-side inside BD, so crawlers see resolved HTML.
 
+<!-- [bd:booking] -->
 ## Booking / scheduling
 
 `book.tsx` lists event types (`scheduling.listEventTypes()`), shows available slots for the selected one (`scheduling.getAvailableSlots(slug, { from, to })`), and confirms a booking (`scheduling.confirmBooking({ eventTypeSlug, startAt, invitee, … })`).
+<!-- [/bd:booking] -->
 
 ## Revalidation webhook
 

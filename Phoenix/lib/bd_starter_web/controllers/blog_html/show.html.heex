@@ -1,20 +1,50 @@
-<article>
-  <h1>{@post["title"]}</h1>
-  <%!--
-    Post bodies are authored HTML from the dashboard, so they are rendered raw.
-    HEEx escapes by default — `raw/1` is the deliberate opt-out, and it is safe
-    here only because the source is the org's own editor, not visitor input.
-  --%>
-  <div class="post-body">{raw(@post["content"] || "")}</div>
-  <p :if={@access == "paywall"} class="muted">
-    This is a preview — the full article is behind the paywall.
-  </p>
-</article>
+<%!--
+  One post. Its HTML was rebuilt from an allowlist (BdStarterWeb.PostHtml), so
+  the raw HTML never reaches the page. The like button and comments are
+  <bd-post-like> and <bd-post-comments> (priv/static/shop/blog-elements.js);
+  signed out, they lead to sign-in and back to the post.
+--%>
+<div :if={is_nil(@post)} class="bd-empty">
+  That post isn't available. <a href={~p"/blog"}>See all posts</a>
+</div>
 
-<section :if={@comments != []}>
-  <h2>Comments</h2>
-  <div :for={comment <- @comments} class="comment">
-    <strong>{comment["authorName"] || "Anonymous"}</strong>
-    <p>{comment["content"]}</p>
-  </div>
-</section>
+<%= if @post do %>
+  <article class="post">
+    <a class="post__back" href={~p"/blog"}>← All posts</a>
+    <header class="post__head">
+      <h1>{@post["title"]}</h1>
+      <p class="post__meta">
+        <img :if={@post["authorAvatarUrl"]} alt="" referrerpolicy="no-referrer" src={@post["authorAvatarUrl"]} />
+        <span :if={@post["authorName"]}>{@post["authorName"]}</span>
+        <span>{post_date(@post["publishedAt"])}</span>
+        <span>· {@minutes} min read</span>
+      </p>
+    </header>
+    <img
+      :if={@post["imageUrl"]}
+      alt=""
+      class="post__cover"
+      referrerpolicy="no-referrer"
+      src={@post["imageUrl"]}
+    />
+    <div :if={@paywalled} class="bd-empty">
+      This post is for members.
+      <p><a class="bd-btn" href={@sign_in_href}>Sign in to read it</a></p>
+    </div>
+    <%!-- Safe: PostHtml.safe/1 rebuilt this from an allowlist. --%>
+    <div :if={not @paywalled} class="post__body">{raw(@html)}</div>
+    <aside :if={@post["ctaHref"] && @post["ctaLabel"]} class="bd-card post__cta">
+      <p :if={@post["ctaDescription"]}>{@post["ctaDescription"]}</p>
+      <a class="bd-btn" href={cta_href(@post["ctaHref"])}>{@post["ctaLabel"]}</a>
+    </aside>
+    <ul :if={(@post["tags"] || []) != []} class="post__tags">
+      <li :for={tag <- @post["tags"]}><a href={~p"/blog?#{[tag: tag]}"}>#{tag}</a></li>
+    </ul>
+    <bd-post-like data-like-url={~p"/blog/#{@post["slug"]}/like"} data-sign-in-href={@sign_in_href}>
+      <.element_data value={@likes} />
+    </bd-post-like>
+  </article>
+  <bd-post-comments data-comment-url={~p"/blog/#{@post["slug"]}/comment"} data-sign-in-href={@sign_in_href}>
+    <.element_data value={@comments} />
+  </bd-post-comments>
+<% end %>

@@ -14,6 +14,16 @@ defmodule BdStarterWeb.Router do
     plug :accepts, ["json"]
   end
 
+  # The shop, blog and review elements' POSTs (add to cart, like, comment,
+  # write a review): JSON, but from this site's pages, so they keep the
+  # session and the CSRF check. The elements send the page's
+  # <meta name="csrf-token"> as X-CSRF-Token.
+  pipeline :page_json do
+    plug :accepts, ["json"]
+    plug :fetch_session
+    plug :protect_from_forgery
+  end
+
   # A server-to-server call authenticated by HMAC over the raw body. There is
   # no session and no CSRF token to present, so it deliberately skips :browser.
   pipeline :webhook do
@@ -25,7 +35,7 @@ defmodule BdStarterWeb.Router do
 
     # ── Pages ──────────────────────────────────────────────────────────────
     get "/", PageController, :home
-    get "/reviews", PageController, :reviews
+    get "/reviews", ReviewsController, :index
     get "/updates", PageController, :updates
 
     get "/blog", BlogController, :index
@@ -37,6 +47,9 @@ defmodule BdStarterWeb.Router do
 
     # ── Store ──────────────────────────────────────────────────────────────
     get "/store", StoreController, :index
+    get "/store/wishlist", StoreController, :wishlist
+    get "/store/compare", StoreController, :compare
+    get "/store/order", StoreController, :order
     get "/store/:id", StoreController, :show
 
     get "/cart", CartController, :show
@@ -92,6 +105,15 @@ defmodule BdStarterWeb.Router do
   scope "/api/bd-auth/customer", BdStarterWeb do
     get "/*path", BdCustomerAuthController, :handle
     post "/*path", BdCustomerAuthController, :handle
+  end
+
+  scope "/", BdStarterWeb do
+    pipe_through :page_json
+
+    post "/api/bd/cart/add", CartController, :add_json
+    post "/blog/:slug/like", BlogController, :like
+    post "/blog/:slug/comment", BlogController, :comment
+    post "/reviews/write", ReviewsController, :write
   end
 
   scope "/", BdStarterWeb do

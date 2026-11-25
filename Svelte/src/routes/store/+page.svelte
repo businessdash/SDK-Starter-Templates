@@ -5,6 +5,8 @@
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
 	import StoreNav from '#lib/components/bd/StoreNav.svelte';
+	import SaveButtons from '#lib/components/bd/SaveButtons.svelte';
+	import CompareBar from '#lib/components/bd/CompareBar.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -231,59 +233,73 @@
 				{:else}
 					<div class="bd-grid-3">
 						{#each data.meta.items as product (product.id)}
-							<a class="bd-card product-card" href={`/store/${product.id}`}>
-								<div class="product-card__media">
-									{#if product.coverImage}
-										<img
-											class="product-card__img"
-											src={product.coverImage}
-											alt={product.name}
-											loading="lazy"
-											referrerpolicy="no-referrer"
-										/>
-									{:else}
-										<div class="product-card__noimg">No image</div>
-									{/if}
-									<div class="product-card__badges">
-										{#if product.isBestSeller}
-											<span class="bd-badge">Best seller</span>
+							<div class="bd-card product-card">
+								<a class="product-card__link" href={`/store/${product.id}`}>
+									<div class="product-card__media">
+										{#if product.coverImage}
+											<img
+												class="product-card__img"
+												src={product.coverImage}
+												alt={product.name}
+												loading="lazy"
+												referrerpolicy="no-referrer"
+											/>
+										{:else}
+											<div class="product-card__noimg">No image</div>
 										{/if}
-										{#if product.isNew}
-											<span class="bd-badge">New</span>
-										{/if}
-										{#if product.isOnSale}
-											<span class="bd-badge product-card__badge--sale">Sale</span>
-										{/if}
-									</div>
-								</div>
-								<div class="product-card__body">
-									<h3>{product.name || 'Untitled'}</h3>
-									{#if product.reviewCount > 0}
-										<div class="product-card__rating">
-											{@render stars(product.avgRating)}
-											<span class="product-card__count">({product.reviewCount})</span>
+										<div class="product-card__badges">
+											{#if product.isBestSeller}
+												<span class="bd-badge">Best seller</span>
+											{/if}
+											{#if product.isNew}
+												<span class="bd-badge">New</span>
+											{/if}
+											{#if product.isOnSale}
+												<span class="bd-badge product-card__badge--sale">Sale</span>
+											{/if}
 										</div>
-									{/if}
-									<div class="product-card__price">
-										<span class="product-card__amount">
-											{product.hasMultipleVariants ? 'From ' : ''}{priceLabel(
-												product.cheapestPriceCents
-											)}
-										</span>
-										{#if product.isOnSale && product.comparePriceCents != null}
-											<span class="product-card__compare">
-												{priceLabel(product.comparePriceCents)}
+									</div>
+									<div class="product-card__body">
+										<h3>{product.name || 'Untitled'}</h3>
+										{#if product.reviewCount > 0}
+											<div class="product-card__rating">
+												{@render stars(product.avgRating)}
+												<span class="product-card__count">({product.reviewCount})</span>
+											</div>
+										{/if}
+										<div class="product-card__price">
+											<span class="product-card__amount">
+												{product.hasMultipleVariants ? 'From ' : ''}{priceLabel(
+													product.cheapestPriceCents
+												)}
 											</span>
+											{#if product.isOnSale && product.comparePriceCents != null}
+												<span class="product-card__compare">
+													{priceLabel(product.comparePriceCents)}
+												</span>
+											{/if}
+										</div>
+										{#if product.isLowStock}
+											<span class="product-card__lowstock">Low stock</span>
 										{/if}
 									</div>
-									{#if product.isLowStock}
-										<span class="product-card__lowstock">Low stock</span>
-									{/if}
+								</a>
+								<div class="product-card__save">
+									<SaveButtons
+										compact
+										product={{
+											id: product.id,
+											name: product.name,
+											image: product.coverImage,
+											priceCents: product.cheapestPriceCents
+										}}
+									/>
 								</div>
-							</a>
+							</div>
 						{/each}
 					</div>
 				{/if}
+				<CompareBar />
 			</div>
 		</div>
 	{/if}
@@ -431,10 +447,23 @@
 	}
 
 	.product-card {
+		position: relative;
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
 		color: inherit;
+	}
+	.product-card__link {
+		display: flex;
+		flex: 1;
+		flex-direction: column;
+		color: inherit;
+		border-bottom: none;
+	}
+	.product-card__save {
+		position: absolute;
+		top: 0.6rem;
+		right: 0.6rem;
 	}
 	.product-card:hover {
 		border-bottom-color: transparent;

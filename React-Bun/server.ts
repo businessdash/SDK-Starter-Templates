@@ -38,6 +38,11 @@ import {
 	TODO_IMAGES_OBJECT_ID,
 	TODOS_OBJECT_ID,
 } from "./bd.data-model.config";
+// [bd:blog]
+import { readingMinutes, safePostHtml } from "./src/components/blog/blog";
+// [/bd:blog]
+import { checkReview } from "./src/components/reviews/reviews";
+import { loadReviewsPage } from "./src/components/reviews/reviews-page";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -279,12 +284,23 @@ const routes: Record<string, Route> = {
 		},
 	},
 
+	// [bd:blog]
+	// Posts newest first; `cursor` pages, `categoryId` filters.
 	"GET /api/bd/blog/posts": {
 		handler: async (req) => {
 			if (!bd) return notConfigured();
-			const limit = Number(new URL(req.url).searchParams.get("limit") ?? "6");
+			const p = new URL(req.url).searchParams;
+			const limit = Math.min(Math.max(Number(p.get("limit") ?? "6") || 6, 1), 50);
+			const cursor = p.has("cursor") ? Number(p.get("cursor")) : null;
+			const categoryId = p.get("categoryId") || undefined;
 			try {
-				const result = await cached(`blog:${limit}`, ["bd:blog"], () => bd.blog.listPosts({ limit }));
+				const result = await cached(`blog:${limit}:${cursor ?? ""}:${categoryId ?? ""}`, ["bd:blog"], () =>
+					bd.blog.listPosts({
+						limit,
+						...(cursor != null && Number.isFinite(cursor) ? { cursor } : {}),
+						...(categoryId ? { categoryId } : {}),
+					}),
+				);
 				return jsonResponse(result);
 			} catch (err) {
 				return errResponse(err);
@@ -292,6 +308,116 @@ const routes: Record<string, Route> = {
 		},
 	},
 
+	"GET /api/bd/blog/categories": {
+		handler: async () => {
+			if (!bd) return notConfigured();
+			try {
+				return jsonResponse(await cached("blog:categories", ["bd:blog"], () => bd.blog.listCategories()));
+			} catch (err) {
+				return errResponse(err);
+			}
+		},
+	},
+
+	"GET /api/bd/blog/tags": {
+		handler: async () => {
+			if (!bd) return notConfigured();
+			try {
+				return jsonResponse(await cached("blog:tags", ["bd:blog"], () => bd.blog.listTags()));
+			} catch (err) {
+				return errResponse(err);
+			}
+		},
+	},
+
+	// One post, ready for the page: its HTML is rebuilt from an allowlist here
+	// (`safePostHtml`), so only that reaches the browser. Likes and comments
+	// come along; `liked` and `signedIn` are this visitor's own.
+	"GET /api/bd/blog/post": {
+		handler: async (req) => {
+			if (!bd) return notConfigured();
+			const slug = new URL(req.url).searchParams.get("slug") ?? "";
+			if (!slug) return jsonResponse({ error: "slug required" }, 400);
+			let found: Awaited<ReturnType<typeof bd.blog.getPost>>;
+			try {
+				found = await cached(`blog:post:${slug}`, ["bd:blog", `bd:blog:${slug}`], () => bd.blog.getPost(slug));
+			} catch (err) {
+				if (err instanceof BdServiceSuspendedError || err instanceof BdPaymentLapsedError) return errResponse(err);
+				return jsonResponse({ error: "Post not found." }, 404);
+			}
+			const session = await getSession(req);
+			const blog = session ? bd.blog.withSession(session.token) : bd.blog;
+			const [likes, comments] = await Promise.all([
+				blog.likeStatus(slug).catch(() => null),
+				bd.blog.listComments(slug, { limit: 50 }).catch(() => ({ items: [] })),
+			]);
+			const { post, access } = found;
+			return jsonResponse({
+				post: {
+					title: post.title,
+					slug: post.slug,
+					excerpt: post.excerpt,
+					imageUrl: post.imageUrl,
+					publishedAt: post.publishedAt,
+					authorName: post.authorName,
+					authorAvatarUrl: post.authorAvatarUrl,
+					tags: post.tags,
+					ctaLabel: post.ctaLabel,
+					ctaHref: post.ctaHref,
+					ctaDescription: post.ctaDescription,
+				},
+				html: safePostHtml(post.content),
+				minutes: readingMinutes(post.content),
+				paywalled: access === "paywall",
+				likes: likes ?? { liked: false, likesCount: post.likes },
+				comments: comments.items,
+				signedIn: session !== null,
+			});
+		},
+	},
+
+	// Like or unlike, for the signed-in customer.
+	"POST /api/bd/blog/like": {
+		handler: async (req) => {
+			if (!bd) return notConfigured();
+			const token = getCookie(req, SESSION_COOKIE);
+			if (!token) return jsonResponse({ error: "Sign in to like posts." }, 401);
+			try {
+				const { slug } = (await req.json()) as { slug?: string };
+				if (!slug) return jsonResponse({ error: "Which post?" }, 400);
+				return jsonResponse(await bd.blog.withSession(token).toggleLike(slug));
+			} catch {
+				return jsonResponse({ error: "Couldn't save your like. Try again." }, 502);
+			}
+		},
+	},
+
+	// `{ slug, content }` in; out, whether it shows now or waits for approval,
+	// and the comments as they are now.
+	"POST /api/bd/blog/comment": {
+		handler: async (req) => {
+			if (!bd) return notConfigured();
+			const token = getCookie(req, SESSION_COOKIE);
+			if (!token) return jsonResponse({ ok: false, error: "Sign in to comment." }, 401);
+			const body = (await req.json().catch(() => null)) as { slug?: unknown; content?: unknown } | null;
+			const slug = typeof body?.slug === "string" ? body.slug : "";
+			const content = typeof body?.content === "string" ? body.content.trim() : "";
+			if (!slug || !content) return jsonResponse({ ok: false, error: "Write something first." }, 400);
+			if (content.length > 5000) {
+				return jsonResponse({ ok: false, error: "Comments are up to 5,000 characters." }, 400);
+			}
+			try {
+				const res = await bd.blog.withSession(token).postComment(slug, { content });
+				const comments = await bd.blog.listComments(slug, { limit: 50 });
+				return jsonResponse({ ok: true, approved: res.moderation.isApproved, comments: comments.items });
+			} catch {
+				return jsonResponse({ ok: false, error: "Couldn't post your comment. Try again." }, 502);
+			}
+		},
+	},
+	// [/bd:blog]
+
+	// [bd:booking]
 	"GET /api/bd/scheduling/event-types": {
 		handler: async () => {
 			if (!bd) return notConfigured();
@@ -342,6 +468,7 @@ const routes: Record<string, Route> = {
 			}
 		},
 	},
+	// [/bd:booking]
 
 	"GET /api/bd/forms/schema": {
 		handler: async (req) => {
@@ -447,7 +574,7 @@ const routes: Record<string, Route> = {
 		},
 	},
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"GET /api/bd/subscriptions": {
 		handler: async (req) => {
 			if (!bd) return notConfigured();
@@ -500,7 +627,7 @@ const routes: Record<string, Route> = {
 			}
 		},
 	},
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	"GET /api/bd/reviews": {
 		handler: async (req) => {
 			if (!bd) return notConfigured();
@@ -514,6 +641,52 @@ const routes: Record<string, Route> = {
 				return jsonResponse(result);
 			} catch (err) {
 				return errResponse(err);
+			}
+		},
+	},
+
+	// The reviews page's data: the rating with its count per star, the first
+	// `shown` reviews (`?source=` for one platform), the platforms for the
+	// filter, the "Show more" link, and whether a customer is signed in.
+	"GET /api/bd/reviews/page": {
+		handler: async (req) => {
+			const data = await loadReviewsPage({
+				params: new URL(req.url).searchParams,
+				list: bd
+					? (query) =>
+							cached(`reviews:${query.source ?? "all"}:${query.limit}:${query.offset ?? 0}`, ["bd:reviews"], () =>
+								bd.reviews.list(query),
+							)
+					: null,
+				totals: bd
+					? cached("bundle:home:en", ["bd:marketing", "bd:marketing:home"], () =>
+							bd.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
+						).then((bundle) => bundle.reviews)
+					: Promise.resolve(null),
+				signedIn: getSession(req).then((session) => session !== null),
+			});
+			return jsonResponse(data, 200, { "Cache-Control": "no-store" });
+		},
+	},
+
+	// `{ rating, title?, body }` from the reviews page's writer, for the
+	// signed-in customer. It shows once the business approves it.
+	"POST /api/bd/reviews/write": {
+		handler: async (req) => {
+			if (!bd) return notConfigured();
+			// A JSON body only: a form on another site can't send one.
+			if (!req.headers.get("content-type")?.includes("application/json")) {
+				return jsonResponse({ ok: false, error: "Send JSON." }, 415);
+			}
+			const session = await getSession(req);
+			if (!session) return jsonResponse({ ok: false, error: "Sign in to write a review." }, 401);
+			const checked = checkReview(((await req.json().catch(() => null)) ?? {}) as Record<string, unknown>);
+			if (!checked.ok) return jsonResponse({ ok: false, error: checked.error }, 400);
+			try {
+				await portalFor(session).submitReview(checked.review);
+				return jsonResponse({ ok: true });
+			} catch {
+				return jsonResponse({ ok: false, error: "Couldn't send your review. Try again." }, 502);
 			}
 		},
 	},
@@ -537,11 +710,23 @@ const routes: Record<string, Route> = {
 			if (!bd) return notConfigured();
 			const { token, setCookie } = resolveVisitor(req);
 			try {
-				const body = (await req.json()) as { productId: string; variantId?: string | null; quantity?: number };
+				const body = (await req.json()) as {
+					productId: string;
+					variantId?: string | null;
+					quantity?: number;
+					options?: Record<string, unknown>;
+				};
+				// Chosen options (such as `{ Size: "42" }`), strings only; the cart prices them.
+				const options = Object.fromEntries(
+					Object.entries(body.options ?? {}).filter(
+						(entry): entry is [string, string] => typeof entry[1] === "string",
+					),
+				);
 				const snapshot = await bd.cart.forVisitor(token).addItem({
 					productId: body.productId,
 					variantId: body.variantId ?? undefined,
-					quantity: body.quantity ?? 1,
+					quantity: Math.min(Math.max(Number(body.quantity) || 1, 1), 999),
+					...(Object.keys(options).length > 0 ? { options } : {}),
 				});
 				return jsonResponse(snapshot, 200, setCookie ? { "Set-Cookie": setCookie } : {});
 			} catch (err) {
@@ -643,12 +828,12 @@ const routes: Record<string, Route> = {
 			if (!session) return jsonResponse({ signedIn: false, work: null });
 			try {
 				let plan = null;
-				// [bd:saas]
+				// [bd:subscriptions]
 				plan = await portalFor(session)
 					.getSubscription()
 					.then((r) => r.subscription)
 					.catch(() => null);
-				// [/bd:saas]
+				// [/bd:subscriptions]
 				return jsonResponse({ signedIn: true, user: session.user, work: await portalFor(session).getWork(), plan });
 			} catch (err) {
 				return errResponse(err);

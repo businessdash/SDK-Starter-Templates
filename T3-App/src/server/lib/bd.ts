@@ -171,6 +171,8 @@ export type BundleReviewItem = {
 export type BundleReviews = {
 	rating: number | null;
 	totalCount: number | null;
+	/** How many reviews have each star rating, for the reviews page's bars. */
+	counts?: { rating: number; count: number }[];
 	items: BundleReviewItem[];
 };
 
@@ -255,6 +257,7 @@ export function getReviewsFromBundle(
 	return {
 		rating: reviews.rating ?? null,
 		totalCount: reviews.totalCount ?? null,
+		counts: reviews.counts ?? [],
 		items: reviews.items ?? [],
 	};
 }

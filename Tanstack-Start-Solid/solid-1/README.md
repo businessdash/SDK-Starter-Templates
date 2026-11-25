@@ -18,7 +18,7 @@ browser → page load → loader() → getHomeData() → bd.gallery.list(...) �
                                           └ SDK lives only in server-fn scope
 ```
 
-The home page renders from data returned by the route's `loader`; interactive sections (Booking, ContactForm) use Solid signals + `createServerFn` calls. Beyond the home page the starter demonstrates the full SDK surface — storefront + cart + subscriptions, customer auth + portal, reviews wall, news banner + updates feed, JSON-LD + sitemap/robots, and programmatic `/services/[service]/[area]` pages. See the tables below.
+The home page renders from data returned by the route's `loader`; interactive sections (Booking, ContactForm) use Solid signals + `createServerFn` calls. Beyond the home page the starter demonstrates the full SDK surface — storefront + cart + subscriptions, a blog with likes and comments, customer auth + portal, the business's reviews (rating, filter, write one), news banner + updates feed, JSON-LD + sitemap/robots, and programmatic `/services/[service]/[area]` pages. See the tables below.
 
 ## What's new (SDK 0.9.53)
 
@@ -63,8 +63,8 @@ Every surface below is server-driven by a `createServerFn` in `src/lib/bd-server
 | --- | --- | --- |
 | **Hero / About / Services** | `getHomeData` server fn reads marketing bundle, passes props to components | `bd.marketing.getPageBundle(...)` |
 | **Gallery** | `getHomeData` with const-generic field selection | `bd.gallery.list({ limit: 12, fields: [...] as const })` |
-| **Blog** | `getHomeData` | `bd.blog.listPosts({ limit: 6 })` |
-| **Booking** | Event-type list server-rendered; slots + confirm via `fetchSlots` + `confirmBooking` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
+| **Blog** | `getHomeData` | `bd.blog.listPosts({ limit: 6 })` | <!-- [bd-line:blog] -->
+| **Booking** | Event-type list server-rendered; slots + confirm via `fetchSlots` + `confirmBooking` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` | <!-- [bd-line:booking] -->
 | **Contact form** | Form schema server-rendered; submit via `submitContactForm` | `bd.forms.schema(slug)`, `bd.forms.submit(...)` |
 | **News banner** | `getSiteContentExtras` → `NewsBanner` (dismissible bar) | `bundle.banner` (untyped passthrough) |
 | **JSON-LD** | `getHomeJsonLd` injected via the route `head` `scripts` | `localBusiness()` + `website()` from `@businessdash/sdk/seo` |
@@ -73,14 +73,46 @@ Every surface below is server-driven by a `createServerFn` in `src/lib/bd-server
 
 | Surface | File | SDK call |
 | --- | --- | --- |
-| **Store list** | `src/routes/store.index.tsx` | `storefront.listProducts(...)` | <!-- [bd-line:store] -->
-| **Product detail** | `src/routes/store.$id.tsx` | `storefront.getProduct(id)`, `cart.forVisitor(t).addItem(...)` | <!-- [bd-line:store] -->
-| **Cart** | `src/routes/store.cart.tsx` | `cart.forVisitor(t)` get/update/remove/coupon/clear + `checkout.forVisitor(t).start(...)` | <!-- [bd-line:store] -->
-| **Subscriptions** | `src/routes/subscriptions.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` | <!-- [bd-line:saas] -->
+| **Product list** (search, category, price, rating, sort; save and compare on each card) | `src/routes/store.index.tsx` | `storefront.listProductsWithMeta(...)`, `storefront.listCategories()` | <!-- [bd-line:store] -->
+| **Product page** (option photos, options, add to cart, add-ons, reviews, related) | `src/routes/store.$id.tsx` → `<bd-product>` | `storefront.getProduct(id)`, reviews, add-ons, related (`getProductPage` in `src/lib/bd-shop-fns.ts`) | <!-- [bd-line:store] -->
+| **Add to cart** for `<bd-product>` | `src/routes/api/bd/cart/add.tsx` (`POST`, JSON) | `cart.forVisitor(token).addItem(...)` | <!-- [bd-line:store] -->
+| **Wishlist** · **Compare** | `src/routes/store.wishlist.tsx` · `src/routes/store.compare.tsx` | `storefront.getProduct(id)` per compared product | <!-- [bd-line:store] -->
+| **Cart** (update / remove / coupon / clear / checkout) | `src/routes/store.cart.tsx` | `cart.forVisitor(t)` get/update/remove/coupon/clear + `checkout.forVisitor(t).start(...)` | <!-- [bd-line:store] -->
+| **Order confirmation** | `src/routes/store.order.tsx` | `checkout.getStatus(sessionId)` | <!-- [bd-line:store] -->
+| **Subscriptions** | `src/routes/subscriptions.tsx` | `subscriptions.list()`, `subscriptions.startCheckout(id, ...)` | <!-- [bd-line:subscriptions] -->
 
 <!-- [bd:store] -->
-The cart is keyed on a visitor UUID we own, stored in an httpOnly cookie `bd_cart_visitor`. It's read on cart loads and minted on the first write — all inside the server fns via TanStack Start's `getCookie` / `setCookie` (`@tanstack/solid-start/server`). Checkout and subscription "subscribe" return a Stripe-hosted URL; the client redirects to it.
+The cart is keyed on a visitor UUID we own, stored in an httpOnly cookie `bd_cart_visitor`. It's read on cart loads and minted on the first write — all inside the server fns via TanStack Start's `getCookie` / `setCookie` (`@tanstack/solid-start/server`). The add-to-cart endpoint reaches the same token through `cartVisitorToken`, a `createServerOnlyFn`, which keeps the cookie code out of the browser bundle. Checkout and subscription "subscribe" return a Stripe-hosted URL; the client redirects to it. Cart amounts are dollars; product prices are cents (`formatMoney`).
+
+The store's filters live in the URL (`?q`, `?category`, `?min`, `?max`, `?rating`, `?sort`): `validateSearch` reads them and `loaderDeps` re-runs the route loader on the server for each change, so a filtered list can be shared.
+
+#### Shop elements
+
+The product page, wishlist, compare table, save buttons and the store bar's
+counts are custom elements in `src/lib/shop/` (`shop-elements.ts`), the same
+ones every BD starter ships. A loader reads the data on the server and the
+page writes it into the element as JSON (`elementHtml` in
+`src/lib/bd-elements.ts`, set as a wrapper's `innerHTML`); `<StoreNav />`
+loads the elements in the browser. The wishlist and the compare picks are
+saved in the browser. Styles: `src/bd-shop.css`.
 <!-- [/bd:store] -->
+
+<!-- [bd:blog] -->
+### Blog
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **Post list** (pinned first, category and tag filters, older posts) | `src/routes/blog.index.tsx` | `blog.listPosts(...)`, `blog.listCategories()`, `blog.listTags()` |
+| **Post** (body, cover, call to action, tags) | `src/routes/blog.$slug.tsx` | `blog.getPost(slug)`, `blog.likeStatus(slug)`, `blog.listComments(slug)` |
+| **Like** · **Comment** (signed-in customers) | `src/routes/api/bd/blog/post.$slug.like.tsx` · `post.$slug.comment.tsx` | `blog.withSession(token).toggleLike(slug)` · `.postComment(slug, …)` |
+
+The server functions are in `src/lib/bd-blog-fns.ts`. The post's HTML is
+rebuilt from an allowlist (`safePostHtml` in `src/lib/shop/blog.ts`), so the
+raw HTML never reaches the page. The like button and comments are
+`<bd-post-like>` and `<bd-post-comments>` (`src/lib/shop/blog-elements.ts`);
+signed out, they lead to sign-in and back to the post. Styles:
+`src/bd-blog.css`.
+<!-- [/bd:blog] -->
 
 ### Auth + customer portal
 
@@ -95,7 +127,7 @@ Sign-in / sign-up / sign-out are plain links to the catch-all handler (no client
 
 | Surface | File | SDK call |
 | --- | --- | --- |
-| **Reviews wall** | `src/routes/reviews.tsx` | aggregate off `bundle.reviews` + `reviews.list({limit,offset})` ("load more") |
+| **Reviews**: the average and a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a "Read on Google/Yelp" link, "Show more" (`?shown=`), and "Write a review" for signed-in customers | `src/routes/reviews.tsx` (data from `getReviewsPage` → `loadReviewsPage`, `src/lib/shop/reviews-page.ts`); `<bd-review-writer>` (`src/lib/shop/reviews-elements.ts`) posts to `src/routes/api/bd/reviews/write.tsx` | `bundle.reviews` (`rating`, `counts`), `reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(t).submitReview(...)` |
 | **Updates feed** | `src/routes/updates.tsx` | `bundle.updates` (untyped passthrough) |
 | **Sitemap** | `src/routes/sitemap[.]xml.tsx` | proxies `parallelPages.sitemapUrl()` |
 | **Robots** | `src/routes/robots[.]txt.tsx` | proxies `parallelPages.robotsUrl()` |
@@ -138,29 +170,69 @@ bd.config.ts                                 # marketing schema + defineParallel
 src/
 ├── lib/
 │   ├── bd.ts                                # SDK client + bundle/banner/updates/reviews helpers (server-only)
-│   └── bd-server-fns.ts                     # all createServerFn RPCs + sitemap/robots/SEO builders
+│   ├── bd-server-fns.ts                     # all createServerFn RPCs + sitemap/robots/SEO builders
+<!-- [bd:store] -->
+│   ├── bd-shop-fns.ts                       # product page, compare, cart count, order status
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   ├── bd-blog-fns.ts                       # post list and post, with likes and comments
+<!-- [/bd:blog] -->
+│   ├── bd-elements.ts                       # writes a custom element with its data
+<!-- [bd:store] -->
+│   ├── shop/shop.ts · shop-elements.ts      # product page, wishlist, compare, save buttons
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   ├── shop/blog.ts · blog-elements.ts      # safePostHtml, like button, comments
+<!-- [/bd:blog] -->
+│   ├── shop/reviews.ts · reviews-page.ts · reviews-elements.ts  # review rules, page data, writer
+│   └── shop/bd-dom.ts                       # the elements' small DOM helpers
 ├── components/bd/
 │   ├── Header.tsx · Footer.tsx · Hero.tsx · About.tsx · Services.tsx
-│   ├── Gallery.tsx · Blog.tsx
-│   ├── Booking.tsx · ContactForm.tsx          # createSignal + createEffect
+│   ├── Gallery.tsx
+│   ├── Blog.tsx                                # latest posts on the home page <!-- [bd-line:blog] -->
+│   ├── Booking.tsx                             # createSignal + createEffect <!-- [bd-line:booking] -->
+│   ├── ContactForm.tsx                         # createSignal + createEffect
+<!-- [bd:store,subscriptions] -->
+│   ├── StoreNav.tsx                            # store bar: products, plans, wishlist, compare, cart
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:store] -->
+│   ├── ShopStars.tsx                           # star rating in the shop's markup
+<!-- [/bd:store] -->
 │   ├── NewsBanner.tsx                          # dismissible bundle.banner bar
 │   └── money.ts                                # price/interval formatters
 ├── routes/
 │   ├── index.tsx                              # home: loader composes sections + injects JSON-LD
 <!-- [bd:store] -->
-│   ├── store.index.tsx · store.$id.tsx · store.cart.tsx
+│   ├── store.index.tsx                        # product list
+│   ├── store.$id.tsx                          # product page (<bd-product>)
+│   ├── store.wishlist.tsx · store.compare.tsx # saved products, products side by side
+│   ├── store.cart.tsx                         # cart mutations + checkout
+│   ├── store.order.tsx                        # Stripe checkout return
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 │   ├── subscriptions.tsx
-<!-- [/bd:saas] -->
-│   ├── reviews.tsx · updates.tsx
+<!-- [/bd:subscriptions] -->
+<!-- [bd:blog] -->
+│   ├── blog.index.tsx · blog.$slug.tsx        # post list + filters; post, likes, comments
+<!-- [/bd:blog] -->
+│   ├── reviews.tsx                             # reviews: rating + bars, filter, show more, write one
+│   ├── updates.tsx
 │   ├── my-account.tsx                          # session + work bundle + review form
 │   ├── services.index.tsx · services.$service.$area.tsx   # programmatic SEO
 │   ├── sitemap[.]xml.tsx · robots[.]txt.tsx    # SEO proxies
 │   └── api/
 │       ├── bd/revalidate.tsx                # webhook receiver
+│       ├── bd/cart/add.tsx                  # add to cart for <bd-product> <!-- [bd-line:store] -->
+│       ├── bd/reviews/write.tsx             # write a review (signed in)
+<!-- [bd:blog] -->
+│       ├── bd/blog/post.$slug.like.tsx      # like (signed in)
+│       ├── bd/blog/post.$slug.comment.tsx   # comment (signed in)
+<!-- [/bd:blog] -->
 │       └── bd-auth.$.tsx                     # auth catch-all (createAuthHandler)
-└── styles.css                                 # Existing tokens + appended BD tokens
+├── styles.css                                 # Existing tokens + appended BD tokens
+├── bd-shop.css                                # shop styles <!-- [bd-line:store] -->
+├── bd-blog.css                                # blog styles <!-- [bd-line:blog] -->
+└── bd-reviews.css                             # reviews page styles
 ```
 
 ## Solid 1.x idioms used

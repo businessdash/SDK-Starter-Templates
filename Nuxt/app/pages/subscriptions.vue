@@ -1,4 +1,4 @@
-<!-- [bd-file:saas] -->
+<!-- [bd-file:subscriptions] -->
 <script setup lang="ts">
 import BdHeader from "~/components/bd/BdHeader.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";

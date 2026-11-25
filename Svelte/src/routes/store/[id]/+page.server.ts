@@ -15,13 +15,21 @@ import {
 /**
  * Product detail. Resolves the full product (with variants) via
  * `storefront.getProduct`, plus reviews (avgRating/totalCount), an addons
- * rail, related products, and the current cart count. The enrichment calls
+ * rail, related products, and the current cart count. `?reviews=40` shows
+ * more reviews, so "Show more" works without JavaScript. The enrichment calls
  * degrade to null/empty independently, so the page still renders if any of
  * them are unavailable. 404s when the product isn't live / doesn't belong to
  * this org (the SDK throws); renders the "not connected" placeholder when
  * BD env is unset.
  */
-export const load: PageServerLoad = async ({ params, cookies }) => {
+const REVIEWS_PAGE = 10;
+
+export const load: PageServerLoad = async ({ params, cookies, url }) => {
+	const shown = Number.parseInt(url.searchParams.get('reviews') ?? '', 10);
+	const reviewLimit = Number.isFinite(shown)
+		? Math.min(Math.max(shown, REVIEWS_PAGE), 100)
+		: REVIEWS_PAGE;
+
 	if (!isStoreConfigured()) {
 		return {
 			configured: false as const,
@@ -29,7 +37,9 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 			reviews: null,
 			addons: [],
 			related: [],
-			cartCount: 0
+			cartCount: 0,
+			reviewLimit,
+			shareUrl: url.href
 		};
 	}
 
@@ -37,7 +47,7 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 	if (!product) throw error(404, 'Product not found.');
 
 	const [reviews, addons, related, cart] = await Promise.all([
-		getStoreProductReviews(params.id),
+		getStoreProductReviews(params.id, { limit: reviewLimit }),
 		getStoreProductAddons(params.id),
 		getStoreRelatedProducts(params.id),
 		getCartSnapshot(cookies)
@@ -49,6 +59,8 @@ export const load: PageServerLoad = async ({ params, cookies }) => {
 		reviews,
 		addons: addons ?? [],
 		related: related ?? [],
-		cartCount: cart?.itemCount ?? 0
+		cartCount: cart?.itemCount ?? 0,
+		reviewLimit,
+		shareUrl: url.origin + url.pathname
 	};
 };

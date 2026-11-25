@@ -1,5 +1,5 @@
 ---
-// [bd-file:saas]
+// [bd-file:subscriptions]
 /**
  * Subscriptions list. Server-renders recurring offerings via
  * `subscriptions.list()`. Each card shows the price + billing interval.
@@ -13,6 +13,7 @@ import { isStoreConfigured } from "../../lib/bd-store";
 import { getCustomerSession } from "../../lib/bd-portal";
 import { isSuspensionError, suspendedResponse } from "../../lib/bd-suspension";
 import Layout from "../../layouts/Layout.astro";
+import StoreNav from "../../components/StoreNav.astro";
 
 export const prerender = false;
 
@@ -58,6 +59,7 @@ function price(o: Offering): string {
 	title="Plans & subscriptions — Your Business"
 	description="Recurring plans and memberships, billed securely through Stripe."
 >
+	<StoreNav />
 	<section class="bd-section" id="subscriptions">
 		<div class="bd-section__lead">
 			<span class="bd-section__eyebrow">Memberships</span>

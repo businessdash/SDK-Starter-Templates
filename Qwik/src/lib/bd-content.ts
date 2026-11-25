@@ -1,6 +1,6 @@
 /**
  * Server-only helpers for the runtime-delivered bundle extras
- * (`banner`, `updates`), the reviews wall, and JSON-LD.
+ * (`banner`, `updates`), the reviews aggregate, and JSON-LD.
  *
  * `bundle.banner` (multi-message announcement bar) and `bundle.updates`
  * (Google-Business-style posts feed) ride the marketing bundle as
@@ -9,10 +9,7 @@
  * typed exports these local types can be dropped with no call-site change.
  */
 
-import type { ReviewWallListResponse } from "@businessdash/sdk/contracts";
 import { localBusiness, website } from "@businessdash/sdk/seo";
-
-import { getBd } from "./bd";
 
 // ── bundle.banner ──────────────────────────────────────────────────
 export type BundleBannerMessage = {
@@ -86,25 +83,6 @@ export function getReviewsAggregateFromBundle(
 					? reviews.total
 					: 0,
 	};
-}
-
-/**
- * Fetch one page of the public reviews wall (server-only — uses the secret
- * key). Returns `null` when unconfigured or the call fails, so the caller can
- * stop paginating gracefully.
- */
-export async function fetchReviewsPage(input?: {
-	limit?: number;
-	offset?: number;
-	source?: "google" | "yelp" | "housecall_pro" | "other";
-}): Promise<ReviewWallListResponse | null> {
-	const bd = getBd();
-	if (!bd) return null;
-	try {
-		return await bd.reviews.list(input);
-	} catch {
-		return null;
-	}
 }
 
 // ── JSON-LD ────────────────────────────────────────────────────────

@@ -28,7 +28,7 @@ No bundler, no hydration step, no client-side state library. The same Bun server
 Five sections render server-side with the BD data:
 
 - **Hero / About / Services** read the marketing bundle (Services also reads the product catalog) and fall back to local defaults
-- **Blog** lists posts via `bd.blog.listPosts(...)`
+- **Blog** lists posts via `bd.blog.listPosts(...)` <!-- [bd-line:blog] -->
 - **Header / Footer** are pure static
 
 One section is interactive — and HTMX handles it without a single line of your own JS:
@@ -66,6 +66,8 @@ SDK-Starter-Templates/HTMX/
 ├── public/
 │   ├── index.html             # HTMX shell — banner + every region is hx-get-driven
 │   ├── styles.css             # shared section + feature-page styles
+│   ├── bd-shop.css            # the store's styles <!-- [bd-line:store] -->
+│   ├── bd-blog.css            # the blog's styles <!-- [bd-line:blog] -->
 │   └── forms.css              # the bd-* form classes src/form.ts renders
 └── src/
     ├── bd.ts                # SDK client + auth handler + session + webhook (server-only)
@@ -78,6 +80,11 @@ SDK-Starter-Templates/HTMX/
     ├── html.ts                # tag template helper with auto-escaping
     ├── layout.ts              # page shell, nav, banner, JSON-LD, money/cookie helpers
     ├── pages.ts               # feature-page + fragment renderers
+    ├── store-pages.ts         # the store: products, a product, wishlist, compare, cart <!-- [bd-line:store] -->
+    ├── store-nav.ts           # the store bar: products, plans, wishlist, compare, cart <!-- [bd-line:store,subscriptions] -->
+    ├── blog-pages.ts          # the blog: the post list, a post, likes and comments <!-- [bd-line:blog] -->
+    ├── elements.ts            # bundles src/shop/ for the browser, served at /shop/*.js <!-- [bd-line:store,blog] -->
+    ├── shop/                  # the store's and blog's custom elements + safePostHtml <!-- [bd-line:store,blog] -->
     └── sections/
         ├── header.ts          # also exports renderFooter()
         └── hero.ts  about.ts  services.ts  blog.ts  subscribe.ts
@@ -201,11 +208,13 @@ below is server-rendered HTML and degrades gracefully when BD env is unset.
 | **Home sections** | `/` (`hx-get /sections/*`) | `marketing.getPageBundle`, `storefront.listProducts`, `blog.listPosts`, `forms.*` |
 | **Forms** | `/forms/:slug`, the contact section | `createFormController` (`@businessdash/sdk/forms`) over `forms.schema`, `forms.uploadFile`, `forms.submit` |
 | **Quizzes** | `/quiz`, `/quiz/:slug`, `/quiz-invite/:token` | `createQuizController` (`@businessdash/sdk/forms`) over `quizzes.practice` / `checkPracticeAnswer` / `scorePractice` and `quizzes.withSession(token).invitation` / `startInvitation` / `lockInvitationAnswer` / `submitInvitation` |
-| **Storefront** | `/store`, `/store/:id` | `storefront.listProducts`, `storefront.getProduct` |
-| **Cart** | `/cart` + `hx-post /cart/*` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie; mutations return the `#cart-region` fragment |
-| **Checkout** | `POST /cart/checkout` → Stripe | `checkout.forVisitor(token).start` (303 redirect) |
-| **Subscriptions** | `/subscriptions` | `subscriptions.list` |
-| **Reviews wall** | `/reviews` + `hx-get /sections/reviews-more` | `reviews.list({ limit, offset })` |
+| **Storefront** | `/store`, `/store/:id` | `storefront.listProductsWithMeta` (search, category, price, rating and sort, all in the URL; `hx-boost` swaps the list in place), `storefront.listCategories`, `storefront.getProduct`, `storefront.getProductReviews`, `storefront.getProductAddons`, `storefront.getRelatedProducts`. The product page has option photos, option and size buttons, add to cart with the chosen options (`POST /api/bd/cart/add`), save, compare, share, add-ons, reviews, related and recently viewed. | <!-- [bd-line:store] -->
+| **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=a,b` | Saved in the shopper's browser; the compare table loads each product with `storefront.getProduct` | <!-- [bd-line:store] -->
+| **Cart** | `/cart` + `hx-post /cart/*` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie; changes return the `#cart-region` fragment and the store bar's count | <!-- [bd-line:store] -->
+| **Checkout** | `POST /cart/checkout` → Stripe | `checkout.forVisitor(token).start` (303 redirect) | <!-- [bd-line:store] -->
+| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:subscriptions] -->
+| **Blog** | `/blog`, `/blog/:slug` | `blog.listPosts` (category, tag, paging), `blog.listCategories`, `blog.listTags`, `blog.getPost` (HTML made safe on the server), `blog.withSession(token).{likeStatus,toggleLike,postComment}`, `blog.listComments` — liking and commenting need a signed-in customer | <!-- [bd-line:blog] -->
+| **Business reviews** | `/reviews` (`?source=` filters), `hx-get /sections/reviews-more`, `POST /reviews/write` | The bundle's `reviews` (average, count, count per star), `reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview`. The page shows the rating with a bar per star, a platform filter, each review with its photos, Verified and a link to it on Google or Yelp, and more on demand; a signed-in customer writes one with `<bd-review-writer>` (`src/shop/reviews-elements.ts`) and it waits for approval. The rules are `src/shop/reviews.ts`, the same in every BD starter. |
 | **News banner + updates** | `hx-get /sections/banner`, `/updates` | `bundle.banner`, `bundle.updates` |
 | **Auth + portal** | `/api/bd-auth/*`, `/my-account` (sign-in screen rendered on the server: `src/sign-in.ts`), `POST /account/review` | `createAuthHandler`, `@businessdash/sdk/sign-in-core` (words, checks, brand colours), `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelPages.listVariants`, `parallelPages.render` |
@@ -214,6 +223,14 @@ below is server-rendered HTML and degrades gracefully when BD env is unset.
 
 Cart, reviews, and the contact form all work with **zero client JS framework** —
 just HTMX attributes (`hx-post` / `hx-get` + `hx-target` + `hx-swap`).
+
+<!-- [bd:store,blog] -->
+The store's product page, wishlist and compare table, and a post's likes and
+comments, are small custom elements (`src/shop/*.ts`). There is still no
+bundler: the server builds them with `Bun.build` and serves them at
+`/shop/*.js`. The server loads each page's data and puts it inside the element
+as JSON, so the page arrives whole.
+<!-- [/bd:store,blog] -->
 
 ### Environment
 

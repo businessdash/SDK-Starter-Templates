@@ -1,69 +1,83 @@
 // [bd-file:store]
-import Link from "next/link";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
-import { getStoreProduct } from "@/server/lib/bd-store";
+import { addItemAction } from "@/app/_actions/store";
+import {
+	getStoreProduct,
+	getStoreProductAddons,
+	getStoreProductReviews,
+	getStoreRelatedProducts,
+	isStoreConfigured,
+} from "@/server/lib/bd-store";
 
-import { AddToCart } from "../_components/AddToCart";
 import { Notice } from "../_components/Notice";
-import { asString, firstImage, toVariant } from "../_components/store-utils";
+import { ProductPageClient } from "./ProductPageClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function ProductPage({
-	params,
-}: {
-	params: Promise<{ id: string }>;
-}) {
-	const { id } = await params;
-	const product = await getStoreProduct(id);
+/** Reviews shown at first; "Show more reviews" adds this many each time. */
+const REVIEWS_PAGE = 10;
 
-	if (!product) {
+type Props = {
+	params: Promise<{ id: string }>;
+	searchParams: Promise<{ reviews?: string | string[] }>;
+};
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+	const { id } = await params;
+	const product = isStoreConfigured() ? await getStoreProduct(id) : null;
+	return { title: product?.name ?? "Product" };
+}
+
+/**
+ * One product: the shared `ProductDetail` (photos, options, price, add to
+ * cart, save, compare, share, details, add-ons, reviews, related and
+ * recently viewed). Reviews grow with ?reviews=N, so "Show more reviews" is
+ * a plain link that works without JavaScript.
+ */
+export default async function ProductPage({ params, searchParams }: Props) {
+	const { id } = await params;
+	const shownRaw = (await searchParams).reviews;
+	const shown = Number.parseInt(
+		(Array.isArray(shownRaw) ? shownRaw[0] : shownRaw) ?? "",
+		10,
+	);
+	const reviewLimit = Number.isFinite(shown)
+		? Math.min(Math.max(shown, REVIEWS_PAGE), 100)
+		: REVIEWS_PAGE;
+
+	if (!isStoreConfigured()) {
 		return (
-			<div>
-				<Notice
-					body={`storefront.getProduct("${id}") returned nothing (not found, not live, or the SDK call failed).`}
-					title="Product unavailable"
-				/>
-				<p style={{ marginTop: "1rem" }}>
-					<Link href="/store">← Back to products</Link>
-				</p>
-			</div>
+			<Notice
+				body="BD env (BD_API_KEY / BD_SITE_ID / base URL) isn't set, so the SDK client can't initialise. See .env.example."
+				title="Store isn't connected"
+			/>
 		);
 	}
 
-	const img = firstImage(product.images);
-	const desc = asString((product as Record<string, unknown>).description);
-	const variants = (product.variants ?? [])
-		.map(toVariant)
-		.filter((v) => v.isLive);
+	const product = await getStoreProduct(id);
+	if (!product) notFound();
+
+	const [reviews, addons, related] = await Promise.all([
+		getStoreProductReviews(id, { limit: reviewLimit }),
+		getStoreProductAddons(id),
+		getStoreRelatedProducts(id),
+	]);
+	const moreReviewsHref =
+		reviews && reviews.totalCount > reviews.items.length
+			? `/store/${id}?reviews=${reviewLimit + REVIEWS_PAGE}#reviews`
+			: null;
 
 	return (
-		<div className="store-detail">
-			<div className="store-detail__media bd-card">
-				{img ? (
-					// eslint-disable-next-line @next/next/no-img-element
-					<img alt={product.name} src={img} />
-				) : (
-					<span className="store-card__noimg">No image</span>
-				)}
-			</div>
-
-			<div className="store-detail__info">
-				<Link className="store-detail__back" href="/store">
-					← Products
-				</Link>
-				<h1 className="bd-section__title">{product.name}</h1>
-				{desc ? <p className="bd-section__sub">{desc}</p> : null}
-
-				{variants.length === 0 ? (
-					<Notice
-						body={`No live variants on this product. (Detail returned ${(product.variants ?? []).length} variant(s) total.)`}
-						title="Nothing to add"
-					/>
-				) : (
-					<AddToCart productId={product.id} variants={variants} />
-				)}
-			</div>
-		</div>
+		<ProductPageClient
+			addons={addons?.items ?? []}
+			addToCart={addItemAction}
+			cartHref="/store/cart"
+			moreReviewsHref={moreReviewsHref}
+			product={product}
+			related={related?.items ?? []}
+			reviews={reviews}
+		/>
 	);
 }

@@ -1,11 +1,10 @@
 import type { ParallelPagesRenderResponse } from "@businessdash/sdk";
-import type { ReviewWallListResponse } from "@businessdash/sdk/contracts";
 
 import { cached } from "./bd-cache.server";
 import { getBd, isSuspensionError } from "./bd.server";
 
 /**
- * Programmatic-SEO + reviews-wall reads (server-only).
+ * Programmatic-SEO reads (server-only).
  *
  * The high-level `createBdClient()` exposes `client.parallelPages`
  * ALREADY BOUND to the site id, so we call `client.parallelPages.render(...)`
@@ -60,25 +59,6 @@ export async function renderServiceArea(
 		);
 	} catch (err) {
 		if (isSuspensionError(err)) throw err;
-		return null;
-	}
-}
-
-/**
- * A deeper page of reviews than the bundle ships. Server-only (the SDK uses
- * the secret key). Returns `null` when unconfigured or on error so the
- * caller can stop paginating gracefully.
- */
-export async function fetchReviewsPage(input: {
-	limit?: number;
-	offset?: number;
-	source?: "google" | "yelp" | "housecall_pro" | "other";
-}): Promise<ReviewWallListResponse | null> {
-	const bd = getBd();
-	if (!bd) return null;
-	try {
-		return await bd.reviews.list(input);
-	} catch {
 		return null;
 	}
 }

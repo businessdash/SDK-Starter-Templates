@@ -1,7 +1,7 @@
 import type { CustomerWorkBundle } from "@businessdash/sdk/contracts";
-// [bd:saas]
+// [bd:subscriptions]
 import type { CustomerSubscriptionResponse } from "@businessdash/sdk/contracts";
-// [/bd:saas]
+// [/bd:subscriptions]
 import type { CustomerSession } from "../../../utils/bd-portal";
 
 /**
@@ -22,10 +22,10 @@ export type PortalContext = {
 		role: string | null;
 	} | null;
 	work: CustomerWorkBundle | null;
-	// [bd:saas]
+	// [bd:subscriptions]
 	/** The customer's plan, or null when they have none. */
 	plan: CustomerSubscriptionResponse["subscription"];
-	// [/bd:saas]
+	// [/bd:subscriptions]
 };
 
 export default defineEventHandler(async (event): Promise<PortalContext> => {
@@ -35,9 +35,9 @@ export default defineEventHandler(async (event): Promise<PortalContext> => {
 			configured: false,
 			session: null,
 			work: null,
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan: null,
-			// [/bd:saas]
+			// [/bd:subscriptions]
 		};
 	}
 
@@ -47,9 +47,9 @@ export default defineEventHandler(async (event): Promise<PortalContext> => {
 			configured: true,
 			session: null,
 			work: null,
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan: null,
-			// [/bd:saas]
+			// [/bd:subscriptions]
 		};
 	}
 
@@ -69,8 +69,8 @@ export default defineEventHandler(async (event): Promise<PortalContext> => {
 			role: session.role,
 		},
 		work,
-		// [bd:saas]
+		// [bd:subscriptions]
 		plan: (await getCustomerSubscription(event))?.subscription ?? null,
-		// [/bd:saas]
+		// [/bd:subscriptions]
 	};
 });

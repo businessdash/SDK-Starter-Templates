@@ -23,9 +23,12 @@ const STATIC_PATHS = [
 	// [bd:store]
 	"/store",
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"/subscriptions",
-	// [/bd:saas]
+	// [/bd:subscriptions]
+	// [bd:blog]
+	"/blog",
+	// [/bd:blog]
 	"/todos",
 ];
 
@@ -44,7 +47,9 @@ export const onGet: RequestHandler = async ({ send, url, env }) => {
 					// [bd:store]
 					product: "/store",
 					// [/bd:store]
-					blog: "/updates",
+					// [bd:blog]
+					blog: "/blog",
+					// [/bd:blog]
 				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),

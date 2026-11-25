@@ -26,27 +26,21 @@ import { mcpHandler, mcpManifestHandler } from "@businessdash/sdk/mcp";
 import type {
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle,
-	ReviewWallListResponse,
 } from "@businessdash/sdk/contracts";
 // [bd:store]
 import type {
 	CartSnapshot,
-	StorefrontAddon,
 	StorefrontCategory,
-	StorefrontListProductsResponse,
 	StorefrontProductCard,
-	StorefrontProductDetail,
-	StorefrontProductReviewsResponse,
-	StorefrontRelatedProduct,
 	StorefrontSort,
 } from "@businessdash/sdk/contracts";
 // [/bd:store]
-// [bd:saas]
+// [bd:subscriptions]
 import type {
 	CustomerSubscriptionResponse,
 	SubscriptionOffering,
 } from "@businessdash/sdk/contracts";
-// [/bd:saas]
+// [/bd:subscriptions]
 import {
 	renderLegalPageHtml,
 	resolveLegalPage,
@@ -56,6 +50,7 @@ import {
 	minimalSitemapXml,
 } from "@businessdash/sdk/sitemap";
 import { createServerFn } from "@tanstack/solid-start";
+import { createServerOnlyFn } from "@tanstack/solid-start";
 import { getCookie, getRequestHeader } from "@tanstack/solid-start/server";
 // [bd:store]
 import { setCookie } from "@tanstack/solid-start/server";
@@ -63,7 +58,6 @@ import { setCookie } from "@tanstack/solid-start/server";
 
 import {
 	type BundleBanner,
-	type BundleReviews,
 	type BundleUpdateItem,
 	bdRawConfig,
 	devwarn,
@@ -76,6 +70,8 @@ import {
 import { getDistributionConfig } from "./bd-distribution";
 import { listTodosWithImages, type TodosResult } from "./bd-todos";
 import { TODO_FORM_SLUG } from "../../bd.data-model.config";
+import { checkReview } from "./shop/reviews";
+import { loadReviewsPage, type ReviewsPageData } from "./shop/reviews-page";
 
 /**
  * For server functions that return SDK records. TanStack Start checks at the
@@ -109,13 +105,16 @@ export type GalleryItem = {
 	blurDataURL?: string | null;
 };
 
+// [bd:booking]
 export type EventType = {
 	id: string;
 	name: string;
 	slug: string;
 	durationMinutes: number;
 };
+// [/bd:booking]
 
+// [bd:blog]
 export type BlogPost = {
 	id: string;
 	slug: string;
@@ -123,6 +122,7 @@ export type BlogPost = {
 	excerpt?: string | null;
 	publishedAt?: string | null;
 };
+// [/bd:blog]
 
 export type FieldDef = {
 	id: string;
@@ -146,17 +146,35 @@ export type HomeData = {
 	about: string;
 	services: Service[];
 	gallery: GalleryItem[];
+	// [bd:booking]
 	eventTypes: EventType[];
+	// [/bd:booking]
+	// [bd:blog]
 	blogPosts: BlogPost[];
+	// [/bd:blog]
 	formSchema: FormSchema;
 	formSlug: string;
 };
 
+// [bd:!booking]
+/** Without booking, the hero's button goes to the contact form. */
+const CONTACT_CTA = {
+	tagline: "Tell us what you need. We'll handle the rest.",
+	ctaLabel: "Get in touch",
+	ctaHref: "#contact",
+};
+// [/bd:!booking]
+
 const HERO_DEFAULTS: HeroData = {
+	// [bd:!booking]
+	...CONTACT_CTA,
+	// [/bd:!booking]
 	title: "Service that shows up — on time.",
+	// [bd:booking]
 	tagline: "Book in 60 seconds. We'll handle the rest.",
 	ctaLabel: "Book a consult",
 	ctaHref: "#booking",
+	// [/bd:booking]
 };
 
 const ABOUT_FALLBACK =
@@ -222,26 +240,42 @@ export const getHomeData = createServerFn({ method: "GET" }).handler(
 				about: ABOUT_FALLBACK,
 				services: SERVICES_FALLBACK,
 				gallery: [],
+				// [bd:booking]
 				eventTypes: [],
+				// [/bd:booking]
+				// [bd:blog]
 				blogPosts: [],
+				// [/bd:blog]
 				formSchema: FORM_FALLBACK,
 				formSlug: FORM_SLUG,
 			};
 		}
 
-		const [bundle, gallery, eventTypes, blog, formSchema] = await Promise.all([
+		// [bd:booking]
+		const eventTypesRequest = bd.scheduling
+			.listEventTypes()
+			.catch(() => []) as Promise<EventType[]>;
+		// [/bd:booking]
+		// [bd:blog]
+		const blogRequest = bd.blog
+			.listPosts({ limit: 6 })
+			.catch(() => ({ items: [] as BlogPost[] }));
+		// [/bd:blog]
+		const [bundle, gallery, formSchema] = await Promise.all([
 			bd.marketing
 				.getPageBundle({ pageKey: "home", locale: "en" })
 				.catch(() => null),
 			bd.gallery
 				.list({ limit: 12, fields: GALLERY_FIELDS })
 				.catch(() => []) as Promise<GalleryItem[]>,
-			bd.scheduling.listEventTypes().catch(() => []) as Promise<EventType[]>,
-			bd.blog
-				.listPosts({ limit: 6 })
-				.catch(() => ({ items: [] as BlogPost[] })),
 			bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK),
 		]);
+		// [bd:booking]
+		const eventTypes = await eventTypesRequest;
+		// [/bd:booking]
+		// [bd:blog]
+		const blog = await blogRequest;
+		// [/bd:blog]
 
 		function readSection(name: string): Record<string, unknown> | null {
 			const raw = (bundle as { sections?: Record<string, unknown> })
@@ -278,8 +312,12 @@ export const getHomeData = createServerFn({ method: "GET" }).handler(
 					? (servicesSection.items as Service[])
 					: SERVICES_FALLBACK,
 			gallery,
+			// [bd:booking]
 			eventTypes,
+			// [/bd:booking]
+			// [bd:blog]
 			blogPosts: ((blog as { items?: BlogPost[] })?.items as BlogPost[]) ?? [],
+			// [/bd:blog]
 			formSchema,
 			formSlug: FORM_SLUG,
 		};
@@ -307,6 +345,7 @@ export const getLegalPage = createServerFn({ method: "GET" })
 		};
 	});
 
+// [bd:booking]
 export const fetchSlots = createServerFn({ method: "GET" })
 	.validator((data: { slug: string; from: string; to: string }) => data)
 	.handler(async ({ data }) => {
@@ -342,6 +381,7 @@ export const confirmBooking = createServerFn({ method: "POST" })
 			notes: data.notes,
 		});
 	});
+// [/bd:booking]
 
 export const submitContactForm = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator((data: { slug: string; values: Record<string, unknown> }) => data)
@@ -371,48 +411,6 @@ export function isSuspensionError(err: unknown): boolean {
 }
 
 // [bd:store]
-/* ────────────────────────────────────────────────────────────────────
- * Storefront — product list + detail
- * ──────────────────────────────────────────────────────────────────── */
-
-export type StoreListResult =
-	| { ok: true; products: StorefrontListProductsResponse["items"] }
-	| { ok: false; reason: "unconfigured" | "suspended" | "error" };
-
-export const getStoreProducts = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
-	async (): Promise<StoreListResult> => {
-		const bd = getBd();
-		if (!bd) return { ok: false, reason: "unconfigured" };
-		try {
-			const res = await bd.storefront.listProducts({ limit: 24 });
-			return { ok: true, products: res.items };
-		} catch (err) {
-			if (isSuspensionError(err)) return { ok: false, reason: "suspended" };
-			devwarn("storefront.listProducts", err);
-			return { ok: false, reason: "error" };
-		}
-	},
-);
-
-export type StoreProductResult =
-	| { ok: true; product: StorefrontProductDetail }
-	| { ok: false; reason: "unconfigured" | "suspended" | "notfound" };
-
-export const getStoreProduct = createServerFn({ method: "GET", strict: SDK_OUTPUT })
-	.validator((data: { id: string }) => data)
-	.handler(async ({ data }): Promise<StoreProductResult> => {
-		const bd = getBd();
-		if (!bd) return { ok: false, reason: "unconfigured" };
-		try {
-			const product = await bd.storefront.getProduct(data.id);
-			return { ok: true, product };
-		} catch (err) {
-			if (isSuspensionError(err)) return { ok: false, reason: "suspended" };
-			devwarn("storefront.getProduct", err);
-			return { ok: false, reason: "notfound" };
-		}
-	});
-
 /* ────────────────────────────────────────────────────────────────────
  * Storefront — filterable listing grid (listProductsWithMeta + facets)
  *
@@ -483,47 +481,6 @@ export const getStoreListing = createServerFn({ method: "GET" })
 	});
 
 /* ────────────────────────────────────────────────────────────────────
- * Storefront — product detail enrichment (reviews + related + addons)
- *
- * Folded into one round-trip from the detail loader. Each call degrades
- * to an empty shape so a missing/older endpoint just hides its section.
- * ──────────────────────────────────────────────────────────────────── */
-
-export type StoreProductExtras = {
-	reviews: StorefrontProductReviewsResponse | null;
-	related: StorefrontRelatedProduct[];
-	addons: StorefrontAddon[];
-};
-
-export const getStoreProductExtras = createServerFn({ method: "GET", strict: SDK_OUTPUT })
-	.validator((data: { id: string }) => data)
-	.handler(async ({ data }): Promise<StoreProductExtras> => {
-		const bd = getBd();
-		if (!bd) return { reviews: null, related: [], addons: [] };
-		const [reviews, related, addons] = await Promise.all([
-			bd.storefront.getProductReviews(data.id, { limit: 20 }).catch((err) => {
-				devwarn("storefront.getProductReviews", err);
-				return null;
-			}),
-			bd.storefront
-				.getRelatedProducts(data.id, { limit: 6 })
-				.then((res) => res.items)
-				.catch((err) => {
-					devwarn("storefront.getRelatedProducts", err);
-					return [] as StorefrontRelatedProduct[];
-				}),
-			bd.storefront
-				.getProductAddons(data.id)
-				.then((res) => res.items)
-				.catch((err) => {
-					devwarn("storefront.getProductAddons", err);
-					return [] as StorefrontAddon[];
-				}),
-		]);
-		return { reviews, related, addons };
-	});
-
-/* ────────────────────────────────────────────────────────────────────
  * Cart — visitor-token pattern
  *
  * The shopper is identified by a UUID we own, stored in an httpOnly
@@ -553,6 +510,11 @@ function ensureVisitorToken(): string {
 	});
 	return token;
 }
+
+/** The visitor's cart token, minted on first use, for the add-to-cart
+ *  endpoint (src/routes/api/bd/cart/add.tsx). Server only: it throws if
+ *  called in the browser, and keeps the cookie code out of the client. */
+export const cartVisitorToken = createServerOnlyFn(() => ensureVisitorToken());
 
 export type CartResult =
 	| { ok: true; snapshot: CartSnapshot }
@@ -699,7 +661,7 @@ export const startCheckout = createServerFn({ method: "POST", strict: SDK_OUTPUT
 	);
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 /* ────────────────────────────────────────────────────────────────────
  * Subscriptions
  * ──────────────────────────────────────────────────────────────────── */
@@ -769,51 +731,32 @@ export const startSubscriptionCheckout = createServerFn({ method: "POST" })
 			}
 		},
 	);
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /* ────────────────────────────────────────────────────────────────────
- * Reviews wall — aggregate (off bundle) + paginated page (reviews.list)
+ * Reviews page — the rating and star counts (off the bundle), the
+ * reviews (reviews.list, by platform and how many are shown), and
+ * whether the visitor can write one
  * ──────────────────────────────────────────────────────────────────── */
 
-export type ReviewsWallData = {
-	aggregate: BundleReviews | null;
-	page: ReviewWallListResponse | null;
-};
-
-const REVIEWS_PAGE_SIZE = 8;
-
-/** First load: aggregate (count / average) off the bundle + the first page
- *  of wall items. Both null when BD isn't configured. */
-export const getReviewsWall = createServerFn({ method: "GET" }).handler(
-	async (): Promise<ReviewsWallData> => {
+/** The reviews page for `?source=` and `?shown=`, gathered by the shared
+ *  `loadReviewsPage` (src/lib/shop/reviews-page.ts). */
+export const getReviewsPage = createServerFn({ method: "GET" })
+	.validator((data: { source?: string; shown?: number }) => data)
+	.handler(async ({ data }): Promise<ReviewsPageData> => {
 		const bd = getBd();
-		if (!bd) return { aggregate: null, page: null };
-		const [bundle, page] = await Promise.all([
-			getBundle("home"),
-			bd.reviews.list({ limit: REVIEWS_PAGE_SIZE }).catch((err) => {
-				devwarn("reviews.list", err);
-				return null;
-			}),
-		]);
-		return { aggregate: getReviewsFromBundle(bundle), page };
-	},
-);
-
-/** "Load more": one deeper page of wall items. `null` stops pagination. */
-export const fetchReviewsPage = createServerFn({ method: "GET" })
-	.validator((data: { offset: number }) => data)
-	.handler(async ({ data }): Promise<ReviewWallListResponse | null> => {
-		const bd = getBd();
-		if (!bd) return null;
-		try {
-			return await bd.reviews.list({
-				limit: REVIEWS_PAGE_SIZE,
-				offset: data.offset,
-			});
-		} catch (err) {
-			devwarn("reviews.list(page)", err);
-			return null;
-		}
+		const params = new URLSearchParams();
+		if (data.source) params.set("source", data.source);
+		if (data.shown) params.set("shown", String(data.shown));
+		return loadReviewsPage({
+			params,
+			list: bd ? (query) => bd.reviews.list(query) : null,
+			totals: getBundle("home").then(getReviewsFromBundle),
+			signedIn: readCustomerSession().then(
+				(session) => session !== null,
+				() => false,
+			),
+		});
 	});
 
 /* ────────────────────────────────────────────────────────────────────
@@ -884,6 +827,12 @@ async function readCustomerSession(): Promise<CustomerSession | null> {
 	};
 }
 
+/** The signed-in customer, or null, for server functions and endpoints
+ *  such as the blog's likes and comments and writing a review. Server only:
+ *  it throws if called in the browser, and keeps the cookie code out of the
+ *  client. */
+export const customerSession = createServerOnlyFn(() => readCustomerSession());
+
 /** Session-scoped customer-portal client for an already-validated session. */
 function portalFor(session: CustomerSession) {
 	const cfg = bdRawConfig();
@@ -902,10 +851,10 @@ export type MyAccountData = {
 		role: string | null;
 	} | null;
 	work: CustomerWorkBundle | null;
-	// [bd:saas]
+	// [bd:subscriptions]
 	/** The customer's plan, or null when they have none. */
 	plan: CustomerSubscriptionResponse["subscription"];
-	// [/bd:saas]
+	// [/bd:subscriptions]
 };
 
 /** Everything the /my-account loader needs: configured flag, the signed-in
@@ -920,9 +869,9 @@ export const getMyAccount = createServerFn({ method: "GET", strict: SDK_OUTPUT }
 				configured,
 				session: null,
 				work: null,
-				// [bd:saas]
+				// [bd:subscriptions]
 				plan: null,
-				// [/bd:saas]
+				// [/bd:subscriptions]
 			};
 		}
 		let work: CustomerWorkBundle | null = null;
@@ -931,14 +880,14 @@ export const getMyAccount = createServerFn({ method: "GET", strict: SDK_OUTPUT }
 		} catch (err) {
 			devwarn("customerPortal.getWork", err);
 		}
-		// [bd:saas]
+		// [bd:subscriptions]
 		let plan: CustomerSubscriptionResponse["subscription"] = null;
 		try {
 			plan = (await portalFor(session).getSubscription()).subscription;
 		} catch (err) {
 			devwarn("customerPortal.getSubscription", err);
 		}
-		// [/bd:saas]
+		// [/bd:subscriptions]
 		return {
 			configured,
 			session: {
@@ -948,14 +897,14 @@ export const getMyAccount = createServerFn({ method: "GET", strict: SDK_OUTPUT }
 				role: session.role,
 			},
 			work,
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan,
-			// [/bd:saas]
+			// [/bd:subscriptions]
 		};
 	},
 );
 
-// [bd:saas]
+// [bd:subscriptions]
 export type PlanChangeResult =
 	| { ok: true; cancelAtPeriodEnd: boolean; accessUntil: string | null }
 	| { ok: false; error: string };
@@ -981,11 +930,46 @@ export const changePlan = createServerFn({ method: "POST" })
 			return { ok: false, error: "We couldn't change your plan. Please try again." };
 		}
 	});
-// [/bd:saas]
+// [/bd:subscriptions]
 
 export type ReviewSubmitResult =
 	| { ok: true; status: string }
 	| { ok: false; error: string };
+
+/**
+ * A review written on /reviews (`POST /api/bd/reviews/write`), checked with
+ * the shared rules and sent as the signed-in customer. It shows once the
+ * business approves it. Server only.
+ */
+export const writeCustomerReview = createServerOnlyFn(
+	async (
+		input: Record<string, unknown>,
+	): Promise<
+		| { ok: true }
+		| { ok: false; status: 400 | 401 | 502 | 503; error: string }
+	> => {
+		if (!bdRawConfig()) {
+			return { ok: false, status: 503, error: "Reviews aren't connected yet." };
+		}
+		const session = await readCustomerSession();
+		if (!session) {
+			return { ok: false, status: 401, error: "Sign in to write a review." };
+		}
+		const checked = checkReview(input);
+		if (!checked.ok) return { ok: false, status: 400, error: checked.error };
+		try {
+			await portalFor(session).submitReview(checked.review);
+			return { ok: true };
+		} catch (err) {
+			devwarn("customerPortal.submitReview", err);
+			return {
+				ok: false,
+				status: 502,
+				error: "Couldn't send your review. Try again.",
+			};
+		}
+	},
+);
 
 /** Submit a review as the signed-in customer. Lands as `pending` until
  *  staff moderates. Requires a valid `bd_session`. */
@@ -1187,12 +1171,15 @@ const SITEMAP_STATIC_PATHS = [
 	"/services",
 	"/reviews",
 	"/updates",
+	// [bd:blog]
+	"/blog",
+	// [/bd:blog]
 	// [bd:store]
 	"/store",
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"/subscriptions",
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	"/todos",
 ];
 
@@ -1222,7 +1209,9 @@ export async function buildSitemapResponse(request: Request): Promise<Response> 
 					// [bd:store]
 					product: "/store",
 					// [/bd:store]
-					blog: "/updates",
+					// [bd:blog]
+					blog: "/blog",
+					// [/bd:blog]
 				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),

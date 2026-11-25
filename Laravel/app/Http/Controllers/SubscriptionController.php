@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Bd\Bd;
 use App\Bd\Client;
+use App\Support\CartVisitor;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class SubscriptionController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
         $plans = Bd::remember(
             'subscriptions:list',
@@ -20,6 +22,7 @@ class SubscriptionController extends Controller
 
         return view('pages.subscriptions', [
             'plans' => $plans['items'] ?? [],
+            'cartCount' => CartVisitor::itemCount($request),
         ]);
     }
 

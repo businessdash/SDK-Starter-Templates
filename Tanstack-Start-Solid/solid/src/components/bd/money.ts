@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 /** Format integer cents into a localized currency string. */
 export function formatMoney(cents: number, currency = "usd"): string {
 	return new Intl.NumberFormat(undefined, {

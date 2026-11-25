@@ -1,34 +1,32 @@
 // [bd-file:store]
 import type { StorefrontSort } from "@businessdash/sdk/contracts";
-import { createFileRoute, Link } from "@tanstack/solid-router";
-import { createMemo, createSignal, For, isPending, Show } from "solid-js";
+import { createFileRoute, Link, useNavigate } from "@tanstack/solid-router";
+import { For, Show } from "solid-js";
 
 import { formatMoney } from "../components/bd/money";
-import { Stars } from "../components/bd/Stars";
-import {
-	getStoreListing,
-	type StoreFilters,
-	type StoreListingResult,
-} from "../lib/bd-server-fns";
+import { ShopStars } from "../components/bd/ShopStars";
+import { StoreNav } from "../components/bd/StoreNav";
+import { elementHtml } from "../lib/bd-elements";
+import { getStoreListing } from "../lib/bd-server-fns";
+import { getCartCount } from "../lib/bd-shop-fns";
 
 /**
- * Storefront listing — `storefront.listProductsWithMeta` powers an enriched,
- * platform-style grid (price / compareAt / ratings / badges) with a facet
- * sidebar (search, categories with counts, price range, min-rating, sort).
- *
- * The loader fetches the unfiltered first page server-side; facet changes drive
- * an async `createMemo` that refetches through the same `getStoreListing`
- * server fn (the secret key stays on the server). Degrades to a "not connected" /
- * "unavailable" state when BD env is unset or the org is suspended.
+ * Storefront listing — `storefront.listProductsWithMeta` powers the grid
+ * (price, compare-at price, ratings, badges) and the filter sidebar (search,
+ * categories with counts, price range, rating, sort). The filters live in
+ * the URL (?q, ?category, ?min, ?max, ?rating, ?sort), so a filtered list
+ * can be shared, and the loader reads the list on the server for each one.
+ * Each card saves to the wishlist or the comparison (`<bd-save-buttons>`),
+ * and `<bd-compare-bar>` shows the picks.
  */
-export const Route = createFileRoute("/store/")({
-	component: StoreIndex,
-	loader: () => getStoreListing({ data: {} }),
-});
-
-/** The loader's filters. Compared by identity, so "Clear filters" (a fresh
- *  `{}`) still refetches. */
-const UNFILTERED: StoreFilters = {};
+type StoreSearch = {
+	q?: string;
+	category?: string;
+	min?: number;
+	max?: number;
+	rating?: number;
+	sort?: StorefrontSort;
+};
 
 const SORT_LABELS: Record<StorefrontSort, string> = {
 	featured: "Featured",
@@ -38,82 +36,100 @@ const SORT_LABELS: Record<StorefrontSort, string> = {
 	"rating-desc": "Top rated",
 };
 
+function text(value: unknown): string | undefined {
+	return typeof value === "string" && value.trim() ? value.trim() : undefined;
+}
+
+function positive(value: unknown): number | undefined {
+	const n = typeof value === "number" ? value : Number(value);
+	return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+export const Route = createFileRoute("/store/")({
+	component: StoreIndex,
+	validateSearch: (search: Record<string, unknown>): StoreSearch => {
+		const sort = text(search.sort);
+		return {
+			q: text(search.q),
+			category: text(search.category),
+			min: positive(search.min),
+			max: positive(search.max),
+			rating: positive(search.rating),
+			sort: sort && sort in SORT_LABELS ? (sort as StorefrontSort) : undefined,
+		};
+	},
+	loaderDeps: ({ search }) => search,
+	loader: async ({ deps }) => {
+		const [listing, cartCount] = await Promise.all([
+			getStoreListing({
+				data: {
+					search: deps.q,
+					categoryId: deps.category,
+					minPriceCents:
+						deps.min != null ? Math.round(deps.min * 100) : undefined,
+					maxPriceCents:
+						deps.max != null ? Math.round(deps.max * 100) : undefined,
+					minRating: deps.rating,
+					sort: deps.sort,
+				},
+			}),
+			getCartCount(),
+		]);
+		return { listing, cartCount };
+	},
+	head: () => ({ meta: [{ title: "Store" }] }),
+});
+
 function StoreIndex() {
-	const initial = Route.useLoaderData();
+	const loaded = Route.useLoaderData();
+	const search = Route.useSearch();
+	const navigate = useNavigate();
 
-	const [filters, setFilters] = createSignal<StoreFilters>(UNFILTERED);
-
-	// Refetch through the server fn whenever a facet changes. Until the first
-	// change the memo answers synchronously with the loader's page, so nothing
-	// suspends on first paint. After that it returns a promise: Solid 2 keeps
-	// showing the previous listing while the next one loads, and `isPending`
-	// (below) reports the gap.
-	const listing = createMemo<StoreListingResult>(() => {
-		const f = filters();
-		return f === UNFILTERED ? initial() : getStoreListing({ data: f });
-	});
-
-	const result = () => listing();
 	const data = () => {
-		const r = result();
+		const r = loaded().listing;
 		return r.ok ? r : null;
 	};
 	const reason = () => {
-		const r = result();
+		const r = loaded().listing;
 		return r.ok ? null : r.reason;
 	};
-
-	const countByCategory = createMemo(() => {
-		const d = data();
-		return new Map(
-			(d?.categoryCounts ?? []).map((c) => [c.categoryId, c.count]),
-		);
-	});
-
-	const patch = (next: Partial<StoreFilters>) =>
-		setFilters((prev) => ({ ...prev, ...next }));
-
+	const countFor = (categoryId: string) =>
+		data()?.categoryCounts.find((c) => c.categoryId === categoryId)?.count ?? 0;
 	const hasFilters = () => {
-		const f = filters();
+		const s = search();
 		return Boolean(
-			f.search ||
-				f.categoryId ||
-				f.minRating ||
-				f.minPriceCents != null ||
-				f.maxPriceCents != null,
+			s.q || s.category || s.rating || s.min != null || s.max != null,
 		);
 	};
+
+	/** This list with some filters changed (undefined drops one). */
+	const setFilters = (next: Partial<StoreSearch>) =>
+		navigate({ to: "/store", search: { ...search(), ...next } });
 
 	const onSearch = (e: SubmitEvent) => {
 		e.preventDefault();
 		const q = String(
 			new FormData(e.currentTarget as HTMLFormElement).get("q") ?? "",
-		).trim();
-		patch({ search: q || undefined });
+		);
+		setFilters({ q: text(q) });
 	};
 
 	const onPrice = (e: SubmitEvent) => {
 		e.preventDefault();
 		const fd = new FormData(e.currentTarget as HTMLFormElement);
-		const min = Number(String(fd.get("min") ?? "").trim());
-		const max = Number(String(fd.get("max") ?? "").trim());
-		patch({
-			minPriceCents:
-				Number.isFinite(min) && min > 0 ? Math.round(min * 100) : undefined,
-			maxPriceCents:
-				Number.isFinite(max) && max > 0 ? Math.round(max * 100) : undefined,
-		});
+		setFilters({ min: positive(fd.get("min")), max: positive(fd.get("max")) });
 	};
 
 	return (
-		<main>
-			<section class="bd-section">
+		<>
+			<StoreNav cartCount={loaded().cartCount} />
+			<main class="bd-page">
 				<div class="bd-section__lead">
 					<span class="bd-section__eyebrow">Shop</span>
-					<h1 class="bd-section__title">Store</h1>
+					<h1 class="bd-section__title">Products</h1>
 					<p class="bd-section__sub">
-						Products synced live from BD. Filter, add to cart, apply a coupon,
-						and check out through Stripe.
+						Filter, sort, and open a product to choose its options and add it to
+						your cart.
 					</p>
 				</div>
 
@@ -138,32 +154,33 @@ function StoreIndex() {
 				>
 					{(d) => (
 						<div class="store-layout">
-							{/* Facet sidebar */}
-							<aside class="store-sidebar">
-								<form onSubmit={onSearch}>
-									<div class="store-facet__title">Search</div>
-									<input
-										class="bd-input"
-										name="q"
-										placeholder="Search products…"
-										type="search"
-										value={filters().search ?? ""}
-									/>
-								</form>
+							<aside aria-label="Product filters" class="store-sidebar">
+								<search>
+									<form onSubmit={onSearch}>
+										<label class="bd-label" for="store-search">
+											Search
+										</label>
+										<input
+											autocomplete="off"
+											class="bd-input"
+											id="store-search"
+											name="q"
+											placeholder="Search products…"
+											type="search"
+											value={search().q ?? ""}
+										/>
+									</form>
+								</search>
 
 								<Show when={d().categories.length > 0}>
-									<div>
-										<div class="store-facet__title">Category</div>
+									<div class="store-facet">
+										<p class="store-facet__title">Category</p>
 										<ul class="store-facet__list">
 											<li>
 												<button
-													class={[
-														"store-facet__btn",
-														{
-															"store-facet__btn--active": !filters().categoryId,
-														},
-													]}
-													onClick={() => patch({ categoryId: undefined })}
+													aria-pressed={search().category ? "false" : "true"}
+													class={`store-facet__item${search().category ? "" : " store-facet__item--active"}`}
+													onClick={() => setFilters({ category: undefined })}
 													type="button"
 												>
 													All products
@@ -171,24 +188,22 @@ function StoreIndex() {
 											</li>
 											<For each={d().categories}>
 												{(c) => {
-													const active = () => filters().categoryId === c.id;
+													const active = () => search().category === c.id;
 													return (
 														<li>
 															<button
-																class={[
-																	"store-facet__btn",
-																	{ "store-facet__btn--active": active() },
-																]}
+																aria-pressed={active() ? "true" : "false"}
+																class={`store-facet__item store-facet__item--row${active() ? " store-facet__item--active" : ""}`}
 																onClick={() =>
-																	patch({
-																		categoryId: active() ? undefined : c.id,
+																	setFilters({
+																		category: active() ? undefined : c.id,
 																	})
 																}
 																type="button"
 															>
 																<span>{c.name}</span>
 																<span class="store-facet__count">
-																	{countByCategory().get(c.id) ?? 0}
+																	{countFor(c.id)}
 																</span>
 															</button>
 														</li>
@@ -199,53 +214,55 @@ function StoreIndex() {
 									</div>
 								</Show>
 
-								<form onSubmit={onPrice}>
-									<div class="store-facet__title">Price</div>
-									<div class="store-facet__price">
+								<form class="store-facet" onSubmit={onPrice}>
+									<p class="store-facet__title">Price</p>
+									<div class="store-price">
 										<input
+											aria-label="Lowest price"
 											class="bd-input"
-											inputmode="numeric"
+											inputmode="decimal"
 											name="min"
 											placeholder={`$${Math.floor(d().priceRange.minDollars)}`}
+											value={search().min ?? ""}
 										/>
-										<span>–</span>
+										<span aria-hidden="true" class="store-price__sep">
+											–
+										</span>
 										<input
+											aria-label="Highest price"
 											class="bd-input"
-											inputmode="numeric"
+											inputmode="decimal"
 											name="max"
 											placeholder={`$${Math.ceil(d().priceRange.maxDollars)}`}
+											value={search().max ?? ""}
 										/>
 									</div>
 									<button
-										class="bd-btn bd-btn--ghost"
-										style="margin-top: 0.5rem; width: 100%;"
+										class="bd-btn bd-btn--ghost store-price__apply"
 										type="submit"
 									>
 										Apply
 									</button>
 								</form>
 
-								<div>
-									<div class="store-facet__title">Rating</div>
+								<div class="store-facet">
+									<p class="store-facet__title">Rating</p>
 									<ul class="store-facet__list">
 										<For each={[4, 3, 2]}>
 											{(r) => {
-												const active = () => filters().minRating === r;
+												const active = () => search().rating === r;
 												return (
 													<li>
 														<button
-															class={[
-																"store-facet__btn",
-																{ "store-facet__btn--active": active() },
-															]}
+															aria-pressed={active() ? "true" : "false"}
+															class={`store-facet__item store-facet__rating${active() ? " store-facet__item--active" : ""}`}
 															onClick={() =>
-																patch({ minRating: active() ? undefined : r })
+																setFilters({ rating: active() ? undefined : r })
 															}
 															type="button"
 														>
-															<span style="display: inline-flex; align-items: center; gap: 0.4rem;">
-																<Stars rating={r} /> &amp; up
-															</span>
+															<ShopStars rating={r} />
+															<span class="store-facet__count">&amp; up</span>
 														</button>
 													</li>
 												);
@@ -256,8 +273,8 @@ function StoreIndex() {
 
 								<Show when={hasFilters()}>
 									<button
-										class="store-facet__btn store-facet__btn--active"
-										onClick={() => setFilters({})}
+										class="store-clear"
+										onClick={() => navigate({ to: "/store", search: {} })}
 										type="button"
 									>
 										Clear all filters
@@ -265,128 +282,138 @@ function StoreIndex() {
 								</Show>
 							</aside>
 
-							{/* Grid */}
-							<div>
-								<div class="store-toolbar">
-									<span class="store-toolbar__count">
+							<div class="store-results">
+								<div class="store-results__bar">
+									<p class="bd-loading">
 										{d().items.length}{" "}
 										{d().items.length === 1 ? "product" : "products"}
-										<Show when={isPending(() => listing())}> · updating…</Show>
-									</span>
-									<label style="display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">
-										<span>Sort</span>
+									</p>
+									<div class="store-sort">
+										<label for="store-sort">Sort</label>
 										<select
-											class="bd-input bd-select"
-											onChange={(e) =>
-												patch({
-													sort:
-														e.currentTarget.value === "featured"
-															? undefined
-															: (e.currentTarget.value as StorefrontSort),
-												})
-											}
-											style="width: auto;"
-											value={filters().sort ?? "featured"}
+											class="bd-select"
+											id="store-sort"
+											onChange={(e) => {
+												const value = e.currentTarget.value as StorefrontSort;
+												setFilters({
+													sort: value === "featured" ? undefined : value,
+												});
+											}}
+											value={search().sort ?? "featured"}
 										>
-											<For
-												each={Object.keys(SORT_LABELS) as Array<StorefrontSort>}
-											>
+											<For each={Object.keys(SORT_LABELS) as StorefrontSort[]}>
 												{(s) => <option value={s}>{SORT_LABELS[s]}</option>}
 											</For>
 										</select>
-									</label>
+									</div>
 								</div>
 
 								<Show
 									when={d().items.length > 0}
 									fallback={
 										<div class="bd-empty">
-											No products match these filters. Try clearing one or
-											broadening your search.
+											{hasFilters()
+												? "No products match these filters. Try clearing a filter or broadening your search."
+												: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
 										</div>
 									}
 								>
 									<div class="bd-grid-3">
 										<For each={d().items}>
 											{(p) => (
-												<Link
-													class="bd-card store-card"
-													params={{ id: p.id }}
-													style="text-decoration: none; border-bottom: none;"
-													to="/store/$id"
-												>
-													<div class="store-card__media">
-														<Show when={p.coverImage}>
-															<img alt={p.name} src={p.coverImage ?? ""} />
-														</Show>
-														<div class="store-card__badges">
-															<Show when={p.isBestSeller}>
-																<span class="store-badge store-badge--featured">
-																	Best seller
-																</span>
-															</Show>
-															<Show when={p.isNew}>
-																<span class="store-badge store-badge--new">
-																	New
-																</span>
-															</Show>
-															<Show when={p.isOnSale}>
-																<span class="store-badge store-badge--sale">
-																	Sale
-																</span>
-															</Show>
-														</div>
-													</div>
-													<div class="store-card__body">
-														<h3>{p.name}</h3>
-														<Show when={p.reviewCount > 0}>
-															<div class="store-card__rating">
-																<Stars rating={p.avgRating} />
-																<span>({p.reviewCount})</span>
-															</div>
-														</Show>
-														<div class="store-card__price">
-															<Show when={p.cheapestPriceCents != null}>
-																<span class="store-card__price-now">
-																	{p.hasMultipleVariants ? "From " : ""}
-																	{formatMoney(p.cheapestPriceCents ?? 0)}
-																</span>
-															</Show>
+												<div class="bd-card product-card">
+													<Link
+														class="product-card__link"
+														params={{ id: p.id }}
+														to="/store/$id"
+													>
+														<div class="product-card__media">
 															<Show
-																when={p.isOnSale && p.comparePriceCents != null}
+																when={p.coverImage}
+																fallback={
+																	<div class="product-card__noimg">
+																		No image
+																	</div>
+																}
 															>
-																<span class="store-card__price-was">
-																	{formatMoney(p.comparePriceCents ?? 0)}
+																<img
+																	alt={p.name}
+																	class="product-card__img"
+																	loading="lazy"
+																	referrerpolicy="no-referrer"
+																	src={p.coverImage ?? ""}
+																/>
+															</Show>
+															<div class="product-card__badges">
+																<Show when={p.isBestSeller}>
+																	<span class="bd-badge">Best seller</span>
+																</Show>
+																<Show when={p.isNew}>
+																	<span class="bd-badge">New</span>
+																</Show>
+																<Show when={p.isOnSale}>
+																	<span class="bd-badge product-card__badge--sale">
+																		Sale
+																	</span>
+																</Show>
+															</div>
+														</div>
+														<div class="product-card__body">
+															<h3>{p.name || "Untitled"}</h3>
+															<Show when={p.reviewCount > 0}>
+																<div class="product-card__rating">
+																	<ShopStars rating={p.avgRating} />
+																	<span class="product-card__count">
+																		({p.reviewCount})
+																	</span>
+																</div>
+															</Show>
+															<div class="product-card__price">
+																<span class="product-card__amount">
+																	{p.cheapestPriceCents != null
+																		? `${p.hasMultipleVariants ? "From " : ""}${formatMoney(p.cheapestPriceCents)}`
+																		: "View details"}
+																</span>
+																<Show
+																	when={
+																		p.isOnSale && p.comparePriceCents != null
+																	}
+																>
+																	<span class="product-card__compare">
+																		{formatMoney(p.comparePriceCents ?? 0)}
+																	</span>
+																</Show>
+															</div>
+															<Show when={p.isLowStock}>
+																<span class="product-card__lowstock">
+																	Low stock
 																</span>
 															</Show>
 														</div>
-														<Show when={p.isLowStock}>
-															<span class="store-card__lowstock">
-																Low stock
-															</span>
-														</Show>
-													</div>
-												</Link>
+													</Link>
+													<div
+														class="product-card__save"
+														innerHTML={elementHtml("bd-save-buttons", {
+															compact: true,
+															"data-product": JSON.stringify({
+																id: p.id,
+																name: p.name,
+																image: p.coverImage ?? null,
+																priceCents: p.cheapestPriceCents ?? null,
+															}),
+														})}
+													/>
+												</div>
 											)}
 										</For>
 									</div>
 								</Show>
+								<div innerHTML={elementHtml("bd-compare-bar", {})} />
 							</div>
 						</div>
 					)}
 				</Show>
-
-				<div style="margin-top: 2rem; display: flex; gap: 0.75rem;">
-					<Link class="bd-btn bd-btn--ghost" to="/store/cart">
-						View cart
-					</Link>
-					{/* [bd:saas] */}
-					<Link class="bd-btn bd-btn--ghost" to="/subscriptions">
-						Subscriptions
-					</Link>
-					{/* [/bd:saas] */}
-				</div>
-			</section>
-		</main>
+			</main>
+		</>
 	);
 }

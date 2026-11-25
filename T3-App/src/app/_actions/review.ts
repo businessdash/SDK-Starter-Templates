@@ -2,7 +2,13 @@
 
 import { z } from "zod";
 
+import type {
+	ReviewSendResult,
+	ReviewToSend,
+} from "@/app/_components/bd/reviews/ReviewWriter";
+import { checkReview } from "@/app/_components/bd/reviews/reviews";
 import {
+	getCustomerSession,
 	isCustomerPortalConfigured,
 	submitCustomerReview,
 } from "@/server/lib/bd-portal";
@@ -10,7 +16,8 @@ import {
 /**
  * Customer review submission (signed-in customer portal). Validates input,
  * submits via the BD portal, and lands as `status: 'pending'` until staff
- * moderate. Called from the my-account review form.
+ * moderate. `submitReviewAction` serves the my-account review form;
+ * `writeReviewAction` the reviews page's writer.
  */
 
 const reviewSchema = z.object({
@@ -32,8 +39,6 @@ export type ReviewFormState =
 			message: string;
 			fieldErrors?: Partial<Record<"rating" | "title" | "body", string>>;
 	  };
-
-export const initialReviewFormState: ReviewFormState = { status: "idle" };
 
 export async function submitReviewAction(
 	_prev: ReviewFormState,
@@ -84,5 +89,28 @@ export async function submitReviewAction(
 			message:
 				"We couldn't submit your review. You may need to be signed in to your account.",
 		};
+	}
+}
+
+/**
+ * A review from the reviews page's writer, checked again with the shared
+ * rules. Signed out, it says so, and the writer offers sign-in.
+ */
+export async function writeReviewAction(
+	input: ReviewToSend,
+): Promise<ReviewSendResult> {
+	if (!isCustomerPortalConfigured()) {
+		return { ok: false, error: "Reviews aren't connected yet." };
+	}
+	if (!(await getCustomerSession().catch(() => null))) {
+		return { ok: false, error: "Sign in to write a review.", signedOut: true };
+	}
+	const checked = checkReview(input);
+	if (!checked.ok) return { ok: false, error: checked.error };
+	try {
+		await submitCustomerReview(checked.review);
+		return { ok: true };
+	} catch {
+		return { ok: false, error: "Couldn't send your review. Try again." };
 	}
 }

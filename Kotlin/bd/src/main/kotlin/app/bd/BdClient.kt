@@ -14,6 +14,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 
 /**
@@ -127,6 +128,9 @@ public class BdClient(
                     setBody(body)
                 }
             }
+        } catch (error: CancellationException) {
+            // A screen that moved on: cancellation, not a network failure.
+            throw error
         } catch (error: Throwable) {
             throw BdTransportException(error)
         }

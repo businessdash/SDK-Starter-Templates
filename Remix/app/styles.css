@@ -221,32 +221,10 @@ form textarea {
 	white-space: nowrap;
 }
 
-.section__head {
-	display: flex;
-	justify-content: space-between;
-	align-items: baseline;
-	margin-bottom: 1.5rem;
-}
-
 .section__subtitle {
 	font-size: 1.15rem;
 	font-weight: 600;
 	margin: 2rem 0 1rem;
-}
-
-.section__head .section__title {
-	margin: 0;
-}
-
-.card--link {
-	display: block;
-	text-decoration: none;
-	color: inherit;
-	transition: border-color 0.15s ease;
-}
-
-.card--link:hover {
-	border-color: var(--accent);
 }
 
 .card__img,
@@ -261,11 +239,6 @@ form textarea {
 	width: 56px;
 	height: 56px;
 	margin: 0;
-}
-
-.price--lg {
-	font-size: 1.25rem;
-	margin: 0.25rem 0 1rem;
 }
 
 /* News banner */
@@ -298,103 +271,6 @@ form textarea {
 	line-height: 1;
 	cursor: pointer;
 	color: inherit;
-}
-
-/* Product detail */
-.product {
-	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-	gap: 2rem;
-	margin-top: 1.5rem;
-}
-
-.product__img {
-	width: 100%;
-	border-radius: 0.75rem;
-	border: 1px solid var(--border);
-}
-
-@media (max-width: 640px) {
-	.product {
-		grid-template-columns: 1fr;
-	}
-}
-
-/* Cart */
-.cart-list {
-	list-style: none;
-	padding: 0;
-	margin: 1.5rem 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.75rem;
-}
-
-.cart-row {
-	display: flex;
-	align-items: center;
-	gap: 0.75rem;
-	padding: 0.75rem;
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 0.5rem;
-}
-
-.cart-row__body {
-	flex: 1;
-}
-
-.cart-row__qty {
-	flex-direction: row;
-	align-items: center;
-	gap: 0.5rem;
-	max-width: none;
-}
-
-.cart-row__qty input {
-	width: 4rem;
-}
-
-.cart-foot {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-	max-width: 28rem;
-}
-
-.coupon {
-	flex-direction: row;
-	align-items: center;
-	gap: 0.5rem;
-	max-width: none;
-}
-
-.cart-total {
-	display: flex;
-	justify-content: space-between;
-	font-size: 1.1rem;
-	border-top: 1px solid var(--border);
-	padding-top: 0.75rem;
-}
-
-.cart-actions {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.cart-link {
-	position: relative;
-}
-
-.cart-badge {
-	display: inline-block;
-	margin-left: 0.25rem;
-	background: var(--accent);
-	color: #fff;
-	border-radius: 999px;
-	font-size: 0.7rem;
-	padding: 0.05rem 0.4rem;
 }
 
 .link-btn {
@@ -434,11 +310,7 @@ form textarea {
 	margin-top: 0.25rem;
 }
 
-/* Reviews */
-.reviews-agg {
-	font-size: 1.1rem;
-}
-
+/* Product reviews (the shop) */
 .review-list {
 	list-style: none;
 	padding: 0;
@@ -539,161 +411,218 @@ form textarea {
 	max-width: 28rem;
 }
 
-/* ── Storefront listing (facet sidebar + richer cards) ──────────── */
-.store-layout {
-	display: grid;
-	grid-template-columns: 14rem minmax(0, 1fr);
-	gap: 2rem;
-	align-items: start;
+/* ── Store and blog pages ──────────────────────────────────────────
+   The shared shop and blog components (app/components/{shop,blog}) and
+   their stylesheets (app/bd-shop.css, app/bd-blog.css, loaded by those
+   routes) use the names below; here they map onto this starter's palette. */
+:root {
+	--card: var(--surface);
+	--title: var(--text);
+	--subtitle: var(--text-muted);
+	--border-strong: #d1d5db;
+	--bg-soft: #f3f4f6;
+	--accent-bg: var(--accent-soft);
+	--accent-border: #a7f3d0;
+	--accent-strong: #065f46;
+	--danger: var(--error);
+	--danger-bg: #fef2f2;
+	--success: #047857;
+	--success-bg: #ecfdf5;
+	--glass-card: var(--surface);
+	--card-neu-shadow: rgba(17, 24, 39, 0.08);
+	--mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (max-width: 720px) {
-	.store-layout {
-		grid-template-columns: 1fr;
-	}
+/* The page body on store and blog routes. `:where` keeps these at zero
+   specificity, so the shop and blog styles win wherever they say more. */
+.bd-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 2.5rem 1.25rem 4rem;
 }
-
-.store-facets {
-	display: flex;
-	flex-direction: column;
-	gap: 1.5rem;
+:where(.bd-page) :where(h1, h2, h3, h4, p) {
+	margin: 0;
+}
+:where(.bd-page) :where(h1, h2, h3, h4) {
+	color: var(--title);
+	line-height: 1.15;
+	letter-spacing: -0.015em;
+}
+:where(.bd-page) a {
+	color: var(--accent);
+	text-decoration: none;
+}
+:where(.bd-page) button {
+	font: inherit;
+	cursor: pointer;
+}
+:where(.bd-page) form {
 	max-width: none;
 }
 
-.store-facets .facet {
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
+.bd-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0.75rem;
+	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
 }
-
-.store-facets h3 {
-	font-size: 0.95rem;
-	font-weight: 600;
-	margin: 0;
+.bd-btn--ghost {
+	background: transparent;
+	color: var(--accent);
+	border: 1px solid var(--accent-border);
 }
-
-.store-facets input,
-.store-facets select {
-	padding: 0.5rem;
-	border: 1px solid #d1d5db;
-	border-radius: 0.375rem;
+.bd-btn--ghost:hover {
+	background: var(--accent-bg);
+}
+.bd-input,
+.bd-textarea,
+.bd-select {
+	width: 100%;
+	padding: 0.6rem 0.8rem;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: 0.5rem;
+	color: var(--text);
 	font: inherit;
 }
-
-.facet-cats {
-	list-style: none;
-	padding: 0;
-	margin: 0;
+.bd-input:focus,
+.bd-textarea:focus,
+.bd-select:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.bd-textarea {
+	min-height: 8rem;
+	resize: vertical;
+}
+.bd-label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--subtitle);
+	margin-bottom: 0.3rem;
+}
+.bd-section__lead {
 	display: flex;
 	flex-direction: column;
-	gap: 0.1rem;
-}
-
-.facet-cats a {
-	display: flex;
-	justify-content: space-between;
 	gap: 0.5rem;
-	text-decoration: none;
+	margin-bottom: 2rem;
+}
+.bd-section__eyebrow {
+	color: var(--accent);
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+.bd-section__title {
+	font-size: clamp(1.75rem, 4vw, 2.4rem);
+}
+.bd-section__sub {
+	color: var(--text-muted);
+	max-width: 36rem;
+}
+.bd-loading {
 	color: var(--text-muted);
 	font-size: 0.9rem;
-	padding: 0.25rem 0.4rem;
-	border-radius: 0.375rem;
+}
+.bd-empty {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	padding: 2rem;
+	text-align: center;
+	border: 1px dashed var(--border-strong);
+	border-radius: 0.75rem;
+}
+.bd-grid-3 {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: 1.25rem;
+}
+.bd-grid-4 {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+	gap: 1rem;
+}
+/* The facets are links here (they work without JavaScript). */
+a.store-facet__item {
+	display: block;
+}
+a.store-facet__item--row,
+a.store-facet__rating {
+	display: flex;
 }
 
-.facet-cats a:hover {
-	background: var(--accent-soft);
-	color: var(--accent);
-}
-
-.facet-cats a.is-active {
-	background: var(--accent-soft);
-	color: var(--accent);
-	font-weight: 600;
-}
-
-.facet-cats .count {
-	color: var(--text-soft);
-}
-
-.facet-range {
+/* Store bar: under the header on store and plan pages. */
+.store-nav {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1rem 1.25rem;
 	display: flex;
 	align-items: center;
-	gap: 0.4rem;
+	justify-content: space-between;
+	gap: 1rem;
+	border-bottom: 1px solid var(--border);
 }
-
-.facet-range input {
-	width: 5.5rem;
-}
-
-.card__badges {
+.store-nav__links {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.35rem;
-	margin-bottom: 0.5rem;
-}
-
-.card__price-row {
-	display: flex;
-	align-items: baseline;
-	gap: 0.5rem;
-}
-
-.price--compare {
-	color: var(--text-soft);
-	text-decoration: line-through;
-	font-weight: 400;
-	font-size: 0.8rem;
-}
-
-.card__rating {
-	display: block;
-	font-size: 0.8rem;
-	color: var(--text-soft);
-	margin-top: 0.25rem;
-}
-
-.card__rating .stars {
-	margin-right: 0.25rem;
-}
-
-/* ── Product detail enrichments (reviews / related / addons) ─────── */
-.addon-list {
-	list-style: none;
-	padding: 0;
-	margin: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.addon {
-	display: flex;
 	align-items: center;
-	gap: 0.75rem;
-	padding: 0.75rem;
-	background: var(--surface);
-	border: 1px solid var(--border);
-	border-radius: 0.5rem;
+	gap: 1.25rem;
+	font-size: 0.92rem;
 }
-
-.addon img {
-	width: 48px;
-	height: 48px;
-	border-radius: 0.375rem;
-	object-fit: cover;
+/* Narrow screens: one row of links that scrolls sideways. */
+@media (max-width: 640px) {
+	.store-nav {
+		justify-content: flex-start;
+		gap: 1.25rem;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+	.store-nav__links {
+		flex-wrap: nowrap;
+	}
 }
-
-.addon__body {
-	flex: 1;
+.store-nav__count {
+	margin-left: 0.2rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
 }
-
-.addon__body strong {
-	font-size: 0.95rem;
+.store-nav__cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
 }
-
-.addon__group {
+.store-nav__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.4rem;
+	border-radius: 9999px;
+	background: var(--accent);
+	color: white;
 	font-size: 0.75rem;
-	color: var(--text-soft);
-	text-transform: uppercase;
-	letter-spacing: 0.03em;
+	font-weight: 700;
+}
+
+/* Narrow screens: the header's links get their own row and scroll sideways,
+   so the header never runs wider than the screen. */
+@media (max-width: 760px) {
+	.header {
+		flex-wrap: wrap;
+		row-gap: 0.6rem;
+	}
+	.header nav {
+		order: 3;
+		flex: 1 0 100%;
+		min-width: 0;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
 }

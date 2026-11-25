@@ -17,10 +17,10 @@ struct CartView: View {
                         ForEach(snapshot.items) { item in
                             HStack {
                                 VStack(alignment: .leading) {
-                                    Text(item.name ?? "Item")
+                                    Text(item.title)
                                     // Cart lines arrive DECIMAL, unlike
                                     // product prices. Two helpers, on purpose.
-                                    Text(Money.amount(item.unitPrice, currency: snapshot.currency))
+                                    Text("\(Money.amount(item.unitPrice, currency: snapshot.currency)) each")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }

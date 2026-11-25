@@ -1,3 +1,4 @@
+// [bd-file:booking]
 "use client";
 
 import { useEffect, useState } from "react";

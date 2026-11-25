@@ -3,15 +3,62 @@ defmodule BdStarterWeb.CartController do
 
   alias BdStarter.Bd
   alias BdStarter.Bd.Resources.Cart
+  alias BdStarterWeb.CartVisitor
 
   @doc """
-  The visitor token lives in an httpOnly cookie on this domain; the cart lives
-  at BD. Nothing about the cart is in the session or a database, which is
-  why this works unchanged behind a load balancer with no sticky sessions.
+  The visitor token lives in an httpOnly cookie on this domain (see
+  `BdStarterWeb.CartVisitor`); the cart lives at BD.
   """
   def show(conn, _params) do
     cart = conn |> visitor_token() |> then(&if(&1, do: Bd.cart(&1)))
-    render(conn, :show, cart: cart)
+
+    render(conn, :show,
+      cart: cart,
+      store_nav: true,
+      cart_count: (cart && cart["itemCount"]) || 0,
+      page_title: "Cart"
+    )
+  end
+
+  @doc """
+  Add to cart for the product page's `<bd-product>`: JSON in (`productId`,
+  `quantity`, `variantId`, `options`), `%{ok, itemCount}` or `%{ok: false,
+  error}` out.
+  """
+  def add_json(conn, params) do
+    product_id = params["productId"]
+    variant_id = params["variantId"]
+
+    options =
+      case params["options"] do
+        %{} = map -> map |> Enum.filter(fn {_k, v} -> is_binary(v) end) |> Map.new()
+        _ -> %{}
+      end
+
+    cond do
+      not Bd.configured?() ->
+        reply(conn, 503, %{ok: false, error: "The store isn't connected yet."})
+
+      not is_binary(product_id) or product_id == "" ->
+        reply(conn, 400, %{ok: false, error: "Choose a product."})
+
+      true ->
+        {conn, token} = CartVisitor.ensure(conn)
+
+        input =
+          %{productId: product_id, quantity: params |> Map.get("quantity", 1) |> to_int(1) |> max(1) |> min(99)}
+          |> then(&if(is_binary(variant_id) and variant_id != "", do: Map.put(&1, :variantId, variant_id), else: &1))
+          |> then(&if(options != %{}, do: Map.put(&1, :options, options), else: &1))
+
+        case Bd.cart_add(token, input) do
+          %{} = cart -> reply(conn, 200, %{ok: true, itemCount: cart["itemCount"] || 0})
+          _ -> reply(conn, 502, %{ok: false, error: "Couldn't add that to your cart. Try again."})
+        end
+    end
+  end
+
+  defp reply(conn, status, body) do
+    conn |> put_resp_header("cache-control", "no-store") |> put_status(status) |> json(body)
   end
 
   def add_item(conn, params) do
@@ -80,7 +127,7 @@ defmodule BdStarterWeb.CartController do
       with token when is_binary(token) <- visitor_token(conn) do
         Bd.checkout_start(token, %{
           # Stripe substitutes the real id for the placeholder on success.
-          successUrl: url(~p"/store") <> "?session_id={CHECKOUT_SESSION_ID}",
+          successUrl: url(~p"/store/order") <> "?session_id={CHECKOUT_SESSION_ID}",
           cancelUrl: url(~p"/cart")
         })
       end
@@ -96,40 +143,8 @@ defmodule BdStarterWeb.CartController do
     end
   end
 
-  # ── Visitor token ─────────────────────────────────────────────────────────
-
-  defp visitor_token(conn) do
-    conn = fetch_cookies(conn)
-
-    case conn.cookies[cookie_name()] do
-      token when is_binary(token) and token != "" -> token
-      _ -> nil
-    end
-  end
-
-  # Mint on first write. There is no round trip to get one — the platform keys
-  # the cart on whatever arrives in the header.
-  defp ensure_visitor_token(conn) do
-    case visitor_token(conn) do
-      token when is_binary(token) ->
-        {conn, token}
-
-      nil ->
-        token = Cart.new_visitor_token()
-
-        conn =
-          put_resp_cookie(conn, cookie_name(), token,
-            http_only: true,
-            same_site: "Lax",
-            secure: conn.scheme == :https,
-            max_age: 60 * 60 * 24 * 30
-          )
-
-        {conn, token}
-    end
-  end
-
-  defp cookie_name, do: Application.get_env(:bd_starter, :bd_cart_cookie, "bd_cart_visitor")
+  defp visitor_token(conn), do: CartVisitor.token(conn)
+  defp ensure_visitor_token(conn), do: CartVisitor.ensure(conn)
 
   defp to_int(value, default) do
     case Integer.parse(to_string(value)) do

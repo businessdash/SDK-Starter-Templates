@@ -120,16 +120,42 @@ export const bd = {
 			return result.items ?? [];
 		},
 	},
+	// [bd:blog]
 	blog: {
-		/** @param {{ limit?: number }} [params] */
+		/** @param {{ limit?: number; cursor?: number | null; categoryId?: string | null }} [params] */
 		async listPosts(params = {}) {
 			const query = new URLSearchParams();
 			if (params.limit) query.set("limit", String(params.limit));
+			if (params.cursor != null) query.set("cursor", String(params.cursor));
+			if (params.categoryId) query.set("categoryId", params.categoryId);
 			return await getJson(
 				`/api/bd/blog/posts${query.toString() ? `?${query}` : ""}`,
 			);
 		},
+		async listCategories() {
+			return await getJson("/api/bd/blog/categories");
+		},
+		async listTags() {
+			return await getJson("/api/bd/blog/tags");
+		},
+		/**
+		 * One post, ready to show: `{ post, html, minutes, paywalled, likes,
+		 * comments, signedIn }`, with `html` already made safe on the server.
+		 * Null when there's no such post.
+		 * @param {string} slug
+		 */
+		async getPost(slug) {
+			const res = await fetch(`/api/bd/blog/post/${encodeURIComponent(slug)}`);
+			if (res.status === 404) return null;
+			if (!res.ok) {
+				const text = await res.text().catch(() => "");
+				throw new Error(`${res.status} ${res.statusText} on /api/bd/blog/post: ${text}`);
+			}
+			return await res.json();
+		},
 	},
+	// [/bd:blog]
+	// [bd:booking]
 	scheduling: {
 		/** @returns {Promise<SchedulingEventType[]>} */
 		async listEventTypes() {
@@ -165,6 +191,7 @@ export const bd = {
 			});
 		},
 	},
+	// [/bd:booking]
 	forms: {
 		/**
 		 * @param {string} slug
@@ -254,7 +281,7 @@ export const bd = {
 	},
 	// [/bd:store]
 
-	// [bd:saas]
+	// [bd:subscriptions]
 	subscriptions: {
 		async list() {
 			return await getJson("/api/bd/subscriptions");
@@ -268,7 +295,7 @@ export const bd = {
 			return await postJson("/api/bd/subscriptions/checkout", { planId });
 		},
 	},
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	reviews: {
 		/** @param {{ limit?: number; offset?: number }} [params] */
@@ -284,7 +311,7 @@ export const bd = {
 		async get() {
 			return await getJson("/api/bd/cart");
 		},
-		/** @param {{ productId: string; variantId?: string | null; quantity?: number }} input */
+		/** @param {{ productId: string; variantId?: string | null; quantity?: number; options?: Record<string, string> }} input */
 		async add(input) {
 			return await postJson("/api/bd/cart/add", input);
 		},
@@ -330,7 +357,7 @@ export const bd = {
 		async submitReview(input) {
 			return await postJson("/api/bd/portal/submit-review", input);
 		},
-		// [bd:saas]
+		// [bd:subscriptions]
 		/**
 		 * Cancel at the end of the paid period, or take the cancel back.
 		 * @param {"cancel" | "resume"} intent
@@ -339,7 +366,7 @@ export const bd = {
 		async changePlan(intent) {
 			return await postJson("/api/bd/portal/plan", { intent });
 		},
-		// [/bd:saas]
+		// [/bd:subscriptions]
 	},
 	parallelPages: {
 		/** @param {string} [key] */

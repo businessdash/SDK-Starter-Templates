@@ -1,4 +1,4 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import { error } from '@sveltejs/kit';
 
 import { SESSION_COOKIE, startPlanCheckout } from '#lib/server/bd-portal.ts';

@@ -3,37 +3,75 @@ import {
 	BdPaymentLapsedError,
 	BdServiceSuspendedError,
 } from "@businessdash/sdk";
-import type { StorefrontProductDetail } from "@businessdash/sdk/contracts";
+import type {
+	StorefrontAddonsResponse,
+	StorefrontProductDetail,
+	StorefrontProductReviewsResponse,
+	StorefrontRelatedProductsResponse,
+} from "@businessdash/sdk/contracts";
 
 /**
- * GET /api/bd/store/product/[id]
+ * GET /api/bd/store/product/[id]?reviews=10
  *
- * Single product detail (with variants + images). Returns
- * `{ product: null }` when the store is unconfigured, the product
- * doesn't exist, or billing is suspended.
+ * Everything the product page shows: the product (variants, photos, option
+ * groups, specs), its reviews (`?reviews=` how many, 10 to 100), add-ons and
+ * related products. The extras are fetched together and each falls back to
+ * empty on its own, so a failing one never hides the product. Returns
+ * `{ product: null }` when the store is unconfigured, the product doesn't
+ * exist, or billing is suspended.
  */
 export type StoreProductResult = {
 	product: StorefrontProductDetail | null;
+	reviews: StorefrontProductReviewsResponse | null;
+	addons: StorefrontAddonsResponse["items"];
+	related: StorefrontRelatedProductsResponse["items"];
+	reviewLimit: number;
 	suspended: boolean;
 };
 
+const REVIEWS_PAGE = 10;
+
 export default defineEventHandler(
 	async (event): Promise<StoreProductResult> => {
+		const shown = Number.parseInt(String(getQuery(event).reviews ?? ""), 10);
+		const reviewLimit = Number.isFinite(shown)
+			? Math.min(Math.max(shown, REVIEWS_PAGE), 100)
+			: REVIEWS_PAGE;
+		const empty: StoreProductResult = {
+			product: null,
+			reviews: null,
+			addons: [],
+			related: [],
+			reviewLimit,
+			suspended: false,
+		};
 		const bd = getBd();
-		if (!bd) return { product: null, suspended: false };
 		const id = getRouterParam(event, "id");
-		if (!id) return { product: null, suspended: false };
+		if (!bd || !id) return empty;
 		try {
-			const product = await bd.storefront.getProduct(id);
-			return { product, suspended: false };
+			const [product, reviews, addons, related] = await Promise.all([
+				bd.storefront.getProduct(id),
+				bd.storefront
+					.getProductReviews(id, { limit: reviewLimit })
+					.catch(() => null),
+				bd.storefront
+					.getProductAddons(id)
+					.then((res) => res.items)
+					.catch(() => []),
+				bd.storefront
+					.getRelatedProducts(id, { limit: 8 })
+					.then((res) => res.items)
+					.catch(() => []),
+			]);
+			return { product, reviews, addons, related, reviewLimit, suspended: false };
 		} catch (err) {
 			if (
 				err instanceof BdServiceSuspendedError ||
 				err instanceof BdPaymentLapsedError
 			) {
-				return { product: null, suspended: true };
+				return { ...empty, suspended: true };
 			}
-			return { product: null, suspended: false };
+			return empty;
 		}
 	},
 );

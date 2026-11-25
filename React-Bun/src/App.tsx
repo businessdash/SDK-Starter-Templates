@@ -1,9 +1,20 @@
 import "./App.css";
+import "./bd-reviews.css";
+// [bd:store]
+import "./bd-shop.css";
+// [/bd:store]
+// [bd:blog]
+import "./bd-blog.css";
+// [/bd:blog]
 import { BDAnalytics } from "@businessdash/sdk/react-analytics";
 import { About } from "./components/About";
 import { Banner } from "./components/Banner";
+// [bd:blog]
 import { Blog } from "./components/Blog";
+// [/bd:blog]
+// [bd:booking]
 import { Booking } from "./components/Booking";
+// [/bd:booking]
 import { ContactForm } from "./components/ContactForm";
 import { Footer } from "./components/Footer";
 import { Gallery } from "./components/Gallery";
@@ -12,8 +23,13 @@ import { Hero } from "./components/Hero";
 import { SdkSetupBanner } from "./components/SdkSetupBanner";
 import { Services } from "./components/Services";
 import { RouterProvider, useRoute } from "./lib/router";
+// [bd:blog]
+import { BlogPage } from "./pages/BlogPage";
+import { BlogPostPage } from "./pages/BlogPostPage";
+// [/bd:blog]
 // [bd:store]
 import { Cart } from "./pages/Cart";
+import { Compare } from "./pages/Compare";
 // [/bd:store]
 import { MyAccount } from "./pages/MyAccount";
 // [bd:store]
@@ -24,10 +40,11 @@ import { ServiceArea } from "./pages/ServiceArea";
 import { ServiceAreas } from "./pages/ServiceAreas";
 // [bd:store]
 import { Store } from "./pages/Store";
+import { Wishlist } from "./pages/Wishlist";
 // [/bd:store]
-// [bd:saas]
+// [bd:subscriptions]
 import { Subscriptions } from "./pages/Subscriptions";
-// [/bd:saas]
+// [/bd:subscriptions]
 import { Todos } from "./pages/Todos";
 import { Updates } from "./pages/Updates";
 
@@ -35,8 +52,8 @@ import { Updates } from "./pages/Updates";
  * Generic business website wired against the BD SDK, now at full feature
  * parity with the production reference consumer. The home page composes the
  * marketing sections; a tiny client router (src/lib/router) switches in the
- * feature pages (store, cart, subscriptions, reviews, updates, my-account,
- * programmatic-SEO service pages).
+ * feature pages (store, wishlist, compare, cart, subscriptions, blog,
+ * reviews, updates, my-account, programmatic-SEO service pages).
  *
  * The pattern is unchanged: browser → same-origin `/api/bd/*` proxy → BD
  * Package API. The Bun server (server.ts) holds the bearer key.
@@ -48,8 +65,12 @@ function Home() {
 			<About />
 			<Services />
 			<Gallery />
+			{/* [bd:booking] */}
 			<Booking />
+			{/* [/bd:booking] */}
+			{/* [bd:blog] */}
 			<Blog />
+			{/* [/bd:blog] */}
 			<ContactForm />
 		</main>
 	);
@@ -59,12 +80,18 @@ function Routed() {
 	const { path } = useRoute();
 	// [bd:store]
 	if (path === "/store") return <Store />;
+	if (path === "/store/wishlist") return <Wishlist />;
+	if (path === "/store/compare") return <Compare />;
 	if (/^\/store\/[^/]+$/.test(path)) return <Product />;
 	if (path === "/cart") return <Cart />;
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:blog]
+	if (path === "/blog") return <BlogPage />;
+	if (/^\/blog\/[^/]+$/.test(path)) return <BlogPostPage />;
+	// [/bd:blog]
+	// [bd:subscriptions]
 	if (path === "/subscriptions") return <Subscriptions />;
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	if (path === "/reviews") return <Reviews />;
 	if (path === "/updates") return <Updates />;
 	if (path === "/todos") return <Todos />;

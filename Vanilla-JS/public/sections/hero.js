@@ -1,5 +1,14 @@
 import { bd, el } from "../bd.js";
 
+// [bd:!booking]
+/** Without booking, the hero's button goes to the contact form. */
+const CONTACT_CTA = {
+	tagline: "Tell us what you need. We'll handle the rest.",
+	ctaLabel: "Get in touch",
+	ctaHref: "#contact",
+};
+// [/bd:!booking]
+
 /**
  * Renders the hero into `target`. Reads the marketing bundle's
  * `hero` section if BD is configured; otherwise the local defaults
@@ -10,9 +19,14 @@ import { bd, el } from "../bd.js";
 export async function renderHero(target) {
 	const defaults = {
 		title: "Service that shows up — on time.",
+		// [bd:!booking]
+		...CONTACT_CTA,
+		// [/bd:!booking]
+		// [bd:booking]
 		tagline: "Book in 60 seconds. We'll handle the rest.",
 		ctaLabel: "Book a consult",
 		ctaHref: "#booking",
+		// [/bd:booking]
 	};
 
 	function paint(data) {

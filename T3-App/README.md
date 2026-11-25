@@ -59,10 +59,11 @@ pnpm start
 | --- | --- | --- |
 | **Hero / About / Services** | `api.bd.home()` (server) reads marketing bundle, passes to React components | `bd.marketing.getPageBundle(...)` |
 | **Gallery** | Same `api.bd.home()` with const-generic field selection | `bd.gallery.list({ limit: 12, fields: [...] as const })` |
-| **Blog** | Same `api.bd.home()` | `bd.blog.listPosts({ limit: 6 })` |
-| **Booking** | Event-type list from `home()`; slots via `api.bd.fetchSlots.useQuery`, confirm via `api.bd.confirmBooking.useMutation` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
+| **Blog** | Same `api.bd.home()` | `bd.blog.listPosts({ limit: 6 })` | <!-- [bd-line:blog] -->
+| **Booking** | Event-type list from `home()`; slots via `api.bd.fetchSlots.useQuery`, confirm via `api.bd.confirmBooking.useMutation` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` | <!-- [bd-line:booking] -->
 | **Contact form** | Form schema from `home()`; submit via `api.bd.submitForm.useMutation` | `bd.forms.schema(slug)`, `bd.forms.submit(...)` |
-| **Reviews wall** | `Reviews.tsx` (aggregate + first page from the bundle) + `ReviewsLoadMore.tsx` paginating via `api.bd.reviewsPage` | `bundle.reviews`, `bd.reviews.list({ offset })` |
+| **Reviews teaser** | `Reviews.tsx`: the average and the newest three from the bundle, with a link to `/reviews` | `bundle.reviews` |
+| **`/reviews`** | `app/reviews/page.tsx` + `_components/bd/reviews/`: the average with a bar per star, a platform filter (`?source=`), each review with its photos and a "Read on Google/Yelp" link, "Show more" (`?shown=`), and "Write a review" for signed-in customers (`writeReviewAction`) | `bundle.reviews` (`rating`, `counts`), `bd.reviews.list({ limit, offset, source })` |
 | **News banner** | `NewsBanner.tsx` (dismissible bar, `sessionStorage`) fed by `bundle.banner` | `bundle.banner` (passthrough) |
 | **Updates feed** | `Updates.tsx` fed by `bundle.updates` (Google Business posts) | `bundle.updates` (passthrough) |
 | **JSON-LD (SEO)** | `homeJsonLd()` in `src/server/lib/bd-seo.ts`, injected server-side into the page | `localBusiness()` + `website()` from `@businessdash/sdk/seo` |
@@ -77,18 +78,43 @@ runs server-side.
 
 | Route | Where it lives | SDK call |
 | --- | --- | --- |
-| `/store` | product list (`page.tsx`) | `bd.storefront.listProducts(...)` |
-| `/store/[id]` | product detail + `AddToCart.tsx` | `bd.storefront.getProduct(id)`, `cart.forVisitor(token).addItem(...)` |
+| `/store`: search, category, price, rating, sort | `page.tsx` + `_components/StoreView.tsx` | `bd.storefront.listProductsWithMeta(...)`, `listCategories()` |
+| `/store/[id]`: photos per option, option buttons, specs, add-ons, reviews (`?reviews=`), related, recently viewed | `page.tsx` + the shared `ProductDetail` | `bd.storefront.getProduct(id)`, `getProductReviews`, `getProductAddons`, `getRelatedProducts`, `cart.forVisitor(token).addItem(...)` |
+| `/store/wishlist` | the shared `WishlistView` | none: kept in the browser |
+| `/store/compare` (up to four, `?ids=`) | `page.tsx` + the shared `CompareTable` | `bd.storefront.getProduct(id)` per product |
 | `/store/cart` | `CartClient.tsx` — qty ±, remove, clear, coupon, checkout | `cart.forVisitor(token).{updateItem,removeItem,clear,applyCoupon,removeCoupon}`, `checkout.forVisitor(token).start(...)` |
 | `/store/order` | Stripe return page — confirms payment | `bd.checkout.getStatus(sessionId)` |
+
+The shop's parts are in `src/app/_components/bd/shop/`: the product page,
+compare table, wishlist, save and compare buttons, compare bar and product
+rails, plus `shop.ts`, the framework-free logic behind them (shaping a product
+for its page, and the wishlist, compare and recently viewed lists, which live in
+the browser's localStorage). The chosen options travel with the cart line
+(`options: { Size: "42" }`), and the cart prices them. Styles are in
+`src/styles/bd-shop.css`.
 <!-- [/bd:store] -->
 
-<!-- [bd:saas] -->
+<!-- [bd:blog] -->
+### Blog (`src/app/blog/*`)
+
+| Route | Where it lives | SDK call |
+| --- | --- | --- |
+| `/blog`: by category or tag, older posts | `page.tsx` + the shared `BlogIndex` | `bd.blog.listPosts(...)`, `listCategories()`, `listTags()` |
+| `/blog/[slug]`: likes, comments | `page.tsx` + the shared `BlogPost`, actions in `src/app/_actions/blog.ts` | `bd.blog.getPost(slug)`, `listComments(slug)`, `withSession(token).{likeStatus,toggleLike,postComment}` |
+
+Liking and commenting need a signed-in customer (the `bd_session` cookie from
+`/my-account`). A post's HTML is rebuilt from an allowlist by `safePostHtml` in
+`src/app/_components/bd/blog/blog.ts` on the server, and only that rebuilt HTML
+reaches the page, so a post can't carry a script. Styles are in
+`src/styles/bd-blog.css`.
+<!-- [/bd:blog] -->
+
+<!-- [bd:subscriptions] -->
 ### Plans (`/store/subscriptions`)
 
 `src/app/store/subscriptions/page.tsx` lists the org's recurring offerings with
 `bd.subscriptions.list()`.
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
 
 ### Auth + customer portal
 
@@ -97,7 +123,7 @@ runs server-side.
 | Auth handler | `src/app/api/bd-auth/[...slug]/route.ts` (catch-all: sign-in / sign-up / callback / sign-out / me) | `createAuthHandler({...})` |
 | Header sign-in/up/out | `src/app/_components/bd/AuthButtons.tsx` (`SignIn`/`SignUp`/`SignOut`/`useUser` from `@businessdash/sdk/react`) | — |
 | `/my-account` | signed-in user + work bundle + review form | `getTenantSession(...)`, `customerPortal(org).withSession(token).getWork()` |
-| Review submit | `src/app/_actions/review.ts` + `ReviewForm.tsx` | `customerPortal(org).withSession(token).submitReview(...)` |
+| Review submit | `src/app/_actions/review.ts`: `submitReviewAction` for `ReviewForm.tsx`, `writeReviewAction` for the `/reviews` writer | `customerPortal(org).withSession(token).submitReview(...)` |
 
 ### SEO routes + programmatic pages
 
@@ -173,9 +199,10 @@ Validated in `src/env.js`, documented in `.env.example`:
 │   ├── server/
 │   │   ├── lib/
 │   │   │   ├── bd.ts                           # SDK client + bundle/banner/updates/reviews + suspension
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │   │   │   ├── bd-store.ts                     # storefront / cart / checkout / subscriptions helpers
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
+│   │   │   ├── bd-blog.ts                      # blog reads, likes and comments <!-- [bd-line:blog] -->
 │   │   │   ├── bd-portal.ts                    # session + customer-portal helpers
 │   │   │   └── bd-seo.ts                        # server-side JSON-LD builder
 │   │   └── api/
@@ -187,21 +214,27 @@ Validated in `src/env.js`, documented in `.env.example`:
 <!-- [bd:store] -->
 │   │   │   ├── store.ts                          # cart / checkout (mints bd_cart_visitor cookie)
 <!-- [/bd:store] -->
-│   │   │   └── review.ts                         # customer review submit
+│   │   │   ├── blog.ts                           # like and comment <!-- [bd-line:blog] -->
+│   │   │   └── review.ts                         # customer review submit (my-account form + /reviews writer)
 │   │   ├── _components/bd/
 │   │   │   ├── Header.tsx / Footer.tsx / Hero.tsx / About.tsx / Services.tsx
 │   │   │   ├── Gallery.tsx / Blog.tsx / Booking.tsx / ContactForm.tsx
+│   │   │   ├── shop/                             # shared shop parts + shop.ts <!-- [bd-line:store] -->
+│   │   │   ├── blog/                             # shared blog parts + blog.ts <!-- [bd-line:blog] -->
 │   │   │   ├── AuthButtons.tsx                   # SignIn/SignUp/SignOut + useUser
 │   │   │   ├── ReviewForm.tsx                    # "use client" review submit form
-│   │   │   ├── Reviews.tsx / ReviewsLoadMore.tsx # reviews wall + load-more
+│   │   │   ├── Reviews.tsx                       # home teaser: average + newest three
+│   │   │   ├── reviews/                          # /reviews page parts + reviews.ts rules
 │   │   │   ├── Updates.tsx                       # bundle.updates feed
 │   │   │   └── NewsBanner.tsx                    # dismissible bundle.banner bar
 <!-- [bd:store] -->
-│   │   ├── store/                                # /store, /store/[id], /store/cart, /store/order
+│   │   ├── store/                                # /store, /store/[id], wishlist, compare, cart, order
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 │   │   ├── store/subscriptions/                  # plans
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
+│   │   ├── blog/                                 # /blog, /blog/[slug] <!-- [bd-line:blog] -->
+│   │   ├── reviews/page.tsx                      # /reviews: rating, filter, reviews, write one
 │   │   ├── my-account/page.tsx                   # signed-in portal + review form
 │   │   ├── services/[service]/[area]/page.tsx    # programmatic SEO page
 │   │   ├── sitemap.xml/route.ts                  # proxies BD sitemap
@@ -209,7 +242,7 @@ Validated in `src/env.js`, documented in `.env.example`:
 │   │   └── api/
 │   │       ├── bd/revalidate/route.ts          # one-liner webhook receiver
 │   │       └── bd-auth/[...slug]/route.ts      # createAuthHandler catch-all
-│   └── styles/globals.css                        # Tailwind + BD tokens + parity-surface styles
+│   └── styles/globals.css                        # Tailwind + BD tokens + parity-surface styles (+ bd-shop.css, bd-blog.css)
 ├── .env.example
 ├── README.md
 └── package.json

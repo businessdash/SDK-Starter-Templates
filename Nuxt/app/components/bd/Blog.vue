@@ -1,3 +1,4 @@
+<!-- [bd-file:blog] -->
 <script setup lang="ts">
 import type { BlogPost } from "../../../server/api/bd/home.get";
 
@@ -28,16 +29,26 @@ function formatDate(iso: string | null | undefined): string {
 			No blog posts published yet. Add one in BD and it'll appear here.
 		</div>
 		<div v-else class="bd-grid-3">
-			<a
+			<NuxtLink
 				v-for="post in posts"
 				:key="post.id"
 				class="bd-card blog-card"
-				:href="`/blog/${post.slug}`"
+				:to="`/blog/${post.slug}`"
 			>
 				<span class="blog-card__meta">{{ formatDate(post.publishedAt) }}</span>
 				<h3>{{ post.title }}</h3>
 				<p v-if="post.excerpt">{{ post.excerpt }}</p>
-			</a>
+			</NuxtLink>
 		</div>
+		<p v-if="posts.length > 0" class="blog-all">
+			<NuxtLink class="bd-btn bd-btn--ghost" to="/blog">All posts</NuxtLink>
+		</p>
 	</section>
 </template>
+
+<style scoped>
+.blog-all {
+	margin-top: 1.5rem;
+	text-align: center;
+}
+</style>

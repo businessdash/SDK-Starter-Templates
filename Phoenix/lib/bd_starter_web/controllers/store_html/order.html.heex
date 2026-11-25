@@ -1,0 +1,16 @@
+<%!-- Back from Stripe's checkout: the order's payment status, by session id. --%>
+<div class="bd-section__lead">
+  <span class="bd-section__eyebrow">Shop</span>
+  <%= if @paid do %>
+    <h1 class="bd-section__title">Thank you for your order</h1>
+    <p class="bd-section__sub">
+      Your payment went through.<span :if={@email}> A receipt is on its way to {@email}.</span>
+    </p>
+  <% else %>
+    <h1 class="bd-section__title">Your order</h1>
+    <p class="bd-section__sub">
+      We're confirming your payment. You'll get an email when it's done.
+    </p>
+  <% end %>
+</div>
+<p><a class="bd-btn" href={~p"/store"}>Continue shopping</a></p>

@@ -16,17 +16,19 @@
  */
 import { getCartSnapshot, isStoreConfigured } from "../../lib/bd-store";
 import Layout from "../../layouts/Layout.astro";
+import StoreNav from "../../components/StoreNav.astro";
 
 export const prerender = false;
 
 const cart = await getCartSnapshot(Astro.cookies);
 const status = Astro.url.searchParams.get("status");
 
-function money(cents: number, currency = "USD"): string {
+/** Cart amounts (unit prices, line and cart subtotals) are dollars, not cents. */
+function money(dollars: number, currency = "USD"): string {
 	return new Intl.NumberFormat(undefined, {
 		style: "currency",
 		currency: currency.toUpperCase(),
-	}).format(cents / 100);
+	}).format(dollars);
 }
 
 const items = cart?.items ?? [];
@@ -38,6 +40,7 @@ const currency = cart?.currency ?? "USD";
 	description="Review your cart and check out."
 	hideBanner
 >
+	<StoreNav />
 	<section class="bd-section bd-section--narrow" id="cart">
 		<div class="bd-section__lead" style="text-align: left;">
 			<span class="bd-section__eyebrow">Checkout</span>
@@ -304,11 +307,12 @@ const currency = cart?.currency ?? "USD";
 		const currency = root.dataset.currency ?? "USD";
 		const errorBox = root.querySelector<HTMLDivElement>("[data-cart-error]");
 
-		function money(cents: number, c = currency): string {
+		// Cart amounts are dollars, not cents.
+		function money(dollars: number, c = currency): string {
 			return new Intl.NumberFormat(undefined, {
 				style: "currency",
 				currency: c.toUpperCase(),
-			}).format(cents / 100);
+			}).format(dollars);
 		}
 
 		function showError(msg: string) {
@@ -334,6 +338,10 @@ const currency = cart?.currency ?? "USD";
 		}
 
 		function render(cart: Cart) {
+			// The store bar's cart count follows this event.
+			window.dispatchEvent(
+				new CustomEvent("bd:cart-count", { detail: cart.itemCount }),
+			);
 			// Cart emptied → flip to the empty state and reload to clear coupons etc.
 			if (cart.items.length === 0) {
 				window.location.reload();

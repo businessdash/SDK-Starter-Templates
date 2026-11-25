@@ -50,9 +50,9 @@ export default async function render(root) {
 		nodes.push(el("ul", { class: "job-list" }, jobs.map(jobRow)));
 	}
 
-	// [bd:saas]
+	// [bd:subscriptions]
 	nodes.push(planSection(data.plan ?? null));
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	nodes.push(reviewForm());
 	nodes.push(el("p", { class: "muted" }, [el("a", { href: "/api/bd-auth/delete-account" }, ["Delete my account"])]));
 	root.replaceChildren(...nodes);
@@ -64,7 +64,7 @@ function signInReturn() {
 	return raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\") ? raw : "/my-account";
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 function formatDate(iso) {
 	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(iso));
 }
@@ -127,7 +127,7 @@ function planSection(plan) {
 	draw();
 	return section;
 }
-// [/bd:saas]
+// [/bd:subscriptions]
 
 function jobRow(j) {
 	return el("li", { class: "job-row" }, [

@@ -1,0 +1,111 @@
+---
+// [bd-file:blog]
+/**
+ * One post. Its HTML is rebuilt from an allowlist here on the server
+ * (`safePostHtml`) and only that reaches the page. Likes and comments are
+ * for signed-in customers: `<bd-post-like>` and `<bd-post-comments>` (see
+ * `src/lib/bd-shop/blog-elements.ts`) post to /api/bd/blog/:slug/{like,comment};
+ * signed out, they lead to sign-in and back here.
+ */
+import "../../styles/bd-blog.css";
+
+import Layout from "../../layouts/Layout.astro";
+import { getBlogLikes, getBlogPost, listBlogComments } from "../../lib/bd-blog";
+import { getCustomerSession } from "../../lib/bd-portal";
+import { formatPostDate, readingMinutes, safePostHtml } from "../../lib/bd-shop/blog";
+
+export const prerender = false;
+
+const slug = Astro.params.slug ?? "";
+const result = await getBlogPost(slug);
+if (!result) Astro.response.status = 404;
+
+const session = result ? await getCustomerSession(Astro.cookies).catch(() => null) : null;
+const [likes, comments] = result
+	? await Promise.all([getBlogLikes(slug, session?.token ?? null), listBlogComments(slug)])
+	: [null, { items: [] }];
+
+const post = result?.post ?? null;
+const paywalled = result?.access === "paywall";
+const signedIn = session !== null;
+const here = `/blog/${encodeURIComponent(slug)}`;
+const signInHref = `/my-account?next=${encodeURIComponent(here)}`;
+const api = `/api/bd/blog/${encodeURIComponent(slug)}`;
+// `<` written as <, so the JSON can't close the script tag early.
+const toJson = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
+const likeJson = post ? toJson({ likes: likes ?? { liked: false, likesCount: post.likes }, signedIn }) : "";
+const commentsJson = toJson({ comments: comments.items, signedIn });
+---
+
+<Layout
+	title={post ? `${post.title} — Blog` : "Post not found"}
+	description={post?.excerpt ?? "A post from the blog."}
+	ogImage={post?.imageUrl ?? null}
+>
+	<div class="bd-page">
+		{
+			!post ? (
+				<div class="bd-empty">
+					That post isn't available. <a href="/blog">See all posts</a>
+				</div>
+			) : (
+				<>
+					<article class="post">
+						<a class="post__back" href="/blog">
+							← All posts
+						</a>
+						<header class="post__head">
+							<h1>{post.title}</h1>
+							<p class="post__meta">
+								{post.authorAvatarUrl ? <img alt="" referrerpolicy="no-referrer" src={post.authorAvatarUrl} /> : null}
+								{post.authorName ? <span>{post.authorName}</span> : null}
+								<span>{formatPostDate(post.publishedAt)}</span>
+								<span>· {readingMinutes(post.content)} min read</span>
+							</p>
+						</header>
+						{post.imageUrl ? <img alt="" class="post__cover" referrerpolicy="no-referrer" src={post.imageUrl} /> : null}
+						{paywalled ? (
+							<div class="bd-empty">
+								This post is for members.
+								<p>
+									<a class="bd-btn" href={signInHref}>
+										Sign in to read it
+									</a>
+								</p>
+							</div>
+						) : (
+							<div class="post__body" set:html={safePostHtml(post.content)} />
+						)}
+						{post.ctaHref && post.ctaLabel ? (
+							<aside class="bd-card post__cta">
+								{post.ctaDescription ? <p>{post.ctaDescription}</p> : null}
+								<a class="bd-btn" href={post.ctaHref}>
+									{post.ctaLabel}
+								</a>
+							</aside>
+						) : null}
+						{post.tags.length > 0 ? (
+							<ul class="post__tags">
+								{post.tags.map((tag) => (
+									<li>
+										<a href={`/blog?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
+									</li>
+								))}
+							</ul>
+						) : null}
+						<bd-post-like data-like-url={`${api}/like`} data-sign-in-href={signInHref}>
+							<script is:inline type="application/json" set:html={likeJson} />
+						</bd-post-like>
+					</article>
+					<bd-post-comments data-comment-url={`${api}/comment`} data-sign-in-href={signInHref}>
+						<script is:inline type="application/json" set:html={commentsJson} />
+					</bd-post-comments>
+				</>
+			)
+		}
+	</div>
+</Layout>
+
+<script>
+	import "../../lib/bd-shop/blog-elements";
+</script>

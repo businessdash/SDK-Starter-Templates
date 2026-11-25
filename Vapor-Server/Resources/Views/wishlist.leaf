@@ -1,0 +1,19 @@
+<!-- Products saved on this device with ♡ Save; <bd-wishlist> draws them there. -->
+#extend("base"):
+  #export("title"):Wishlist — Store#endexport
+  #export("head"):
+    <link rel="stylesheet" href="/bd-pages.css">
+    <link rel="stylesheet" href="/bd-shop.css">
+  #endexport
+  #export("subnav"):#extend("store-nav")#endexport
+  #export("mainClass"):bd-page#endexport
+  #export("scripts"):<script type="module" src="/shop/shop-elements.js"></script>#endexport
+  #export("content"):
+    <div class="bd-section__lead">
+      <span class="bd-section__eyebrow">Shop</span>
+      <h1 class="bd-section__title">Wishlist</h1>
+      <p class="bd-section__sub">Products you saved on this device.</p>
+    </div>
+    <bd-wishlist><p class="bd-loading">Loading your wishlist…</p></bd-wishlist>
+  #endexport
+#endextend

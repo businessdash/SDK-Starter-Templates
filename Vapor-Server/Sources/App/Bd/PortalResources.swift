@@ -49,6 +49,12 @@ struct PortalResource: Sendable {
         try await client.get("customer-portal/profile", headers: extraHeaders)
     }
 
+    /// A review of the business from this customer. It waits for the business
+    /// to approve it: `{ id, status: "pending", submittedAt }`.
+    func submitReview(_ review: Reviews.Input) async throws -> JSONValue {
+        try await client.post("customer-portal/reviews", body: review, headers: extraHeaders)
+    }
+
     /// The other companies this customer belongs to. Each `orgId` builds
     /// another `PortalResource` — that is how a dashboard offers per-company
     /// notification settings.

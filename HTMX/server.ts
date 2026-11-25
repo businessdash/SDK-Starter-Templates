@@ -1,14 +1,18 @@
 /**
  * HTMX starter — Bun HTTP server that returns HTML fragments per section, plus
  * fully server-rendered feature pages. The browser loads `public/index.html`,
- * HTMX fires `hx-get` against `/sections/*` on body load, and `/store`,
- * `/cart`, `/my-account`, etc. are whole documents rendered server-side with
- * the BD SDK. No client JS framework.
+ * HTMX fires `hx-get` against `/sections/*` on body load, and the feature
+ * pages (my account, reviews, updates, …) are whole documents rendered
+ * server-side with the BD SDK. No client JS framework.
  *
  * Feature parity with the reference consumer (BD SDK 0.9.5): storefront,
  * visitor-token cart + checkout, subscriptions, customer portal + auth,
  * reviews wall, news banner + updates, programmatic-SEO parallel pages,
  * sitemap/robots, JSON-LD, and a cache-backed revalidation webhook.
+ *
+ * The store (src/store-pages.ts) and the blog (src/blog-pages.ts) render on
+ * the server too; their interactive parts are custom elements (src/shop/),
+ * which this server bundles and serves at /shop/*.js (src/elements.ts).
  */
 
 import { llmsTxtHandler } from "@businessdash/sdk/distribution";
@@ -25,23 +29,29 @@ import {
 	revalidateHandler,
 } from "./src/bd";
 import { VISITOR_COOKIE, SESSION_COOKIE, getCookie, renderBanner, setupBannerHtml } from "./src/layout";
+import { reviewsMore, reviewsPage, writeReview } from "./src/reviews-page";
 import {
-	cartPage,
-	handleCartOp,
 	myAccountPage,
 	signInPage,
-	productPage,
-	reviewsMore,
-	reviewsPage,
 	serviceAreaPage,
 	servicesPage,
-	storePage,
+	// [bd:subscriptions]
 	subscriptionsPage,
+	// [/bd:subscriptions]
 	submitReviewFragment,
 	todosCreateFragment,
 	todosPage,
 	updatesPage,
 } from "./src/pages";
+// [bd:store]
+import { addToCart, cartPage, comparePage, handleCartOp, productPage, storePage, wishlistPage } from "./src/store-pages";
+// [/bd:store]
+// [bd:blog]
+import { blogIndexPage, blogPostPage, commentOnPost, likePost } from "./src/blog-pages";
+// [/bd:blog]
+// [bd:store,blog]
+import { serveElements } from "./src/elements";
+// [/bd:store,blog]
 import { handleSignInCheck, handleSignInPost, safeNext, signInCss } from "./src/sign-in";
 import { handleFormPost, renderForm } from "./src/form";
 import { contactSection, formPage } from "./src/form-pages";
@@ -59,7 +69,9 @@ import {
 } from "./src/quiz";
 import { render } from "./src/html";
 import { renderAbout } from "./src/sections/about";
+// [bd:blog]
 import { renderBlog } from "./src/sections/blog";
+// [/bd:blog]
 import { renderFooter, renderHeader } from "./src/sections/header";
 import { renderHero } from "./src/sections/hero";
 import { renderServices } from "./src/sections/services";
@@ -92,10 +104,11 @@ const sectionHandlers: Record<string, Handler> = {
 	"GET /sections/hero": () => renderHero(),
 	"GET /sections/about": (req) => renderAbout(req),
 	"GET /sections/services": () => renderServices(),
+	// [bd:blog]
 	"GET /sections/blog": () => renderBlog(),
+	// [/bd:blog]
 	"GET /sections/footer": (req) => renderFooter(req),
-	"GET /sections/reviews-more": async (req) =>
-		reviewsMore(Number(new URL(req.url).searchParams.get("offset") ?? 0)),
+	"GET /sections/reviews-more": (req) => reviewsMore(new URL(req.url)),
 	"GET /sections/banner": () => renderBanner(),
 	"GET /sections/contact": () => contactSection(),
 };
@@ -293,9 +306,12 @@ const server = Bun.serve({
 			}
 		}
 
-		// Cart mutations (HTMX fragments).
+		// [bd:store]
+		// Add to cart, from the product page (JSON).
+		if (method === "POST" && pathname === "/api/bd/cart/add") return addToCart(req);
+
+		// Cart changes on /cart (HTMX fragments).
 		const cartOps: Record<string, Parameters<typeof handleCartOp>[1]> = {
-			"/cart/add": "add",
 			"/cart/update": "update",
 			"/cart/remove": "remove",
 			"/cart/coupon": "coupon",
@@ -303,8 +319,8 @@ const server = Bun.serve({
 			"/cart/clear": "clear",
 		};
 		if (method === "POST" && pathname in cartOps) {
-			const { body, setCookie, status } = await handleCartOp(req, cartOps[pathname]!);
-			return htmlResponse(body, status ?? 200, setCookie ? { "Set-Cookie": setCookie } : {});
+			const { body, status } = await handleCartOp(req, cartOps[pathname]!);
+			return htmlResponse(body, status ?? 200);
 		}
 
 		// Checkout → Stripe redirect.
@@ -326,6 +342,19 @@ const server = Bun.serve({
 				);
 			}
 		}
+		// [/bd:store]
+
+		// Writing a review (JSON, for the signed-in customer).
+		if (method === "POST" && pathname === "/reviews/write") return writeReview(req);
+
+		// [bd:blog]
+		// Likes and comments on a post (JSON, for the signed-in customer).
+		const blogAction = method === "POST" ? pathname.match(/^\/blog\/([^/]+)\/(like|comment)$/) : null;
+		if (blogAction) {
+			const slug = decodeURIComponent(blogAction[1]!);
+			return blogAction[2] === "like" ? likePost(req, slug) : commentOnPost(req, slug);
+		}
+		// [/bd:blog]
 
 		// Customer review submit (HTMX fragment into #review-msg).
 		if (method === "POST" && pathname === "/account/review") {
@@ -350,13 +379,37 @@ const server = Bun.serve({
 
 		// Feature pages (full documents).
 		if (method === "GET") {
-			const storeMatch = pathname.match(/^\/store\/([^/]+)$/);
 			const svcMatch = pathname.match(/^\/services\/([^/]+)\/([^/]+)$/);
-			if (pathname === "/store") return htmlResponse(await storePage(url, req.headers.get("HX-Request") === "true"));
-			if (storeMatch) return htmlResponse(await productPage(url.origin, decodeURIComponent(storeMatch[1]!)));
-			if (pathname === "/cart") return htmlResponse(await cartPage(url.origin, getCookie(req, VISITOR_COOKIE)));
-			if (pathname === "/subscriptions") return htmlResponse(await subscriptionsPage(url.origin));
-			if (pathname === "/reviews") return htmlResponse(await reviewsPage(url.origin));
+			// [bd:store,blog]
+			if (pathname.startsWith("/shop/")) {
+				const elements = await serveElements(pathname);
+				if (elements) return elements;
+			}
+			// [/bd:store,blog]
+			// [bd:store]
+			const visitor = getCookie(req, VISITOR_COOKIE);
+			const storeMatch = pathname.match(/^\/store\/([^/]+)$/);
+			if (pathname === "/store") return htmlResponse(await storePage(url, visitor));
+			if (pathname === "/store/wishlist") return htmlResponse(await wishlistPage(url, visitor));
+			if (pathname === "/store/compare") return htmlResponse(await comparePage(url, visitor));
+			if (storeMatch) {
+				const product = await productPage(url, decodeURIComponent(storeMatch[1]!), visitor);
+				return htmlResponse(product.html, product.status);
+			}
+			if (pathname === "/cart") return htmlResponse(await cartPage(url.origin, visitor));
+			// [/bd:store]
+			// [bd:subscriptions]
+			if (pathname === "/subscriptions") return htmlResponse(await subscriptionsPage(url.origin, getCookie(req, VISITOR_COOKIE)));
+			// [/bd:subscriptions]
+			// [bd:blog]
+			const blogMatch = pathname.match(/^\/blog\/([^/]+)$/);
+			if (pathname === "/blog") return htmlResponse(await blogIndexPage(url));
+			if (blogMatch) {
+				const post = await blogPostPage(url, decodeURIComponent(blogMatch[1]!), getCookie(req, SESSION_COOKIE));
+				return htmlResponse(post.html, post.status);
+			}
+			// [/bd:blog]
+			if (pathname === "/reviews") return htmlResponse(await reviewsPage(url, getCookie(req, SESSION_COOKIE)));
 			if (pathname === "/updates") return htmlResponse(await updatesPage(url.origin));
 			if (pathname === "/todos") return htmlResponse(await todosPage(url.origin));
 			if (pathname === "/services") return htmlResponse(await servicesPage(url.origin));

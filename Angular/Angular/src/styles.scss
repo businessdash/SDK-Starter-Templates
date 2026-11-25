@@ -3,6 +3,17 @@
  * <router-outlet> (component-scoped styles wouldn't reach them). The visual
  * language is unchanged from the original single-page starter. */
 
+// The shop's, the blog's and the reviews page's styles (src/bd-shop.css,
+// src/bd-blog.css, src/bd-reviews.css), shared with the other starters. The
+// colour names they use are set at the end.
+// [bd:store]
+@use "./bd-shop";
+// [/bd:store]
+// [bd:blog]
+@use "./bd-blog";
+// [/bd:blog]
+@use "./bd-reviews";
+
 :root {
 	font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
@@ -282,6 +293,13 @@ form {
 	border-bottom: 1px solid #e5e7eb;
 }
 
+/* The options chosen on the product page: "Cloud · Size 42". */
+.cart-row__variant {
+	display: block;
+	color: #6b7280;
+	font-size: 0.85rem;
+}
+
 .cart-row__qty {
 	display: inline-flex;
 	align-items: center;
@@ -336,275 +354,10 @@ form {
 	gap: 0.75rem;
 }
 
-/* ── Store (listing sidebar + richer cards) ── */
-.store__layout {
-	display: grid;
-	grid-template-columns: 15rem 1fr;
-	gap: 2rem;
-	align-items: start;
-}
-
-@media (max-width: 48rem) {
-	.store__layout {
-		grid-template-columns: 1fr;
-	}
-}
-
-.store-sidebar {
-	display: flex;
-	flex-direction: column;
-	gap: 1.25rem;
-	padding: 1.25rem;
-	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 0.75rem;
-	position: sticky;
-	top: 1rem;
-}
-
-.store-sidebar__group {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.store-sidebar__label {
-	font-size: 0.75rem;
-	font-weight: 700;
-	letter-spacing: 0.04em;
-	text-transform: uppercase;
-	color: #6b7280;
-}
-
-.store-sidebar__clear {
-	align-self: flex-start;
-	font-size: 0.85rem;
-	padding: 0.5rem 0.875rem;
-}
-
-.store-facets {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.125rem;
-}
-
-.store-facet {
-	width: 100%;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 0.5rem;
-	padding: 0.4rem 0.5rem;
-	border: 0;
-	border-radius: 0.375rem;
-	background: transparent;
-	cursor: pointer;
-	font: inherit;
-	font-size: 0.9rem;
-	color: #374151;
-	text-align: left;
-}
-
-.store-facet:hover {
-	background: #f3f4f6;
-}
-
-.store-facet--active {
-	background: #111827;
-	color: #fff;
-}
-
-.store-facet__count {
-	font-size: 0.75rem;
-	color: #9ca3af;
-	font-variant-numeric: tabular-nums;
-}
-
-.store-facet--active .store-facet__count {
-	color: #d1d5db;
-}
-
-.store-price {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.store-results {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.store-results__bar {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-	gap: 1rem;
-	flex-wrap: wrap;
-}
-
-.store-sort {
-	display: inline-flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: 0.9rem;
-}
-
-.store-sort .bd-input {
-	width: auto;
-}
-
-.product-card {
-	display: flex;
-	flex-direction: column;
-}
-
-.product-card__media {
-	position: relative;
-	display: block;
-}
-
-.product-card__placeholder {
-	display: block;
-	width: 100%;
-	aspect-ratio: 4 / 3;
-	border-radius: 0.5rem;
-	margin-bottom: 0.5rem;
-	background: #f3f4f6;
-}
-
-.product-card__badges {
-	position: absolute;
-	top: 0.5rem;
-	left: 0.5rem;
-	display: flex;
-	flex-wrap: wrap;
-	gap: 0.25rem;
-}
-
-.product-badge {
-	font-size: 0.7rem;
-	font-weight: 700;
-	padding: 0.15rem 0.5rem;
-	border-radius: 999px;
-	background: #111827;
-	color: #fff;
-}
-
-.product-badge--sale {
-	background: #b91c1c;
-}
-
-.product-card__rating {
-	display: flex;
-	align-items: center;
-	gap: 0.375rem;
-	margin: 0 0 0.5rem;
-	font-size: 0.85rem;
-}
-
-.product-card__price {
-	display: flex;
-	align-items: baseline;
-	gap: 0.4rem;
-	margin: 0 0 0.75rem;
-}
-
-.product-card__from {
-	font-size: 0.75rem;
-}
-
-.product-card__compare {
-	font-size: 0.8rem;
-	color: #9ca3af;
-	text-decoration: line-through;
-}
-
-.product-card__add {
-	margin-top: auto;
-}
-
-.link-btn {
-	border: 0;
-	background: none;
-	padding: 0;
-	color: #374151;
-	text-decoration: underline;
-	cursor: pointer;
-	font: inherit;
-}
-
-/* ── Product detail enrichment (addons + rating summary) ── */
-.product__rating-summary {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	margin: -0.5rem 0 1rem;
-	font-size: 0.95rem;
-}
-
-.addon-rail,
-.store-grid {
-	margin-bottom: 1.5rem;
-}
-
-.addon-card {
-	display: flex;
-	flex-direction: column;
-}
-
-.addon-card__price {
-	display: flex;
-	align-items: baseline;
-	gap: 0.4rem;
-}
-
-.addon-card__add {
-	margin-top: auto;
-}
-
-.review__title {
-	margin: 0.25rem 0 0.25rem;
-}
-
-/* ── Reviews ── */
+/* ── Reviews (the home page's summary) ── */
 .reviews-agg {
 	font-size: 1.1rem;
 	margin-bottom: 1.5rem;
-}
-
-.review-list {
-	list-style: none;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.review {
-	padding: 1rem;
-	background: #fff;
-	border: 1px solid #e5e7eb;
-	border-radius: 0.5rem;
-}
-
-.review__head {
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
-}
-
-.review__stars {
-	color: #f59e0b;
-}
-
-.review__source {
-	font-size: 0.8rem;
-	text-transform: capitalize;
 }
 
 /* ── Booking ── */
@@ -1099,4 +852,225 @@ form {
 		opacity: 0;
 		transform: translateX(-1.5rem);
 	}
+}
+
+/* ── Store and blog pages ──────────────────────────────────────────
+   The shop and blog custom elements (src/app/shop/) and their stylesheets
+   (bd-shop.css, bd-blog.css) use the names below; here they map onto this
+   starter's palette. */
+:root {
+	--text: #111827;
+	--text-muted: #4b5563;
+	--title: #111827;
+	--subtitle: #374151;
+	--surface: #ffffff;
+	--card: #ffffff;
+	--glass-card: #ffffff;
+	--bg-soft: #f3f4f6;
+	--border: #e5e7eb;
+	--border-strong: #d1d5db;
+	--accent: #047857;
+	--accent-bg: #ecfdf5;
+	--accent-strong: #065f46;
+	--danger: #b91c1c;
+	--danger-bg: #fef2f2;
+	--success: #047857;
+	--success-bg: #ecfdf5;
+	--card-neu-shadow: rgba(17, 24, 39, 0.08);
+	--mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* The page body on store and blog pages. `:where` keeps these at zero
+   specificity, so the shop and blog styles win wherever they say more. */
+.bd-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 2.5rem 1.25rem 4rem;
+}
+
+:where(.bd-page) :where(h1, h2, h3, h4, p) {
+	margin: 0;
+}
+
+:where(.bd-page) :where(h1, h2, h3, h4) {
+	color: var(--title);
+	line-height: 1.15;
+	letter-spacing: -0.015em;
+}
+
+:where(.bd-page) a {
+	color: var(--accent);
+	text-decoration: none;
+}
+
+:where(.bd-page) button {
+	font: inherit;
+	cursor: pointer;
+}
+
+/* This starter's own forms are flex columns (the `form` rule above); the
+   shop and blog forms lay themselves out. */
+:where(.bd-page) form {
+	display: block;
+	flex-direction: row;
+	gap: normal;
+	max-width: none;
+}
+
+.bd-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0.75rem;
+	box-shadow: 0 1px 2px rgba(17, 24, 39, 0.04);
+}
+
+:where(.bd-page) :is(.bd-input, .bd-textarea, .bd-select) {
+	width: 100%;
+	padding: 0.6rem 0.8rem;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: 0.5rem;
+	color: var(--text);
+	font: inherit;
+}
+
+:where(.bd-page) :is(.bd-input, .bd-textarea, .bd-select):focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.bd-textarea {
+	min-height: 8rem;
+	resize: vertical;
+}
+
+.bd-label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--subtitle);
+	margin-bottom: 0.3rem;
+}
+
+.bd-section__lead {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 2rem;
+}
+
+.bd-section__eyebrow {
+	color: var(--accent);
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+
+.bd-section__title {
+	font-size: clamp(1.75rem, 4vw, 2.4rem);
+}
+
+.bd-section__sub {
+	color: var(--text-muted);
+	max-width: 36rem;
+}
+
+.bd-loading {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+
+.bd-empty {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	padding: 2rem;
+	text-align: center;
+	border: 1px dashed var(--border-strong);
+	border-radius: 0.75rem;
+}
+
+.bd-grid-3 {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: 1.25rem;
+}
+
+.bd-grid-4 {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+	gap: 1rem;
+}
+
+.blog-section__all {
+	margin-top: 1.5rem;
+	text-align: center;
+}
+
+/* Store bar: under the header on store and plan pages. */
+.store-nav {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1rem 1.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	border-bottom: 1px solid var(--border);
+}
+
+.store-nav__links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1.25rem;
+	font-size: 0.92rem;
+}
+
+.store-nav__links a {
+	color: var(--accent);
+	text-decoration: none;
+}
+
+/* Narrow screens: one row of links that scrolls sideways. */
+@media (max-width: 640px) {
+	.store-nav {
+		justify-content: flex-start;
+		gap: 1.25rem;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+
+	.store-nav__links {
+		flex-wrap: nowrap;
+	}
+}
+
+.store-nav__count {
+	margin-left: 0.2rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+
+.store-nav__cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
+}
+
+.store-nav__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.4rem;
+	border-radius: 9999px;
+	background: var(--accent);
+	color: white;
+	font-size: 0.75rem;
+	font-weight: 700;
 }

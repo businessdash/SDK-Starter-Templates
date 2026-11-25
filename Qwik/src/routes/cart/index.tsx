@@ -1,15 +1,16 @@
 // [bd-file:store]
-import { $, component$, useSignal } from "@builder.io/qwik";
+import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city";
 
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
 import { Footer } from "../../components/bd/Footer";
 import { SiteHeader } from "../../components/bd/SiteHeader";
+import { StoreNav } from "../../components/bd/StoreNav";
 import {
 	applyCartCoupon,
 	clearCart,
-	formatMoney,
+	formatDollars,
 	getCartSnapshot,
 	removeCartCoupon,
 	removeCartItem,
@@ -23,6 +24,8 @@ import { getCustomerSession } from "../../lib/bd-portal";
  * are `server$` RPCs that read/write the `bd_cart_visitor` cookie through
  * `this.cookie` and return a fresh snapshot the client swaps in. Checkout
  * starts a Stripe session and returns the hosted URL to redirect to.
+ * Cart amounts are dollars. After each change the new item count goes to the
+ * store bar as a `bd:cart-count` event.
  */
 export const useCart = routeLoader$(async ({ cookie }) => {
 	const [snapshot, session] = await Promise.all([
@@ -94,12 +97,21 @@ export default component$(() => {
 		}
 	});
 
+	// The store bar's count follows the cart.
+	useTask$(({ track }) => {
+		const count = track(() => cart.value?.itemCount ?? 0);
+		if (typeof window !== "undefined") {
+			window.dispatchEvent(new CustomEvent("bd:cart-count", { detail: count }));
+		}
+	});
+
 	const snapshot = cart.value;
 	const items = snapshot?.items ?? [];
 
 	return (
 		<>
-			<SiteHeader signedIn={data.value.signedIn} cartCount={snapshot?.itemCount ?? 0} />
+			<SiteHeader signedIn={data.value.signedIn} />
+			<StoreNav cartCount={data.value.snapshot?.itemCount ?? 0} />
 			<main>
 				<section class="bd-section bd-section--narrow">
 					<div class="bd-section__lead">
@@ -135,7 +147,7 @@ export default component$(() => {
 											</div>
 										) : null}
 										<div style="color: var(--accent); font-weight: 600;">
-											{formatMoney(item.subtotal, item.currency)}
+											{formatDollars(item.subtotal, item.currency)}
 										</div>
 									</div>
 									<div style="display: flex; align-items: center; gap: 0.5rem;">
@@ -220,7 +232,7 @@ export default component$(() => {
 								</button>
 								<div style="font-size: 1.15rem; font-weight: 700; color: var(--title);">
 									{snapshot
-										? formatMoney(snapshot.subtotal, snapshot.currency)
+										? formatDollars(snapshot.subtotal, snapshot.currency)
 										: ""}
 								</div>
 							</div>

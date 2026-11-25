@@ -3,9 +3,14 @@ import Vapor
 func routes(_ app: Application) throws {
     // ── Pages ──────────────────────────────────────────────────────────────
     app.get(use: PageController.home)
-    app.get("blog", use: PageController.blog)
-    app.get("blog", ":slug", use: PageController.blogPost)
-    app.get("reviews", use: PageController.reviews)
+    app.get("blog", use: BlogController.index)
+    app.get("blog", ":slug", use: BlogController.show)
+    // Like and comment, for signed-in customers (JSON, from the post's elements).
+    app.on(.POST, "blog", ":slug", "like", body: .collect(maxSize: "4kb"), use: BlogController.like)
+    app.on(.POST, "blog", ":slug", "comment", body: .collect(maxSize: "64kb"), use: BlogController.comment)
+    app.get("reviews", use: ReviewsController.page)
+    // Writing a review, for signed-in customers (JSON, from <bd-review-writer>).
+    app.on(.POST, "reviews", "write", body: .collect(maxSize: "64kb"), use: ReviewsController.write)
     app.get("subscriptions", use: PageController.subscriptions)
     app.get("todos", use: PageController.todos)
 
@@ -15,7 +20,12 @@ func routes(_ app: Application) throws {
 
     // ── Store ──────────────────────────────────────────────────────────────
     app.get("store", use: StoreController.index)
+    app.get("store", "wishlist", use: StoreController.wishlist)
+    app.get("store", "compare", use: StoreController.compare)
+    app.get("store", "order", use: StoreController.order)
     app.get("store", ":id", use: StoreController.show)
+    // Add to cart for the product page's <bd-product> (JSON).
+    app.on(.POST, "api", "bd", "cart", "add", body: .collect(maxSize: "16kb"), use: CartController.addJSON)
 
     app.get("cart", use: CartController.show)
     app.post("cart", "items", use: CartController.addItem)

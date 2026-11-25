@@ -273,7 +273,7 @@ export function portalForSession(organizationId: string, sessionToken: string) {
 		.withSession(sessionToken);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 /**
  * The subscriptions client acting for the signed-in customer. A plan
  * belongs to a person, and BD refuses a plan checkout without the
@@ -288,6 +288,6 @@ export function subscriptionsForSession(sessionToken: string) {
 		defaultHeaders: { "X-BD-Session-Token": sessionToken },
 	}).subscriptions;
 }
-// [/bd:saas]
+// [/bd:subscriptions]
 
 export { BdPaymentLapsedError, BdServiceSuspendedError };

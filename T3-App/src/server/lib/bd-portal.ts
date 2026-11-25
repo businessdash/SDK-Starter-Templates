@@ -6,9 +6,9 @@ import type {
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle,
 } from "@businessdash/sdk/contracts";
-// [bd:saas]
+// [bd:subscriptions]
 import type { CustomerSubscriptionResponse } from "@businessdash/sdk/contracts";
-// [/bd:saas]
+// [/bd:subscriptions]
 import { cookies } from "next/headers";
 
 import { env } from "@/env";
@@ -23,7 +23,7 @@ import { env } from "@/env";
  * read from the validated session. Server-only.
  */
 
-const SESSION_COOKIE = "bd_session";
+export const SESSION_COOKIE = "bd_session";
 
 function normalizeBaseUrl(input: string): string {
 	const next = input.trim().replace(/\/+$/, "");
@@ -116,7 +116,7 @@ export async function submitCustomerReview(
 	return portalFor(session).submitReview(input);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 /**
  * Start a Stripe subscription checkout for the signed-in customer. Returns
  * null when nobody is signed in: a plan belongs to a person, and BD refuses a
@@ -160,4 +160,4 @@ export async function setPlanCancelled(cancel: boolean) {
 	const portal = portalFor(session);
 	return cancel ? portal.cancelSubscription() : portal.resumeSubscription();
 }
-// [/bd:saas]
+// [/bd:subscriptions]

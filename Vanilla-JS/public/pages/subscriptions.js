@@ -1,11 +1,13 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 /** /subscriptions — recurring plans from `bd.subscriptions.list`. */
 import { bd, el, money } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
+import { mountStoreNav } from "./_store-nav.js";
 
 const SIGN_IN = "/my-account?next=/subscriptions";
 
 export default async function render(root) {
+	mountStoreNav();
 	root.replaceChildren(pageHead("Plans", "Recurring subscriptions, billed via Stripe."));
 	// Stripe sends the customer back with the checkout session id.
 	if (new URLSearchParams(location.search).has("session_id")) {

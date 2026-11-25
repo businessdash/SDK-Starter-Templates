@@ -9,7 +9,15 @@
  * Routes mounted:
  *   GET  /api/bd/home              marketing bundle → hero/about/services/
  *                                    reviews-config/banner/updates (cached)
- *   GET  /api/bd/blog              recent posts
+ * [bd:blog]
+ *   GET  /api/bd/blog              recent posts (the home section)
+ *   GET  /api/bd/blog/posts        a page of posts (?limit, ?cursor, ?categoryId)
+ *   GET  /api/bd/blog/categories   the blog's categories
+ *   GET  /api/bd/blog/tags         the tags in use
+ *   GET  /api/bd/blog/post/:slug   one post, its HTML made safe, with likes + comments
+ *   POST /api/bd/blog/post/:slug/like     like or unlike (signed in)
+ *   POST /api/bd/blog/post/:slug/comment  comment (signed in)
+ * [/bd:blog]
  * [bd:store]
  *   GET  /api/bd/store/products    storefront list (?cursor, ?categoryId)
  *   GET  /api/bd/store/products-meta filterable grid + facets (search,
@@ -20,14 +28,15 @@
  *   GET  /api/bd/store/products/:id/related   "you may also like"
  *   GET  /api/bd/store/products/:id/addons    companion cross-sell rail
  * [/bd:store]
- * [bd:saas]
+ * [bd:subscriptions]
  *   GET  /api/bd/subscriptions     recurring offerings list
  *   POST /api/bd/subscriptions/:id/checkout  → { url } Stripe, or { signIn }
  *   POST /api/bd/portal/plan       cancel the plan, or take the cancel back
- * [/bd:saas]
+ * [/bd:subscriptions]
  * [bd:store]
  *   GET  /api/bd/cart              current visitor cart snapshot
  *   POST /api/bd/cart/items        add item
+ *   POST /api/bd/cart/add          add with options, for <bd-product> → { ok, itemCount }
  *   PATCH/api/bd/cart/items/:id    set quantity (0 removes)
  *   DELETE /api/bd/cart/items/:id  remove item
  *   POST /api/bd/cart/coupon       apply coupon
@@ -37,8 +46,13 @@
  * [/bd:store]
  *   POST /api/bd/contact           submit the contact form
  *   GET  /api/bd/reviews           reviews wall page (?offset, ?limit)
+ *   GET  /api/bd/reviews/page      the reviews page's data (?source, ?shown)
+ *   POST /api/bd/reviews/write     write a review (signed-in customer)
  *   GET  /api/bd/portal/me         signed-in customer + work bundle
  *   POST /api/bd/portal/review     submit a customer review
+ * [bd:booking]
+ *   GET  /api/bd/scheduling/…      event types, open slots, book
+ * [/bd:booking]
  *   POST /api/bd/services/:service/:area  parallel-page render
  *   ALL  /api/bd-auth/{*splat}     WorkOS auth handler (sign-in/out/callback…)
  *   POST /api/bd/revalidate        BD → consumer cache-purge webhook
@@ -79,9 +93,14 @@ import {
 // [bd:store]
 import { VISITOR_COOKIE, VISITOR_MAX_AGE_SECONDS } from "./bd-server";
 // [/bd:store]
-// [bd:saas]
+// [bd:subscriptions]
 import { subscriptionsForSession } from "./bd-server";
-// [/bd:saas]
+// [/bd:subscriptions]
+// [bd:blog]
+import { readingMinutes, safePostHtml } from "../app/shop/blog";
+// [/bd:blog]
+import { checkReview } from "../app/shop/reviews";
+import { loadReviewsPage } from "../app/shop/reviews-page";
 
 // ── Cookie helpers (no cookie-parser dependency) ───────────────────
 
@@ -268,6 +287,7 @@ export function mountBdApi(app: Express): void {
 		res.json(result.ok ? result.data : { configured: false });
 	});
 
+	// [bd:blog]
 	// ---- Blog -------------------------------------------------------
 	app.get("/api/bd/blog", async (_req, res) => {
 		const bd = getBd();
@@ -283,6 +303,157 @@ export function mountBdApi(app: Express): void {
 		);
 		res.json(out.ok ? { items: out.data.items } : { items: [] });
 	});
+
+	// A page of posts: ?limit (up to 50), ?cursor, ?categoryId.
+	app.get("/api/bd/blog/posts", async (req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.json({ items: [], nextCursor: null });
+			return;
+		}
+		const limit = Math.min(50, Math.max(1, Number(req.query["limit"]) || 12));
+		const cursorRaw = Number(req.query["cursor"]);
+		const cursor = Number.isFinite(cursorRaw) && req.query["cursor"] !== undefined ? cursorRaw : null;
+		const categoryId = typeof req.query["categoryId"] === "string" && req.query["categoryId"] ? req.query["categoryId"] : undefined;
+		const out = await runGuarded(() =>
+			cached(`blog:posts:${limit}:${cursor ?? ""}:${categoryId ?? ""}`, ["bd:blog"], () =>
+				bd.blog.listPosts({ limit, cursor, ...(categoryId ? { categoryId } : {}) }),
+			),
+		);
+		if (!out.ok && out.suspended) {
+			res.status(503).json({ unavailable: true, reason: out.reason });
+			return;
+		}
+		res.json(out.ok ? out.data : { items: [], nextCursor: null });
+	});
+
+	app.get("/api/bd/blog/categories", async (_req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.json({ items: [] });
+			return;
+		}
+		const out = await runGuarded(() => cached("blog:categories", ["bd:blog"], () => bd.blog.listCategories()));
+		res.json(out.ok ? out.data : { items: [] });
+	});
+
+	app.get("/api/bd/blog/tags", async (_req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.json({ items: [] });
+			return;
+		}
+		const out = await runGuarded(() => cached("blog:tags", ["bd:blog"], () => bd.blog.listTags()));
+		res.json(out.ok ? out.data : { items: [] });
+	});
+
+	// One post, ready for the page: its HTML is rebuilt from an allowlist here
+	// (`safePostHtml`), so only that reaches the browser. Likes and comments
+	// come along; `liked` and `signedIn` are this visitor's own.
+	app.get("/api/bd/blog/post/:slug", async (req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.status(404).json({ error: "unconfigured" });
+			return;
+		}
+		const slug = req.params["slug"];
+		const found = await runGuarded(() =>
+			cached(`blog:post:${slug}`, ["bd:blog", `bd:blog:${slug}`], () => bd.blog.getPost(slug)),
+		);
+		if (!found.ok) {
+			res.status(found.suspended ? 503 : 404).json({ error: found.reason });
+			return;
+		}
+		const session = await readSession(readCookie(req, SESSION_COOKIE)).catch(() => null);
+		const [likes, comments] = await Promise.all([
+			(session ? bd.blog.withSession(session.token) : bd.blog).likeStatus(slug).catch(() => null),
+			bd.blog.listComments(slug, { limit: 50 }).catch(() => ({ items: [] })),
+		]);
+		const { post, access } = found.data;
+		res.json({
+			post: {
+				title: post.title,
+				slug: post.slug,
+				excerpt: post.excerpt,
+				imageUrl: post.imageUrl,
+				publishedAt: post.publishedAt,
+				authorName: post.authorName,
+				authorAvatarUrl: post.authorAvatarUrl,
+				tags: post.tags,
+				ctaLabel: post.ctaLabel,
+				ctaHref: post.ctaHref,
+				ctaDescription: post.ctaDescription,
+			},
+			html: access === "paywall" ? "" : safePostHtml(post.content),
+			minutes: readingMinutes(post.content),
+			paywalled: access === "paywall",
+			likes: likes ?? { liked: false, likesCount: post.likes },
+			comments: comments.items,
+			signedIn: session !== null,
+		});
+	});
+
+	// Like or unlike, for the signed-in customer: { liked, likesCount } or { error }.
+	app.post("/api/bd/blog/post/:slug/like", async (req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.status(503).json({ error: "The blog isn't connected yet." });
+			return;
+		}
+		// A JSON body only: a form on another site can't send one.
+		if (!req.is("application/json")) {
+			res.status(415).json({ error: "Send JSON." });
+			return;
+		}
+		const token = readCookie(req, SESSION_COOKIE);
+		if (!token) {
+			res.status(401).json({ error: "Sign in to like posts." });
+			return;
+		}
+		try {
+			res.json(await bd.blog.withSession(token).toggleLike(req.params["slug"]));
+		} catch {
+			res.status(502).json({ error: "Couldn't save your like. Try again." });
+		}
+	});
+
+	// { content } in; out, whether it shows now or waits for approval, and the
+	// comments as they are now.
+	app.post("/api/bd/blog/post/:slug/comment", async (req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.status(503).json({ ok: false, error: "The blog isn't connected yet." });
+			return;
+		}
+		if (!req.is("application/json")) {
+			res.status(415).json({ ok: false, error: "Send JSON." });
+			return;
+		}
+		const token = readCookie(req, SESSION_COOKIE);
+		if (!token) {
+			res.status(401).json({ ok: false, error: "Sign in to comment." });
+			return;
+		}
+		const raw: unknown = req.body?.content;
+		const content = typeof raw === "string" ? raw.trim() : "";
+		if (!content) {
+			res.status(400).json({ ok: false, error: "Write something first." });
+			return;
+		}
+		if (content.length > 5000) {
+			res.status(400).json({ ok: false, error: "Comments are up to 5,000 characters." });
+			return;
+		}
+		const slug = req.params["slug"];
+		try {
+			const posted = await bd.blog.withSession(token).postComment(slug, { content });
+			const comments = await bd.blog.listComments(slug, { limit: 50 });
+			res.json({ ok: true, approved: posted.moderation.isApproved, comments: comments.items });
+		} catch {
+			res.status(502).json({ ok: false, error: "Couldn't post your comment. Try again." });
+		}
+	});
+	// [/bd:blog]
 
 	// [bd:store]
 	// ---- Storefront -------------------------------------------------
@@ -426,7 +597,7 @@ export function mountBdApi(app: Express): void {
 	});
 	// [/bd:store]
 
-	// [bd:saas]
+	// [bd:subscriptions]
 	// ---- Subscriptions ----------------------------------------------
 	app.get("/api/bd/subscriptions", async (req, res) => {
 		const bd = getBd();
@@ -493,7 +664,7 @@ export function mountBdApi(app: Express): void {
 			res.status(400).json({ error: out.reason });
 		}
 	});
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	// [bd:store]
 	// ---- Cart -------------------------------------------------------
@@ -510,6 +681,47 @@ export function mountBdApi(app: Express): void {
 		}
 		const out = await runGuarded(() => bd.cart.forVisitor(token).get());
 		res.json(out.ok ? out.data : null);
+	});
+
+	// Add to the cart for <bd-product>: JSON { productId, variantId?, quantity?,
+	// options? } in; { ok, itemCount } or { ok: false, error } out. The first
+	// add mints the visitor's cart cookie.
+	app.post("/api/bd/cart/add", async (req, res) => {
+		const bd = getBd();
+		if (!bd) {
+			res.status(503).json({ ok: false, error: "The store isn't connected yet." });
+			return;
+		}
+		if (!req.is("application/json")) {
+			res.status(415).json({ ok: false, error: "Send JSON." });
+			return;
+		}
+		const body = (req.body ?? {}) as { productId?: unknown; variantId?: unknown; quantity?: unknown; options?: unknown };
+		const productId = typeof body.productId === "string" ? body.productId : "";
+		if (!productId) {
+			res.status(400).json({ ok: false, error: "Choose a product." });
+			return;
+		}
+		const quantity = Math.max(1, Math.min(99, Math.floor(Number(body.quantity) || 1)));
+		const options =
+			body.options && typeof body.options === "object"
+				? Object.fromEntries(
+						Object.entries(body.options as Record<string, unknown>).filter(
+							(entry): entry is [string, string] => typeof entry[1] === "string",
+						),
+					)
+				: {};
+		const token = ensureVisitorToken(req, res);
+		const out = await runGuarded(() =>
+			bd.cart.forVisitor(token).addItem({
+				productId,
+				quantity,
+				...(typeof body.variantId === "string" && body.variantId ? { variantId: body.variantId } : {}),
+				...(Object.keys(options).length > 0 ? { options } : {}),
+			}),
+		);
+		if (out.ok) res.json({ ok: true, itemCount: out.data.itemCount });
+		else res.status(out.suspended ? 503 : 502).json({ ok: false, error: "Couldn't add that to your cart. Try again." });
 	});
 
 	app.post("/api/bd/cart/items", async (req, res) => {
@@ -837,6 +1049,67 @@ export function mountBdApi(app: Express): void {
 		res.json(out.ok ? out.data : { items: [], totalCount: 0, nextOffset: null });
 	});
 
+	// The reviews page's data: the rating with its count per star, the first
+	// `shown` reviews (`?source=` for one platform), the platforms for the
+	// filter, the "Show more" link, and whether a customer is signed in.
+	app.get("/api/bd/reviews/page", async (req, res) => {
+		const bd = getBd();
+		const env = getBdEnv();
+		const params = new URLSearchParams();
+		for (const key of ["source", "shown"]) {
+			const value = req.query[key];
+			if (typeof value === "string") params.set(key, value);
+		}
+		const data = await loadReviewsPage({
+			params,
+			list:
+				bd && env
+					? (query) =>
+							cached(
+								`reviews:${env.siteId}:${query.source ?? "all"}:${query.offset ?? 0}:${query.limit}`,
+								["bd:reviews"],
+								() => bd.reviews.list(query),
+							)
+					: null,
+			totals: getPageBundle().then((bundle) => bundle?.reviews),
+			signedIn: readSession(readCookie(req, SESSION_COOKIE)).then((session) => session !== null),
+		});
+		res.set("Cache-Control", "no-store").json(data);
+	});
+
+	// { rating, title?, body } from <bd-review-writer> on /reviews, for the
+	// signed-in customer. It shows once the business approves it.
+	app.post("/api/bd/reviews/write", async (req, res) => {
+		res.set("Cache-Control", "no-store");
+		if (!getBd()) {
+			res.status(503).json({ ok: false, error: "Reviews aren't connected yet." });
+			return;
+		}
+		// A JSON body only: a form on another site can't send one.
+		if (!req.is("application/json")) {
+			res.status(415).json({ ok: false, error: "Send JSON." });
+			return;
+		}
+		const session = await readSession(readCookie(req, SESSION_COOKIE)).catch(() => null);
+		const portal = session ? portalForSession(session.organizationId, session.token) : null;
+		if (!portal) {
+			res.status(401).json({ ok: false, error: "Sign in to write a review." });
+			return;
+		}
+		const checked = checkReview((req.body ?? {}) as Record<string, unknown>);
+		if (!checked.ok) {
+			res.status(400).json({ ok: false, error: checked.error });
+			return;
+		}
+		try {
+			await portal.submitReview(checked.review);
+			res.json({ ok: true });
+		} catch {
+			res.status(502).json({ ok: false, error: "Couldn't send your review. Try again." });
+		}
+	});
+
+	// [bd:booking]
 	// ---- Scheduling / booking ---------------------------------------
 	app.get("/api/bd/scheduling/event-types", async (_req, res) => {
 		const bd = getBd();
@@ -893,6 +1166,7 @@ export function mountBdApi(app: Express): void {
 		if (out.ok) res.json({ ok: true, status: out.data.status, bookingId: out.data.bookingId });
 		else res.status(400).json({ ok: false, error: out.reason });
 	});
+	// [/bd:booking]
 
 	// ---- Customer portal --------------------------------------------
 	app.get("/api/bd/portal/me", async (req, res) => {
@@ -906,10 +1180,10 @@ export function mountBdApi(app: Express): void {
 			? await runGuarded(() => portal.getWork())
 			: ({ ok: false, suspended: false, reason: "unconfigured" } as const);
 		let plan = null;
-		// [bd:saas]
+		// [bd:subscriptions]
 		const sub = portal ? await runGuarded(() => portal.getSubscription()) : null;
 		plan = sub?.ok ? sub.data.subscription : null;
-		// [/bd:saas]
+		// [/bd:subscriptions]
 		res.json({
 			signedIn: true,
 			user: session.user,

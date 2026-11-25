@@ -1,9 +1,12 @@
+// [bd-file:blog]
 import { ChangeDetectionStrategy, Component, inject, OnInit } from "@angular/core";
+import { RouterLink } from "@angular/router";
 import { BdService } from "../lib/bd.service";
 
 @Component({
 	selector: "bd-blog",
 	changeDetection: ChangeDetectionStrategy.OnPush,
+	imports: [RouterLink],
 	template: `
 		<section class="section" id="blog">
 			<h2 class="section__title">From the blog</h2>
@@ -13,7 +16,7 @@ import { BdService } from "../lib/bd.service";
 				<ul class="post-list">
 					@for (post of svc.blog(); track post.slug) {
 						<li>
-							<a [href]="'/blog/' + post.slug">
+							<a [routerLink]="['/blog', post.slug]">
 								<strong>{{ post.title }}</strong>
 								<span class="muted">{{ post.publishedAt }}</span>
 							</a>
@@ -22,6 +25,7 @@ import { BdService } from "../lib/bd.service";
 					}
 				</ul>
 			}
+			<p class="blog-section__all"><a class="bd-btn bd-btn--ghost" routerLink="/blog">All posts</a></p>
 		</section>
 	`,
 })

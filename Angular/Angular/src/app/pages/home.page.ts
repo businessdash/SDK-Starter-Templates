@@ -5,7 +5,9 @@ import { AboutComponent } from "../sections/about.component";
 import { ServicesComponent } from "../sections/services.component";
 import { ReviewsSummaryComponent } from "../sections/reviews-summary.component";
 import { UpdatesComponent } from "../sections/updates.component";
+// [bd:blog]
 import { BlogComponent } from "../sections/blog.component";
+// [/bd:blog]
 import { ContactFormComponent } from "../sections/contact-form.component";
 
 /**
@@ -21,7 +23,9 @@ import { ContactFormComponent } from "../sections/contact-form.component";
 		ServicesComponent,
 		ReviewsSummaryComponent,
 		UpdatesComponent,
+		// [bd:blog]
 		BlogComponent,
+		// [/bd:blog]
 		ContactFormComponent,
 	],
 	template: `
@@ -30,7 +34,9 @@ import { ContactFormComponent } from "../sections/contact-form.component";
 		<bd-services />
 		<bd-reviews-summary />
 		<bd-updates />
+		<!-- [bd:blog] -->
 		<bd-blog />
+		<!-- [/bd:blog] -->
 		<bd-contact-form />
 	`,
 })

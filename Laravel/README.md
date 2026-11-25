@@ -98,9 +98,13 @@ app/Bd/
 app/Http/Controllers/ one per surface
 app/Livewire/         SignIn, BdForm, BdQuiz
 app/Support/Money.php cents vs decimal — see the note below
+app/Support/PostHtml.php    a post's HTML rebuilt from an allowlist, reading time, dates
+app/Support/CartVisitor.php the cart cookie, and the item count for the store bar
 config/bd.php       every knob, all server-side
-routes/web.php        twelve pages + four machine endpoints
-resources/views/      layout.blade.php, pages/, livewire/, forms/, quiz/
+routes/web.php        the pages + the JSON and machine endpoints
+resources/views/      layout.blade.php, pages/, components/, livewire/, forms/, quiz/
+public/shop/          the shop and blog elements (plain ES modules, no build)
+public/bd-*.css       their styles: bd-pages (shared), bd-shop, bd-blog
 ```
 
 ## Feature parity
@@ -108,12 +112,13 @@ resources/views/      layout.blade.php, pages/, livewire/, forms/, quiz/
 | Surface | Route(s) | Calls |
 | --- | --- | --- |
 | **Home sections** | `/` | `marketing.getPageBundle`, `storefront.listProducts`, `blog.listPosts` |
-| **Storefront** | `/store`, `/store/{id}` | `storefront.listProductsWithMeta`, `getProduct`, `getRelatedProducts`, `getProductReviews` |
+| **Storefront** | `/store`, `/store/{id}` | `storefront.listProductsWithMeta` (search, category, price, rating and sort, all links in the URL), `listCategories`, `getProduct`, `getProductReviews`, `getProductAddons`, `getRelatedProducts`. The product page has option photos, option and size buttons, add to cart with the chosen options (`POST /api/bd/cart/add`), save, compare, share, add-ons, reviews, related and recently viewed. |
+| **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=a,b` | Saved in the shopper's browser; the compare table loads each product with `storefront.getProduct` |
 | **Cart** | `/cart` + mutations | `cart.{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie |
-| **Checkout** | `POST /cart/checkout` | `checkout.start` → 303 to `stripeUrl` |
+| **Checkout** | `POST /cart/checkout` → Stripe → `/store/order` | `checkout.start` → 303 to `stripeUrl`; back from Stripe, `checkout.get(sessionId)` says whether it's paid |
 | **Subscriptions** | `/subscriptions` | `subscriptions.list`, `subscriptions.checkout` |
-| **Blog** | `/blog`, `/blog/{slug}` | `blog.listPosts`, `getPost`, `listComments` |
-| **Reviews wall** | `/reviews` | `reviews.list({limit, offset})` |
+| **Blog** | `/blog`, `/blog/{slug}`, `POST /blog/{slug}/like`, `POST /blog/{slug}/comment` | `blog.listPosts` (category, tag, paging), `listCategories`, `listTags`, `getPost` (HTML made safe on the server), `listComments`, `likeStatus`, `toggleLike`, `postComment` — liking and commenting need a signed-in customer |
+| **Business reviews** | `/reviews` (`?source=` filters, `?shown=` shows more), `POST /reviews/write` | The bundle's `reviews` (average, count, count per star), `reviews.list(limit, offset, source)`, `portal.submitReview`. The page shows the rating with a bar per star, a platform filter, each review with its photos, Verified and a link to it on Google or Yelp, and more on demand; a signed-in customer writes one with `<bd-review-writer>` (`public/shop/reviews-elements.js`) and it waits for approval. The rules are `App\Support\Reviews` (tested in `tests/Unit/ReviewsTest.php`), the same as `reviews.ts` in the other BD starters. |
 | **Updates** | `/updates` | `bundle.updates` |
 | **Programmatic SEO** | `/services`, `/services/{service}/{area}` | `parallelPages.listVariants`, `render` |
 | **Auth + portal** | `/my-account` (sign-in screen, a Livewire component: `App\Livewire\SignIn`, words, checks and brand colours in `App\Bd\SignInCore`; `?next=/path` comes back after), `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.{me,signOut}`, `portal.{getWork,submitReview}` |
@@ -161,6 +166,34 @@ updates in place.
 
 **4. Tagged cache needs a tag-capable store.** `file` and `database` don't support tags, so the publish webhook falls back to flushing everything. Use `redis` or `memcached` in production.
 
+## The shop and blog elements
+
+The product page, the wishlist, the compare table, the save buttons, and a
+post's likes and comments are small custom elements, the same ones every BD
+starter ships, as plain ES modules in `public/shop/`. There is no bundler and
+no npm at runtime: the browser loads them as they are.
+
+The controller reads the data and the view writes it inside the element as JSON
+(`<x-element-data>`); the element draws the page from it. The store list,
+filters, cart, blog list and post body are plain Blade and work without
+JavaScript.
+
+- **CSRF.** The elements send the `<meta name="csrf-token">` from the layout as
+  `X-CSRF-Token` on every POST, so the JSON endpoints stay behind Laravel's
+  CSRF check.
+- **Wishlist and compare** are kept in the shopper's browser (`localStorage`),
+  not at BD. The compare page puts its picks in the URL (`?ids=a,b`), so a
+  comparison can be shared.
+- **Post HTML** is rebuilt from an allowlist by `App\Support\PostHtml::safe()`
+  before it reaches the page: unknown tags are dropped, links and images are limited to
+  web, mail, phone and same-site addresses, and every attribute is escaped. It is a
+  port of the SDK's `safePostHtml`, and `tests/Unit/PostHtmlParityTest.php`
+  replays the TypeScript's answers (`tests/Fixtures/post-html-parity.json`) to
+  keep it so. Don't print `content` with `{!! !!}` anywhere else.
+- **Likes and comments** go out with the customer's `bd_session` cookie as
+  `X-BD-Session-Token`. Signed out, the like button and comment box become
+  links to `/my-account?next=…`, which comes back to the post.
+
 ## The CDN pin
 
 `layout.blade.php` imports the analytics island, and `forms/styles.blade.php` the forms stylesheet, from esm.sh at an **exact version**, not `@latest`. A CDN import has no lockfile: `@latest` would roll this page forward on somebody else's release, with no PR and no way to pin a rollback. Bump it deliberately, and keep it in step with `package.json`.
@@ -169,7 +202,7 @@ updates in place.
 
 - **No native chatbot UI.** Front Desk chat is a polling API (`chatbot/messages`, every 3–5s while open). A Blade page can poll it, but the SDK's widget isn't ported. Wire `<bd-chat>` from the CDN, or build it.
 - **No typed models.** Responses are PHP arrays; the views use `data_get()` with defaults. Real DTOs would be the natural next step if this graduates from a starter to a package.
-- **No shipping / address / coupons-admin surfaces.** The endpoints exist; the client covers what these twelve pages use.
+- **No shipping / address / coupons-admin surfaces.** The endpoints exist; the client covers what these pages use.
 
 <!-- [bd:donations] -->
 ## Donations

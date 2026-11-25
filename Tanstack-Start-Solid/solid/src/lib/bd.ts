@@ -101,12 +101,14 @@ export type BundleUpdateItem = {
 	postedAt: string | null;
 };
 
-/** First page of org reviews + aggregate, as shipped on the bundle.
+/** First page of org reviews + aggregate, as shipped on the bundle: the
+ *  average, the total and how many of each star (`counts`).
  *  (Bundle review items are `{ reviewee, description, date, rating }`,
  *  distinct from `reviews.list` wall items — map each at its call site.) */
 export type BundleReviews = {
 	rating: number | null;
 	totalCount: number | null;
+	counts?: { rating: number; count: number }[];
 	items: Array<{
 		reviewee: string;
 		rating: number;

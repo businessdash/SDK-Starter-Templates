@@ -1,4 +1,4 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city";
 
@@ -10,8 +10,12 @@ import type { SubscriptionOffering } from "@businessdash/sdk/contracts";
 
 import { Footer } from "../../components/bd/Footer";
 import { SiteHeader } from "../../components/bd/SiteHeader";
+import { StoreNav } from "../../components/bd/StoreNav";
 import { getBd } from "../../lib/bd";
 import { formatMoney } from "../../lib/bd-store";
+// [bd:store]
+import { getCartSnapshot } from "../../lib/bd-store";
+// [/bd:store]
 import { getCustomerSession, startPlanCheckout } from "../../lib/bd-portal";
 
 const SIGN_IN = "/my-account?next=/subscriptions";
@@ -62,8 +66,18 @@ const startSubscriptionRpc = server$(async function (this, id: string) {
 	}
 });
 
+// [bd:store]
+/** The store bar's cart count. */
+export const useCartCount = routeLoader$(
+	async ({ cookie }) => (await getCartSnapshot(cookie))?.itemCount ?? 0,
+);
+// [/bd:store]
+
 export default component$(() => {
 	const data = useSubscriptions();
+	// [bd:store]
+	const cartCount = useCartCount();
+	// [/bd:store]
 	const busy = useSignal<string | null>(null);
 	const error = useSignal<string | null>(null);
 
@@ -81,6 +95,12 @@ export default component$(() => {
 	return (
 		<>
 			<SiteHeader signedIn={data.value.signedIn} />
+			{/* [bd:store] */}
+			<StoreNav cartCount={cartCount.value} />
+			{/* [/bd:store] */}
+			{/* [bd:!store] */}
+			<StoreNav />
+			{/* [/bd:!store] */}
 			<main>
 				<section class="bd-section">
 					<div class="bd-section__lead">

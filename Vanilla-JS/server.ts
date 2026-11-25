@@ -7,11 +7,14 @@
  * consumer "David's Garage Pro"):
  *   - Marketing bundle, gallery, blog, scheduling, forms (the baseline).
  * [bd:store]
- *   - Storefront + cart + checkout (visitor-token cart).
+ *   - Storefront + cart + checkout (visitor-token cart), wishlist and compare.
  * [/bd:store]
- * [bd:saas]
+ * [bd:blog]
+ *   - Blog pages, with likes and comments for signed-in customers.
+ * [/bd:blog]
+ * [bd:subscriptions]
  *   - Subscription plans.
- * [/bd:saas]
+ * [/bd:subscriptions]
  *   - Customer portal + tenant auth (createAuthHandler at /api/bd-auth/*).
  *   - Reviews wall, news banner + updates feed.
  *   - Programmatic-SEO parallel pages + sitemap.xml / robots.txt proxies +
@@ -41,6 +44,11 @@ import {
 	TODO_IMAGES_OBJECT_ID,
 } from "./bd.data-model.config";
 import { cached, invalidateTags } from "./lib/cache";
+// [bd:blog]
+import { readingMinutes, safePostHtml } from "./lib/shop/blog";
+// [/bd:blog]
+import { checkReview } from "./lib/shop/reviews";
+import { loadReviewsPage } from "./lib/shop/reviews-page";
 
 const PORT = Number(process.env.PORT ?? 3000);
 
@@ -276,15 +284,17 @@ function navHtml(): string {
     <!-- [bd:store] -->
     <a href="/store">Store</a>
     <!-- [/bd:store] -->
-    <!-- [bd:saas] -->
+    <!-- [bd:subscriptions] -->
+    <!-- [bd:!store] -->
     <a href="/subscriptions">Plans</a>
-    <!-- [/bd:saas] -->
+    <!-- [/bd:!store] -->
+    <!-- [/bd:subscriptions] -->
+    <!-- [bd:blog] -->
+    <a href="/blog">Blog</a>
+    <!-- [/bd:blog] -->
     <a href="/reviews">Reviews</a>
     <a href="/updates">Updates</a>
     <a href="/todos">Todos</a>
-    <!-- [bd:store] -->
-    <a href="/cart">Cart</a>
-    <!-- [/bd:store] -->
     <a href="/my-account">Account</a>
   </nav>
   <span class="docnav__auth">
@@ -301,6 +311,8 @@ async function pageShell(opts: {
 	title: string;
 	description?: string;
 	module: string;
+	/** Another stylesheet the page needs (the shop's or the blog's). */
+	css?: string;
 }): Promise<Response> {
 	const jsonLd = await siteJsonLd(opts.origin);
 	const html = `<!doctype html>
@@ -311,6 +323,7 @@ async function pageShell(opts: {
   <title>${esc(opts.title)}</title>
   ${opts.description ? `<meta name="description" content="${esc(opts.description)}" />` : ""}
   <link rel="stylesheet" href="/styles.css" />
+  ${opts.css ? `<link rel="stylesheet" href="${esc(opts.css)}" />` : ""}
   <!-- SDK form styles (file-upload box, multi-step progress, choice chips). The
        container background is intentionally transparent — the template owns it. -->
   <link rel="stylesheet" href="/bd-forms.css" />
@@ -444,12 +457,21 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		}
 	},
 
+	// [bd:blog]
+	// Posts newest first; `cursor` pages, `categoryId` filters.
 	"GET /api/bd/blog/posts": async (req) => {
 		if (!bd) return notConfigured();
-		const limit = Number(new URL(req.url).searchParams.get("limit") ?? "6");
+		const p = new URL(req.url).searchParams;
+		const limit = Math.min(Math.max(Number(p.get("limit") ?? "6") || 6, 1), 50);
+		const cursor = p.has("cursor") ? Number(p.get("cursor")) : null;
+		const categoryId = p.get("categoryId") || undefined;
 		try {
-			const result = await cached(`blog:${limit}`, ["bd:blog"], () =>
-				bd.blog.listPosts({ limit }),
+			const result = await cached(`blog:${limit}:${cursor ?? ""}:${categoryId ?? ""}`, ["bd:blog"], () =>
+				bd.blog.listPosts({
+					limit,
+					...(cursor != null && Number.isFinite(cursor) ? { cursor } : {}),
+					...(categoryId ? { categoryId } : {}),
+				}),
 			);
 			return json(result);
 		} catch (err) {
@@ -457,6 +479,26 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		}
 	},
 
+	"GET /api/bd/blog/categories": async () => {
+		if (!bd) return notConfigured();
+		try {
+			return json(await cached("blog:categories", ["bd:blog"], () => bd.blog.listCategories()));
+		} catch (err) {
+			return errResponse(err);
+		}
+	},
+
+	"GET /api/bd/blog/tags": async () => {
+		if (!bd) return notConfigured();
+		try {
+			return json(await cached("blog:tags", ["bd:blog"], () => bd.blog.listTags()));
+		} catch (err) {
+			return errResponse(err);
+		}
+	},
+	// [/bd:blog]
+
+	// [bd:booking]
 	"GET /api/bd/scheduling/event-types": async () => {
 		if (!bd) return notConfigured();
 		try {
@@ -505,6 +547,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 			return json({ error: errMessage(err) }, 400);
 		}
 	},
+	// [/bd:booking]
 
 	"GET /api/bd/forms/schema": async (req) => {
 		if (!bd) return notConfigured();
@@ -595,7 +638,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 	},
 	// [/bd:store]
 
-	// [bd:saas]
+	// [bd:subscriptions]
 	"GET /api/bd/subscriptions": async (req) => {
 		if (!bd) return notConfigured();
 		try {
@@ -648,7 +691,7 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 			return json({ error: errMessage(err) }, 400);
 		}
 	},
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	// ── reviews wall (paginated) ──────────────────────────────────
 	"GET /api/bd/reviews": async (req) => {
@@ -665,6 +708,48 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 			return json(result);
 		} catch (err) {
 			return errResponse(err);
+		}
+	},
+
+	// The reviews page's data: the rating with its count per star, the first
+	// `shown` reviews (`?source=` for one platform), the platforms for the
+	// filter, the "Show more" link, and whether a customer is signed in.
+	"GET /api/bd/reviews/page": async (req) => {
+		const data = await loadReviewsPage({
+			params: new URL(req.url).searchParams,
+			list: bd
+				? (query) =>
+						cached(`reviews:${query.source ?? "all"}:${query.limit}:${query.offset ?? 0}`, ["bd:reviews"], () =>
+							bd.reviews.list(query),
+						)
+				: null,
+			totals: bd
+				? cached("bundle:home:en", ["bd:marketing", "bd:marketing:home"], () =>
+						bd.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
+					).then((bundle) => bundle.reviews)
+				: Promise.resolve(null),
+			signedIn: getSession(req).then((session) => session !== null),
+		});
+		return json(data, 200, { "Cache-Control": "no-store" });
+	},
+
+	// `{ rating, title?, body }` from <bd-review-writer> on /reviews, for the
+	// signed-in customer. It shows once the business approves it.
+	"POST /api/bd/reviews/write": async (req) => {
+		if (!bd) return notConfigured();
+		// A JSON body only: a form on another site can't send one.
+		if (!req.headers.get("content-type")?.includes("application/json")) {
+			return json({ ok: false, error: "Send JSON." }, 415);
+		}
+		const session = await getSession(req);
+		if (!session) return json({ ok: false, error: "Sign in to write a review." }, 401);
+		const checked = checkReview(((await req.json().catch(() => null)) ?? {}) as Record<string, unknown>);
+		if (!checked.ok) return json({ ok: false, error: checked.error }, 400);
+		try {
+			await portalFor(session).submitReview(checked.review);
+			return json({ ok: true });
+		} catch {
+			return json({ ok: false, error: "Couldn't send your review. Try again." }, 502);
 		}
 	},
 
@@ -686,13 +771,20 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		if (!bd) return notConfigured();
 		const { token, setCookie } = resolveVisitor(req);
 		try {
-			const body = (await req.json()) as { productId: string; variantId?: string | null; quantity?: number };
+			const body = (await req.json()) as {
+				productId: string;
+				variantId?: string | null;
+				quantity?: number;
+				options?: Record<string, string>;
+			};
 			const snapshot = await bd.cart.forVisitor(token).addItem({
 				productId: body.productId,
 				variantId: body.variantId ?? undefined,
 				quantity: body.quantity ?? 1,
+				...(body.options && Object.keys(body.options).length > 0 ? { options: body.options } : {}),
 			});
-			return json(snapshot, 200, setCookie ? { "Set-Cookie": setCookie } : {});
+			// `ok` + `itemCount` for the product page; the snapshot for everyone else.
+			return json({ ...snapshot, ok: true }, 200, setCookie ? { "Set-Cookie": setCookie } : {});
 		} catch (err) {
 			return errResponse(err);
 		}
@@ -798,12 +890,12 @@ const routes: Record<string, (req: Request) => Promise<Response>> = {
 		try {
 			const work = await portalFor(session).getWork();
 			let plan = null;
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan = await portalFor(session)
 				.getSubscription()
 				.then((r) => r.subscription)
 				.catch(() => null);
-			// [/bd:saas]
+			// [/bd:subscriptions]
 			return json({ signedIn: true, user: session.user, work, plan });
 		} catch (err) {
 			return errResponse(err);
@@ -944,6 +1036,92 @@ const patternRoutes: Array<{
 		},
 	},
 	// [/bd:store]
+	// [bd:blog]
+	// One post, ready for the page: its HTML is rebuilt from an allowlist here
+	// (`safePostHtml`), so only that reaches the browser. Likes and comments
+	// come along; `liked` and `signedIn` are this visitor's own.
+	{
+		method: "GET",
+		pattern: /^\/api\/bd\/blog\/post\/([^/]+)$/,
+		handler: async (req, m) => {
+			if (!bd) return notConfigured();
+			const slug = decodeURIComponent(m[1] ?? "");
+			let found: Awaited<ReturnType<typeof bd.blog.getPost>>;
+			try {
+				found = await cached(`blog:post:${slug}`, ["bd:blog", `bd:blog:${slug}`], () => bd.blog.getPost(slug));
+			} catch (err) {
+				if (err instanceof BdServiceSuspendedError || err instanceof BdPaymentLapsedError) return errResponse(err);
+				return json({ error: "Post not found." }, 404);
+			}
+			const session = await getSession(req);
+			const blog = session ? bd.blog.withSession(session.token) : bd.blog;
+			const [likes, comments] = await Promise.all([
+				blog.likeStatus(slug).catch(() => null),
+				bd.blog.listComments(slug, { limit: 50 }).catch(() => ({ items: [] })),
+			]);
+			const { post, access } = found;
+			return json({
+				post: {
+					title: post.title,
+					slug: post.slug,
+					excerpt: post.excerpt,
+					imageUrl: post.imageUrl,
+					publishedAt: post.publishedAt,
+					authorName: post.authorName,
+					authorAvatarUrl: post.authorAvatarUrl,
+					tags: post.tags,
+					ctaLabel: post.ctaLabel,
+					ctaHref: post.ctaHref,
+					ctaDescription: post.ctaDescription,
+				},
+				html: safePostHtml(post.content),
+				minutes: readingMinutes(post.content),
+				paywalled: access === "paywall",
+				likes: likes ?? { liked: false, likesCount: post.likes },
+				comments: comments.items,
+				signedIn: session !== null,
+			});
+		},
+	},
+	// Like or unlike, for the signed-in customer.
+	{
+		method: "POST",
+		pattern: /^\/api\/bd\/blog\/post\/([^/]+)\/like$/,
+		handler: async (req, m) => {
+			if (!bd) return notConfigured();
+			const token = getCookie(req, SESSION_COOKIE);
+			if (!token) return json({ error: "Sign in to like posts." }, 401);
+			try {
+				return json(await bd.blog.withSession(token).toggleLike(decodeURIComponent(m[1] ?? "")));
+			} catch {
+				return json({ error: "Couldn't save your like. Try again." }, 502);
+			}
+		},
+	},
+	// `{ content }` in; out, whether it shows now or waits for approval, and the
+	// comments as they are now.
+	{
+		method: "POST",
+		pattern: /^\/api\/bd\/blog\/post\/([^/]+)\/comment$/,
+		handler: async (req, m) => {
+			if (!bd) return notConfigured();
+			const token = getCookie(req, SESSION_COOKIE);
+			if (!token) return json({ ok: false, error: "Sign in to comment." }, 401);
+			const slug = decodeURIComponent(m[1] ?? "");
+			const body = (await req.json().catch(() => null)) as { content?: unknown } | null;
+			const content = typeof body?.content === "string" ? body.content.trim() : "";
+			if (!content) return json({ ok: false, error: "Write something first." }, 400);
+			if (content.length > 5000) return json({ ok: false, error: "Comments are up to 5,000 characters." }, 400);
+			try {
+				const res = await bd.blog.withSession(token).postComment(slug, { content });
+				const comments = await bd.blog.listComments(slug, { limit: 50 });
+				return json({ ok: true, approved: res.moderation.isApproved, comments: comments.items });
+			} catch {
+				return json({ ok: false, error: "Couldn't post your comment. Try again." }, 502);
+			}
+		},
+	},
+	// [/bd:blog]
 ];
 
 // ── SEO proxies (host root, not the package API path) ──────────────
@@ -986,18 +1164,33 @@ async function proxyRobots(): Promise<Response> {
 
 // ── server-rendered HTML pages (each loads one /pages/*.js module) ─
 
+// [bd:store]
+const SHOP_CSS = "/bd-shop.css";
+// [/bd:store]
+// [bd:blog]
+const BLOG_CSS = "/bd-blog.css";
+// [/bd:blog]
+
 async function matchHtmlPage(pathname: string, origin: string): Promise<Response | null> {
 	switch (pathname) {
 		// [bd:store]
 		case "/store":
-			return pageShell({ origin, title: "Store", description: "Browse our products.", module: "store" });
+			return pageShell({ origin, title: "Store", description: "Browse our products.", module: "store", css: SHOP_CSS });
+		case "/store/wishlist":
+			return pageShell({ origin, title: "Wishlist", description: "Products you saved.", module: "wishlist", css: SHOP_CSS });
+		case "/store/compare":
+			return pageShell({ origin, title: "Compare", description: "Products side by side.", module: "compare", css: SHOP_CSS });
 		case "/cart":
-			return pageShell({ origin, title: "Your cart", module: "cart" });
+			return pageShell({ origin, title: "Your cart", module: "cart", css: SHOP_CSS });
 		// [/bd:store]
-		// [bd:saas]
+		// [bd:subscriptions]
 		case "/subscriptions":
 			return pageShell({ origin, title: "Plans", description: "Subscription plans.", module: "subscriptions" });
-		// [/bd:saas]
+		// [/bd:subscriptions]
+		// [bd:blog]
+		case "/blog":
+			return pageShell({ origin, title: "Blog", description: "News, guides and stories.", module: "blog", css: BLOG_CSS });
+		// [/bd:blog]
 		case "/my-account":
 			return pageShell({ origin, title: "My account", module: "my-account" });
 		case "/updates":
@@ -1005,15 +1198,20 @@ async function matchHtmlPage(pathname: string, origin: string): Promise<Response
 		case "/todos":
 			return pageShell({ origin, title: "Todos", description: "Relational custom-collections demo.", module: "todos" });
 		case "/reviews":
-			return pageShell({ origin, title: "Reviews", description: "What customers say.", module: "reviews" });
+			return pageShell({ origin, title: "Reviews", description: "What customers say.", module: "reviews", css: "/bd-reviews.css" });
 		case "/services":
 			return pageShell({ origin, title: "Service areas", description: "Programmatic-SEO pages.", module: "services" });
 	}
 	// [bd:store]
 	if (/^\/store\/[^/]+$/.test(pathname)) {
-		return pageShell({ origin, title: "Product", module: "product" });
+		return pageShell({ origin, title: "Product", module: "product", css: SHOP_CSS });
 	}
 	// [/bd:store]
+	// [bd:blog]
+	if (/^\/blog\/[^/]+$/.test(pathname)) {
+		return pageShell({ origin, title: "Blog", module: "blog-post", css: BLOG_CSS });
+	}
+	// [/bd:blog]
 	if (/^\/services\/[^/]+\/[^/]+$/.test(pathname)) {
 		return pageShell({ origin, title: "Service area", module: "services-area" });
 	}
@@ -1089,6 +1287,51 @@ async function serveSdkSignIn(): Promise<Response> {
 	});
 }
 
+/**
+ * The shop's, the blog's and the reviews' custom elements (`lib/shop/*.ts`)
+ * for the browser. The pages load plain ES modules with no bundler, so the server
+ * bundles each entry with Bun.build and serves it under /shop/. Built once in
+ * production; rebuilt on every request in development, so edits show up.
+ */
+const ELEMENT_BUNDLES: Record<string, string> = {
+	// [bd:store]
+	"/shop/shop-elements.js": "./lib/shop/shop-elements.ts",
+	// [/bd:store]
+	// [bd:blog]
+	"/shop/blog-elements.js": "./lib/shop/blog-elements.ts",
+	// [/bd:blog]
+	"/shop/reviews-elements.js": "./lib/shop/reviews-elements.ts",
+};
+const elementBundles = new Map<string, Promise<string | null>>();
+async function serveElements(pathname: string): Promise<Response | null> {
+	const entry = ELEMENT_BUNDLES[pathname];
+	if (!entry) return null;
+	const build = async () => {
+		try {
+			const built = await Bun.build({ entrypoints: [entry], target: "browser", format: "esm" });
+			const out = built.outputs.find((o) => o.kind === "entry-point");
+			if (!built.success || !out) console.error(`[bd] couldn't bundle ${entry}`, built.logs);
+			return built.success && out ? await out.text() : null;
+		} catch (err) {
+			console.error(`[bd] couldn't bundle ${entry}`, err);
+			return null;
+		}
+	};
+	const pending = process.env.NODE_ENV === "production" ? (elementBundles.get(pathname) ?? build()) : build();
+	elementBundles.set(pathname, pending);
+	const code = await pending;
+	if (!code) {
+		elementBundles.delete(pathname);
+		return new Response(`// ${entry} didn't build; see the server log\n`, {
+			status: 503,
+			headers: { "Content-Type": "text/javascript; charset=utf-8" },
+		});
+	}
+	return new Response(code, {
+		headers: { "Content-Type": "text/javascript; charset=utf-8", "Cache-Control": "no-cache" },
+	});
+}
+
 async function serveFormsCss(): Promise<Response> {
 	const file = Bun.file("./node_modules/@businessdash/sdk/dist/bd-forms.css");
 	const body = (await file.exists()) ? file : "/* @businessdash/sdk/bd-forms.css not installed yet */\n";
@@ -1157,6 +1400,10 @@ const server = Bun.serve({
 		// SDK form stylesheet (served from the installed package).
 		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
 		if (method === "GET" && pathname === "/_sdk/sign-in.js") return serveSdkSignIn();
+		if (method === "GET" && pathname.startsWith("/shop/")) {
+			const elements = await serveElements(pathname);
+			if (elements) return elements;
+		}
 
 		// Exact API routes.
 		const exact = routes[`${method} ${pathname}`];

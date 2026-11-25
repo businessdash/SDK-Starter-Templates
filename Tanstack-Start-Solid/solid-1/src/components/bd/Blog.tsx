@@ -1,3 +1,4 @@
+// [bd-file:blog]
 import { For, Show } from "solid-js";
 
 import type { BlogPost } from "../../lib/bd-server-fns";
@@ -47,6 +48,9 @@ export function Blog(props: { posts: BlogPost[] }) {
 					</For>
 				</div>
 			</Show>
+			<a class="blog-section__all" href="/blog">
+				All posts →
+			</a>
 		</section>
 	);
 }

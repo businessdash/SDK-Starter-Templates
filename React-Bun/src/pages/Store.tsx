@@ -1,43 +1,66 @@
 // [bd-file:store]
-import { useMemo, useState } from "react";
+import type { FormEvent } from "react";
 
-import { bd, money } from "../lib/bd";
-import { Link } from "../lib/router";
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { StoreNav } from "../components/StoreNav";
+import { CompareBar } from "../components/shop/CompareBar";
+import { SaveButtons } from "../components/shop/SaveButtons";
+import { StarRating } from "../components/shop/StarRating";
+import { formatCents } from "../components/shop/shop";
+import { bd } from "../lib/bd";
+import { Link, useRoute, useSearchParams } from "../lib/router";
+import { ErrorBox, useApi } from "./ui";
 
-type Sort = "featured" | "newest" | "price-asc" | "price-desc" | "rating-desc";
+const SORTS = [
+	{ value: "featured", label: "Featured" },
+	{ value: "newest", label: "Newest" },
+	{ value: "price-asc", label: "Price: low to high" },
+	{ value: "price-desc", label: "Price: high to low" },
+	{ value: "rating-desc", label: "Top rated" },
+] as const;
 
-const SORT_LABELS: Record<Sort, string> = {
-	featured: "Featured",
-	newest: "Newest",
-	"price-asc": "Price: low to high",
-	"price-desc": "Price: high to low",
-	"rating-desc": "Top rated",
+type Sort = (typeof SORTS)[number]["value"];
+
+type Card = {
+	id: string;
+	name: string;
+	coverImage: string | null;
+	cheapestPriceCents: number | null;
+	comparePriceCents: number | null;
+	hasMultipleVariants: boolean;
+	avgRating: number;
+	reviewCount: number;
+	isBestSeller: boolean;
+	isNew: boolean;
+	isOnSale: boolean;
+	isLowStock: boolean;
 };
 
-/** Five-star glyph row from an average rating (supports half stars). */
-function Stars({ rating }: { rating: number }) {
-	const full = Math.floor(rating);
-	const half = rating - full >= 0.5;
-	return (
-		<span className="product-card__stars" aria-label={`${rating.toFixed(1)} out of 5`}>
-			{[0, 1, 2, 3, 4].map((i) => (
-				<span key={i}>{i < full ? "★" : i === full && half ? "⯨" : "☆"}</span>
-			))}
-		</span>
-	);
+function parseSort(raw: string | null): Sort {
+	return SORTS.some((s) => s.value === raw) ? (raw as Sort) : "featured";
 }
 
-export function Store() {
-	const [search, setSearch] = useState("");
-	const [categoryId, setCategoryId] = useState<string | null>(null);
-	const [minRating, setMinRating] = useState<number | null>(null);
-	const [minPrice, setMinPrice] = useState("");
-	const [maxPrice, setMaxPrice] = useState("");
-	const [sort, setSort] = useState<Sort>("featured");
+function parseCents(raw: string | null): number | undefined {
+	if (!raw) return undefined;
+	const dollars = Number.parseFloat(raw);
+	return Number.isFinite(dollars) ? Math.round(dollars * 100) : undefined;
+}
 
-	const minPriceCents = minPrice ? Math.round(Number(minPrice) * 100) : undefined;
-	const maxPriceCents = maxPrice ? Math.round(Number(maxPrice) * 100) : undefined;
+/**
+ * The product list. Every filter is in the URL (?q, ?category, ?min, ?max,
+ * ?rating, ?sort), so a filtered list can be shared and the back button
+ * steps through filters.
+ */
+export function Store() {
+	const { navigate } = useRoute();
+	const params = useSearchParams();
+	const search = params.get("q")?.trim() || undefined;
+	const categoryId = params.get("category") || undefined;
+	const sort = parseSort(params.get("sort"));
+	const minPriceCents = parseCents(params.get("min"));
+	const maxPriceCents = parseCents(params.get("max"));
+	const ratingRaw = Number.parseInt(params.get("rating") ?? "", 10);
+	const minRating = ratingRaw >= 1 && ratingRaw <= 5 ? ratingRaw : undefined;
+	const hasFilters = ["q", "category", "min", "max", "rating"].some((key) => params.get(key));
 
 	const { data, error, loading } = useApi(
 		() =>
@@ -45,230 +68,266 @@ export function Store() {
 				limit: 48,
 				...(search ? { search } : {}),
 				...(categoryId ? { categoryId } : {}),
-				...(minRating != null ? { minRating } : {}),
 				...(minPriceCents != null ? { minPriceCents } : {}),
 				...(maxPriceCents != null ? { maxPriceCents } : {}),
+				...(minRating ? { minRating } : {}),
 				sort,
 			}),
-		[search, categoryId, minRating, minPriceCents, maxPriceCents, sort],
+		[search, categoryId, minPriceCents, maxPriceCents, minRating, sort],
 	);
-	// Categories load once for the sidebar (id → display name).
+	// Categories load once for the sidebar; the listing brings their counts.
 	const { data: catData } = useApi(() => bd.storefront.listCategories(), []);
 
-	const items: Record<string, any>[] = data?.items ?? [];
-	const categoryCounts: { categoryId: string; count: number }[] = data?.categoryCounts ?? [];
+	const products: Card[] = data?.items ?? [];
+	const counts = new Map<string, number>(
+		((data?.categoryCounts ?? []) as { categoryId: string; count: number }[]).map((c) => [c.categoryId, c.count]),
+	);
+	const categories = ((catData?.items ?? []) as { id: string; name: string }[]).map((c) => ({
+		id: c.id,
+		name: c.name,
+		count: counts.get(c.id) ?? 0,
+	}));
 	const priceRange = data?.priceRange as { minDollars: number; maxDollars: number } | undefined;
 
-	const categoryName = useMemo(() => {
-		const m = new Map<string, string>();
-		for (const c of (catData?.items ?? []) as { id: string; name: string }[]) m.set(c.id, c.name);
-		return m;
-	}, [catData]);
+	/** This list with some filters changed (null removes one). */
+	function hrefWith(changes: Record<string, string | null>): string {
+		const next = new URLSearchParams(params);
+		for (const [key, value] of Object.entries(changes)) {
+			if (value === null || value === "") next.delete(key);
+			else next.set(key, value);
+		}
+		const qs = next.toString();
+		return qs ? `/store?${qs}` : "/store";
+	}
 
-	const hasFilters = Boolean(
-		search || categoryId || minRating != null || minPrice || maxPrice || sort !== "featured",
-	);
-	const clearFilters = () => {
-		setSearch("");
-		setCategoryId(null);
-		setMinRating(null);
-		setMinPrice("");
-		setMaxPrice("");
-		setSort("featured");
-	};
+	/** A filter form: its fields replace those filters in the URL. */
+	function submitFilters(e: FormEvent<HTMLFormElement>) {
+		e.preventDefault();
+		const changes: Record<string, string | null> = {};
+		for (const [key, value] of new FormData(e.currentTarget)) changes[key] = String(value).trim() || null;
+		navigate(hrefWith(changes), { scroll: false });
+	}
 
 	return (
-		<main className="page">
-			<PageHead title="Store" sub="Native storefront on the BD SDK." />
-			<div className="store-layout">
-				<aside className="store-sidebar">
-					<div className="store-facet">
-						<label className="bd-label" htmlFor="store-search">
-							Search
-						</label>
-						<input
-							className="bd-input"
-							id="store-search"
-							type="search"
-							placeholder="Search products…"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-						/>
-					</div>
+		<>
+			<StoreNav />
+			<main className="bd-page">
+				<div className="bd-section__lead">
+					<span className="bd-section__eyebrow">Shop</span>
+					<h1 className="bd-section__title">Products</h1>
+					<p className="bd-section__sub">
+						Filter, sort, and open a product to choose its options and add it to your cart.
+					</p>
+				</div>
 
-					{categoryCounts.length > 0 ? (
-						<div className="store-facet">
-							<div className="store-facet__title">Categories</div>
-							<ul className="store-facet__list">
-								<li>
-									<button
-										type="button"
-										className={`store-facet__opt${categoryId === null ? " is-active" : ""}`}
-										onClick={() => setCategoryId(null)}
-									>
-										<span>All products</span>
-									</button>
-								</li>
-								{categoryCounts.map((c) => (
-									<li key={c.categoryId}>
-										<button
-											type="button"
-											className={`store-facet__opt${categoryId === c.categoryId ? " is-active" : ""}`}
-											onClick={() =>
-												setCategoryId(categoryId === c.categoryId ? null : c.categoryId)
-											}
-										>
-											<span>{categoryName.get(c.categoryId) ?? "Category"}</span>
-											<span className="store-facet__count">{c.count}</span>
-										</button>
-									</li>
-								))}
-							</ul>
-						</div>
-					) : null}
+				{error && !data ? (
+					<ErrorBox error={error} />
+				) : (
+					<div className="store-layout">
+						<aside className="store-sidebar">
+							<form onSubmit={submitFilters}>
+								<label className="bd-label" htmlFor="store-search">
+									Search
+								</label>
+								<input
+									autoComplete="off"
+									className="bd-input"
+									defaultValue={params.get("q") ?? ""}
+									id="store-search"
+									key={params.get("q") ?? ""}
+									name="q"
+									placeholder="Search products…"
+									type="search"
+								/>
+							</form>
 
-					<div className="store-facet">
-						<div className="store-facet__title">Price</div>
-						<div className="store-facet__price">
-							<input
-								className="bd-input"
-								type="number"
-								min={0}
-								inputMode="decimal"
-								placeholder={priceRange ? `$${priceRange.minDollars}` : "Min"}
-								value={minPrice}
-								onChange={(e) => setMinPrice(e.target.value)}
-								aria-label="Minimum price"
-							/>
-							<span className="store-facet__dash">—</span>
-							<input
-								className="bd-input"
-								type="number"
-								min={0}
-								inputMode="decimal"
-								placeholder={priceRange ? `$${priceRange.maxDollars}` : "Max"}
-								value={maxPrice}
-								onChange={(e) => setMaxPrice(e.target.value)}
-								aria-label="Maximum price"
-							/>
-						</div>
-					</div>
+							{categories.length > 0 ? (
+								<div className="store-facet">
+									<p className="store-facet__title">Category</p>
+									<ul className="store-facet__list">
+										<li>
+											<Link
+												className={`store-facet__item${categoryId ? "" : " store-facet__item--active"}`}
+												keepScroll
+												to={hrefWith({ category: null })}
+											>
+												All products
+											</Link>
+										</li>
+										{categories.map((c) => {
+											const active = categoryId === c.id;
+											return (
+												<li key={c.id}>
+													<Link
+														className={`store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}`}
+														keepScroll
+														to={hrefWith({ category: active ? null : c.id })}
+													>
+														<span>{c.name}</span>
+														<span className="store-facet__count">{c.count}</span>
+													</Link>
+												</li>
+											);
+										})}
+									</ul>
+								</div>
+							) : null}
 
-					<div className="store-facet">
-						<div className="store-facet__title">Rating</div>
-						<div className="store-facet__ratings">
-							{[4, 3, 2, 1].map((r) => (
-								<button
-									key={r}
-									type="button"
-									className={`store-facet__opt${minRating === r ? " is-active" : ""}`}
-									onClick={() => setMinRating(minRating === r ? null : r)}
-								>
-									<span className="product-card__stars">
-										{"★".repeat(r)}
-										{"☆".repeat(5 - r)}
+							<form className="store-facet" onSubmit={submitFilters}>
+								<p className="store-facet__title">Price</p>
+								<div className="store-price">
+									<input
+										aria-label="Lowest price"
+										className="bd-input"
+										defaultValue={params.get("min") ?? ""}
+										inputMode="decimal"
+										key={`min${params.get("min") ?? ""}`}
+										name="min"
+										placeholder={priceRange ? `$${priceRange.minDollars.toFixed(0)}` : "Min"}
+									/>
+									<span aria-hidden="true" className="store-price__sep">
+										–
 									</span>
-									<span>&amp; up</span>
+									<input
+										aria-label="Highest price"
+										className="bd-input"
+										defaultValue={params.get("max") ?? ""}
+										inputMode="decimal"
+										key={`max${params.get("max") ?? ""}`}
+										name="max"
+										placeholder={priceRange ? `$${priceRange.maxDollars.toFixed(0)}` : "Max"}
+									/>
+								</div>
+								<button className="bd-btn bd-btn--ghost store-price__apply" type="submit">
+									Apply
 								</button>
-							))}
-						</div>
-					</div>
+							</form>
 
-					{hasFilters ? (
-						<button type="button" className="btn btn--ghost btn--sm" onClick={clearFilters}>
-							Clear filters
-						</button>
-					) : null}
-				</aside>
+							<div className="store-facet">
+								<p className="store-facet__title">Rating</p>
+								<ul className="store-facet__list">
+									{[4, 3, 2].map((r) => {
+										const active = minRating === r;
+										return (
+											<li key={r}>
+												<Link
+													className={`store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}`}
+													keepScroll
+													to={hrefWith({ rating: active ? null : String(r) })}
+												>
+													<StarRating rating={r} />
+													<span className="store-facet__count">&amp; up</span>
+												</Link>
+											</li>
+										);
+									})}
+								</ul>
+							</div>
 
-				<section className="store-results">
-					<div className="store-results__bar">
-						<span className="muted">
-							{loading ? "Loading…" : `${items.length} product${items.length === 1 ? "" : "s"}`}
-						</span>
-						<label className="store-sort">
-							<span className="muted">Sort</span>
-							<select
-								className="bd-select"
-								value={sort}
-								onChange={(e) => setSort(e.target.value as Sort)}
-							>
-								{(Object.keys(SORT_LABELS) as Sort[]).map((s) => (
-									<option key={s} value={s}>
-										{SORT_LABELS[s]}
-									</option>
-								))}
-							</select>
-						</label>
-					</div>
-
-					{error ? <ErrorBox error={error} /> : null}
-					{data && items.length === 0 ? (
-						<p className="bd-empty">
-							{hasFilters
-								? "No products match these filters."
-								: "No products published yet."}
-						</p>
-					) : null}
-
-					{items.length > 0 ? (
-						<div className="product-grid">
-							{items.map((p) => (
-								<Link
-									key={p.id}
-									className="product-card"
-									to={`/store/${encodeURIComponent(p.id)}`}
-								>
-									<div className="product-card__media">
-										{p.coverImage ? (
-											<img
-												className="product-card__img"
-												src={p.coverImage}
-												alt={p.name}
-												loading="lazy"
-											/>
-										) : (
-											<div className="product-card__img product-card__img--ph" />
-										)}
-										<div className="product-card__badges">
-											{p.isOnSale ? <span className="bd-badge badge--sale">Sale</span> : null}
-											{p.isNew ? <span className="bd-badge">New</span> : null}
-											{p.isBestSeller ? (
-												<span className="bd-badge">Best seller</span>
-											) : null}
-											{p.isLowStock ? (
-												<span className="bd-badge badge--low">Low stock</span>
-											) : null}
-										</div>
-									</div>
-									<div className="product-card__body">
-										<div className="product-card__name">{p.name ?? "Product"}</div>
-										{p.reviewCount > 0 ? (
-											<div className="product-card__rating">
-												<Stars rating={p.avgRating} />
-												<span className="muted">({p.reviewCount})</span>
-											</div>
-										) : null}
-										<div className="product-card__pricing">
-											{p.cheapestPriceCents != null ? (
-												<span className="product-card__price">
-													{p.hasMultipleVariants ? "From " : ""}
-													{money(p.cheapestPriceCents, p.currency)}
-												</span>
-											) : null}
-											{p.isOnSale && p.comparePriceCents != null ? (
-												<span className="product-card__compare">
-													{money(p.comparePriceCents, p.currency)}
-												</span>
-											) : null}
-										</div>
-									</div>
+							{hasFilters ? (
+								<Link className="store-clear" keepScroll to="/store">
+									Clear all filters
 								</Link>
-							))}
+							) : null}
+						</aside>
+
+						<div className="store-results">
+							<div className="store-results__bar">
+								<p className="bd-loading">
+									{loading && !data
+										? "Loading products…"
+										: `${products.length} ${products.length === 1 ? "product" : "products"}`}
+								</p>
+								<label className="store-sort">
+									<span>Sort</span>
+									<select
+										className="bd-select"
+										onChange={(e) =>
+											navigate(hrefWith({ sort: e.currentTarget.value === "featured" ? null : e.currentTarget.value }), {
+												scroll: false,
+											})
+										}
+										value={sort}
+									>
+										{SORTS.map((s) => (
+											<option key={s.value} value={s.value}>
+												{s.label}
+											</option>
+										))}
+									</select>
+								</label>
+							</div>
+
+							{!data ? null : products.length === 0 ? (
+								<div className="bd-empty">
+									{hasFilters
+										? "No products match these filters. Try clearing a filter or broadening your search."
+										: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
+								</div>
+							) : (
+								<div className="bd-grid-3">
+									{products.map((p) => (
+										<div className="bd-card product-card" key={p.id}>
+											<Link className="product-card__link" to={`/store/${p.id}`}>
+												<div className="product-card__media">
+													{p.coverImage ? (
+														<img
+															alt={p.name}
+															className="product-card__img"
+															loading="lazy"
+															referrerPolicy="no-referrer"
+															src={p.coverImage}
+														/>
+													) : (
+														<div className="product-card__noimg">No image</div>
+													)}
+													<div className="product-card__badges">
+														{p.isBestSeller ? <span className="bd-badge">Best seller</span> : null}
+														{p.isNew ? <span className="bd-badge">New</span> : null}
+														{p.isOnSale ? <span className="bd-badge product-card__badge--sale">Sale</span> : null}
+													</div>
+												</div>
+												<div className="product-card__body">
+													<h3>{p.name || "Untitled"}</h3>
+													{p.reviewCount > 0 ? (
+														<div className="product-card__rating">
+															<StarRating rating={p.avgRating} />
+															<span className="product-card__count">({p.reviewCount})</span>
+														</div>
+													) : null}
+													<div className="product-card__price">
+														<span className="product-card__amount">
+															{p.cheapestPriceCents != null
+																? `${p.hasMultipleVariants ? "From " : ""}${formatCents(p.cheapestPriceCents)}`
+																: "View details"}
+														</span>
+														{p.isOnSale && p.comparePriceCents != null ? (
+															<span className="product-card__compare">{formatCents(p.comparePriceCents)}</span>
+														) : null}
+													</div>
+													{p.isLowStock ? <span className="product-card__lowstock">Low stock</span> : null}
+												</div>
+											</Link>
+											<div className="product-card__save">
+												<SaveButtons
+													compact
+													product={{
+														id: p.id,
+														name: p.name,
+														image: p.coverImage,
+														priceCents: p.cheapestPriceCents,
+													}}
+												/>
+											</div>
+										</div>
+									))}
+								</div>
+							)}
+							<CompareBar />
 						</div>
-					) : null}
-				</section>
-			</div>
-		</main>
+					</div>
+				)}
+			</main>
+		</>
 	);
 }

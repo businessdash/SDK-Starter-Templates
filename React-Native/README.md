@@ -68,21 +68,51 @@ than being a dev-only escape hatch.
 
 ```
 app/                       expo-router
-  (tabs)/index.tsx         shop
-  (tabs)/cart.tsx          cart + Stripe hand-off
+  (tabs)/index.tsx         the store: rating, search, categories, filters, grid
+  (tabs)/cart.tsx          cart, coupon + Stripe hand-off
+  (tabs)/blog.tsx          the blog: topics, tags, pinned first
   (tabs)/chat.tsx          Front Desk
   (tabs)/account.tsx       sign-in screen + portal
-  product/[id].tsx
+  product/[id].tsx         a product: options, add-ons, reviews, rails
+  wishlist.tsx, compare.tsx
+  reviews.tsx              the business's reviews + writing one
+  blog/[slug].tsx          a post, likes, comments
+  checkout/success.tsx     back from Stripe (bdstarter://checkout/success)
 src/bd/
   client.ts    the two clients + the pk_ guard
   session.ts   session token → SecureStore, visitor id → AsyncStorage
+  customer.ts  the signed-in customer, and their portal client
+  cart-count.ts  the Cart tab's badge
   auth.ts      sign-in backend (BD's auth/customer/*) + provider links
-src/components/
-  SignInScreen.tsx  the business's own sign-in screen
-  useChat.ts   the polling chat loop
-  useBd.ts   useLoad / useVisitorToken
+  useBd.ts     useLoad / useVisitorToken
   money.ts     cents vs decimal
+  useChat.ts   the polling chat loop
+src/shop/      the rules every BD starter shares
+  shop.ts      product shaping: photos per option, "from" prices, specs
+  blog.ts      the post HTML allowlist, reading time
+  reviews.ts   the summary, platforms, links, checking a review
+  post-blocks.ts  a post's HTML as native blocks
+  saved.ts     wishlist, compare, recently viewed (AsyncStorage)
+src/components/
+  shop.tsx     stars, product card, save buttons, compare bar, rails
+  PostBody.tsx a post drawn with Text and Image
+  SignInScreen.tsx  the business's own sign-in screen
 ```
+
+## The store, the blog and reviews
+
+The same shop, blog and reviews as the web starters and the Swift app, as native screens. `src/shop/shop.ts`, `blog.ts` and `reviews.ts` are the web starters' own files, so a product shows the same photos for the same option, a post keeps the same HTML, and a review is checked the same way on every platform.
+
+- **Store.** The business's rating at the top (it opens Reviews), search, category chips with counts, and a sheet for price, rating and sort (`storefront.listProductsWithMeta`). Each card has its badges (Best seller, New, Sale), stars, a "From" or sale price, Low stock, and ♡ / ⇄ to save it or pick it to compare.
+- **Product.** Photos for the chosen style, style and option buttons (sizes smallest first; sold-out ones struck through), the price for what's chosen, quantity, add to cart, add-ons, features and specs, reviews with "Show more", "You may also like" and "Recently viewed".
+- **Wishlist and compare.** Kept on the phone in AsyncStorage (`src/shop/saved.ts`); nothing reaches the server. Compare holds four products side by side: price, rating, category, options and every spec.
+- **Cart.** Quantity, remove, a coupon, clear, the subtotal, and checkout in Stripe's page. Stripe sends the customer back to `bdstarter://checkout/success`, where the app says whether the order is paid. The Cart tab shows how many things are in it.
+- **Blog.** Topics, tags and pinned posts first, older posts on demand. A post is drawn natively from its HTML (`postBlocks`): headings, lists, quotes, code, photos with captions, tables; links open in the browser, mail or phone app, and nothing in a post runs in the app. A signed-in customer can like and comment; a members-only post asks them to sign in.
+- **Reviews.** The average with a bar per star, Google / Yelp / Other filters, each review with its photos, Verified and a link to it on Google or Yelp, and "Show more". A signed-in customer can write one (stars, an optional title, the review); the business approves it before it shows.
+
+Set `EXPO_PUBLIC_BD_SITE_URL` to your website's address and products and posts get a Share button that links to their web page.
+
+`pnpm test:shop` runs the shared rules' tests, including the post-HTML cases every BD starter checks its port against (`src/shop/__tests__/post-html-parity.json`).
 
 ## Five things that will bite you
 
@@ -123,11 +153,13 @@ Full guide: [Native Forms (React Native)](https://businessdash.us/docs/developer
 ## What this starter does not do
 
 - **No portal detail screens.** Sign-in works and the scopes allow the whole portal; only the session check is wired.
-- **No tests.** The SDK's own suite covers the client; what's here is app glue.
+- **Few tests.** `pnpm test` runs the forms renderer's and the shop rules' tests; the screens themselves have none.
 
 ## ⚠️ Verification
 
 **The Form tab has run on a device; the other screens haven't.** The form was walked end to end on an Android 16 emulator in Expo Go: every step, validation and scroll-to-error, a condition, the searchable sheets, calculations, color, date and time pickers, a picked PDF uploading on submit, the success screen and reset, light and dark. On iOS it has been rendered in the simulator, light and dark, but not tapped through.
+
+**The store, blog and reviews have run on the web, not yet on a device.** The Expo web build (react-native-web) was driven in a browser against a mock of BD's API at phone size: search, filters and sort, saving and comparing, a product with its options, add-ons, reviews and rails, adding to the cart, quantity and a coupon, the order screen, reviews with their filters, "Show more" and writing one signed in, the blog's topics and tags, a post, and liking and commenting signed in, with no console errors.
 
 The rest is **bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the other screens in a simulator yet.
 

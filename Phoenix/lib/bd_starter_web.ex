@@ -6,7 +6,8 @@ defmodule BdStarterWeb do
       use BdStarterWeb, :html
   """
 
-  def static_paths, do: ~w(assets fonts images favicon.ico bd-sign-in.css forms.css)
+  def static_paths,
+    do: ~w(assets fonts images favicon.ico bd-sign-in.css forms.css shop bd-pages.css bd-shop.css bd-blog.css bd-reviews.css)
 
   def router do
     quote do
@@ -53,6 +54,7 @@ defmodule BdStarterWeb do
 
       import BdStarterWeb.Bundle
       import BdStarterWeb.Money
+      import BdStarterWeb.ShopComponents
 
       alias Phoenix.LiveView.JS
 

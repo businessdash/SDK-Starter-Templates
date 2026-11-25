@@ -1,128 +1,105 @@
-import { useEffect, useState } from "react";
-import { useFetcher, useLoaderData } from "react-router";
-import type { LoaderFunctionArgs, MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
+import type {
+	LinksFunction,
+	LoaderFunctionArgs,
+	MetaFunction,
+} from "react-router";
 
+import reviewStyles from "~/bd-reviews.css?url";
 import { SiteHeader } from "~/components/SiteHeader";
+import { ReviewsView } from "~/components/reviews/ReviewsView";
+import {
+	type ReviewSendResult,
+	type ReviewToSend,
+	ReviewWriter,
+} from "~/components/reviews/ReviewWriter";
+import { loadReviewsPage } from "~/components/reviews/reviews-page";
 import {
 	getMarketingBundle,
 	getReviewsFromBundle,
 } from "~/lib/bd-bundle.server";
-import { isServiceSuspended } from "~/lib/bd.server";
+import { getCustomerSession } from "~/lib/bd-portal.server";
+import { getBd, isServiceSuspended } from "~/lib/bd.server";
 
 export const meta: MetaFunction = () => [{ title: "Reviews — Your Business" }];
 
-type WallReview = {
-	id: string;
-	reviewerName: string;
-	text: string;
-	rating: number;
-	timeCreated: string;
-};
+export const links: LinksFunction = () => [
+	{ rel: "stylesheet", href: reviewStyles },
+];
 
-export async function loader(_: LoaderFunctionArgs) {
+/**
+ * The business's reviews: the rating with a bar per star, a platform filter
+ * (`?source=`), each review with its photos, Verified and a link to it on
+ * Google or Yelp, "Show more" (`?shown=`), and writing one, which posts to
+ * `/api/reviews/write`. The rules are `components/reviews/reviews.ts`, the
+ * same in every BD starter.
+ */
+export async function loader({ request }: LoaderFunctionArgs) {
+	const bundle = getMarketingBundle();
+	const suspended = await bundle.then(
+		() => false,
+		(err: unknown) => isServiceSuspended(err),
+	);
+	if (suspended) return { suspended: true as const };
+	const bd = getBd();
+	const data = await loadReviewsPage({
+		params: new URL(request.url).searchParams,
+		list: bd ? (query) => bd.reviews.list(query) : null,
+		totals: bundle.then(getReviewsFromBundle),
+		signedIn: getCustomerSession(request).then((s) => s !== null),
+	});
+	return { suspended: false as const, data };
+}
+
+/** The writer's `send`: the review as JSON to the write route. */
+async function sendReview(review: ReviewToSend): Promise<ReviewSendResult> {
 	try {
-		const bundle = await getMarketingBundle();
-		const reviews = getReviewsFromBundle(bundle);
-		if (!reviews) {
-			return { suspended: false, average: null, count: 0, first: [] as WallReview[] };
-		}
-		// Bundle review items use `{ reviewee, description, date, rating }`. Map
-		// them into the same WALL shape `/api/reviews` returns so "load more"
-		// appends seamlessly.
-		const first: WallReview[] = reviews.items.map((r, i) => ({
-			id: `bundle-${i}`,
-			reviewerName: r.reviewee,
-			text: r.description,
-			rating: r.rating,
-			timeCreated: r.date,
-		}));
+		const res = await fetch("/api/reviews/write", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(review),
+		});
+		const reply = (await res.json().catch(() => null)) as {
+			ok?: boolean;
+			error?: string;
+		} | null;
+		if (res.ok && reply?.ok) return { ok: true };
 		return {
-			suspended: false,
-			average: reviews.rating,
-			count: reviews.totalCount ?? first.length,
-			first,
+			ok: false,
+			error: reply?.error ?? "Couldn't send your review. Try again.",
+			signedOut: res.status === 401,
 		};
-	} catch (err) {
-		if (isServiceSuspended(err)) {
-			return { suspended: true, average: null, count: 0, first: [] as WallReview[] };
-		}
-		throw err;
+	} catch {
+		return { ok: false, error: "Couldn't send your review. Try again." };
 	}
 }
 
 export default function ReviewsPage() {
-	const { suspended, average, count, first } = useLoaderData<typeof loader>();
-	const fetcher = useFetcher<{
-		items: WallReview[];
-		totalCount: number;
-		nextOffset: number | null;
-	}>();
-	const [items, setItems] = useState<WallReview[]>(first);
-	const [nextOffset, setNextOffset] = useState<number | null>(
-		first.length > 0 ? first.length : null,
-	);
-
-	useEffect(() => {
-		if (fetcher.data) {
-			setItems((prev) => [...prev, ...fetcher.data!.items]);
-			setNextOffset(fetcher.data.nextOffset);
-		}
-	}, [fetcher.data]);
-
-	function loadMore() {
-		if (nextOffset == null) return;
-		fetcher.load(`/api/reviews?offset=${nextOffset}&limit=10`);
-	}
-
-	if (suspended) {
-		return (
-			<>
-				<SiteHeader />
-				<main>
-					<section className="section">
-						<h1 className="section__title">Reviews</h1>
-						<p className="muted">Temporarily unavailable. Please check back soon.</p>
-					</section>
-				</main>
-			</>
-		);
-	}
+	const page = useLoaderData<typeof loader>();
 
 	return (
 		<>
 			<SiteHeader />
-			<main>
-				<section className="section">
-					<h1 className="section__title">Reviews</h1>
-					{average != null ? (
-						<p className="reviews-agg">
-							<strong>{average.toFixed(1)}</strong> ★ · {count} review
-							{count === 1 ? "" : "s"}
+			<main className="bd-page">
+				{page.suspended ? (
+					<>
+						<h1 className="bd-section__title">Reviews</h1>
+						<p className="bd-empty">
+							Temporarily unavailable. Please check back soon.
 						</p>
-					) : (
-						<p className="muted">No reviews yet.</p>
-					)}
-					<ul className="review-list">
-						{items.map((r) => (
-							<li className="review" key={r.id}>
-								<div className="review__head">
-									<strong>{r.reviewerName}</strong>
-									<span className="stars">{"★".repeat(Math.round(r.rating))}</span>
-								</div>
-								<p>{r.text}</p>
-							</li>
-						))}
-					</ul>
-					{nextOffset != null && items.length < count ? (
-						<button
-							className="bd-btn"
-							onClick={loadMore}
-							disabled={fetcher.state !== "idle"}
-						>
-							{fetcher.state !== "idle" ? "Loading…" : "Load more"}
-						</button>
-					) : null}
-				</section>
+					</>
+				) : (
+					<ReviewsView
+						data={page.data}
+						writer={
+							<ReviewWriter
+								send={sendReview}
+								signedIn={page.data.signedIn}
+								signInHref="/my-account?next=%2Freviews"
+							/>
+						}
+					/>
+				)}
 			</main>
 		</>
 	);

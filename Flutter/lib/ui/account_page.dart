@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 
+import 'app_state.dart';
+
 /// The app's URL scheme. "Continue with Google / Apple / GitHub / Discord"
 /// comes back to `bdstarter://bd-oauth`; on Android, flutter_web_auth_2's
 /// `CallbackActivity` has to be registered for it in AndroidManifest.xml
@@ -30,11 +32,6 @@ class _AccountPageState extends State<AccountPage> {
   late final BdSignInBackend? _backend = widget.publishableKey.isEmpty
       ? null
       : BdBusinessDashSignInBackend(publishableKey: widget.publishableKey, host: Uri.parse(widget.host));
-
-  // A real app keeps `session.sessionToken` in the Keychain / Keystore
-  // (flutter_secure_storage) so a sign-in survives a relaunch, and sends it
-  // as `X-BD-Session-Token` on customer-portal calls.
-  BdSignInSession? _session;
 
   // Account calls belong to the business the key is for, not to a site, so
   // this client needs no site id.
@@ -82,10 +79,8 @@ class _AccountPageState extends State<AccountPage> {
       problem = _deleteFailed;
     }
     if (!mounted) return;
-    setState(() {
-      _deleting = false;
-      if (signedOut) _session = null;
-    });
+    setState(() => _deleting = false);
+    if (signedOut) AppScope.read(context).session = null;
     if (problem != null) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(problem)));
     }
@@ -105,7 +100,12 @@ class _AccountPageState extends State<AccountPage> {
   @override
   Widget build(BuildContext context) {
     final backend = _backend;
-    final session = _session;
+    // The session lives in AppState: the blog and reviews send it too, and
+    // it outlasts this tab. A real app keeps `session.sessionToken` in the
+    // Keychain / Keystore (flutter_secure_storage) so a sign-in survives a
+    // relaunch, and sends it as `X-BD-Session-Token` on customer-portal calls.
+    final app = AppScope.of(context);
+    final session = app.session;
     return Scaffold(
       appBar: AppBar(title: const Text('Account')),
       body: switch ((backend, session)) {
@@ -120,7 +120,7 @@ class _AccountPageState extends State<AccountPage> {
             tagline: 'Sign in to see your jobs, quotes and invoices.',
             authenticate: _authenticate,
             callbackScheme: bdCallbackScheme,
-            onSignedIn: (signedIn) => setState(() => _session = signedIn),
+            onSignedIn: (signedIn) => app.session = signedIn,
           ),
         (_, final session?) => Padding(
             padding: const EdgeInsets.all(24),
@@ -130,7 +130,7 @@ class _AccountPageState extends State<AccountPage> {
               children: [
                 Text('Signed in as ${session.user.email ?? 'a customer'}.'),
                 FilledButton.tonal(
-                  onPressed: () => setState(() => _session = null),
+                  onPressed: () => app.session = null,
                   child: const Text('Sign out'),
                 ),
                 // Google Play and the App Store require it in the app, not on a website.

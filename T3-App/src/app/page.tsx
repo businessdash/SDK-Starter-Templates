@@ -1,8 +1,12 @@
 import { renderJsonLdToHtml } from "@businessdash/sdk/seo";
 
 import { About } from "@/app/_components/bd/About";
+// [bd:blog]
 import { Blog } from "@/app/_components/bd/Blog";
+// [/bd:blog]
+// [bd:booking]
 import { Booking } from "@/app/_components/bd/Booking";
+// [/bd:booking]
 import { ContactForm } from "@/app/_components/bd/ContactForm";
 import { BdFooter } from "@/app/_components/bd/Footer";
 import { Gallery } from "@/app/_components/bd/Gallery";
@@ -77,10 +81,14 @@ export default async function Home() {
 				<About body={data.about} />
 				<Services services={data.services} />
 				<Gallery items={data.gallery} />
+				{/* [bd:booking] */}
 				<Booking eventTypes={data.eventTypes} />
+				{/* [/bd:booking] */}
 				<Reviews reviews={reviews} />
 				<Updates items={updates} />
+				{/* [bd:blog] */}
 				<Blog posts={data.blogPosts} />
+				{/* [/bd:blog] */}
 				<ContactForm schema={data.formSchema} slug={data.formSlug} />
 			</main>
 			<BdFooter />

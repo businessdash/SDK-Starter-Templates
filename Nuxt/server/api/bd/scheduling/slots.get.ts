@@ -1,3 +1,4 @@
+// [bd-file:booking]
 /**
  * GET /api/bd/scheduling/slots?slug=&from=&to=
  *

@@ -1,0 +1,43 @@
+---
+// [bd-file:store,subscriptions]
+/**
+ * The bar under the header on every store page: products and plans on the
+ * left; wishlist, compare and the cart with their counts on the right. The
+ * cart count is read here on the server and then follows each change the
+ * page announces (the `bd:cart-count` event); the saved lists live in this
+ * browser, so their counts are filled in there.
+ */
+// [bd:store]
+import { getCartCount } from "../lib/bd-store";
+
+const cartCount = await getCartCount(Astro.cookies).catch(() => 0);
+// [/bd:store]
+---
+
+<nav aria-label="Store" class="store-nav">
+	<div class="store-nav__links">
+		<!-- [bd:store] -->
+		<a href="/store">Products</a>
+		<!-- [/bd:store] -->
+		<!-- [bd:subscriptions] -->
+		<a href="/store/subscriptions">Plans</a>
+		<!-- [/bd:subscriptions] -->
+	</div>
+	<!-- [bd:store] -->
+	<div class="store-nav__links">
+		<a href="/store/wishlist">Wishlist<bd-saved-count data-list="wishlist"></bd-saved-count></a>
+		<a href="/store/compare">Compare<bd-saved-count data-list="compare"></bd-saved-count></a>
+		<a class="store-nav__cart" href="/store/cart">
+			Cart<bd-cart-count data-count={cartCount}>
+				{cartCount > 0 ? <span class="store-nav__badge">{cartCount}</span> : null}
+			</bd-cart-count>
+		</a>
+	</div>
+	<!-- [/bd:store] -->
+</nav>
+
+<!-- [bd:store] -->
+<script>
+	import "../lib/bd-shop/shop-elements";
+</script>
+<!-- [/bd:store] -->

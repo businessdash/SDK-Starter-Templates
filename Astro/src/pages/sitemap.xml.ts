@@ -37,10 +37,15 @@ const STATIC_PATHS = [
 	"/updates",
 	// [bd:store]
 	"/store",
+	"/store/wishlist",
+	"/store/compare",
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"/store/subscriptions",
-	// [/bd:saas]
+	// [/bd:subscriptions]
+	// [bd:blog]
+	"/blog",
+	// [/bd:blog]
 	"/todos",
 ];
 
@@ -64,10 +69,12 @@ export const GET: APIRoute = async ({ site }) => {
 		baseUrl,
 		staticPaths: STATIC_PATHS,
 		routes: {
-			// This starter renders posts at /updates/[slug] and products at
+			// This starter renders posts at /blog/[slug] and products at
 			// /store/[id]. Change these if you move those routes; delete them if
 			// you drop the surface.
-			blog: "/updates",
+			// [bd:blog]
+			blog: "/blog",
+			// [/bd:blog]
 			// [bd:store]
 			product: "/store",
 			// [/bd:store]

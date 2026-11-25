@@ -10,9 +10,9 @@ import type {
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle
 } from '@businessdash/sdk/contracts';
-// [bd:saas]
+// [bd:subscriptions]
 import type { CustomerSubscriptionResponse } from '@businessdash/sdk/contracts';
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /**
  * Customer-portal helpers (SDK 0.9.x).
@@ -132,7 +132,18 @@ export async function submitCustomerReview(
 	return portalFor(session).submitReview(input);
 }
 
-// [bd:saas]
+/**
+ * Submit a review for a session already checked with `getCustomerSession`
+ * (the reviews page knows who is signed in before it sends).
+ */
+export function submitReviewAs(
+	session: CustomerSession,
+	input: CustomerReviewSubmitInput
+): Promise<CustomerReviewSubmitResponse> {
+	return portalFor(session).submitReview(input);
+}
+
+// [bd:subscriptions]
 /**
  * Start a Stripe subscription checkout for the signed-in customer. Returns
  * null when nobody is signed in: a plan belongs to a person, and BD refuses a
@@ -184,4 +195,4 @@ export async function setPlanCancelled(cookieValue: string | null | undefined, c
 	const portal = portalFor(session);
 	return cancel ? portal.cancelSubscription() : portal.resumeSubscription();
 }
-// [/bd:saas]
+// [/bd:subscriptions]

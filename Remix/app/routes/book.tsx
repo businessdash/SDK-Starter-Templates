@@ -1,3 +1,4 @@
+// [bd-file:booking]
 import { Form, useActionData, useLoaderData, useNavigation } from "react-router";
 import type {
 	ActionFunctionArgs,

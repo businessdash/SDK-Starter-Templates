@@ -9,12 +9,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BdStarter">
 
+        <!-- singleTask: Stripe's return link comes back to this activity (onNewIntent). -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+            <!-- Checkout: {applicationId}://checkout/success?session_id=… and …/cancel -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="${applicationId}" android:host="checkout" />
             </intent-filter>
         </activity>
     </application>

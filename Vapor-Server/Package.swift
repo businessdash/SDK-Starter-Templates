@@ -28,6 +28,14 @@ let package = Package(
         .target(
             name: "BdForms",
             swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        // `swift test`: the post sanitizer gives the TypeScript's answers.
+        .testTarget(
+            name: "AppTests",
+            dependencies: [.target(name: "App")],
+            // Read by path in the test, not bundled as a resource.
+            exclude: ["Fixtures"],
+            swiftSettings: [.swiftLanguageMode(.v6)]
         )
     ]
 )

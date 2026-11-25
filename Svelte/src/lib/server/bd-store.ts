@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 import { NODE_ENV } from '$app/env/private';
 
 // [bd:store]
@@ -17,9 +17,9 @@ import type {
 	StorefrontSort
 } from '@businessdash/sdk/contracts';
 // [/bd:store]
-// [bd:saas]
+// [bd:subscriptions]
 import type { SubscriptionOffering } from '@businessdash/sdk/contracts';
-// [/bd:saas]
+// [/bd:subscriptions]
 
 import { bd } from '#lib/server/bd.ts';
 
@@ -185,7 +185,7 @@ export async function getStoreProduct(productId: string): Promise<StorefrontProd
 
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 export async function listStoreSubscriptions(): Promise<{ items: SubscriptionOffering[] } | null> {
 	if (!bd) return null;
 	try {
@@ -196,7 +196,7 @@ export async function listStoreSubscriptions(): Promise<{ items: SubscriptionOff
 	}
 }
 
-// [/bd:saas]
+// [/bd:subscriptions]
 
 // [bd:store]
 /** Current cart snapshot, or null when unconfigured / no visitor token yet. */

@@ -52,6 +52,7 @@
                     </li>
                 @endforeach
             </ul>
+            <p><a href="{{ route('blog') }}">All posts →</a></p>
         </section>
     @endif
 

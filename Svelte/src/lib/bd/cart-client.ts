@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 // [bd:store]
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
@@ -33,6 +33,8 @@ export function addToCart(input: {
 	productId: string;
 	variantId?: string | null;
 	quantity?: number;
+	/** The options chosen on the product page ({ Size: "M" }). */
+	options?: Record<string, string>;
 }): Promise<CartCallResult> {
 	return send("/api/bd/cart/items", {
 		method: "POST",

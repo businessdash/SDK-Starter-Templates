@@ -11,11 +11,6 @@ defmodule BdStarterWeb.PageController do
     )
   end
 
-  def reviews(conn, params) do
-    offset = params |> Map.get("offset", "0") |> to_int()
-    render(conn, :reviews, reviews: Bd.reviews(10, offset), offset: offset)
-  end
-
   def updates(conn, _params) do
     render(conn, :updates, updates: Map.get(Bd.page_bundle("home"), "updates", []))
   end
@@ -46,11 +41,4 @@ defmodule BdStarterWeb.PageController do
   end
 
   defp valid_email?(email), do: is_binary(email) and String.match?(email, ~r/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
-
-  defp to_int(value) do
-    case Integer.parse(to_string(value)) do
-      {n, _} when n >= 0 -> n
-      _ -> 0
-    end
-  end
 end

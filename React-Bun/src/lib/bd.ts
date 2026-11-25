@@ -10,21 +10,29 @@
  * code from the SDK is bundled here).
  */
 
+// [bd:blog]
 import type {
+	BlogCategory,
+	BlogLikeResponse,
 	BlogListPostsResponse,
-	BlogPostBySlugResponse,
 } from "@businessdash/sdk/contracts";
+import type { BlogPostData, CommentResult } from "../components/blog/BlogPost";
+// [/bd:blog]
 import type {
 	BundleGalleryItem,
 	FormSchema,
 	FormSubmitResult,
 	GalleryField,
 	GalleryItemFor,
+} from "@businessdash/sdk";
+// [bd:booking]
+import type {
 	SchedulingBookingResult,
 	SchedulingEventType,
 	SchedulingInvitee,
 	SchedulingSlot,
 } from "@businessdash/sdk";
+// [/bd:booking]
 
 export type TodoImage = {
 	id: string;
@@ -56,6 +64,25 @@ async function getJson<T>(path: string): Promise<T> {
 	}
 	return (await res.json()) as T;
 }
+
+// [bd:blog]
+/**
+ * POST and read the answer whatever its status (these routes explain a
+ * refusal in the body); `fallback` when the server can't be reached.
+ */
+async function postAnswer<T>(path: string, body: unknown, fallback: T): Promise<T> {
+	try {
+		const res = await fetch(path, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(body),
+		});
+		return (await res.json()) as T;
+	} catch {
+		return fallback;
+	}
+}
+// [/bd:blog]
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
 	const res = await fetch(path, {
@@ -102,20 +129,48 @@ export const bd = {
 			return result.items as never;
 		},
 	},
+	// [bd:blog]
 	blog: {
-		async listPosts(params?: { limit?: number }): Promise<BlogListPostsResponse> {
+		async listPosts(params?: {
+			limit?: number;
+			cursor?: number | null;
+			categoryId?: string | null;
+		}): Promise<BlogListPostsResponse> {
 			const query = new URLSearchParams();
 			if (params?.limit) query.set("limit", String(params.limit));
+			if (params?.cursor != null) query.set("cursor", String(params.cursor));
+			if (params?.categoryId) query.set("categoryId", params.categoryId);
 			return await getJson<BlogListPostsResponse>(
 				`/api/bd/blog/posts${query.toString() ? `?${query}` : ""}`,
 			);
 		},
-		async getPost(slug: string): Promise<BlogPostBySlugResponse> {
-			return await getJson<BlogPostBySlugResponse>(
-				`/api/bd/blog/post?slug=${encodeURIComponent(slug)}`,
+		async listCategories(): Promise<BlogCategory[]> {
+			return (await getJson<{ items: BlogCategory[] }>("/api/bd/blog/categories")).items;
+		},
+		async listTags(): Promise<string[]> {
+			return (await getJson<{ items: string[] }>("/api/bd/blog/tags")).items;
+		},
+		/** One post, ready for the page (its HTML made safe on the server), or null. */
+		async getPost(slug: string): Promise<BlogPostData | null> {
+			const res = await fetch(`/api/bd/blog/post?slug=${encodeURIComponent(slug)}`);
+			if (res.status === 404) return null;
+			if (!res.ok) throw new Error(`${res.status} ${res.statusText} on /api/bd/blog/post`);
+			return (await res.json()) as BlogPostData;
+		},
+		/** Like or unlike, for the signed-in customer. */
+		async toggleLike(slug: string): Promise<BlogLikeResponse | { error: string }> {
+			return await postAnswer("/api/bd/blog/like", { slug }, { error: "Couldn't save your like. Try again." });
+		},
+		async comment(slug: string, content: string): Promise<CommentResult> {
+			return await postAnswer(
+				"/api/bd/blog/comment",
+				{ slug, content },
+				{ ok: false, error: "Couldn't post your comment. Try again." },
 			);
 		},
 	},
+	// [/bd:blog]
+	// [bd:booking]
 	scheduling: {
 		async listEventTypes(): Promise<SchedulingEventType[]> {
 			const result = await getJson<{ items: SchedulingEventType[] }>(
@@ -152,6 +207,7 @@ export const bd = {
 			);
 		},
 	},
+	// [/bd:booking]
 	// This `forms` shape structurally satisfies the `BdFormsClient` contract
 	// `<BdForm>` (from `@businessdash/sdk/react`) expects, so you can pass `bd`
 	// straight to the component: `<BdForm slug="general-inquiry" client={bd} />`.
@@ -248,7 +304,7 @@ export const bd = {
 		},
 	},
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	subscriptions: {
 		async list(): Promise<Loose> {
 			return await getJson<Loose>("/api/bd/subscriptions");
@@ -258,7 +314,7 @@ export const bd = {
 			return await postJson("/api/bd/subscriptions/checkout", { planId, origin });
 		},
 	},
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	reviews: {
 		async list(params?: { limit?: number; offset?: number }): Promise<Loose> {
 			const query = new URLSearchParams();
@@ -272,7 +328,13 @@ export const bd = {
 		async get(): Promise<Loose> {
 			return await getJson<Loose>("/api/bd/cart");
 		},
-		async add(input: { productId: string; variantId?: string | null; quantity?: number }): Promise<Loose> {
+		async add(input: {
+			productId: string;
+			variantId?: string | null;
+			quantity?: number;
+			/** Chosen options, such as `{ Size: "42" }`; the cart prices them. */
+			options?: Record<string, string>;
+		}): Promise<Loose> {
 			return await postJson<Loose>("/api/bd/cart/add", input);
 		},
 		async update(itemId: string, quantity: number): Promise<Loose> {
@@ -301,12 +363,12 @@ export const bd = {
 		async work(): Promise<{ signedIn: boolean; user?: PortalUser; work: Loose | null; plan?: CustomerPlan | null }> {
 			return await getJson("/api/bd/portal/work");
 		},
-		// [bd:saas]
+		// [bd:subscriptions]
 		/** Cancel at the end of the paid period, or take the cancel back. */
 		async changePlan(intent: "cancel" | "resume"): Promise<{ cancelAtPeriodEnd: boolean; accessUntil: string | null }> {
 			return await postJson("/api/bd/portal/plan", { intent });
 		},
-		// [/bd:saas]
+		// [/bd:subscriptions]
 		async submitReview(input: { rating: number; body: string; jobId?: string | null }): Promise<Loose> {
 			return await postJson<Loose>("/api/bd/portal/submit-review", input);
 		},
@@ -358,13 +420,7 @@ export function dollars(amount: number | null | undefined, currency = "USD"): st
 	return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(Number(amount));
 }
 
-export type {
-	BundleGalleryItem,
-	FormSchema,
-	FormSubmitResult,
-	GalleryField,
-	SchedulingBookingResult,
-	SchedulingEventType,
-	SchedulingInvitee,
-	SchedulingSlot,
-};
+export type { BundleGalleryItem, FormSchema, FormSubmitResult, GalleryField };
+// [bd:booking]
+export type { SchedulingBookingResult, SchedulingEventType, SchedulingInvitee, SchedulingSlot };
+// [/bd:booking]

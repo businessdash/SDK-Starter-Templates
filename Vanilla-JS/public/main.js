@@ -9,8 +9,12 @@
  */
 
 import { renderAbout } from "./sections/about.js";
+// [bd:blog]
 import { renderBlog } from "./sections/blog.js";
+// [/bd:blog]
+// [bd:booking]
 import { renderBooking } from "./sections/booking.js";
+// [/bd:booking]
 import { renderContactForm } from "./sections/contact-form.js";
 import { renderGallery } from "./sections/gallery.js";
 import { renderHero } from "./sections/hero.js";
@@ -28,8 +32,12 @@ mount("hero", renderHero);
 mount("about", renderAbout);
 mount("services", renderServices);
 mount("gallery", renderGallery);
+// [bd:booking]
 mount("booking", renderBooking);
+// [/bd:booking]
+// [bd:blog]
 mount("blog", renderBlog);
+// [/bd:blog]
 mount("contact", renderContactForm);
 
 // Footer newsletter signup — the same shared subscribe section as About.

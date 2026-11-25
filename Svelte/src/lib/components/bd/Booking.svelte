@@ -1,3 +1,4 @@
+<!-- [bd-file:booking] -->
 <script lang="ts">
 	/**
 	 * Booking — server-rendered event-type list + client-side slot

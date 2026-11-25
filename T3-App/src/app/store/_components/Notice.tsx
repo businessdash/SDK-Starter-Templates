@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 /** A small inline notice — used by the store surface to explain "not
  *  connected" / "no items" / "failed" states instead of an empty grid. */
 export function Notice({ title, body }: { title: string; body: string }) {

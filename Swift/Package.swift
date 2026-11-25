@@ -45,6 +45,8 @@ let package = Package(
         .testTarget(
             name: "BusinessDashKitTests",
             dependencies: ["BusinessDashKit"],
+            // post-html-parity.json is read by path in PostHtmlTests.
+            exclude: ["Fixtures"],
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(

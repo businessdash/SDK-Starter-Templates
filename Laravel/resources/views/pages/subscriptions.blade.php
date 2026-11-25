@@ -1,5 +1,8 @@
 @extends('layout')
 @section('title', 'Plans')
+@section('subnav')
+    <x-store-nav :count="$cartCount" />
+@endsection
 @section('content')
     <h1>Plans</h1>
     @forelse ($plans as $plan)

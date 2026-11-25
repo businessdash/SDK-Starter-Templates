@@ -1,3 +1,4 @@
+// [bd-file:booking]
 import type { APIRoute } from "astro";
 
 import { bd } from "../../../../lib/bd";

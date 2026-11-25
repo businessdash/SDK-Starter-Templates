@@ -11,14 +11,16 @@ export function Header() {
 					{/* [bd:store] */}
 					<Link to="/store">Store</Link>
 					{/* [/bd:store] */}
-					{/* [bd:saas] */}
+					{/* [bd:subscriptions] */}
+					{/* [bd:!store] */}
 					<Link to="/subscriptions">Plans</Link>
-					{/* [/bd:saas] */}
+					{/* [/bd:!store] */}
+					{/* [/bd:subscriptions] */}
+					{/* [bd:blog] */}
+					<Link to="/blog">Blog</Link>
+					{/* [/bd:blog] */}
 					<Link to="/reviews">Reviews</Link>
 					<Link to="/updates">Updates</Link>
-					{/* [bd:store] */}
-					<Link to="/cart">Cart</Link>
-					{/* [/bd:store] */}
 					<Link to="/my-account">Account</Link>
 				</nav>
 			</div>

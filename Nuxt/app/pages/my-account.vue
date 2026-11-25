@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { BdSignIn } from "@businessdash/sdk/vue";
 import { computed } from "vue";
-// [bd:saas]
+// [bd:subscriptions]
 import { ref } from "vue";
-// [/bd:saas]
+// [/bd:subscriptions]
 import BdHeader from "~/components/bd/BdHeader.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
 import ReviewForm from "~/components/bd/ReviewForm.vue";
@@ -40,7 +40,7 @@ const displayName = computed(() => {
 	return name || s.email || "there";
 });
 
-// [bd:saas]
+// [bd:subscriptions]
 const plan = computed(() => data.value?.plan ?? null);
 // What just happened wins over the stored status, which lags until the
 // payment provider confirms.
@@ -70,7 +70,7 @@ async function changePlan(intent: "cancel" | "resume") {
 		planError.value = "We couldn't change your plan. Please try again.";
 	}
 }
-// [/bd:saas]
+// [/bd:subscriptions]
 
 useHead({ title: "My account — Your Business" });
 </script>
@@ -154,7 +154,7 @@ useHead({ title: "My account — Your Business" });
 						</div>
 					</div>
 
-					<!-- [bd:saas] -->
+					<!-- [bd:subscriptions] -->
 					<div class="bd-card account-plan">
 						<h3>Your plan</h3>
 						<template v-if="plan?.hasAccess">
@@ -192,7 +192,7 @@ useHead({ title: "My account — Your Business" });
 						</template>
 						<p v-if="planError" class="plan-error">{{ planError }}</p>
 					</div>
-					<!-- [/bd:saas] -->
+					<!-- [/bd:subscriptions] -->
 
 					<ReviewForm />
 

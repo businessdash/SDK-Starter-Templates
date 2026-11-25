@@ -1,5 +1,8 @@
 @extends('layout')
 @section('title', 'Cart')
+@section('subnav')
+    <x-store-nav :count="$cartCount" />
+@endsection
 @section('content')
     <h1>Cart</h1>
 
@@ -11,7 +14,10 @@
         <ul class="cart-lines">
             @foreach ($items as $item)
                 <li>
-                    <span>{{ data_get($item, 'name') }}</span>
+                    <span>
+                        {{ data_get($item, 'productName') }}@if (data_get($item, 'variantTitle')) · {{ data_get($item, 'variantTitle') }}@endif
+                        <span class="muted">{{ \App\Support\Money::amount(data_get($item, 'unitPrice')) }} each</span>
+                    </span>
                     <form method="POST" action="{{ route('cart.update', data_get($item, 'id')) }}">
                         @csrf @method('PATCH')
                         <input type="number" name="quantity" value="{{ data_get($item, 'quantity', 1) }}" min="0">

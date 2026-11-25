@@ -19,6 +19,8 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    {{-- The shop and blog elements send this with their POSTs (X-CSRF-Token). --}}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('app.name'))</title>
     <link rel="stylesheet" href="/styles.css">
     @stack('head')
@@ -49,15 +51,16 @@
             <a href="{{ route('services') }}">Services</a>
             <a href="{{ route('blog') }}">Blog</a>
             <a href="{{ route('reviews') }}">Reviews</a>
-            <a href="{{ route('subscriptions') }}">Plans</a>
             <a href="{{ route('todos') }}">Todos</a>
             <a href="{{ route('quiz') }}">Quiz</a>
-            <a href="{{ route('cart') }}">Cart</a>
             <a href="{{ route('portal') }}">My account</a>
         </nav>
     </header>
 
-    <main>
+    {{-- The store bar (Products, Plans, Wishlist, Compare, Cart) on store and plan pages. --}}
+    @yield('subnav')
+
+    <main class="@yield('main_class')">
         @if (session('subscribe_status'))
             <p class="notice">{{ session('subscribe_status') }}</p>
         @endif
@@ -78,14 +81,15 @@
         <p class="muted">Powered by BusinessDash</p>
     </footer>
 
-    @if (\App\Bd\Bd::configured())
+    {{-- Records this page view and the time spent on it; it needs the publishable key. --}}
+    @if (\App\Bd\Bd::configured() && config('bd.publishable_key'))
         <script type="module">
-            import { createAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.97/analytics-core";
-            createAnalytics({
+            import { initBdAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.97/analytics-core";
+            initBdAnalytics({
                 siteId: @json(config('bd.site_id')),
                 baseUrl: @json(rtrim(config('bd.host'), '/') . '/api/package/v1'),
                 apiKey: @json(config('bd.publishable_key')),
-            }).trackPageView();
+            });
         </script>
     @endif
 

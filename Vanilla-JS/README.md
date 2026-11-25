@@ -47,6 +47,8 @@ browser → /api/bd/<route> → Bun (server.ts) → BD Package API
 
 - `server.ts` — Bun HTTP server. Builds `createBdClient` once with the bearer key, mounts the WorkOS auth handler + revalidation webhook, proxies every SDK surface under `/api/bd/*`, proxies `/sitemap.xml` + `/robots.txt`, and server-renders the feature pages (with JSON-LD injected into `<head>`).
 - `lib/cache.ts` — tiny in-memory, tag-keyed TTL cache. The revalidation webhook busts it (a plain server has no `revalidateTag`).
+- `lib/shop/*.ts` — the shop's and blog's interactive parts as framework-free custom elements (`<bd-product>`, `<bd-save-buttons>`, `<bd-compare-bar>`, `<bd-wishlist>`, `<bd-compare>`, `<bd-post-like>`, `<bd-post-comments>`), plus `safePostHtml`, which the server runs on every post. The pages load plain ES modules, so the server bundles `shop-elements.ts` and `blog-elements.ts` with Bun.build and serves them at `/shop/*.js`. They draw the same markup as the React starters' components, styled by `public/bd-shop.css` and `public/bd-blog.css`. <!-- [bd-line:store,blog] -->
+- `lib/shop/reviews*.ts` — the business reviews: the rules every BD starter shares (`reviews.ts`), the page's data (`reviews-page.ts`, which `GET /api/bd/reviews/page` runs) and `<bd-review-writer>` (`reviews-elements.ts`, served at `/shop/reviews-elements.js`), which posts to `POST /api/bd/reviews/write`. Styled by `public/bd-reviews.css`.
 - `public/index.html` — the home shell with anchor divs (`#hero`, `#gallery`, …) + the news-banner mount.
 - `public/bd.js` — vanilla client mirroring the SDK's method names (JSDoc-typed, no build step). Exports `el` / `money` / `dollars` DOM helpers.
 - `public/banner.js` — the dismissible `bundle.banner`.
@@ -63,12 +65,14 @@ unset.
 | Surface | Route(s) / page | SDK calls |
 | --- | --- | --- |
 | **Home sections** | `/` (`sections/*`) | `marketing.getPageBundle`, `gallery.list`, `blog.listPosts`, `scheduling.*`, `forms.*` |
-| **Storefront** | `/store`, `/store/:id` | `storefront.listProductsWithMeta` (sidebar facets: category counts, price range, min-rating, sort), `storefront.listCategories`, `storefront.getProduct`, `storefront.getProductReviews`, `storefront.getRelatedProducts`, `storefront.getProductAddons` | <!-- [bd-line:store] -->
+| **Storefront** | `/store`, `/store/:id` | `storefront.listProductsWithMeta` (search, category, price, rating and sort, all in the URL), `storefront.listCategories`, `storefront.getProduct`, `storefront.getProductReviews`, `storefront.getRelatedProducts`, `storefront.getProductAddons`. The product page has option photos, option and size buttons, add to cart with the chosen options, save, compare, share, add-ons, reviews, related and recently viewed. | <!-- [bd-line:store] -->
+| **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=a,b` | Saved in the shopper's browser; the compare table loads each product with `storefront.getProduct` | <!-- [bd-line:store] -->
+| **Blog** | `/blog`, `/blog/:slug` | `blog.listPosts` (category, tag, paging), `blog.listCategories`, `blog.listTags`, `blog.getPost` (HTML made safe on the server), `blog.withSession(token).{likeStatus,toggleLike,postComment}`, `blog.listComments` — liking and commenting need a signed-in customer | <!-- [bd-line:blog] -->
 | **Newsletter** | About section + footer | `followers.join` via the browser-safe publishable token (`window.__BD_PUBLIC__`), with a `bd.followers.<siteId>` localStorage "already subscribed" hint |
 | **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — visitor token in an httpOnly `bd_cart_visitor` cookie | <!-- [bd-line:store] -->
 | **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` (→ Stripe URL), `checkout.getStatus` | <!-- [bd-line:store] -->
-| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:saas] -->
-| **Reviews wall** | `/reviews` | `reviews.list({ limit, offset })` with "load more" |
+| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:subscriptions] -->
+| **Reviews** | `/reviews` | `bundle.reviews` (`rating`, `counts`) for the average and a bar per star; `reviews.list({ limit, offset, source })` for the platform filter (`?source=`) and "Show more" (`?shown=`), with each review's photos, Verified and a "Read on Google/Yelp" link; `customerPortal(org).withSession(token).submitReview` for "Write a review" (signed in) |
 | **News banner + updates** | banner on every page, `/updates` | `bundle.banner`, `bundle.updates` |
 | **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelPages.listVariants`, `parallelPages.render` |
@@ -113,10 +117,14 @@ One entry in the server route table + one method on the browser client.
 ├── server.ts                       # Bun proxy — key holder, auth, webhook, SEO, page render
 ├── bd.config.ts                  # Marketing schema + brand tokens + parallel page
 ├── lib/
-│   └── cache.ts                    # In-memory tag cache (webhook target)
+│   ├── cache.ts                    # In-memory tag cache (webhook target)
+│   └── shop/                       # Shop, blog and review custom elements, served at /shop/*.js
 ├── public/
 │   ├── index.html                  # Home shell + banner mount
 │   ├── styles.css                  # BD CSS vars + section + feature-page styles
+│   ├── bd-shop.css                 # The store's styles <!-- [bd-line:store] -->
+│   ├── bd-blog.css                 # The blog's styles <!-- [bd-line:blog] -->
+│   ├── bd-reviews.css              # The reviews page's styles
 │   ├── bd.js                     # Typed browser fetcher (JSDoc) + el/money/dollars
 │   ├── banner.js                   # Dismissible bundle.banner
 │   ├── main.js                     # Mounts home sections
@@ -124,11 +132,17 @@ One entry in the server route table + one method on the browser client.
 │   └── pages/                      # Feature pages
 │       ├── _ui.js                  # Shared errBox / pageHead
 <!-- [bd:store] -->
-│       ├── store.js  product.js  cart.js
+│       ├── store.js  product.js  wishlist.js  compare.js  cart.js
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:store,subscriptions] -->
+│       ├── _store-nav.js           # The store bar: products, plans, wishlist, compare, cart
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:blog] -->
+│       ├── blog.js  blog-post.js
+<!-- [/bd:blog] -->
+<!-- [bd:subscriptions] -->
 │       ├── subscriptions.js
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
 │       ├── reviews.js  updates.js  my-account.js
 │       └── services.js  services-area.js
 ├── tsconfig.json                   # Server-only TS settings

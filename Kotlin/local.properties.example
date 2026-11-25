@@ -26,5 +26,9 @@ bd.publishableKey=
 # bundled sample form, which runs offline.
 bd.form=
 
+# Your web store's address (e.g. https://yourshop.com), for a product's
+# "Copy link". Leave empty to hide the button.
+bd.siteUrl=
+
 # The Android SDK location Gradle needs. Android Studio writes this for you.
 # sdk.dir=/Users/you/Library/Android/sdk

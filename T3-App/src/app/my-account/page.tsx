@@ -10,10 +10,10 @@ import {
 	getCustomerWork,
 	isCustomerPortalConfigured,
 } from "@/server/lib/bd-portal";
-// [bd:saas]
+// [bd:subscriptions]
 import { changePlanAction } from "@/app/_actions/plans";
 import { getCustomerSubscription } from "@/server/lib/bd-portal";
-// [/bd:saas]
+// [/bd:subscriptions]
 
 export const metadata: Metadata = {
 	title: "My Account",
@@ -122,9 +122,9 @@ export default async function MyAccountPage({
 					</div>
 				) : (
 					<>
-						{/* [bd:saas] */}
+						{/* [bd:subscriptions] */}
 						<PlanSection result={plan} />
-						{/* [/bd:saas] */}
+						{/* [/bd:subscriptions] */}
 						<AccountWork />
 						<p className="account__delete">
 							<a href="/api/bd-auth/delete-account">Delete my account</a>
@@ -183,7 +183,7 @@ async function AccountWork() {
 	);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 /**
  * The customer's plan, with Cancel, or Keep my plan while a cancel is pending.
  * `result` is what the last change did; it wins over the stored status,
@@ -256,4 +256,4 @@ async function PlanSection({ result }: { result?: string }) {
 		</section>
 	);
 }
-// [/bd:saas]
+// [/bd:subscriptions]

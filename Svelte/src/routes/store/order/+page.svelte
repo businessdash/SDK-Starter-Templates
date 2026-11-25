@@ -1,4 +1,4 @@
-<!-- [bd-file:store,saas] -->
+<!-- [bd-file:store,subscriptions] -->
 <script lang="ts">
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
@@ -45,11 +45,11 @@
 			Continue shopping
 		</a>
 		<!-- [/bd:store] -->
-		<!-- [bd:saas] -->
+		<!-- [bd:subscriptions] -->
 		<a class="bd-btn bd-btn--ghost" href="/my-account" style="align-self: flex-start;">
 			See your plan
 		</a>
-		<!-- [/bd:saas] -->
+		<!-- [/bd:subscriptions] -->
 	</div>
 </main>
 

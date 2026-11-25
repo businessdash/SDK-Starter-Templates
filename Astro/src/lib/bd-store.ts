@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 // [bd:store]
 import type { AstroCookies } from "astro";
 // [/bd:store]
@@ -108,10 +108,13 @@ export async function getStoreProduct(productId: string) {
 }
 
 /** Approved reviews + aggregate (avgRating, totalCount) for a product. */
-export async function getStoreProductReviews(productId: string) {
+export async function getStoreProductReviews(
+	productId: string,
+	{ limit = 10 }: { limit?: number } = {},
+) {
 	if (!bd) return null;
 	try {
-		return await bd.storefront.getProductReviews(productId, { limit: 20 });
+		return await bd.storefront.getProductReviews(productId, { limit });
 	} catch {
 		return null;
 	}
@@ -143,7 +146,7 @@ export async function getStoreProductAddons(productId: string) {
 
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 export async function listStoreSubscriptions() {
 	if (!bd) return null;
 	try {
@@ -153,7 +156,7 @@ export async function listStoreSubscriptions() {
 	}
 }
 
-// [/bd:saas]
+// [/bd:subscriptions]
 
 // [bd:store]
 /** Current cart snapshot, or null when unconfigured / no cart yet. */

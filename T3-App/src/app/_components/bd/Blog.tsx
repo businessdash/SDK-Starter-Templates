@@ -1,3 +1,6 @@
+// [bd-file:blog]
+import Link from "next/link";
+
 import type { BlogPost } from "@/server/api/routers/bd";
 
 function formatDate(iso: string | null | undefined): string {
@@ -28,7 +31,7 @@ export function Blog({ posts }: { posts: BlogPost[] }) {
 			) : (
 				<div className="bd-grid-3">
 					{posts.map((post) => (
-						<a
+						<Link
 							className="bd-card blog-card"
 							href={`/blog/${post.slug}`}
 							key={post.id}
@@ -38,10 +41,17 @@ export function Blog({ posts }: { posts: BlogPost[] }) {
 							</span>
 							<h3>{post.title}</h3>
 							{post.excerpt ? <p>{post.excerpt}</p> : null}
-						</a>
+						</Link>
 					))}
 				</div>
 			)}
+			{posts.length > 0 ? (
+				<p className="blog-section__all">
+					<Link className="bd-btn bd-btn--ghost" href="/blog">
+						All posts
+					</Link>
+				</p>
+			) : null}
 		</section>
 	);
 }

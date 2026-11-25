@@ -1,8 +1,12 @@
 <script lang="ts">
 	import About from '#lib/components/bd/About.svelte';
 	import Banner from '#lib/components/bd/Banner.svelte';
+	// [bd:blog]
 	import Blog from '#lib/components/bd/Blog.svelte';
+	// [/bd:blog]
+	// [bd:booking]
 	import Booking from '#lib/components/bd/Booking.svelte';
+	// [/bd:booking]
 	import ContactForm from '#lib/components/bd/ContactForm.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
 	import Gallery from '#lib/components/bd/Gallery.svelte';
@@ -37,8 +41,12 @@
 		<About body={data.about} />
 		<Services services={data.services} />
 		<Gallery items={data.gallery} />
+		<!-- [bd:booking] -->
 		<Booking eventTypes={data.eventTypes} />
+		<!-- [/bd:booking] -->
+		<!-- [bd:blog] -->
 		<Blog posts={data.blogPosts} />
+		<!-- [/bd:blog] -->
 		<ContactForm schema={data.formSchema} slug={data.formSlug} />
 	</main>
 	<Footer />

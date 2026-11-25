@@ -3,9 +3,12 @@
 import { useActionState } from "react";
 
 import {
-	initialReviewFormState,
+	type ReviewFormState,
 	submitReviewAction,
 } from "@/app/_actions/review";
+
+// Kept here: a "use server" file may export only async functions.
+const initialReviewFormState: ReviewFormState = { status: "idle" };
 
 /**
  * Customer review form — submits via the `submitReviewAction` Server Action

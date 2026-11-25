@@ -1,4 +1,4 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import {
 	BdPaymentLapsedError,
 	BdServiceSuspendedError,

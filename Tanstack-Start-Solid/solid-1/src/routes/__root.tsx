@@ -19,10 +19,25 @@ import Header from "../components/Header";
 import { SdkSetupBanner } from "../components/bd/SdkSetupBanner";
 
 import styleCss from "../styles.css?url";
+// [bd:store]
+// The shop's styles: store grid, product page, wishlist, compare.
+import shopCss from "../bd-shop.css?url";
+// [/bd:store]
+// [bd:blog]
+// The blog's styles: post list, post body, likes and comments.
+import blogCss from "../bd-blog.css?url";
+// [/bd:blog]
+// The reviews page's styles: the rating, the filter, the reviews, writing one.
+import reviewsCss from "../bd-reviews.css?url";
 
 export const Route = createRootRouteWithContext()({
 	head: () => ({
-		links: [{ rel: "stylesheet", href: styleCss }],
+		links: [
+			{ rel: "stylesheet", href: styleCss },
+			{ rel: "stylesheet", href: shopCss }, // [bd-line:store]
+			{ rel: "stylesheet", href: blogCss }, // [bd-line:blog]
+			{ rel: "stylesheet", href: reviewsCss },
+		],
 	}),
 	shellComponent: RootComponent,
 });

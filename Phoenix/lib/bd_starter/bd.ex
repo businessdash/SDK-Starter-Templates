@@ -46,9 +46,47 @@ defmodule BdStarter.Bd do
     |> Map.get("items", [])
   end
 
+  @doc "The product list with its filters, counts and price range; nil when BD doesn't answer."
   def product_grid(params) do
     key = "storefront:grid:" <> (params |> :erlang.term_to_binary() |> Base.encode16())
-    cached(key, ["bd:storefront"], &Storefront.grid(&1, params), %{})
+    cached(key, ["bd:storefront"], &Storefront.grid(&1, params), nil)
+  end
+
+  def store_categories do
+    cached("storefront:categories", ["bd:storefront"], &Storefront.categories/1, %{})
+    |> Map.get("items", [])
+  end
+
+  @doc """
+  One product for its page: `{:ok, product}`, or `{:error, :unavailable}` when
+  the site's BD access is suspended, `{:error, :not_found}` otherwise.
+  """
+  def product_lookup(id) do
+    case product(id) do
+      nil ->
+        # The cached read keeps no reason; ask once more to tell a missing
+        # product from a suspended site.
+        with client when not is_nil(client) <- client(),
+             {:error, reason} <- Storefront.get(client, id) do
+          {:error, if(Client.unavailable?(reason), do: :unavailable, else: :not_found)}
+        else
+          {:ok, product} -> {:ok, product}
+          nil -> {:error, :not_found}
+        end
+
+      product ->
+        {:ok, product}
+    end
+  end
+
+  @doc "A page of a product's reviews with `totalCount` and `avgRating`; nil when BD doesn't answer."
+  def product_review_page(id, limit) do
+    cached("storefront:reviews:#{id}:#{limit}", ["bd:storefront"], &Storefront.reviews(&1, id, limit), nil)
+  end
+
+  def product_addons(id) do
+    cached("storefront:addons:#{id}", ["bd:storefront"], &Storefront.addons(&1, id), %{})
+    |> Map.get("items", [])
   end
 
   def product(id) do
@@ -56,7 +94,7 @@ defmodule BdStarter.Bd do
   end
 
   def related_products(id, limit \\ 4) do
-    cached("storefront:related:#{id}", ["bd:storefront"], &Storefront.related(&1, id, limit), %{})
+    cached("storefront:related:#{id}:#{limit}", ["bd:storefront"], &Storefront.related(&1, id, limit), %{})
     |> Map.get("items", [])
   end
 
@@ -70,6 +108,20 @@ defmodule BdStarter.Bd do
     |> Map.get("items", [])
   end
 
+  @doc "One page of posts: `%{\"items\", \"nextCursor\"}`, in a category or not."
+  def post_page(limit, cursor, category_id) do
+    key = "blog:page:#{limit}:#{cursor}:#{category_id}"
+    cached(key, ["bd:blog"], &Blog.list(&1, limit, cursor, category_id), %{"items" => [], "nextCursor" => nil})
+  end
+
+  def blog_categories do
+    cached("blog:categories", ["bd:blog"], &Blog.categories/1, %{}) |> Map.get("items", [])
+  end
+
+  def blog_tags do
+    cached("blog:tags", ["bd:blog"], &Blog.tags/1, %{}) |> Map.get("items", [])
+  end
+
   def post(slug) do
     # The API wraps the post: `%{"post" => …, "access" => "granted" | "paywall"}`.
     cached("blog:post:#{slug}", ["bd:blog", "bd:blog:#{slug}"], &Blog.get(&1, slug), nil)
@@ -80,9 +132,41 @@ defmodule BdStarter.Bd do
     |> Map.get("items", [])
   end
 
-  def reviews(limit \\ 10, offset \\ 0) do
-    cached("reviews:#{offset}:#{limit}", ["bd:reviews"], &Reviews.list(&1, limit, offset), %{})
-    |> Map.get("items", [])
+  @doc """
+  The first `shown` reviews, newest first: `%{"items", "totalCount",
+  "nextOffset"}`, read a page of up to 50 at a time.
+  """
+  def reviews_page(shown \\ 10, source \\ nil) do
+    cached("reviews:#{source || "all"}:#{shown}", ["bd:reviews"], &first_reviews(&1, shown, source), %{})
+  end
+
+  @doc "The newest 50 reviews, for the platform filter; nil when BD doesn't answer."
+  def review_sources do
+    case cached("reviews:sources", ["bd:reviews"], &Reviews.list(&1, 50, 0), nil) do
+      %{"items" => items} when is_list(items) -> items
+      _ -> nil
+    end
+  end
+
+  defp first_reviews(client, shown, source, items \\ [], offset \\ 0) do
+    case Reviews.list(client, min(50, shown - length(items)), offset, source) do
+      {:ok, %{} = page} ->
+        got = List.wrap(page["items"])
+        items = items ++ got
+        next = if is_integer(page["nextOffset"]), do: page["nextOffset"], else: nil
+
+        if next && got != [] && length(items) < shown do
+          first_reviews(client, shown, source, items, next)
+        else
+          {:ok, %{"items" => items, "totalCount" => page["totalCount"] || length(items), "nextOffset" => next}}
+        end
+
+      {:ok, _} ->
+        {:error, :unexpected_reply}
+
+      error ->
+        error
+    end
   end
 
   def subscription_plans do
@@ -125,6 +209,19 @@ defmodule BdStarter.Bd do
   def cart_clear(visitor_token), do: uncached(&Cart.clear(&1, visitor_token), nil)
 
   def checkout_start(visitor_token, urls), do: uncached(&Checkout.start(&1, visitor_token, urls), nil)
+
+  @doc "Back from Stripe: the checkout session's status (`paymentStatus`, `customerEmail`)."
+  def checkout_status(session_id), do: uncached(&Checkout.get(&1, nil, session_id), nil)
+
+  # Comments and likes are read fresh: a cached list would hide a comment just posted.
+  def post_comments_fresh(slug),
+    do: uncached(&Blog.comments(&1, slug), %{}) |> Map.get("items", [])
+
+  def like_status(slug, session_token), do: uncached(&Blog.like_status(&1, slug, session_token), nil)
+  def toggle_like(slug, session_token), do: uncached(&Blog.toggle_like(&1, slug, session_token), nil)
+
+  def post_comment(slug, content, session_token),
+    do: uncached(&Blog.post_comment(&1, slug, content, session_token), nil)
 
   def portal_work(session_token, org_id),
     do: uncached(&Portal.work(&1, session_token, org_id), nil)

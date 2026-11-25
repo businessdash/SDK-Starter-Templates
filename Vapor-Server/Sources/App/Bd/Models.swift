@@ -18,6 +18,12 @@ struct Product: Content {
     let coverImage: String?
     let avgRating: Double?
     let reviewCount: Int?
+    // The grid's card flags (`meta=1`).
+    let hasMultipleVariants: Bool?
+    let isOnSale: Bool?
+    let isNew: Bool?
+    let isBestSeller: Bool?
+    let isLowStock: Bool?
 }
 
 /// Every list response on the platform is keyed `items`, not the plural of
@@ -30,13 +36,29 @@ struct ProductListResponse: Content {
 struct ProductGridResponse: Content {
     let items: [Product]
     let categoryCounts: [CategoryCount]?
+    let priceRange: PriceRange?
     var products: [Product] { items }
 }
 
+/// Per category, how many products the list has: `categoryId`, not `id`.
 struct CategoryCount: Content {
+    let categoryId: String
+    let count: Int?
+}
+
+/// The catalogue's cheapest and dearest price, in **dollars** (not cents).
+struct PriceRange: Content {
+    let minDollars: Double
+    let maxDollars: Double
+}
+
+struct StoreCategory: Content {
     let id: String
     let name: String
-    let count: Int?
+}
+
+struct StoreCategoryListResponse: Content {
+    let items: [StoreCategory]
 }
 
 struct CartSnapshot: Content {
@@ -45,13 +67,18 @@ struct CartSnapshot: Content {
     let subtotal: Double?
     let currency: String?
     let couponCode: String?
+    /// Units across every line, for the cart count in the store bar.
+    let itemCount: Int?
 
-    static let empty = CartSnapshot(items: [], subtotal: nil, currency: nil, couponCode: nil)
+    static let empty = CartSnapshot(items: [], subtotal: nil, currency: nil, couponCode: nil, itemCount: 0)
 }
 
+/// A cart line names its product `productName`, and the chosen variant
+/// (size, colour) `variantTitle` — there is no `name`.
 struct CartItem: Content {
     let id: String
-    let name: String?
+    let productName: String?
+    let variantTitle: String?
     let quantity: Int
     /// **Already decimal.**
     let unitPrice: Double?
@@ -60,6 +87,15 @@ struct CartItem: Content {
 struct CartAddItemInput: Content {
     let productId: String
     let quantity: Int
+    /// The variant the shopper chose, and their option picks (`{"Size": "42"}`).
+    var variantId: String? = nil
+    var options: [String: String]? = nil
+}
+
+/// `checkout/{sessionId}`, read when Stripe sends the shopper back.
+struct CheckoutStatus: Content {
+    let paymentStatus: String?
+    let customerEmail: String?
 }
 
 struct CartQuantityInput: Content {
@@ -81,16 +117,49 @@ struct BlogPost: Content {
     let slug: String
     let title: String
     let excerpt: String?
-    /// Authored HTML — the field is `content`, not `contentHtml`.
+    /// Authored HTML — the field is `content`, not `contentHtml`. Never put it
+    /// on a page as is: `PostHtml.safe(_:)` rebuilds it first.
     let content: String?
     let imageUrl: String?
     /// `public` | `followers` | `paid`.
     let accessLevel: String?
+    let publishedAt: String?
+    let authorName: String?
+    let authorAvatarUrl: String?
+    let isPinned: Bool?
+    let tags: [String]?
+    let likes: Int?
+    /// The post's call to action: a button under the body.
+    let ctaHref: String?
+    let ctaLabel: String?
+    let ctaDescription: String?
 }
 
 struct BlogListResponse: Content {
     let items: [BlogPost]
+    /// The next page's cursor: a number on the wire, sent back as it came.
+    let nextCursor: JSONValue?
     var posts: [BlogPost] { items }
+}
+
+struct BlogCategory: Content {
+    let id: String
+    let name: String
+    let description: String?
+}
+
+struct BlogCategoryListResponse: Content {
+    let items: [BlogCategory]
+}
+
+struct BlogTagListResponse: Content {
+    let items: [String]
+}
+
+/// `{ liked, likesCount }` — for the signed-in customer, or `liked: false`.
+struct PostLikes: Content {
+    let liked: Bool
+    let likesCount: Int
 }
 
 /// `blog/posts/{slug}` wraps the post: `{ post, access }`. `access` is
@@ -103,18 +172,27 @@ struct BlogPostDetail: Content {
     var isPaywalled: Bool { access == "paywall" }
 }
 
-/// Note `text` and `reviewerName` — not `body` and `authorName`.
+/// A review of the business. Note `text` and `reviewerName` — not `body`
+/// and `authorName`. `source` is google, yelp, housecall_pro, or other (added
+/// in the dashboard).
 struct Review: Content {
     let id: String
+    let source: String?
     let rating: Double
     let text: String?
+    let reviewUrl: String?
     let reviewerName: String?
+    let reviewerImageUrl: String?
+    let photos: [String]?
+    let timeCreated: String?
     let verified: Bool?
 }
 
+/// One page of reviews, newest first; `nextOffset` is nil on the last page.
 struct ReviewListResponse: Content {
     let items: [Review]
-    var reviews: [Review] { items }
+    let totalCount: Int?
+    let nextOffset: Int?
 }
 
 struct SubscriptionPlan: Content {

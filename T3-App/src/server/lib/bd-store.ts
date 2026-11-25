@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 import "server-only";
 
 // [bd:store]
@@ -95,11 +95,14 @@ export async function listStoreCategories() {
 }
 
 /** Approved reviews + aggregate (avgRating, totalCount) for a product. */
-export async function getStoreProductReviews(productId: string) {
+export async function getStoreProductReviews(
+	productId: string,
+	{ limit = 10 }: { limit?: number } = {},
+) {
 	const bd = getBd();
 	if (!bd) return null;
 	return readOrUnavailable(
-		() => bd.storefront.getProductReviews(productId, { limit: 20 }),
+		() => bd.storefront.getProductReviews(productId, { limit }),
 		null,
 	);
 }
@@ -132,14 +135,14 @@ export async function getStoreProduct(productId: string) {
 
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 export async function listStoreSubscriptions() {
 	const bd = getBd();
 	if (!bd) return null;
 	return readOrUnavailable(() => bd.subscriptions.list(), null);
 }
 
-// [/bd:saas]
+// [/bd:subscriptions]
 
 // [bd:store]
 /** Current cart snapshot, or null when the SDK is unconfigured or no cart

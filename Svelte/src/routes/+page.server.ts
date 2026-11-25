@@ -24,11 +24,25 @@ import { buildHomeJsonLd } from '#lib/server/bd-seo.ts';
  * page can render a minimal "site unavailable" state instead of crashing.
  */
 
+// [bd:!booking]
+/** Without booking, the hero's button goes to the contact form. */
+const CONTACT_CTA = {
+	tagline: "Tell us what you need. We'll handle the rest.",
+	ctaLabel: 'Get in touch',
+	ctaHref: '#contact'
+};
+// [/bd:!booking]
+
 const HERO_DEFAULTS = {
+	// [bd:!booking]
+	...CONTACT_CTA,
+	// [/bd:!booking]
 	title: 'Service that shows up — on time.',
+	// [bd:booking]
 	tagline: "Book in 60 seconds. We'll handle the rest.",
 	ctaLabel: 'Book a consult',
 	ctaHref: '#booking'
+	// [/bd:booking]
 };
 
 const ABOUT_FALLBACK =
@@ -73,6 +87,17 @@ const FORM_FALLBACK = {
 
 const GALLERY_FIELDS = ['id', 'src', 'title', 'category', 'blurDataURL'] as const;
 
+// [bd:blog]
+/** What the home page's blog section shows of a post. */
+type BlogCard = {
+	id: string;
+	slug: string;
+	title: string;
+	excerpt?: string | null;
+	publishedAt?: string | null;
+};
+// [/bd:blog]
+
 const SITE_URL = 'https://example.com';
 const COMPANY_NAME = 'Your Business';
 
@@ -91,8 +116,12 @@ export const load: PageServerLoad = async () => {
 			about: ABOUT_FALLBACK,
 			services: SERVICES_FALLBACK,
 			gallery: [],
+			// [bd:booking]
 			eventTypes: [],
-			blogPosts: [],
+			// [/bd:booking]
+			// [bd:blog]
+			blogPosts: [] as BlogCard[],
+			// [/bd:blog]
 			formSchema: FORM_FALLBACK,
 			formSlug: FORM_SLUG,
 			banner: null as BundleBanner | null,
@@ -100,11 +129,19 @@ export const load: PageServerLoad = async () => {
 		};
 	}
 
-	const [bundleResult, gallery, eventTypes, blog, formSchema] = await Promise.all([
+	// Started together with the calls below, so the page waits for the slowest.
+	// [bd:booking]
+	const eventTypesCall = bd.scheduling.listEventTypes().catch(() => []);
+	// [/bd:booking]
+	// [bd:blog]
+	const blogCall = bd.blog
+		.listPosts({ limit: 6 })
+		.then((page): BlogCard[] => page.items)
+		.catch((): BlogCard[] => []);
+	// [/bd:blog]
+	const [bundleResult, gallery, formSchema] = await Promise.all([
 		fetchBundleSafe('home', 'en'),
 		bd.gallery.list({ limit: 12, fields: GALLERY_FIELDS }).catch(() => []),
-		bd.scheduling.listEventTypes().catch(() => []),
-		bd.blog.listPosts({ limit: 6 }).catch(() => ({ items: [] as unknown[] })),
 		bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK)
 	]);
 
@@ -139,15 +176,12 @@ export const load: PageServerLoad = async () => {
 				? (servicesSection.items as typeof SERVICES_FALLBACK)
 				: SERVICES_FALLBACK,
 		gallery,
-		eventTypes,
-		blogPosts:
-			((blog as { items?: unknown[] })?.items as Array<{
-				id: string;
-				slug: string;
-				title: string;
-				excerpt?: string | null;
-				publishedAt?: string | null;
-			}>) ?? [],
+		// [bd:booking]
+		eventTypes: await eventTypesCall,
+		// [/bd:booking]
+		// [bd:blog]
+		blogPosts: await blogCall,
+		// [/bd:blog]
 		formSchema,
 		formSlug: FORM_SLUG,
 		banner: getBannerFromBundle(bundle),

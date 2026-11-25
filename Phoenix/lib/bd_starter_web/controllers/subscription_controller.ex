@@ -4,7 +4,14 @@ defmodule BdStarterWeb.SubscriptionController do
   alias BdStarter.Bd
   alias BdStarter.Bd.Resources.Subscriptions
 
-  def index(conn, _params), do: render(conn, :index, plans: Bd.subscription_plans())
+  def index(conn, _params) do
+    render(conn, :index,
+      page_title: "Plans",
+      plans: Bd.subscription_plans(),
+      store_nav: true,
+      cart_count: BdStarterWeb.CartVisitor.item_count(conn)
+    )
+  end
 
   def checkout(conn, %{"id" => id}) do
     urls = %{

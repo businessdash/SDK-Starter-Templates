@@ -1,4 +1,5 @@
 import 'client.dart';
+import 'reviews.dart';
 
 /// The customer portal, and the notification settings that hang off it.
 ///
@@ -204,6 +205,11 @@ class PortalResource {
         body: {'resume': true},
         headers: _headers,
       );
+
+  /// Write a review of the business. It shows once the business approves it.
+  /// Check it with `Reviews.check` first.
+  Future<Map<String, dynamic>> submitReview(ReviewInput review) =>
+      _client.post('customer-portal/reviews', body: review.toJson(), headers: _headers);
 
   /// What the subscription entitles them to.
   ///

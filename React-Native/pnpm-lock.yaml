@@ -12,8 +12,8 @@ importers:
   .:
     dependencies:
       '@businessdash/sdk':
-        specifier: ^0.9.94
-        version: 0.9.94(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        specifier: ^0.9.97
+        version: 0.9.97(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@expo/metro-runtime':
         specifier: ~58.0.17
         version: 58.0.17(@expo/log-box@58.0.15)(expo@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.13)(@react-native/metro-config@0.88.1(@babel/core@7.29.13))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -475,8 +475,8 @@ packages:
     resolution: {integrity: sha512-UjI/dKmwJwT9pOszJitq2G6EObZPnsZUfdCr92z2TlF3EZK9J3EdfOKUrCzHl6wFthbzwhzl1Soc/UIwxRiq6w==}
     engines: {node: '>=6.9.0'}
 
-  '@businessdash/sdk@0.9.94':
-    resolution: {integrity: sha512-flSHB/uPftoE2taTPZk2NIeVpws41p77dY0riuofC3fgB9Dk/t2QC1B8IuYlTPZ6XYeM3IUXKiddVJQN05VuRQ==}
+  '@businessdash/sdk@0.9.97':
+    resolution: {integrity: sha512-jB1vSElujB9ZPCzGa4fT7oH7TDV5FrHjNHQgPCgzUg0Xbc56vl1xB3/G8UW443VhKMwVt1DkzMuQwjYyTi0Rhw==}
     engines: {node: '>=18'}
     hasBin: true
     peerDependencies:
@@ -3333,7 +3333,7 @@ snapshots:
       '@babel/helper-string-parser': 7.29.14
       '@babel/helper-validator-identifier': 7.29.7
 
-  '@businessdash/sdk@0.9.94(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@businessdash/sdk@0.9.97(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
       zod: 4.6.7
     optionalDependencies:

@@ -1,3 +1,4 @@
+// [bd-file:booking]
 /**
  * POST /api/bd/scheduling/bookings
  *

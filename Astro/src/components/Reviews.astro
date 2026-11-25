@@ -1,11 +1,8 @@
 ---
 /**
- * Reviews wall — aggregate (average / count) + first page of reviews from the
- * marketing bundle, plus a "load more" client island that paginates deeper via
- * the `/api/bd/reviews` endpoint (which wraps `reviews.list`).
- *
- * The aggregate + first page ride the bundle, so the initial render is pure
- * server-render with zero JS; "Load more" is the only interactive part.
+ * The home page's reviews: the average and the first few from the marketing
+ * bundle, server-rendered with no JS, and a link to /reviews, which has the
+ * rest (the bars per star, the platform filter, "Show more", writing one).
  */
 import { getBundle, getReviewsFromBundle } from "../lib/bd-bundle";
 
@@ -61,109 +58,27 @@ function formatDate(iso: string): string {
 			</div>
 		) : (
 			<>
-				<div class="bd-grid-3" data-reviews-list>
+				<div class="bd-grid-3">
 					{firstPage.map((r) => (
-						<article class="bd-card review-card">
-							<div class="review-card__stars" aria-label={`${r.rating} stars`}>
+						<article class="bd-card review-teaser">
+							<div class="review-teaser__stars" aria-label={`${r.rating} stars`}>
 								{stars(r.rating)}
 							</div>
-							<p class="review-card__text">{r.description}</p>
-							<div class="review-card__meta">
+							<p class="review-teaser__text">{r.description}</p>
+							<div class="review-teaser__meta">
 								<span>{r.reviewee}</span>
 								<span>{formatDate(r.date)}</span>
 							</div>
 						</article>
 					))}
 				</div>
-				{totalCount > firstPage.length ? (
-					<div style="text-align: center; margin-top: 2rem;">
-						<button
-							class="bd-btn bd-btn--ghost"
-							data-reviews-more
-							data-offset={String(firstPage.length)}
-							type="button"
-						>
-							Load more reviews
-						</button>
-					</div>
-				) : null}
-				<div data-reviews-error hidden></div>
+				<div style="text-align: center; margin-top: 2rem;">
+					<a class="bd-btn bd-btn--ghost" href="/reviews">
+						See all {totalCount} review{totalCount === 1 ? "" : "s"}
+					</a>
+				</div>
 			</>
 		)
 	}
 </section>
 
-<script>
-	const list = document.querySelector<HTMLDivElement>("[data-reviews-list]");
-	const moreBtn = document.querySelector<HTMLButtonElement>(
-		"[data-reviews-more]",
-	);
-	const errorBox = document.querySelector<HTMLDivElement>(
-		"[data-reviews-error]",
-	);
-
-	function starsFor(rating: number): string {
-		const full = Math.round(Math.max(0, Math.min(5, rating)));
-		return "★★★★★".slice(0, full) + "☆☆☆☆☆".slice(0, 5 - full);
-	}
-	function fmtDate(iso: string): string {
-		const d = new Date(iso);
-		return Number.isNaN(d.getTime())
-			? ""
-			: d.toLocaleDateString(undefined, {
-					year: "numeric",
-					month: "short",
-					day: "numeric",
-				});
-	}
-
-	moreBtn?.addEventListener("click", async () => {
-		if (!list || !moreBtn) return;
-		const offset = Number(moreBtn.dataset.offset ?? "0");
-		moreBtn.disabled = true;
-		moreBtn.textContent = "Loading…";
-		try {
-			const res = await fetch(`/api/bd/reviews?offset=${offset}&limit=6`);
-			if (!res.ok) throw new Error(await res.text());
-			const data = (await res.json()) as {
-				items: Array<{
-					id: string;
-					rating: number;
-					text: string;
-					reviewerName: string;
-					timeCreated: string;
-				}>;
-				nextOffset: number | null;
-			};
-			for (const r of data.items) {
-				const card = document.createElement("article");
-				card.className = "bd-card review-card";
-				card.innerHTML = `
-					<div class="review-card__stars" aria-label="${r.rating} stars">${starsFor(r.rating)}</div>
-					<p class="review-card__text"></p>
-					<div class="review-card__meta"><span class="rc-name"></span><span class="rc-date"></span></div>`;
-				card.querySelector(".review-card__text")!.textContent = r.text;
-				card.querySelector(".rc-name")!.textContent = r.reviewerName;
-				card.querySelector(".rc-date")!.textContent = fmtDate(r.timeCreated);
-				list.append(card);
-			}
-			if (data.nextOffset == null) {
-				moreBtn.remove();
-			} else {
-				moreBtn.dataset.offset = String(data.nextOffset);
-				moreBtn.disabled = false;
-				moreBtn.textContent = "Load more reviews";
-			}
-		} catch (err) {
-			if (errorBox) {
-				errorBox.hidden = false;
-				errorBox.textContent =
-					err instanceof Error ? err.message : "Couldn't load more.";
-				errorBox.style.cssText =
-					"color: var(--danger); text-align: center; margin-top: 1rem; font-size: 0.9rem;";
-			}
-			moreBtn.disabled = false;
-			moreBtn.textContent = "Load more reviews";
-		}
-	});
-</script>

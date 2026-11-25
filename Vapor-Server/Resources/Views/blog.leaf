@@ -1,18 +1,75 @@
+<!-- The post list: pinned first, category and tag filters, older posts.
+     BlogController.index works out every link and label. -->
 #extend("base"):
-  #export("title"):Blog#endexport
+  #export("title"):#(title)#endexport
+  #export("head"):
+    <link rel="stylesheet" href="/bd-pages.css">
+    <link rel="stylesheet" href="/bd-blog.css">
+  #endexport
+  #export("mainClass"):bd-page#endexport
   #export("content"):
-    <h1>Blog</h1>
-    #if(count(posts) > 0):
-      <ul class="post-list">
-        #for(post in posts):
-          <li>
-            <a href="/blog/#(post.slug)">#(post.title)</a>
-            <p class="muted">#(post.excerpt)</p>
-          </li>
-        #endfor
-      </ul>
+    #if(!configured):
+      <div class="bd-empty">The blog isn't connected yet. Add your BD env, then publish a post in Business Dash.</div>
     #else:
-      <p class="muted">No posts yet.</p>
+      <div class="bd-section__lead">
+        <span class="bd-section__eyebrow">Blog</span>
+        <h1 class="bd-section__title">#(heading)</h1>
+        #if(hasDescription):<p class="bd-section__sub">#(description)</p>#endif
+      </div>
+
+      #if(hasFilterNav):
+        <nav aria-label="Blog topics" class="blog-filters">
+          #if(hasCategories):
+            <ul>
+              #for(link in categories):
+                <li><a#if(link.current): aria-current="true"#endif href="#(link.href)">#(link.label)</a></li>
+              #endfor
+            </ul>
+          #endif
+          #if(hasTags):
+            <ul class="blog-filters__tags">
+              #for(link in tags):
+                <li><a#if(link.current): aria-current="true"#endif href="#(link.href)">#(link.label)</a></li>
+              #endfor
+            </ul>
+          #endif
+        </nav>
+      #endif
+
+      #if(isEmpty):
+        <div class="bd-empty">
+          #if(filtered):
+            No posts here yet.
+          #else:
+            No posts published yet. Write one in Business Dash and it'll appear here.
+          #endif
+        </div>
+      #else:
+        <ul class="posts">
+          #for(post in posts):
+            <li class="bd-card post-card#if(post.lead): post-card--lead#endif">
+              <a class="post-card__link" href="#(post.href)">
+                #if(post.hasImage):
+                  <img alt="" class="post-card__img" loading="lazy" referrerpolicy="no-referrer" src="#(post.image)">
+                #endif
+                <div class="post-card__body">
+                  <p class="post-card__meta">
+                    #if(post.pinned):<span class="bd-badge">Pinned</span>#endif
+                    <span>#(post.date)</span>
+                    <span>· #(post.minutes) min read</span>
+                  </p>
+                  <h2>#(post.title)</h2>
+                  #if(post.hasExcerpt):<p class="post-card__excerpt">#(post.excerpt)</p>#endif
+                  #if(post.hasAuthor):<p class="post-card__author">#(post.author)</p>#endif
+                </div>
+              </a>
+            </li>
+          #endfor
+        </ul>
+        #if(hasOlder):
+          <p class="posts__more"><a class="bd-btn bd-btn--ghost" href="#(olderHref)">Older posts</a></p>
+        #endif
+      #endif
     #endif
   #endexport
 #endextend

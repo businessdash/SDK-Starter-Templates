@@ -1,9 +1,12 @@
 <!-- [bd-file:store] -->
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, watch } from "vue";
 import BdHeader from "~/components/bd/BdHeader.vue";
+import StoreNav from "~/components/bd/StoreNav.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
-import { useCart, formatMoney } from "~/composables/useCart";
+import { useCart } from "~/composables/useCart";
+// Cart amounts are dollars (not cents), so they are formatted as they are.
+import { formatDollars } from "#shared/bd/shop";
 
 /**
  * Cart page. Loads the visitor's cart, edits line quantities, applies /
@@ -25,6 +28,15 @@ const {
 
 // Load on the server during SSR so the cart is present on first paint.
 await useAsyncData("cart", load);
+
+// Keep the cart count in the store links in step with edits made here.
+const cartCount = useState<number>("bd-cart-count", () => 0);
+watch(
+	() => cart.value?.itemCount,
+	(count) => {
+		if (count !== undefined) cartCount.value = count;
+	},
+);
 
 const couponInput = ref("");
 const checkoutError = ref<string | null>(null);
@@ -62,6 +74,7 @@ useHead({ title: "Cart — Your Business" });
 <template>
 	<div>
 		<BdHeader />
+		<StoreNav />
 		<main>
 			<section class="bd-section bd-section--narrow">
 				<div class="bd-section__lead">
@@ -87,7 +100,7 @@ useHead({ title: "Cart — Your Business" });
 								{{ item.variantTitle }}
 							</div>
 							<div class="cart-line__price">
-								{{ formatMoney(item.subtotal, cart.currency) }}
+								{{ formatDollars(item.subtotal, cart.currency) }}
 							</div>
 						</div>
 						<div class="cart-line__qty">
@@ -152,7 +165,7 @@ useHead({ title: "Cart — Your Business" });
 
 					<div class="cart__totals">
 						<span>Subtotal</span>
-						<strong>{{ formatMoney(cart.subtotal, cart.currency) }}</strong>
+						<strong>{{ formatDollars(cart.subtotal, cart.currency) }}</strong>
 					</div>
 
 					<div class="cart__actions">

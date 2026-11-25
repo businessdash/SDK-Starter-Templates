@@ -17,6 +17,14 @@ export const routes: Routes = [
 		loadComponent: () => import("./pages/store.page").then((m) => m.StorePage),
 	},
 	{
+		path: "store/wishlist",
+		loadComponent: () => import("./pages/wishlist.page").then((m) => m.WishlistPage),
+	},
+	{
+		path: "store/compare",
+		loadComponent: () => import("./pages/compare.page").then((m) => m.ComparePage),
+	},
+	{
 		path: "store/:id",
 		loadComponent: () =>
 			import("./pages/product-detail.page").then((m) => m.ProductDetailPage),
@@ -26,13 +34,24 @@ export const routes: Routes = [
 		loadComponent: () => import("./pages/cart.page").then((m) => m.CartPage),
 	},
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	{
 		path: "subscriptions",
 		loadComponent: () =>
 			import("./pages/subscriptions.page").then((m) => m.SubscriptionsPage),
 	},
-	// [/bd:saas]
+	// [/bd:subscriptions]
+	// [bd:blog]
+	{
+		path: "blog",
+		pathMatch: "full",
+		loadComponent: () => import("./pages/blog.page").then((m) => m.BlogPage),
+	},
+	{
+		path: "blog/:slug",
+		loadComponent: () => import("./pages/blog-post.page").then((m) => m.BlogPostPage),
+	},
+	// [/bd:blog]
 	{
 		path: "my-account",
 		loadComponent: () =>
@@ -50,10 +69,12 @@ export const routes: Routes = [
 		path: "todos",
 		loadComponent: () => import("./pages/todos.page").then((m) => m.TodosPage),
 	},
+	// [bd:booking]
 	{
 		path: "booking",
 		loadComponent: () => import("./pages/booking.page").then((m) => m.BookingPage),
 	},
+	// [/bd:booking]
 	{
 		path: "services",
 		pathMatch: "full",

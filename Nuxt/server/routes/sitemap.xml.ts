@@ -19,13 +19,18 @@ const STATIC_PATHS = [
 	"/services",
 	"/reviews",
 	"/updates",
+	// [bd:blog]
+	"/blog",
+	// [/bd:blog]
 	// [bd:store]
 	"/store",
+	"/store/wishlist",
+	"/store/compare",
 	"/cart",
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"/subscriptions",
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	"/todos",
 ];
 
@@ -47,7 +52,9 @@ export default defineEventHandler(async (event) => {
 					// [bd:store]
 					product: "/store",
 					// [/bd:store]
-					blog: "/updates",
+					// [bd:blog]
+					blog: "/blog",
+					// [/bd:blog]
 				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),

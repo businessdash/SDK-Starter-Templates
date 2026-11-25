@@ -4,7 +4,7 @@ Three packages:
 
 - **`packages/businessdash_sdk`** — the client, and the forms engine (`package:businessdash_sdk/forms.dart`). **Pure Dart**: it imports nothing from Flutter, so it analyzes, tests and runs anywhere Dart does — a server, a CLI, a test runner with no Flutter toolchain installed. Its only dependency is `http`.
 - **`packages/businessdash_forms`** — `BdForm`, the widget that renders a Live BusinessDash form natively: Material controls on Android, Cupertino on iOS. See [Native forms](#native-forms).
-- **the root package** — the Flutter app built on them: shop, product detail, cart, Front Desk chat, and a Form tab.
+- **the root package** — the Flutter app built on them: the store (product pages, wishlist, compare, cart and checkout), the blog, the business's reviews, Front Desk chat, and Form and Quiz tabs. See [The store, the blog and reviews](#the-store-the-blog-and-reviews).
 
 The split is not tidiness. It means the part most likely to be wrong — decoding, error mapping, the access gate — is testable without an emulator, and stays reusable if you later want the same client in a Dart backend.
 
@@ -38,6 +38,7 @@ flutter run \
   --dart-define=BD_SITE_ID=… \
   --dart-define=BD_PK=pk_… \
   --dart-define=BD_FORM=contact            # optional: a Live form for the Form tab
+  --dart-define=BD_SITE_URL=https://…      # optional: your website, for a product's "Copy link"
 ```
 
 Configuration comes from `--dart-define`, not a `.env` file. There is no env in an APK, and dart-defines are compiled in — which is exactly what an app credential is. **With no defines at all the app still launches**, showing a setup banner and empty states.
@@ -74,10 +75,29 @@ packages/businessdash_sdk/lib/src/
   chat.dart        the polling chat API as a Stream
   bundle.dart      key-path reads for the two schema-driven surfaces
   money.dart       cents vs decimal — read this before rendering money
+  shop.dart        the product page's rules: photos per style, option groups,
+                   "from" prices, the cart line's options
+  reviews.dart     the reviews' rules: the summary, platforms, safe links,
+                   what a written review must be
+  post_html.dart   a post's HTML cleaned to what BD allows, reading time, dates
+  post_blocks.dart that HTML as blocks the app draws with its own widgets
   donations.dart   giving page + checkout, and the cover-fees math
   forms/           the native forms engine: conditions, formulas, validation,
                    the submission payload, and BdFormController
 ```
+
+## The store, the blog and reviews
+
+The same shop, blog and reviews as the web starters and the Swift and React Native apps, as Flutter screens. The rules live in the pure-Dart package (`shop.dart`, `reviews.dart`, `post_html.dart`, `post_blocks.dart`), ported line for line from the web starters' `src/shop/*.ts`, so a product shows the same photos for the same option, a post keeps the same HTML, and a review is checked the same way on every platform.
+
+- **Store** (`lib/ui/storefront_page.dart`). The business's rating at the top (it opens Reviews), search, category chips with counts, and a sheet for sort, price and rating (`productListing`). Each card has its badges (Best seller, New, Sale), stars, a "From" or sale price, Low stock, and ♡ / ⇄ to save it or pick it to compare. The results on screen stay while new ones load.
+- **Product** (`product_page.dart`). Photos for the chosen style, style and option chips (sizes smallest first; sold-out ones disabled), the price for what's chosen, quantity, add to cart, add-ons, features and specs, reviews with "Show more", "You may also like" and "Recently viewed".
+- **Wishlist and compare** (`wishlist_page.dart`, `compare_page.dart`). Kept on the device with `shared_preferences` (`lib/ui/app_state.dart`); nothing reaches the server. Compare holds four products side by side: price, rating, category, options and every spec.
+- **Cart** (`cart_page.dart`). Quantity, remove, a coupon, clear, the subtotal, and checkout on Stripe's page (`flutter_web_auth_2`). Stripe sends the customer back to `bdstarter://checkout/success`, where `order_page.dart` says whether the order is paid. The Cart tab shows how many things are in it.
+- **Blog** (`blog_page.dart`, `post_page.dart`). Topics, tags and pinned posts first, older posts on demand. A post is drawn with Flutter's own text and images from its HTML (`PostBlocks`, rendered by `post_body.dart`): headings, lists, quotes, code, photos with captions, tables; links open in the browser, mail or phone app, and nothing in a post runs in the app. A signed-in customer can like and comment; a members-only post asks them to sign in.
+- **Reviews** (`reviews_page.dart`). The average with a bar per star, Google / Yelp / Other filters, each review with its photos, Verified and a link to it on Google or Yelp, and "Show more". A signed-in customer can write one (stars, an optional title, the review); the business approves it before it shows.
+
+Signing in on the Account tab is what the blog and reviews use: `AppState` keeps the session, and liking, commenting and writing a review send its token as `X-BD-Session-Token`.
 
 ## Five things that will bite you
 
@@ -87,7 +107,7 @@ packages/businessdash_sdk/lib/src/
 
 **3. Checkout returns `stripeUrl`, not `url`.** Open it in a browser; no card data touches this process, which keeps the app out of PCI scope.
 
-**4. The cart visitor token is generated locally.** There is no endpoint that mints one — `cart/session` is a tokenized iframe embed, a different feature. It's an opaque id, not a secret, so ordinary storage is right for it. `main.dart` generates a throwaway per launch; **persist it** (`shared_preferences`) so a cart survives a relaunch.
+**4. The cart visitor token is generated locally.** There is no endpoint that mints one — `cart/session` is a tokenized iframe embed, a different feature. It's an opaque id, not a secret, so ordinary storage is right for it: `main.dart` makes one on first launch and keeps it with `shared_preferences`, so a cart survives a relaunch.
 
 **5. Nullable everywhere is deliberate.** The platform returns a superset that grows release to release. An app that hard-fails parsing because a new nullable column appeared is an app that breaks on somebody else's deploy.
 
@@ -169,8 +189,7 @@ The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in s
 
 ## What this starter does not do
 - **The session isn't persisted.** Keep `session.sessionToken` in `flutter_secure_storage` so a sign-in survives a relaunch; the customer-portal screens are yours to build on it.
-- **The visitor token isn't persisted.** See above — one line with `shared_preferences`.
-- **No widget tests for the shop, cart and chat screens.** The forms package has them; the app screens don't.
+- **No widget tests for the chat screen.** The store, product, cart, blog and reviews screens have them (`test/`).
 
 ## Verification
 
@@ -178,7 +197,9 @@ The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in s
 
 `flutter test` passes in `packages/businessdash_forms`: rendering, validation, submit, conditions, steps, Cupertino and Material controls, sheets, repeaters, collections, retry, the leave guard, custom renderers, and hosting in a `CupertinoApp`. The quiz widget tests take a quiz through choices, typed answers, verdicts, a countdown that runs out, results and a retake, and load practice quizzes and invitations from a mocked BD.
 
-The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`).
+`flutter test` passes in the root package: against a fake BD (`MockClient`), the store's categories and filters, a product's options going into the cart and the Cart tab's badge, a coupon BD refuses and one it takes, the blog's pinned posts, a tag and a post liked and commented on as a signed-in customer, the reviews' summary, "Show more", a platform filter and a written review, and the saved lists outlasting a relaunch. The package's `test/shop_blog_reviews_test.dart` replays the post-HTML cases every BD starter checks its port against (`test/fixtures/post-html-parity.json`) and pins the product, review and request rules.
+
+The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`). The store, product, compare, cart, blog, post and reviews screens were also checked at phone size in a web build (`flutter create --platforms=web .`) against a mock BD.
 
 <!-- [bd:donations] -->
 ## Donations

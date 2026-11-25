@@ -350,6 +350,23 @@ main {
 	color: var(--accent);
 }
 
+/* Narrow screens: the links get their own row and scroll sideways, so the
+   header never runs wider than the screen. */
+@media (max-width: 860px) {
+	.app-header__inner {
+		flex-wrap: wrap;
+		row-gap: 0.6rem;
+	}
+
+	.app-header nav {
+		flex: 1 0 100%;
+		min-width: 0;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+}
+
 /* Hero */
 .hero {
 	max-width: 72rem;
@@ -559,317 +576,79 @@ main {
 	line-height: 0;
 }
 
-/* Storefront listing — sidebar + results layout. */
-.store-layout {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 2rem;
+/* The page body on store and blog pages. `:where` keeps these at zero
+   specificity, so the shop and blog styles (bd-shop.css, bd-blog.css) win
+   wherever they say more. */
+.bd-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 2.5rem 1.25rem 4rem;
 }
 
-@media (min-width: 860px) {
-	.store-layout {
-		grid-template-columns: 15rem minmax(0, 1fr);
-		gap: 2.5rem;
-	}
+:where(.bd-page) a {
+	border-bottom: 0;
 }
 
-.store-sidebar {
-	display: flex;
-	flex-direction: column;
-	gap: 1.75rem;
-	align-self: start;
+.blog-section__all {
+	display: block;
+	width: fit-content;
+	margin: 1.5rem auto 0;
 }
 
-@media (min-width: 860px) {
-	.store-sidebar {
-		position: sticky;
-		top: 5.5rem;
-	}
-}
-
-.store-filter {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.store-filter__title {
-	font-size: 0.78rem;
-	font-weight: 700;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
-	color: var(--subtitle);
-}
-
-.store-filter__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.2rem;
-}
-
-.store-filter__link {
-	display: flex;
-	width: 100%;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-	padding: 0.25rem 0;
-	background: none;
-	border: none;
-	color: var(--text-muted);
-	font-size: 0.92rem;
-	text-align: left;
-	transition: color 0.12s ease;
-}
-
-.store-filter__link:hover {
-	color: var(--title);
-}
-
-.store-filter__link[aria-pressed="true"] {
-	color: var(--accent);
-	font-weight: 600;
-}
-
-.store-filter__count {
-	font-size: 0.78rem;
-	color: var(--text-muted);
-}
-
-.store-filter__price {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-}
-
-.store-filter__dash {
-	color: var(--text-muted);
-}
-
-.store-filter__apply {
-	margin-top: 0.5rem;
-	width: 100%;
-}
-
-.store-filter__clear {
-	align-self: flex-start;
-	background: none;
-	border: none;
-	color: var(--accent);
-	font-size: 0.78rem;
-	font-weight: 600;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-}
-
-.store-results__bar {
+/* [bd:store,subscriptions] */
+/* Store bar: under the header on store and plan pages. */
+.store-nav {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1rem 1.25rem;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 1rem;
-	margin-bottom: 1.5rem;
+	border-bottom: 1px solid var(--border);
 }
-
-.store-results__count {
-	color: var(--text-muted);
-	font-size: 0.9rem;
-}
-
-.store-results__sort {
-	display: flex;
-	align-items: center;
-	gap: 0.5rem;
-	font-size: 0.9rem;
-	color: var(--text-muted);
-}
-
-.store-results__sort .bd-select {
-	width: auto;
-}
-
-/* Listing card extras (badges, ratings, prices). */
-.store-card {
-	padding: 0;
-	overflow: hidden;
-}
-
-.store-card__media {
-	position: relative;
-	aspect-ratio: 4 / 3;
-	background: var(--bg-soft);
-}
-
-.store-card__media img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.store-card__placeholder {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	height: 100%;
-	color: var(--text-muted);
-	font-size: 0.85rem;
-}
-
-.store-card > h3,
-.store-card__rating,
-.store-card__price,
-.store-card__lowstock {
-	padding-inline: 1.25rem;
-}
-
-.store-card > h3 {
-	padding-top: 1rem;
-}
-
-.store-card__lowstock {
-	padding-bottom: 1.25rem;
-}
-
-.store-card__badges {
-	position: absolute;
-	top: 0.6rem;
-	left: 0.6rem;
+.store-nav__links {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.35rem;
-}
-
-.store-card__badge--sale {
-	background: var(--danger-bg);
-	color: var(--danger);
-	border-color: var(--danger);
-}
-
-.store-card__rating {
-	display: flex;
 	align-items: center;
-	gap: 0.4rem;
-}
-
-.store-card__reviews {
-	font-size: 0.8rem;
-	color: var(--text-muted);
-}
-
-.store-card__price {
-	display: flex;
-	align-items: baseline;
-	gap: 0.5rem;
-}
-
-.store-card__price .service-card__price {
-	margin-top: 0;
-}
-
-.store-card__compare {
-	color: var(--text-muted);
-	font-size: 0.85rem;
-	text-decoration: line-through;
-}
-
-.store-card__lowstock {
-	color: var(--danger);
-	font-size: 0.72rem;
-	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-}
-
-/* Product detail enrichment — addons, reviews, related blocks. */
-.store-detail__block {
-	margin-top: 2.5rem;
-	display: flex;
-	flex-direction: column;
 	gap: 1.25rem;
-}
-
-.store-detail__heading {
-	font-size: 1.35rem;
-}
-
-.store-detail__heading-sub {
-	color: var(--text-muted);
-	font-size: 0.9rem;
-	font-weight: 400;
-}
-
-.store-addons {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: 1rem;
-}
-
-@media (min-width: 600px) {
-	.store-addons {
-		grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
-	}
-}
-
-.store-addon {
-	display: flex;
-	flex-direction: column;
-	overflow: hidden;
-}
-
-.store-addon__img {
-	width: 100%;
-	aspect-ratio: 4 / 3;
-	object-fit: cover;
-}
-
-.store-addon__body {
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-	padding: 1rem 1.25rem 1.25rem;
-}
-
-.store-addon__name {
-	font-size: 1rem;
-}
-
-.store-addon__desc {
-	color: var(--text-muted);
-	font-size: 0.88rem;
-}
-
-.store-reviews {
-	display: flex;
-	flex-direction: column;
-	gap: 1rem;
-}
-
-.store-review {
-	padding: 1.25rem 1.5rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.5rem;
-}
-
-.store-review__head {
-	display: flex;
-	align-items: center;
-	gap: 0.6rem;
-}
-
-.store-review__author {
-	font-size: 0.85rem;
-	font-weight: 600;
-	color: var(--subtitle);
-}
-
-.store-review__title {
-	font-size: 1rem;
-}
-
-.store-review__body {
-	color: var(--text);
 	font-size: 0.92rem;
 }
+/* Narrow screens: one row of links that scrolls sideways. */
+@media (max-width: 640px) {
+	.store-nav {
+		justify-content: flex-start;
+		gap: 1.25rem;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+	.store-nav__links {
+		flex-wrap: nowrap;
+	}
+}
+.store-nav__count {
+	margin-left: 0.2rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+.store-nav__cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
+}
+.store-nav__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.4rem;
+	border-radius: 9999px;
+	background: var(--accent);
+	color: white;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+/* [/bd:store,subscriptions] */

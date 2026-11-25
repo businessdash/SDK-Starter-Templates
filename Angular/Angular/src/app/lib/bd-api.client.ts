@@ -12,6 +12,20 @@
  * keeps rendering its demo content.
  */
 
+// [bd:store]
+// Types only: the elements themselves load in the browser.
+import type { CompareColumn, ProductPageData } from "../shop/shop-elements";
+// [/bd:store]
+// [bd:blog]
+import type {
+	BlogCategory,
+	BlogLikeResponse,
+	BlogPublicComment,
+	BlogPublicPost,
+} from "@businessdash/sdk/contracts";
+// [/bd:blog]
+import type { ReviewsPageData } from "../shop/reviews-page";
+
 /** Resolve a path against the current origin (works in SSR + browser). */
 function apiUrl(path: string): string {
 	if (typeof window !== "undefined" && window.location?.origin) {
@@ -198,7 +212,7 @@ export type ProductAddon = {
 export type ProductAddonsPayload = { items: ProductAddon[] };
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 export type Subscription = {
 	id: string;
 	name: string;
@@ -221,7 +235,7 @@ export type CustomerPlan = {
 	expiresAt: string | null;
 	plan: { name: string } | null;
 };
-// [/bd:saas]
+// [/bd:subscriptions]
 
 // [bd:store]
 export type CartItem = {
@@ -243,6 +257,7 @@ export type CartSnapshot = {
 } | null;
 // [/bd:store]
 
+// [bd:blog]
 export type BlogPost = {
 	id: string;
 	slug: string;
@@ -251,11 +266,38 @@ export type BlogPost = {
 	publishedAt: string | null;
 };
 
+/** A page of the blog, as `blog.listPosts` returns it. */
+export type BlogPostsPayload = { items: BlogPublicPost[]; nextCursor: number | null };
+
+/** One post, ready for the page: the server has made its HTML safe. */
+export type BlogPostPayload = {
+	post: {
+		title: string;
+		slug: string;
+		excerpt: string | null;
+		imageUrl: string | null;
+		publishedAt: string | null;
+		authorName: string | null;
+		authorAvatarUrl: string | null;
+		tags: string[];
+		ctaLabel: string | null;
+		ctaHref: string | null;
+		ctaDescription: string | null;
+	};
+	html: string;
+	minutes: number;
+	paywalled: boolean;
+	likes: BlogLikeResponse;
+	comments: BlogPublicComment[];
+	signedIn: boolean;
+};
+// [/bd:blog]
+
 export type PortalMe = {
 	signedIn: boolean;
-	// [bd:saas]
+	// [bd:subscriptions]
 	plan?: CustomerPlan | null;
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	user?: { email: string | null; firstName: string | null; lastName: string | null };
 	organizationId?: string;
 	role?: string | null;
@@ -271,6 +313,7 @@ export type PortalMe = {
 	} | null;
 };
 
+// [bd:booking]
 export type EventType = {
 	id: string;
 	name: string;
@@ -279,6 +322,7 @@ export type EventType = {
 	durationMinutes: number;
 };
 export type Slot = { startAt: string; endAt: string };
+// [/bd:booking]
 
 export type ParallelPageRender = {
 	meta: { title: string; description: string; canonical?: string; ogImage?: string };
@@ -305,7 +349,19 @@ export type TodosPayload = {
 
 export const bdApi = {
 	home: () => getJson<HomePayload>("/api/bd/home"),
+	// [bd:blog]
 	blog: () => getJson<{ items: BlogPost[] }>("/api/bd/blog"),
+	blogPosts: (input: { limit: number; cursor?: number | null; categoryId?: string | null }) => {
+		const q = new URLSearchParams({ limit: String(input.limit) });
+		if (input.cursor != null) q.set("cursor", String(input.cursor));
+		if (input.categoryId) q.set("categoryId", input.categoryId);
+		return getJson<BlogPostsPayload>(`/api/bd/blog/posts?${q}`);
+	},
+	blogCategories: () => getJson<{ items: BlogCategory[] }>("/api/bd/blog/categories"),
+	blogTags: () => getJson<{ items: string[] }>("/api/bd/blog/tags"),
+	/** null when the post isn't there (or the blog isn't connected). */
+	blogPost: (slug: string) => getJson<BlogPostPayload>(`/api/bd/blog/post/${encodeURIComponent(slug)}`),
+	// [/bd:blog]
 
 	// [bd:store]
 	products: (cursor?: number | null, categoryId?: string) => {
@@ -341,9 +397,54 @@ export const bdApi = {
 		),
 	productAddons: (id: string) =>
 		getJson<ProductAddonsPayload>(`/api/bd/store/products/${encodeURIComponent(id)}/addons`),
+
+	/**
+	 * Everything `<bd-product>` draws: the product, its first `reviewLimit`
+	 * reviews, its add-ons and related products. null when the product isn't
+	 * there (or the store isn't connected).
+	 */
+	productPage: async (id: string, reviewLimit: number): Promise<ProductPageData | null> => {
+		const path = `/api/bd/store/products/${encodeURIComponent(id)}`;
+		const [product, reviews, addons, related] = await Promise.all([
+			getJson<ProductPageData["product"]>(path),
+			getJson<NonNullable<ProductPageData["reviews"]>>(`${path}/reviews?limit=${reviewLimit}`),
+			getJson<{ items: ProductPageData["addons"] }>(`${path}/addons`),
+			getJson<{ items: ProductPageData["related"] }>(`${path}/related?limit=6`),
+		]);
+		if (!product) return null;
+		return {
+			product,
+			reviews,
+			addons: addons?.items ?? [],
+			related: related?.items ?? [],
+			moreReviewsHref:
+				reviews && reviews.totalCount > reviews.items.length
+					? `/store/${encodeURIComponent(id)}?reviews=${reviewLimit + 10}#reviews`
+					: null,
+		};
+	},
+
+	/** Up to four products side by side, for `<bd-compare>`; missing ones drop out. */
+	compare: async (ids: string[]): Promise<CompareColumn[]> => {
+		const columns = await Promise.all(
+			ids.map(async (id): Promise<CompareColumn | null> => {
+				const path = `/api/bd/store/products/${encodeURIComponent(id)}`;
+				const [product, reviews] = await Promise.all([
+					getJson<CompareColumn["product"]>(path),
+					getJson<NonNullable<ProductPageData["reviews"]>>(`${path}/reviews?limit=1`),
+				]);
+				if (!product) return null;
+				return {
+					product,
+					rating: reviews && reviews.totalCount > 0 ? { avg: reviews.avgRating, count: reviews.totalCount } : null,
+				};
+			}),
+		);
+		return columns.filter((column): column is CompareColumn => column !== null);
+	},
 	// [/bd:store]
 
-	// [bd:saas]
+	// [bd:subscriptions]
 	subscriptions: () => getJson<SubscriptionsPayload>("/api/bd/subscriptions"),
 	/** A Stripe URL for the signed-in customer, or where to sign in first. */
 	subscribe: (id: string) =>
@@ -358,7 +459,7 @@ export const bdApi = {
 			"POST",
 			{ intent },
 		),
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	// [bd:store]
 	cart: () => getJson<CartSnapshot>("/api/bd/cart"),
@@ -378,6 +479,8 @@ export const bdApi = {
 	contact: (input: { name: string; email: string; message: string }) =>
 		sendJson<{ ok: boolean }>("/api/bd/contact", "POST", { slug: "general-inquiry", ...input }),
 
+	/** The reviews page's data; `search` is "?source=…&shown=…" or "". */
+	reviewsPage: (search: string) => getJson<ReviewsPageData>(`/api/bd/reviews/page${search}`),
 	reviews: (offset?: number, limit = 10) => {
 		const q = new URLSearchParams();
 		if (offset != null) q.set("offset", String(offset));
@@ -389,6 +492,7 @@ export const bdApi = {
 	submitReview: (input: { rating: number; title?: string; body: string }) =>
 		sendJson<{ ok: boolean; status?: string }>("/api/bd/portal/review", "POST", input),
 
+	// [bd:booking]
 	eventTypes: () => getJson<{ items: EventType[] }>("/api/bd/scheduling/event-types"),
 	slots: (slug: string, fromIso: string, toIso: string) =>
 		getJson<{ slots: Slot[] }>(
@@ -400,6 +504,7 @@ export const bdApi = {
 			"POST",
 			input,
 		),
+	// [/bd:booking]
 
 	serviceVariants: () =>
 		getJson<{ variants: Array<Record<string, string>> }>("/api/bd/services"),

@@ -6,11 +6,14 @@
 			<!-- [bd:store] -->
 			<a href="/store">Store</a>
 			<!-- [/bd:store] -->
-			<!-- [bd:saas] -->
+			<!-- [bd:subscriptions] -->
 			<!-- [bd:!store] -->
 			<a href="/store/subscriptions">Plans</a>
 			<!-- [/bd:!store] -->
-			<!-- [/bd:saas] -->
+			<!-- [/bd:subscriptions] -->
+			<!-- [bd:blog] -->
+			<a href="/blog">Blog</a>
+			<!-- [/bd:blog] -->
 			<a href="/reviews">Reviews</a>
 			<a href="/updates">Updates</a>
 			<a href="/todos">Todos</a>
@@ -42,6 +45,22 @@
 		border-bottom: none;
 		font-size: 0.82rem;
 		padding: 0.4rem 0.85rem;
+	}
+	/* Narrow screens: the links get their own row and scroll sideways, so the
+	   header never runs wider than the screen. */
+	@media (max-width: 860px) {
+		.app-header__inner {
+			flex-wrap: wrap;
+			row-gap: 0.6rem;
+		}
+		nav {
+			order: 3;
+			flex: 1 0 100%;
+			min-width: 0;
+			overflow-x: auto;
+			white-space: nowrap;
+			scrollbar-width: none;
+		}
 	}
 	@media (max-width: 640px) {
 		.app-header__signin {

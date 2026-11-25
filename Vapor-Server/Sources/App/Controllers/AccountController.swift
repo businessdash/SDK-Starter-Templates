@@ -360,7 +360,7 @@ enum AccountController {
     }
 
     /// Behind a proxy the request itself is plain http; the proxy says so.
-    private static func isHTTPS(_ req: Request) -> Bool {
+    static func isHTTPS(_ req: Request) -> Bool {
         req.url.scheme == "https" || req.headers.first(name: "X-Forwarded-Proto") == "https"
     }
 

@@ -235,6 +235,14 @@ public class PortalResource internal constructor(
             mapOf("token" to token),
             headers,
         )
+
+    /**
+     * Write a review of the business as this customer. It waits for the
+     * business to approve it; show [Reviews.SENT]. Check the input with
+     * [Reviews.check] first.
+     */
+    public suspend fun submitReview(review: ReviewInput): JsonElement =
+        client.post("customer-portal/reviews", review, headers)
 }
 
 /**

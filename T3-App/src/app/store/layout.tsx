@@ -1,38 +1,33 @@
-// [bd-file:store,saas]
-import Link from "next/link";
+// [bd-file:store,subscriptions]
+import { BdFooter } from "@/app/_components/bd/Footer";
+import { BdHeader } from "@/app/_components/bd/Header";
+// [bd:store]
+import { getCartSnapshot } from "@/server/lib/bd-store";
+// [/bd:store]
+
+import { StoreNav } from "./_components/StoreNav";
 
 /**
- * Store layout — wraps every page under app/store with a thin sub-nav linking
- * products / subscriptions / cart, plus a link back to the home page. Reuses
- * the home page's sticky `app-header` shell so the storefront feels native.
+ * Every page under /store: the site header, the store bar (products, plans,
+ * wishlist, compare, cart) and the footer.
  */
-export default function StoreLayout({
+export default async function StoreLayout({
 	children,
 }: {
 	children: React.ReactNode;
 }) {
+	// Read-only: this never starts a cart, it only counts one that exists.
+	const cartCount =
+		// [bd:store]
+		(await getCartSnapshot())?.itemCount ??
+		// [/bd:store]
+		0;
 	return (
 		<>
-			<header className="app-header">
-				<div className="app-header__inner">
-					<Link className="app-header__brand" href="/">
-						Your Business
-					</Link>
-					<nav>
-						{/* [bd:store] */}
-						<Link href="/store">Products</Link>
-						{/* [/bd:store] */}
-						{/* [bd:saas] */}
-						<Link href="/store/subscriptions">Subscriptions</Link>
-						{/* [/bd:saas] */}
-						{/* [bd:store] */}
-						<Link href="/store/cart">Cart</Link>
-						{/* [/bd:store] */}
-						<Link href="/">Home</Link>
-					</nav>
-				</div>
-			</header>
+			<BdHeader />
+			<StoreNav cartCount={cartCount} />
 			<main className="bd-section">{children}</main>
+			<BdFooter />
 		</>
 	);
 }

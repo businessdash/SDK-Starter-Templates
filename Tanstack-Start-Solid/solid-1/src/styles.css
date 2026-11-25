@@ -500,6 +500,23 @@ main {
 	color: var(--accent);
 }
 
+/* Narrow screens: the links get their own row and scroll sideways, so the
+   header never runs wider than the screen. */
+@media (max-width: 860px) {
+	.app-header__inner {
+		flex-wrap: wrap;
+		row-gap: 0.6rem;
+	}
+
+	.app-header nav {
+		flex: 1 0 100%;
+		min-width: 0;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+}
+
 /* Hero */
 .hero {
 	max-width: 72rem;
@@ -591,270 +608,82 @@ main {
 	font-weight: 700;
 }
 
-/* ──────────────────────────────────────────────────────────────────
-   Storefront — facet sidebar + enriched cards (store.index / store.$id)
-   Built on the same tokens as the rest of the starter.
-   ────────────────────────────────────────────────────────────────── */
-.store-layout {
-	display: grid;
-	gap: 2rem;
-	align-items: start;
+/* The page body on store and blog pages. `:where` keeps this at zero
+   specificity, so the shop and blog styles (bd-shop.css, bd-blog.css) win
+   wherever they say more. */
+.bd-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 2.5rem 1.25rem 4rem;
 }
 
-@media (min-width: 64rem) {
-	.store-layout {
-		grid-template-columns: 15rem minmax(0, 1fr);
-		gap: 2.5rem;
-	}
-	.store-sidebar {
-		position: sticky;
-		top: 5rem;
-	}
+:where(.bd-page) a {
+	border-bottom: 0;
 }
 
-.store-sidebar {
-	display: flex;
-	flex-direction: column;
-	gap: 1.75rem;
+.blog-section__all {
+	display: block;
+	width: fit-content;
+	margin: 1.5rem auto 0;
 }
 
-.store-facet__title {
-	font-size: 0.78rem;
-	font-weight: 700;
-	letter-spacing: 0.1em;
-	text-transform: uppercase;
-	color: var(--subtitle);
-	margin-bottom: 0.6rem;
-}
-
-.store-facet__list {
-	list-style: none;
-	margin: 0;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-	gap: 0.3rem;
-}
-
-.store-facet__btn {
-	display: flex;
-	width: 100%;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-	background: none;
-	border: none;
-	padding: 0;
-	text-align: left;
-	font-size: 0.9rem;
-	color: var(--text);
-}
-
-.store-facet__btn:hover {
-	color: var(--accent);
-}
-
-.store-facet__btn--active {
-	color: var(--accent);
-	font-weight: 700;
-}
-
-.store-facet__count {
-	font-size: 0.78rem;
-	color: var(--text-muted);
-}
-
-.store-facet__price {
-	display: flex;
-	align-items: center;
-	gap: 0.4rem;
-}
-
-.store-facet__price .bd-input {
-	padding: 0.4rem 0.55rem;
-	font-size: 0.85rem;
-}
-
-.store-toolbar {
+/* [bd:store,subscriptions] */
+/* Store bar: under the header on store and plan pages. */
+.store-nav {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1rem 1.25rem;
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
 	gap: 1rem;
-	margin-bottom: 1.25rem;
+	border-bottom: 1px solid var(--border);
 }
-
-.store-toolbar__count {
-	color: var(--text-muted);
-	font-size: 0.9rem;
-}
-
-.store-card {
-	position: relative;
-	overflow: hidden;
-	padding: 0;
-	display: flex;
-	flex-direction: column;
-}
-
-.store-card__media {
-	position: relative;
-	aspect-ratio: 4 / 3;
-	background: var(--bg-soft);
-}
-
-.store-card__media img {
-	width: 100%;
-	height: 100%;
-	object-fit: cover;
-}
-
-.store-card__badges {
-	position: absolute;
-	top: 0.6rem;
-	left: 0.6rem;
+.store-nav__links {
 	display: flex;
 	flex-wrap: wrap;
-	gap: 0.35rem;
-}
-
-.store-card__body {
-	padding: 1rem 1.25rem 1.25rem;
-	display: flex;
-	flex-direction: column;
-	gap: 0.4rem;
-	flex: 1;
-}
-
-.store-card__body h3 {
-	font-size: 1rem;
-}
-
-.store-card__rating {
-	display: flex;
 	align-items: center;
-	gap: 0.4rem;
-	font-size: 0.8rem;
-	color: var(--text-muted);
-}
-
-.store-card__price {
-	margin-top: auto;
-	padding-top: 0.4rem;
-	display: flex;
-	align-items: baseline;
-	gap: 0.5rem;
-}
-
-.store-card__price-now {
-	color: var(--accent);
-	font-weight: 700;
-	font-size: 1.1rem;
-}
-
-.store-card__price-was {
-	color: var(--text-muted);
-	font-size: 0.85rem;
-	text-decoration: line-through;
-}
-
-.store-card__lowstock {
-	font-size: 0.72rem;
-	font-weight: 700;
-	letter-spacing: 0.05em;
-	text-transform: uppercase;
-	color: var(--danger);
-}
-
-.store-badge {
-	display: inline-block;
-	padding: 0.1rem 0.45rem;
-	border-radius: 0.35rem;
-	font-size: 0.65rem;
-	font-weight: 800;
-	letter-spacing: 0.08em;
-	text-transform: uppercase;
-}
-
-.store-badge--featured {
-	background: var(--accent);
-	color: white;
-}
-
-.store-badge--new {
-	background: var(--accent-bg);
-	color: var(--accent);
-	border: 1px solid var(--accent-border);
-}
-
-.store-badge--sale {
-	background: var(--danger);
-	color: white;
-}
-
-/* Detail enrichment sections */
-.store-section {
-	margin-top: 3rem;
-}
-
-.store-section__title {
-	font-size: 1.4rem;
-	margin-bottom: 1.25rem;
-}
-
-.store-review {
-	border-bottom: 1px solid var(--border);
-	padding-bottom: 1.1rem;
-	margin-bottom: 1.1rem;
-}
-
-.store-review__head {
-	display: flex;
-	align-items: center;
-	gap: 0.6rem;
-	margin-bottom: 0.35rem;
-}
-
-.store-review__name {
-	font-weight: 600;
-	font-size: 0.9rem;
-	color: var(--subtitle);
-}
-
-.store-review__title {
-	font-weight: 600;
-	font-size: 0.9rem;
-}
-
-.store-review__body {
-	color: var(--text-muted);
-	font-size: 0.9rem;
-}
-
-.store-addon {
-	padding: 1rem;
-	display: flex;
-	gap: 0.85rem;
-	align-items: center;
-}
-
-.store-addon img {
-	width: 3.5rem;
-	height: 3.5rem;
-	object-fit: cover;
-	border-radius: 0.5rem;
-	flex-shrink: 0;
-}
-
-.store-addon__name {
-	font-weight: 600;
+	gap: 1.25rem;
 	font-size: 0.92rem;
 }
-
-.store-addon__price {
-	color: var(--accent);
-	font-weight: 700;
-	font-size: 0.9rem;
+/* Narrow screens: one row of links that scrolls sideways. */
+@media (max-width: 640px) {
+	.store-nav {
+		justify-content: flex-start;
+		gap: 1.25rem;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+	.store-nav__links {
+		flex-wrap: nowrap;
+	}
 }
+.store-nav__count {
+	margin-left: 0.2rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+.store-nav__cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
+}
+.store-nav__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.4rem;
+	border-radius: 9999px;
+	background: var(--accent);
+	color: white;
+	font-size: 0.75rem;
+	font-weight: 700;
+}
+/* [/bd:store,subscriptions] */
 
 .blog-card {
 	padding: 1.25rem 1.5rem;

@@ -6,9 +6,9 @@
 	import Footer from '#lib/components/bd/Footer.svelte';
 	import type { ActionData, PageData } from './$types';
 	import type { ReviewState } from './+page.server';
-	// [bd:saas]
+	// [bd:subscriptions]
 	import type { PlanChangeState } from './+page.server';
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	let { data, form }: { data: PageData; form: ActionData } = $props();
 
@@ -24,7 +24,7 @@
 		const raw = page.url.searchParams.get('next') ?? '';
 		return raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : '/my-account';
 	});
-	// [bd:saas]
+	// [bd:subscriptions]
 	const planChange = $derived(form?.planChange as PlanChangeState | undefined);
 	const plan = $derived(data.plan?.subscription ?? null);
 	// What just happened wins over the stored status, which lags until the
@@ -38,7 +38,7 @@
 	function formatDate(iso: string): string {
 		return new Intl.DateTimeFormat(undefined, { dateStyle: 'long' }).format(new Date(iso));
 	}
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	function displayName(): string {
 		if (!user) return '';
@@ -119,7 +119,7 @@
 			{/if}
 		</div>
 
-		<!-- [bd:saas] -->
+		<!-- [bd:subscriptions] -->
 		<div class="bd-card account-card">
 			<h3>Your plan</h3>
 			{#if plan?.hasAccess}
@@ -152,7 +152,7 @@
 				<div class="account-msg account-msg--err">{planChange.message}</div>
 			{/if}
 		</div>
-		<!-- [/bd:saas] -->
+		<!-- [/bd:subscriptions] -->
 
 		<div class="bd-card account-card">
 			<h3>Leave a review</h3>

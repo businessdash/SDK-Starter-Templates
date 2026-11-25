@@ -1,0 +1,21 @@
+<!-- Up to four products side by side. The products come from ?ids=a,b, so a
+     comparison can be shared; opened without ids, <bd-compare> moves this
+     browser's picks into the URL. -->
+#extend("base"):
+  #export("title"):Compare — Store#endexport
+  #export("head"):
+    <link rel="stylesheet" href="/bd-pages.css">
+    <link rel="stylesheet" href="/bd-shop.css">
+  #endexport
+  #export("subnav"):#extend("store-nav")#endexport
+  #export("mainClass"):bd-page#endexport
+  #export("scripts"):<script type="module" src="/shop/shop-elements.js"></script>#endexport
+  #export("content"):
+    <div class="bd-section__lead">
+      <span class="bd-section__eyebrow">Shop</span>
+      <h1 class="bd-section__title">Compare</h1>
+      <p class="bd-section__sub">Up to four products side by side.</p>
+    </div>
+    <bd-compare><script type="application/json">#unsafeHTML(dataJSON)</script></bd-compare>
+  #endexport
+#endextend

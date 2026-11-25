@@ -7,11 +7,25 @@ import { getBd } from "./bd.server";
  * isn't configured (no crash, no blank page).
  */
 
+// [bd:!booking]
+/** Without booking, the hero's button goes to the contact form. */
+const CONTACT_CTA = {
+	tagline: "Tell us what you need. We'll handle the rest.",
+	ctaLabel: "Get in touch",
+	ctaHref: "#contact",
+};
+// [/bd:!booking]
+
 const heroDefaults = {
 	title: "Service that shows up — on time.",
+	// [bd:!booking]
+	...CONTACT_CTA,
+	// [/bd:!booking]
+	// [bd:booking]
 	tagline: "Book in 60 seconds. We'll handle the rest.",
 	ctaLabel: "Book a consult",
-	ctaHref: "#contact",
+	ctaHref: "/book",
+	// [/bd:booking]
 };
 
 export async function loadHero() {
@@ -138,6 +152,7 @@ export async function loadServices() {
 	return servicesDefaults;
 }
 
+// [bd:blog]
 export async function loadBlog() {
 	const bd = getBd();
 	if (!bd) return [];
@@ -156,6 +171,7 @@ export async function loadBlog() {
 	}
 	return [];
 }
+// [/bd:blog]
 
 export type GalleryTile = {
 	id: string;

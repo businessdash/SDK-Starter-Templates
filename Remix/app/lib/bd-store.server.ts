@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 // [bd:store]
 import { createCookie } from "react-router";
 import type { BdClient } from "@businessdash/sdk";
@@ -133,13 +133,14 @@ export async function getStoreProduct(productId: string) {
 }
 
 /** Approved reviews + aggregate (avgRating, totalCount) for a product. */
-export async function getStoreProductReviews(productId: string) {
+export async function getStoreProductReviews(
+	productId: string,
+	{ limit = 10 }: { limit?: number } = {},
+) {
 	const bd = getBd();
 	if (!bd) return null;
 	try {
-		const res = await bd.storefront.getProductReviews(productId, {
-			limit: 20,
-		});
+		const res = await bd.storefront.getProductReviews(productId, { limit });
 		// 0.9.54+ returns a bare [] when the product has no reviews — normalize
 		// to the page shape or null so callers narrow on one union.
 		return Array.isArray(res) ? null : res;
@@ -177,7 +178,7 @@ export async function getStoreProductAddons(productId: string) {
 
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 export async function listStoreSubscriptions() {
 	const bd = getBd();
 	if (!bd) return null;
@@ -188,7 +189,7 @@ export async function listStoreSubscriptions() {
 	}
 }
 
-// [/bd:saas]
+// [/bd:subscriptions]
 
 // [bd:store]
 // ── Cart reads ────────────────────────────────────────────────────────
@@ -242,13 +243,23 @@ async function mutateCart(
 
 export function addToCart(
 	request: Request,
-	input: { productId: string; variantId?: string | null; quantity?: number },
+	input: {
+		productId: string;
+		variantId?: string | null;
+		quantity?: number;
+		/** Chosen options, such as `{ Size: "42" }`; the cart prices them. */
+		options?: Record<string, string>;
+	},
 ): Promise<CartMutationResult> {
 	return mutateCart(request, (cart) =>
 		cart.addItem({
 			productId: input.productId,
 			variantId: input.variantId ?? undefined,
 			quantity: input.quantity ?? 1,
+			options:
+				input.options && Object.keys(input.options).length > 0
+					? input.options
+					: undefined,
 		}),
 	);
 }

@@ -28,10 +28,15 @@ const STATIC_PATHS = [
 	"/services",
 	// [bd:store]
 	"/store",
+	"/store/wishlist",
+	"/store/compare",
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"/store/subscriptions",
-	// [/bd:saas]
+	// [/bd:subscriptions]
+	// [bd:blog]
+	"/blog",
+	// [/bd:blog]
 	"/todos",
 	"/my-account",
 ];
@@ -64,6 +69,9 @@ export async function GET() {
 			// [bd:store]
 			product: "/store",
 			// [/bd:store]
+			// [bd:blog]
+			blog: "/blog",
+			// [/bd:blog]
 		},
 		onSkip: (section, reason) =>
 			console.info(`[sitemap] skipped ${section}: ${reason}`),

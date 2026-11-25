@@ -28,47 +28,9 @@ enum PageController {
         ))
     }
 
-    static func blog(req: Request) async throws -> View {
-        let posts: [BlogPost] = await withBd(req, fallback: []) { bd in
-            await req.bdCache.fetch("blog:list", tags: ["bd:blog"], fallback: []) {
-                try await bd.posts().posts
-            }
-        }
-        return try await req.view.render("blog", ListContext(configured: req.application.bdConfigured, posts: posts))
-    }
+    // The blog is BlogController.
 
-    static func blogPost(req: Request) async throws -> View {
-        let slug = req.parameters.get("slug") ?? ""
-        guard let bd = req.bd else { throw Abort(.notFound) }
-
-        // The API wraps the post: `{ post, access }`. `access` is how a
-        // paywalled post is signalled — the body comes back truncated rather
-        // than absent, so a page that ignores it renders a teaser as if it
-        // were the whole article.
-        let detail = await req.bdCache.fetch(
-            "blog:post:\(slug)", tags: ["bd:blog", "bd:blog:\(slug)"],
-            fallback: Optional<BlogPostDetail>.none
-        ) { try await bd.post(slug: slug) }
-
-        guard let detail else { throw Abort(.notFound) }
-
-        return try await req.view.render("post", PostContext(
-            configured: req.application.bdConfigured,
-            post: detail.post,
-            isPaywalled: detail.isPaywalled
-        ))
-    }
-
-    static func reviews(req: Request) async throws -> View {
-        let reviews: [Review] = await withBd(req, fallback: []) { bd in
-            await req.bdCache.fetch("reviews", tags: ["bd:reviews"], fallback: []) {
-                try await bd.reviews().reviews
-            }
-        }
-        return try await req.view.render("reviews", ReviewsContext(
-            configured: req.application.bdConfigured, reviews: reviews
-        ))
-    }
+    // The reviews are ReviewsController.
 
     static func subscriptions(req: Request) async throws -> View {
         let plans: [SubscriptionPlan] = await withBd(req, fallback: []) { bd in
@@ -78,7 +40,8 @@ enum PageController {
         }
         return try await req.view.render("subscriptions", PlansContext(
             configured: req.application.bdConfigured,
-            plans: plans.map { PlanCard(id: $0.id, name: $0.name, price: Money.cents($0.amountCents)) }
+            plans: plans.map { PlanCard(id: $0.id, name: $0.name, price: Money.cents($0.amountCents)) },
+            cartCount: await CartVisitor.itemCount(req)
         ))
     }
 

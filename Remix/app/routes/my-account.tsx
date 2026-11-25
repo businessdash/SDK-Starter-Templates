@@ -13,12 +13,12 @@ import {
 	isCustomerPortalConfigured,
 	submitCustomerReview,
 } from "~/lib/bd-portal.server";
-// [bd:saas]
+// [bd:subscriptions]
 import {
 	getCustomerSubscription,
 	setPlanCancelled,
 } from "~/lib/bd-portal.server";
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /** Where sign-in returns to: a path on this site, or the account page. */
 function safeNext(raw: string | null): string {
@@ -45,16 +45,16 @@ export async function loader({ request }: LoaderFunctionArgs) {
 		};
 	}
 	const work = await getCustomerWork(request);
-	// [bd:saas]
+	// [bd:subscriptions]
 	const plan = (await getCustomerSubscription(request))?.subscription ?? null;
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	return {
 		configured,
 		signedIn: true as const,
 		user: session.user,
-		// [bd:saas]
+		// [bd:subscriptions]
 		plan,
-		// [/bd:saas]
+		// [/bd:subscriptions]
 		unlinked: work?.unlinked ?? true,
 		summary: work?.summary ?? null,
 		jobs: (work?.jobs ?? []).slice(0, 10).map((j) => {
@@ -76,7 +76,7 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export async function action({ request }: ActionFunctionArgs) {
 	const fd = await request.formData();
-	// [bd:saas]
+	// [bd:subscriptions]
 	const intent = fd.get("intent");
 	if (intent === "cancelPlan" || intent === "resumePlan") {
 		try {
@@ -93,7 +93,7 @@ export async function action({ request }: ActionFunctionArgs) {
 			};
 		}
 	}
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	const rating = Number.parseInt(String(fd.get("rating") ?? "5"), 10);
 	const title = (String(fd.get("title") ?? "").trim() || undefined) as
 		| string
@@ -209,7 +209,7 @@ export default function MyAccount() {
 								</>
 							)}
 
-							{/* [bd:saas] */}
+							{/* [bd:subscriptions] */}
 							<h2 className="section__subtitle">Your plan</h2>
 							<PlanCard
 								plan={data.plan}
@@ -220,7 +220,7 @@ export default function MyAccount() {
 										: null
 								}
 							/>
-							{/* [/bd:saas] */}
+							{/* [/bd:subscriptions] */}
 
 							<h2 className="section__subtitle">Leave a review</h2>
 							{actionData?.status === "success" ? (
@@ -274,7 +274,7 @@ export default function MyAccount() {
 	);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 type Plan = NonNullable<
 	Awaited<ReturnType<typeof getCustomerSubscription>>
 >["subscription"];
@@ -346,4 +346,4 @@ function PlanCard({ plan, change }: { plan: Plan; change: PlanChange | null }) {
 		</div>
 	);
 }
-// [/bd:saas]
+// [/bd:subscriptions]

@@ -1,3 +1,4 @@
+<!-- [bd-file:blog] -->
 <script lang="ts">
 	type BlogPost = {
 		id: string;
@@ -16,7 +17,7 @@
 		return date.toLocaleDateString(undefined, {
 			year: 'numeric',
 			month: 'short',
-			day: 'numeric',
+			day: 'numeric'
 		});
 	}
 </script>
@@ -25,14 +26,10 @@
 	<div class="bd-section__lead">
 		<span class="bd-section__eyebrow">Latest</span>
 		<h2 class="bd-section__title">From the blog</h2>
-		<p class="bd-section__sub">
-			Tips, customer stories, and what we're working on this month.
-		</p>
+		<p class="bd-section__sub">Tips, customer stories, and what we're working on this month.</p>
 	</div>
 	{#if posts.length === 0}
-		<div class="bd-empty">
-			No blog posts published yet. Add one in BD and it'll appear here.
-		</div>
+		<div class="bd-empty">No blog posts published yet. Add one in BD and it'll appear here.</div>
 	{:else}
 		<div class="bd-grid-3">
 			{#each posts as post (post.id)}
@@ -43,5 +40,13 @@
 				</a>
 			{/each}
 		</div>
+		<p class="blog-all"><a class="bd-btn bd-btn--ghost" href="/blog">All posts</a></p>
 	{/if}
 </section>
+
+<style>
+	.blog-all {
+		margin-top: 1.5rem;
+		text-align: center;
+	}
+</style>

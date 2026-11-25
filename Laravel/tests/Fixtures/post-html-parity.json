@@ -1,0 +1,117 @@
+{
+  "about": "Post HTML in, and what the SDK starters' safePostHtml (TypeScript) gives back. Each server starter's port must give the same.",
+  "cases": [
+    {
+      "input": "<p>Hi <strong>there</strong> &amp; you</p>",
+      "output": "<p>Hi <strong>there</strong> &amp; you</p>"
+    },
+    {
+      "input": "<script>alert(1)</script><p>x</p>",
+      "output": "<p>x</p>"
+    },
+    {
+      "input": "<img src=x onerror=alert(1)>",
+      "output": "<img src=\"x\" loading=\"lazy\">"
+    },
+    {
+      "input": "<a href=\"javascript:alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"jav&#x09;ascript:alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"java\nscript:alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\" JaVaScRiPt:alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"&#106;avascript:alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"data:text/html,<script>\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"//evil.com\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"https://x.com/?a=1&b=2\" onclick=\"x\">a</a>",
+      "output": "<a href=\"https://x.com/?a=1&amp;b=2\" target=\"_blank\" rel=\"noopener noreferrer nofollow\">a</a>"
+    },
+    {
+      "input": "<a href=\"/about\">a</a>",
+      "output": "<a href=\"/about\">a</a>"
+    },
+    {
+      "input": "<svg onload=alert(1)><circle/></svg>ok",
+      "output": "ok"
+    },
+    {
+      "input": "<p style=\"background:url(javascript:x)\" class=\"lead\">t</p>",
+      "output": "<p class=\"lead\">t</p>"
+    },
+    {
+      "input": "<div><p>unclosed",
+      "output": "<div><p>unclosed</p></div>"
+    },
+    {
+      "input": "</div>stray",
+      "output": "stray"
+    },
+    {
+      "input": "a < b > c",
+      "output": "a &lt; b &gt; c"
+    },
+    {
+      "input": "<p title=\"&quot;><script>alert(1)</script>\">t</p>",
+      "output": "<p title=\"&quot;&gt;&lt;script&gt;alert(1)&lt;/script&gt;\">t</p>"
+    },
+    {
+      "input": "<<script>script>alert(1)<</script>/script>",
+      "output": "&lt;/script&gt;"
+    },
+    {
+      "input": "<iframe src=\"https://x\"></iframe>after",
+      "output": "after"
+    },
+    {
+      "input": "<!-- <script>x</script> -->t",
+      "output": "t"
+    },
+    {
+      "input": "<img src=\"https://cdn/x.png\" alt='A \"q\"' loading=\"eager\">",
+      "output": "<img src=\"https://cdn/x.png\" alt=\"A &quot;q&quot;\" loading=\"eager\">"
+    },
+    {
+      "input": "<p onmouseover=\"x\"/>",
+      "output": "<p></p>"
+    },
+    {
+      "input": "<scr<script>ipt>alert(1)</script>",
+      "output": "ipt&gt;alert(1)"
+    },
+    {
+      "input": "<math><mi xlink:href=\"javascript:alert(1)\">x</mi></math>",
+      "output": "x"
+    },
+    {
+      "input": "<a href=\"mailto:a@b.c\">m</a>",
+      "output": "<a href=\"mailto:a@b.c\">m</a>"
+    },
+    {
+      "input": "<a href=\"&#0000000106;avascript:alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    },
+    {
+      "input": "<a href=\"javascript&#0000000058;alert(1)\">a</a>",
+      "output": "<a>a</a>"
+    }
+  ]
+}

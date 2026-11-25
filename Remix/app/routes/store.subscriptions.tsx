@@ -1,4 +1,4 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import { Form, useActionData, useLoaderData } from "react-router";
 import { redirect } from "react-router";
 import type {
@@ -8,6 +8,7 @@ import type {
 } from "react-router";
 
 import { SiteHeader } from "~/components/SiteHeader";
+import { StoreNav } from "~/components/StoreNav";
 // [bd:store]
 import { getCartSnapshot } from "~/lib/bd-store.server";
 // [/bd:store]
@@ -72,7 +73,8 @@ export default function SubscriptionsPage() {
 	const actionData = useActionData<typeof action>();
 	return (
 		<>
-			<SiteHeader cartCount={cartCount} />
+			<SiteHeader />
+			<StoreNav cartCount={cartCount} />
 			<main>
 				<section className="section">
 					<h1 className="section__title">Subscriptions</h1>

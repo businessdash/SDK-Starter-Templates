@@ -8,7 +8,9 @@ import type {
 } from "react-router";
 
 import { SiteHeader } from "~/components/SiteHeader";
-import { formatCents } from "~/lib/format";
+import { StoreNav } from "~/components/StoreNav";
+// Cart amounts are dollars (not cents), so they are formatted as they are.
+import { formatDollars } from "~/components/shop/shop";
 import {
 	applyCartCoupon,
 	clearCart,
@@ -95,7 +97,8 @@ export default function CartPage() {
 
 	return (
 		<>
-			<SiteHeader cartCount={cart?.itemCount ?? 0} />
+			<SiteHeader />
+			<StoreNav cartCount={cart?.itemCount ?? 0} />
 			<main>
 				<section className="section">
 					<h1 className="section__title">Your cart</h1>
@@ -135,7 +138,7 @@ export default function CartPage() {
 											</button>
 										</Form>
 										<span className="price">
-											{formatCents(it.lineTotal, cart.currency)}
+											{formatDollars(it.lineTotal, cart.currency)}
 										</span>
 										<Form method="post">
 											<input type="hidden" name="intent" value="remove" />
@@ -169,7 +172,7 @@ export default function CartPage() {
 
 								<div className="cart-total">
 									<span>Subtotal</span>
-									<strong>{formatCents(cart.subtotal, cart.currency)}</strong>
+									<strong>{formatDollars(cart.subtotal, cart.currency)}</strong>
 								</div>
 
 								<div className="cart-actions">

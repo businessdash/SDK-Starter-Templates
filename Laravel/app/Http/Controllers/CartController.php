@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Bd\Bd;
 use App\Bd\Client;
+use App\Support\CartVisitor;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -12,21 +14,68 @@ use Illuminate\View\View;
  * Cart + checkout hand-off.
  *
  * The visitor token lives in an httpOnly cookie on this domain; the cart
- * itself lives at BD. Nothing about the cart is in the session or the DB,
- * which is why this works unchanged behind a load balancer with no sticky
- * sessions.
+ * itself lives at BD (App\Support\CartVisitor). Nothing about the cart is
+ * in the session or the DB, which is why this works unchanged behind a load
+ * balancer with no sticky sessions.
  */
 class CartController extends Controller
 {
     public function show(Request $request): View
     {
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
 
         $cart = $token
             ? Bd::attempt(static fn (Client $c) => $c->cart($token)->get(), default: null)
             : null;
 
-        return view('pages.cart', ['cart' => $cart]);
+        return view('pages.cart', [
+            'cart' => $cart,
+            'cartCount' => (int) data_get($cart, 'itemCount', 0),
+        ]);
+    }
+
+    /**
+     * Add to the cart, for `<bd-product>` on the product page: JSON
+     * `{ productId, variantId?, quantity?, options? }` in; `{ ok, itemCount }`
+     * or `{ ok: false, error }` out. The first add mints the visitor's cart
+     * cookie. The element sends the page's CSRF token (the `csrf-token` meta
+     * in the layout) as `X-CSRF-Token`, which Laravel checks as for a form.
+     */
+    public function addJson(Request $request): JsonResponse
+    {
+        $reply = static fn (array $body, int $status = 200) => response()
+            ->json($body, $status)
+            ->header('Cache-Control', 'no-store');
+        if (! Bd::configured()) {
+            return $reply(['ok' => false, 'error' => "The store isn't connected yet."], 503);
+        }
+        if (! $request->isJson()) {
+            return $reply(['ok' => false, 'error' => 'Send JSON.'], 415);
+        }
+        $productId = $request->json('productId');
+        if (! is_string($productId) || $productId === '') {
+            return $reply(['ok' => false, 'error' => 'Choose a product.'], 400);
+        }
+        $quantity = max(1, min(99, (int) ($request->json('quantity') ?? 1)));
+        $variantId = $request->json('variantId');
+        $options = array_filter(
+            (array) ($request->json('options') ?? []),
+            static fn ($value) => is_string($value),
+        );
+
+        [$token, $cookie] = CartVisitor::ensure($request);
+        $cart = Bd::attempt(static fn (Client $c) => $c->cart($token)->addItem(array_filter([
+            'productId' => $productId,
+            'quantity' => $quantity,
+            'variantId' => is_string($variantId) && $variantId !== '' ? $variantId : null,
+            'options' => $options !== [] ? $options : null,
+        ], static fn ($value) => $value !== null)));
+
+        $response = $cart === null
+            ? $reply(['ok' => false, 'error' => "Couldn't add that to your cart. Try again."], 502)
+            : $reply(['ok' => true, 'itemCount' => (int) data_get($cart, 'itemCount', 0)]);
+
+        return $cookie ? $response->withCookie($cookie) : $response;
     }
 
     public function addItem(Request $request): RedirectResponse
@@ -36,10 +85,7 @@ class CartController extends Controller
             'quantity' => ['nullable', 'integer', 'min:1'],
         ]);
 
-        [$token, $cookie] = $this->ensureVisitorToken($request);
-        if (! $token) {
-            return back()->with('cart_error', 'Store is not configured.');
-        }
+        [$token, $cookie] = CartVisitor::ensure($request);
 
         Bd::attempt(static fn (Client $c) => $c->cart($token)->addItem([
             'productId' => $validated['productId'],
@@ -57,7 +103,7 @@ class CartController extends Controller
             'quantity' => ['required', 'integer', 'min:0'],
         ]);
 
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
         if ($token) {
             Bd::attempt(static fn (Client $c) => $c->cart($token)
                 ->updateItem($itemId, ['quantity' => $validated['quantity']]));
@@ -68,7 +114,7 @@ class CartController extends Controller
 
     public function removeItem(Request $request, string $itemId): RedirectResponse
     {
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
         if ($token) {
             Bd::attempt(static fn (Client $c) => $c->cart($token)->removeItem($itemId));
         }
@@ -79,7 +125,7 @@ class CartController extends Controller
     public function applyCoupon(Request $request): RedirectResponse
     {
         $validated = $request->validate(['code' => ['required', 'string', 'max:80']]);
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
 
         if ($token) {
             $result = Bd::attempt(
@@ -95,7 +141,7 @@ class CartController extends Controller
 
     public function removeCoupon(Request $request): RedirectResponse
     {
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
         if ($token) {
             Bd::attempt(static fn (Client $c) => $c->cart($token)->removeCoupon());
         }
@@ -105,7 +151,7 @@ class CartController extends Controller
 
     public function clear(Request $request): RedirectResponse
     {
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
         if ($token) {
             Bd::attempt(static fn (Client $c) => $c->cart($token)->clear());
         }
@@ -119,14 +165,14 @@ class CartController extends Controller
      */
     public function checkout(Request $request): RedirectResponse
     {
-        $token = $this->visitorToken($request);
+        $token = CartVisitor::token($request);
         if (! $token) {
             return redirect()->route('cart');
         }
 
         $session = Bd::attempt(static fn (Client $c) => $c->checkout($token)->start([
             // Stripe substitutes the real id for the placeholder on success.
-            'successUrl' => route('store').'?session_id={CHECKOUT_SESSION_ID}',
+            'successUrl' => route('store.order').'?session_id={CHECKOUT_SESSION_ID}',
             'cancelUrl' => route('cart'),
         ]));
 
@@ -136,48 +182,5 @@ class CartController extends Controller
         }
 
         return redirect()->away($url, 303);
-    }
-
-    private function visitorToken(Request $request): ?string
-    {
-        $token = $request->cookie(config('bd.cart_cookie'));
-
-        return is_string($token) && $token !== '' ? $token : null;
-    }
-
-    /**
-     * Mint a visitor token on first write. Returns the token plus the cookie
-     * to attach (null when one already existed).
-     *
-     * The token is just an opaque id WE generate — there is no round trip to
-     * mint one. The platform keys the cart on whatever arrives in
-     * `X-BD-Cart-Visitor`. (`cart/session` exists but mints a tokenized
-     * iframe-embed URL, which is a different feature.)
-     *
-     * @return array{0: ?string, 1: ?\Symfony\Component\HttpFoundation\Cookie}
-     */
-    private function ensureVisitorToken(Request $request): array
-    {
-        $existing = $this->visitorToken($request);
-        if ($existing) {
-            return [$existing, null];
-        }
-
-        $token = (string) \Illuminate\Support\Str::uuid();
-
-        // 30 days, httpOnly — the browser never needs to read this.
-        $cookie = cookie(
-            name: config('bd.cart_cookie'),
-            value: $token,
-            minutes: 60 * 24 * 30,
-            path: '/',
-            domain: null,
-            secure: $request->isSecure(),
-            httpOnly: true,
-            raw: false,
-            sameSite: 'lax',
-        );
-
-        return [$token, $cookie];
     }
 }

@@ -56,8 +56,8 @@ Every section under `src/components/` exercises one SDK surface:
 | --- | --- | --- |
 | **Hero / About / Services** | `bd.marketing.getPageBundle({ pageKey: "home" })` | Class A — admin-published marketing content with local fallbacks |
 | **Gallery** | `bd.gallery.list({ limit: 12, fields: ["id", "src", "title", "category", "blurDataURL"] as const })` | **Typed field selection** — const-generic narrowing means the server SELECTs only the columns you asked for, and TS types `.map((item) => …)` accordingly |
-| **Blog** | `bd.blog.listPosts({ limit: 6 })` | Class A — webhook-invalidated; new posts appear within seconds of publish |
-| **Booking** | `bd.scheduling.listEventTypes()` → `getAvailableSlots(slug, { from, to })` → `confirmBooking(...)` | Full Calendly-shape flow end-to-end |
+| **Blog** | `bd.blog.listPosts({ limit: 6 })` | Class A — webhook-invalidated; new posts appear within seconds of publish | <!-- [bd-line:blog] -->
+| **Booking** | `bd.scheduling.listEventTypes()` → `getAvailableSlots(slug, { from, to })` → `confirmBooking(...)` | Full Calendly-shape flow end-to-end | <!-- [bd-line:booking] -->
 | **Contact form** | `bd.forms.schema(slug)` → render fields dynamically → `bd.forms.submit(slug, data, ...)` | Schema-driven form rendering + client-side validation against the same shape BD enforces server-side |
 
 ## Feature parity (BD SDK 0.9.5)
@@ -70,11 +70,13 @@ is unset.
 | Surface | Route / page | SDK calls (proxied) |
 | --- | --- | --- |
 | **Home sections** | `/` | `marketing.getPageBundle`, `gallery.list`, `blog.listPosts`, `scheduling.*`, `forms.*` |
-| **Storefront** | `/store`, `/store/:id` | `storefront.listProducts`, `storefront.getProduct` | <!-- [bd-line:store] -->
+| **Storefront** | `/store`, `/store/:id` | `storefront.listProductsWithMeta` (search, category, price, rating, sort in the URL), `storefront.getProduct`, `getProductReviews`, `getRelatedProducts`, `getProductAddons` | <!-- [bd-line:store] -->
+| **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=…` | saved in this browser; compare reads `storefront.getProduct` per id | <!-- [bd-line:store] -->
 | **Cart** | `/cart` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` — `bd_cart_visitor` httpOnly cookie minted by the proxy | <!-- [bd-line:store] -->
 | **Checkout** | `/cart` → Stripe | `checkout.forVisitor(token).start` | <!-- [bd-line:store] -->
-| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:saas] -->
-| **Reviews wall** | `/reviews` | `reviews.list({ limit, offset })` with "load more" |
+| **Subscriptions** | `/subscriptions` | `subscriptions.list` | <!-- [bd-line:subscriptions] -->
+| **Blog** | `/blog`, `/blog/:slug` | `blog.listPosts`, `listCategories`, `listTags`, `getPost`, `listComments`; likes and comments through `blog.withSession(token)` | <!-- [bd-line:blog] -->
+| **Reviews** | `/reviews` | `bundle.reviews` (`rating`, `counts`), `reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview` |
 | **News banner + updates** | banner on every page, `/updates` | `bundle.banner`, `bundle.updates` |
 | **Auth + portal** | `/api/bd-auth/*`, `/my-account` | `createAuthHandler`, `getTenantSession`, `customerPortal(org).withSession(token).{getWork,submitReview}` |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelPages.listVariants`, `parallelPages.render` |
@@ -132,21 +134,72 @@ fetch returns fresh data within seconds of a publish, no redeploy. Set
 │   │   └── router.tsx        # Tiny dependency-free client router
 │   ├── components/
 │   │   ├── Header.tsx  Footer.tsx  Banner.tsx
-│   │   ├── Hero.tsx  About.tsx  Services.tsx  Gallery.tsx  Blog.tsx
+│   │   ├── Hero.tsx  About.tsx  Services.tsx  Gallery.tsx
+<!-- [bd:blog] -->
+│   │   ├── Blog.tsx           # latest posts on the home page
+│   │   ├── blog/              # blog index, post, likes, comments, safePostHtml
+<!-- [/bd:blog] -->
+<!-- [bd:booking] -->
 │   │   ├── Booking.tsx        # Calendly flow
+<!-- [/bd:booking] -->
+<!-- [bd:store,subscriptions] -->
+│   │   ├── StoreNav.tsx       # store bar: products, plans, wishlist, compare, cart count
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:store] -->
+│   │   ├── shop/              # product page, compare table, wishlist, save buttons
+<!-- [/bd:store] -->
+│   │   ├── reviews/           # reviews page parts + reviews.ts rules
+│   │   ├── bd-link.tsx        # the link the shared shop/blog/review components use
 │   │   └── ContactForm.tsx    # Forms schema + validator
+<!-- [bd:store] -->
+│   ├── bd-shop.css           # shop styles
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   ├── bd-blog.css           # blog styles
+<!-- [/bd:blog] -->
+│   ├── bd-reviews.css        # reviews page styles
 │   └── pages/
 │       ├── ui.tsx            # useApi hook + ErrorBox + PageHead
 <!-- [bd:store] -->
-│       ├── Store.tsx  Product.tsx  Cart.tsx
+│       ├── Store.tsx  Product.tsx  Wishlist.tsx  Compare.tsx  Cart.tsx
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:blog] -->
+│       ├── BlogPage.tsx  BlogPostPage.tsx
+<!-- [/bd:blog] -->
+<!-- [bd:subscriptions] -->
 │       ├── Subscriptions.tsx
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
 │       ├── Reviews.tsx  Updates.tsx  MyAccount.tsx
 │       └── ServiceAreas.tsx  ServiceArea.tsx
 └── .env.example
 ```
+
+<!-- [bd:store] -->
+## The shop
+
+The store is the same shop as the Business Dash demo: a product list with search, category, price, rating and sort filters; product pages with photos, options, add-ons, reviews, related and recently viewed products; a wishlist; side-by-side compare; and the cart. The product page, compare table and wishlist are shared components in `src/components/shop/` (the same in every React starter), styled by `src/bd-shop.css`.
+
+- The product list keeps every filter in the URL (`?q`, `?category`, `?min`, `?max`, `?rating`, `?sort`), so a filtered list can be shared and the back button steps through filters. The router (`src/lib/router.tsx`) tracks the query string for this.
+- Add to cart sends the chosen options (`{ Size: "42" }`) through `POST /api/bd/cart/add`, which mints the `bd_cart_visitor` cookie on the first add; the store bar's cart count updates in place.
+- The wishlist and compare picks live in this browser (`localStorage`). `/store/compare?ids=a,b,c` can be shared.
+<!-- [/bd:store] -->
+
+<!-- [bd:blog] -->
+## The blog
+
+`/blog` lists posts newest first (pinned posts lead the first page) with category and tag filters and "Older posts" paging, all in the URL. `/blog/:slug` shows one post. The Bun server rebuilds the post's HTML from an allowlist (`safePostHtml` in `src/components/blog/blog.ts`) in `GET /api/bd/blog/post`, so only that reaches the browser. Signed-in customers can like posts and comment (`POST /api/bd/blog/like`, `POST /api/bd/blog/comment`, which read the `bd_session` cookie); signed out, those buttons lead to sign-in and back.
+<!-- [/bd:blog] -->
+
+## Reviews
+
+`/reviews` shows the business's reviews from Google, Yelp and the ones added in the dashboard:
+
+- the average and a bar per star, from the marketing bundle's `reviews` (`rating`, `counts`);
+- a platform filter (`?source=google`), and "Show more reviews", which is a link (`?shown=20`);
+- each review with the reviewer's photo or initial, the stars, the date, the text, any photos, the platform, Verified, and a "Read on Google/Yelp" link;
+- "Write a review" for a signed-in customer, which shows once the business approves it. Signed out, it's a link to sign in.
+
+The Bun server gathers the page in `GET /api/bd/reviews/page` (with `loadReviewsPage` from `src/components/reviews/reviews-page.ts`) and takes a written review in `POST /api/bd/reviews/write`, which checks it again and sends it with `submitReview`. The page parts are `src/components/reviews/` (the same in every React starter), styled by `src/bd-reviews.css`; `reviews.ts` holds the rules every BD starter shares.
 
 
 <!-- [bd:donations] -->

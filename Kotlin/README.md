@@ -72,6 +72,10 @@ bd/src/main/kotlin/app/bd/
   Models.kt       @Serializable models for every fixed-shape surface
   Resources.kt    storefront · cart · checkout · blog · reviews
                   subscriptions · forms
+  Shop.kt         ProductView: a product's photos, options and price for a choice
+  Reviews.kt      the reviews summary, platform names, safe links, the review rules
+  PostHtml.kt     a post's HTML made safe, reading time, dates
+  PostBlocks.kt   a post's HTML as blocks to draw natively
   ChatFeed.kt     the polling chat API as a cold Flow
   Bundle.kt       key-path reads for the two schema-driven surfaces
   Money.kt        cents vs decimal — read this before rendering money
@@ -98,6 +102,19 @@ Provider sign-ins open in a Custom Tab and come back to
 schemes are. `SessionStore` keeps the session token encrypted with an
 Android Keystore key, and `tenantSession` checks it on launch. Signing out
 is forgetting the token: BD's tokens are signed, not stored.
+
+## The store, the blog and reviews
+
+The same shop, blog and reviews as the web starters and the Swift, React Native and Flutter apps, as Compose screens. The rules live in `:bd` (`Shop.kt`, `Reviews.kt`, `PostHtml.kt`, `PostBlocks.kt`), ported line for line from the web starters' `src/shop/*.ts`, so a product shows the same photos for the same option, a post keeps the same HTML, and a review is checked the same way on every platform.
+
+- **Store** (`StoreScreen.kt`). The business's rating at the top (it opens Reviews), search, category chips with counts, and a sheet for sort, price and rating (`productListing`). Each card has its badges (Best seller, New, Sale), stars, a "From" or sale price, Low stock, and ♡ / ⇄ to save it or pick it to compare. The grid widens to more columns on a tablet.
+- **Product** (`ProductScreen.kt`). Photos for the chosen style, style and option chips (sizes smallest first; sold-out ones disabled), the price for what's chosen, quantity, add to cart, add-ons, features and specs, reviews with "Show more", "You may also like" and "Recently viewed". Set `bd.siteUrl` for a "Copy link" to the product on your web store.
+- **Wishlist and compare** (`SavedScreens.kt`). Kept on the device in `SharedPreferences` (`AppState.kt`); nothing reaches the server. Compare holds four products side by side: price, rating, category, options and every spec.
+- **Cart** (`CartScreen.kt`). Quantity, remove, a coupon, clear, the subtotal, and checkout on Stripe's page in the browser. Stripe sends the customer back to `{applicationId}://checkout/success?session_id=…` (or `…/cancel`), which `MainActivity` claims (`launchMode="singleTask"`, so the running app gets it in `onNewIntent`); `OrderScreen` then says whether the order is paid. The Cart tab shows how many things are in it.
+- **Blog** (`BlogScreens.kt`). Topics, tags and pinned posts first, older posts on demand. A post is drawn with Compose's own text and images from its HTML (`PostBlocks`, rendered by `PostBody`): headings, lists, quotes, code, photos with captions, tables; links open in the browser, mail or phone app, and nothing in a post runs in the app. A signed-in customer can like and comment; a members-only post asks them to sign in.
+- **Reviews** (`ReviewsScreen.kt`). The average with a bar per star, Google / Yelp / Other filters, each review with its photos, Verified and a link to it on Google or Yelp, and "Show more". A signed-in customer can write one (stars, an optional title, the review); the business approves it before it shows.
+
+Screens open over the tabs on a small stack in `AppState` (no navigation library); Back closes the top one, and the one under it keeps its scroll position and what it loaded. Signing in on the Account tab is what the blog and reviews use: `AccountViewModel.token` feeds `AppState.sessionToken`, and liking, commenting and writing a review send it as `X-BD-Session-Token`. Photos load with [Coil](https://coil-kt.github.io/coil/).
 
 ## Five things that will bite you
 
@@ -148,16 +165,17 @@ The loop also de-duplicates on message id: `since` is only as good as what the s
 ## What this starter does not do
 
 - **No customer portal UI.** Sign-in is there; the portal's jobs, quotes and invoices (`customer_portal:self`) are wired in the client but have no Compose screen yet.
-- **Three tabs.** Shop + add-to-cart, a form, and the account. Cart, blog and chat are wired in the client and the ViewModel but have no Compose screens yet.
+- **No chat screen.** `ChatFeed` is in the client; the screen is yours to build.
 
 ## ⚠️ Verification status
 
 Built with Gradle 9.8, AGP 8.7, Kotlin 2.0 and JDK 21 (toolchain 17). There is no Gradle wrapper in the repo; a system `gradle` works, or let Android Studio add one.
 
-- `gradle :bd:test` passes, including the forms parity suite that replays the TypeScript forms-core fixtures. It needs no Android SDK.
+- `gradle :bd:test` passes, including the forms parity suite that replays the TypeScript forms-core fixtures. It needs no Android SDK. `ShopBlogReviewsTest.kt` replays the post-HTML cases every BD starter checks its port against (`post-html-parity.json`) and pins the product, review and request rules.
 - `gradle :bd-forms:testDebugUnitTest` and `gradle :bd-sign-in:testDebugUnitTest` pass.
-- `gradle :app:assembleDebug` builds, and the Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit.
-- The Shop tab and `BdPackageFormsBackend` against a live site have not been run from this app; they need a real site id and publishable key.
+- `gradle :app:testDebugUnitTest` passes: Compose tests run on the JVM by Robolectric (no emulator) against a fake BD — the store's categories and filters, a product's options going into the cart and the cart count, a coupon BD refuses and one it takes, the blog's pinned posts, a tag and a post liked and commented on as a signed-in customer, the reviews' summary, "Show more", a platform filter and a written review, the saved lists outlasting a relaunch, and Stripe's return link. Robolectric's Android 15 needs Java 21 to run the tests; the build sets that up.
+- `gradle :app:assembleDebug` builds and `gradle :app:lintDebug` is clean. The Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit. The store, product, compare, cart, order, blog, post and reviews screens were checked at phone and tablet size, light and dark, against a mock BD.
+- `BdPackageFormsBackend` and the shop against a live site have not been run from this app; they need a real site id and publishable key.
 
 <!-- [bd:donations] -->
 ## Donations

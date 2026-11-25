@@ -2,12 +2,17 @@
 import {
 	ChangeDetectionStrategy,
 	Component,
-	OnInit,
+	CUSTOM_ELEMENTS_SCHEMA,
+	DestroyRef,
+	afterNextRender,
 	computed,
 	inject,
 	signal,
 } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { FormControl, FormGroup, ReactiveFormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
+import { debounceTime, distinctUntilChanged } from "rxjs";
 import {
 	bdApi,
 	type CategoryCount,
@@ -16,6 +21,8 @@ import {
 	type StoreFilters,
 	type StoreSort,
 } from "../lib/bd-api.client";
+import { StarRatingComponent } from "../sections/star-rating.component";
+import { StoreNavComponent } from "../sections/store-nav.component";
 
 const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 	{ value: "featured", label: "Featured" },
@@ -25,236 +32,262 @@ const SORT_OPTIONS: ReadonlyArray<{ value: StoreSort; label: string }> = [
 	{ value: "rating-desc", label: "Top rated" },
 ];
 
+/** A price typed in dollars, as cents; null when blank or not a price. */
+function cents(value: string): number | null {
+	if (!value.trim()) return null;
+	const amount = Number.parseFloat(value);
+	return Number.isFinite(amount) && amount >= 0 ? Math.round(amount * 100) : null;
+}
+
 /**
- * Storefront listing — platform-style shop page. Products + facets come from
- * the BD `listProductsWithMeta` surface via `/api/bd/store/products-meta`
- * (the API key stays server-side). The sidebar filters (search, categories +
- * counts, price range, min rating, sort) are reflected into the URL query
- * string so a filtered grid is shareable/back-button friendly. Cards carry
- * cover image, price/compare-at, star rating + count, and badges. "Add to
- * cart" posts through `/api/bd/cart/items`. Degrades to an empty/unconfigured
- * state gracefully.
+ * The product list. Products and facets come from `listProductsWithMeta`
+ * through `/api/bd/store/products-meta` (the API key stays on the server).
+ * Every filter (search, category, price, rating, sort) is in the URL, so a
+ * filtered list can be shared and reloaded. Each card saves to the wishlist
+ * or the comparison (`<bd-save-buttons>`); `<bd-compare-bar>` shows the
+ * picks. Those elements come from src/app/shop/, loaded by the store bar.
  */
 @Component({
 	selector: "bd-store-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [RouterLink],
+	imports: [ReactiveFormsModule, RouterLink, StarRatingComponent, StoreNavComponent],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	template: `
-		<section class="section store">
-			<h1 class="section__title">Store</h1>
+		<bd-store-nav />
+		<div class="bd-page">
+			<div class="bd-section__lead">
+				<span class="bd-section__eyebrow">Shop</span>
+				<h1 class="bd-section__title">Products</h1>
+				<p class="bd-section__sub">
+					Filter, sort, and open a product to choose its options and add it to your cart.
+				</p>
+			</div>
 
 			@if (state() === "unavailable") {
-				<p class="error">The store is temporarily unavailable. Please check back soon.</p>
+				<div class="bd-empty">The store is temporarily unavailable. Please check back soon.</div>
 			} @else {
-				<div class="store__layout">
-					<!-- ── Filter sidebar ────────────────────────────── -->
-					<aside class="store-sidebar" aria-label="Product filters">
-						<label class="store-sidebar__group">
-							<span class="store-sidebar__label">Search</span>
+				<div class="store-layout">
+					<aside aria-label="Product filters" class="store-sidebar">
+						<div role="search">
+							<label class="bd-label" for="store-search">Search</label>
 							<input
-								type="search"
+								autocomplete="off"
 								class="bd-input"
+								id="store-search"
 								placeholder="Search products…"
-								[value]="search()"
-								(input)="onSearch($any($event.target).value)"
+								type="search"
+								[formControl]="searchControl"
 							/>
-						</label>
+						</div>
 
-						<div class="store-sidebar__group">
-							<span class="store-sidebar__label">Categories</span>
-							<ul class="store-facets">
-								<li>
-									<button
-										type="button"
-										class="store-facet"
-										[class.store-facet--active]="!categoryId()"
-										(click)="setCategory(null)"
-									>
-										<span>All products</span>
-									</button>
-								</li>
-								@for (c of categoriesWithCounts(); track c.id) {
+						@if (categoriesWithCounts().length > 0) {
+							<div class="store-facet">
+								<p class="store-facet__title">Category</p>
+								<ul class="store-facet__list">
 									<li>
 										<button
+											class="store-facet__item"
 											type="button"
-											class="store-facet"
-											[class.store-facet--active]="categoryId() === c.id"
-											(click)="setCategory(c.id)"
+											[attr.aria-pressed]="!categoryId()"
+											[class.store-facet__item--active]="!categoryId()"
+											(click)="setCategory(null)"
 										>
-											<span>{{ c.name }}</span>
-											<span class="store-facet__count">{{ c.count }}</span>
+											All products
+										</button>
+									</li>
+									@for (c of categoriesWithCounts(); track c.id) {
+										<li>
+											<button
+												class="store-facet__item store-facet__item--row"
+												type="button"
+												[attr.aria-pressed]="categoryId() === c.id"
+												[class.store-facet__item--active]="categoryId() === c.id"
+												(click)="setCategory(categoryId() === c.id ? null : c.id)"
+											>
+												<span>{{ c.name }}</span>
+												<span class="store-facet__count">{{ c.count }}</span>
+											</button>
+										</li>
+									}
+								</ul>
+							</div>
+						}
+
+						<form class="store-facet" [formGroup]="priceForm" (ngSubmit)="applyPrice()">
+							<p class="store-facet__title">Price</p>
+							<div class="store-price">
+								<input
+									aria-label="Lowest price"
+									class="bd-input"
+									formControlName="min"
+									inputmode="decimal"
+									[placeholder]="pricePlaceholder().min"
+								/>
+								<span aria-hidden="true" class="store-price__sep">–</span>
+								<input
+									aria-label="Highest price"
+									class="bd-input"
+									formControlName="max"
+									inputmode="decimal"
+									[placeholder]="pricePlaceholder().max"
+								/>
+							</div>
+							<button class="bd-btn bd-btn--ghost store-price__apply" type="submit">Apply</button>
+						</form>
+
+						<div class="store-facet">
+							<p class="store-facet__title">Rating</p>
+							<ul class="store-facet__list">
+								@for (r of ratingSteps; track r) {
+									<li>
+										<button
+											class="store-facet__item store-facet__rating"
+											type="button"
+											[attr.aria-pressed]="minRating() === r"
+											[class.store-facet__item--active]="minRating() === r"
+											(click)="setRating(minRating() === r ? 0 : r)"
+										>
+											<bd-star-rating [rating]="r" />
+											<span class="store-facet__count">&amp; up</span>
 										</button>
 									</li>
 								}
 							</ul>
 						</div>
 
-						<div class="store-sidebar__group">
-							<span class="store-sidebar__label">Price ($)</span>
-							<div class="store-price">
-								<input
-									type="number"
-									class="bd-input"
-									min="0"
-									inputmode="numeric"
-									placeholder="Min"
-									[value]="minPriceInput()"
-									(change)="onMinPrice($any($event.target).value)"
-									aria-label="Minimum price"
-								/>
-								<span class="muted">–</span>
-								<input
-									type="number"
-									class="bd-input"
-									min="0"
-									inputmode="numeric"
-									placeholder="Max"
-									[value]="maxPriceInput()"
-									(change)="onMaxPrice($any($event.target).value)"
-									aria-label="Maximum price"
-								/>
-							</div>
-						</div>
-
-						<label class="store-sidebar__group">
-							<span class="store-sidebar__label">Minimum rating</span>
-							<select
-								class="bd-input"
-								[value]="minRatingValue()"
-								(change)="onMinRating($any($event.target).value)"
-							>
-								<option value="0">Any rating</option>
-								<option value="4">4★ &amp; up</option>
-								<option value="3">3★ &amp; up</option>
-								<option value="2">2★ &amp; up</option>
-								<option value="1">1★ &amp; up</option>
-							</select>
-						</label>
-
-						@if (hasActiveFilters()) {
-							<button class="bd-btn bd-btn--ghost store-sidebar__clear" type="button" (click)="clearFilters()">
-								Clear filters
-							</button>
+						@if (hasFilters()) {
+							<button class="store-clear" type="button" (click)="clearFilters()">Clear all filters</button>
 						}
 					</aside>
 
-					<!-- ── Results ────────────────────────────────────── -->
 					<div class="store-results">
 						<div class="store-results__bar">
-							<span class="muted">
+							<p class="bd-loading" aria-live="polite">
 								@if (state() === "loading") {
-									Loading…
+									Loading products…
 								} @else {
 									{{ products().length }} {{ products().length === 1 ? "product" : "products" }}
 								}
-							</span>
-							<label class="store-sort">
-								<span class="muted">Sort</span>
-								<select class="bd-input" [value]="sort()" (change)="onSort($any($event.target).value)">
+							</p>
+							<div class="store-sort">
+								<label for="store-sort">Sort</label>
+								<select class="bd-select" id="store-sort" [formControl]="sortControl">
 									@for (o of sortOptions; track o.value) {
 										<option [value]="o.value">{{ o.label }}</option>
 									}
 								</select>
-							</label>
+							</div>
 						</div>
 
-						@if (state() === "loading" && products().length === 0) {
-							<p class="muted">Loading products…</p>
-						} @else if (products().length === 0) {
-							@if (hasActiveFilters()) {
-								<p class="muted">No products match these filters. <button class="link-btn" type="button" (click)="clearFilters()">Clear filters</button>.</p>
-							} @else {
-								<p class="muted">No products yet — add them in BD (Products) and they appear here.</p>
-							}
+						@if (state() === "ready" && cards().length === 0) {
+							<div class="bd-empty">
+								@if (hasFilters()) {
+									No products match these filters. Try clearing a filter or broadening your search.
+								} @else {
+									No live products yet. Add and publish products in the BD dashboard and they'll
+									appear here.
+								}
+							</div>
 						} @else {
-							<div class="grid store-grid">
-								@for (p of products(); track p.id) {
-									<article class="card product-card">
-										<a class="product-card__media" [routerLink]="['/store', p.id]">
-											@if (p.coverImage) {
-												<img class="card__img" [src]="p.coverImage" [alt]="p.name" />
-											} @else {
-												<span class="product-card__placeholder" aria-hidden="true"></span>
-											}
-											@if (badges(p).length > 0) {
-												<span class="product-card__badges">
-													@for (b of badges(p); track b.label) {
-														<span class="product-badge" [class.product-badge--sale]="b.kind === 'sale'">{{ b.label }}</span>
+							<div class="bd-grid-3">
+								@for (p of cards(); track p.id) {
+									<div class="bd-card product-card">
+										<a class="product-card__link" [routerLink]="['/store', p.id]">
+											<div class="product-card__media">
+												@if (p.coverImage) {
+													<img
+														class="product-card__img"
+														loading="lazy"
+														referrerpolicy="no-referrer"
+														[alt]="p.name"
+														[src]="p.coverImage"
+													/>
+												} @else {
+													<div class="product-card__noimg">No image</div>
+												}
+												<div class="product-card__badges">
+													@if (p.isBestSeller) {
+														<span class="bd-badge">Best seller</span>
 													}
-												</span>
-											}
+													@if (p.isNew) {
+														<span class="bd-badge">New</span>
+													}
+													@if (p.isOnSale) {
+														<span class="bd-badge product-card__badge--sale">Sale</span>
+													}
+												</div>
+											</div>
+											<div class="product-card__body">
+												<h3>{{ p.name || "Untitled" }}</h3>
+												@if (p.reviewCount > 0) {
+													<div class="product-card__rating">
+														<bd-star-rating [rating]="p.avgRating" />
+														<span class="product-card__count">({{ p.reviewCount }})</span>
+													</div>
+												}
+												<div class="product-card__price">
+													<span class="product-card__amount">{{ p.priceLabel }}</span>
+													@if (p.isOnSale && p.comparePriceCents != null) {
+														<span class="product-card__compare">{{ money(p.comparePriceCents) }}</span>
+													}
+												</div>
+												@if (p.isLowStock) {
+													<span class="product-card__lowstock">Low stock</span>
+												}
+											</div>
 										</a>
-										<h3>
-											<a [routerLink]="['/store', p.id]">{{ p.name }}</a>
-										</h3>
-
-										@if (p.reviewCount > 0) {
-											<p class="product-card__rating">
-												<span class="review__stars">{{ stars(p.avgRating) }}</span>
-												<span class="muted">{{ p.avgRating.toFixed(1) }} ({{ p.reviewCount }})</span>
-											</p>
-										}
-
-										@if (p.cheapestPriceCents != null) {
-											<p class="product-card__price">
-												@if (p.hasMultipleVariants) {
-													<span class="muted product-card__from">From</span>
-												}
-												<span class="price">{{ money(p.cheapestPriceCents) }}</span>
-												@if (p.isOnSale && p.comparePriceCents != null) {
-													<span class="product-card__compare">{{ money(p.comparePriceCents) }}</span>
-												}
-											</p>
-										}
-
-										<button
-											class="bd-btn product-card__add"
-											type="button"
-											(click)="add(p.id)"
-											[disabled]="adding() === p.id"
-										>
-											{{ adding() === p.id ? "Adding…" : "Add to cart" }}
-										</button>
-									</article>
+										<div class="product-card__save">
+											<bd-save-buttons compact [attr.data-product]="p.saved" />
+										</div>
+									</div>
 								}
 							</div>
 						}
+						<bd-compare-bar />
 					</div>
 				</div>
 			}
-
-			<p class="store-links">
-				<a routerLink="/cart">View cart</a>
-				<!-- [bd:saas] -->
-				· <a routerLink="/subscriptions">Subscriptions</a>
-				<!-- [/bd:saas] -->
-			</p>
-		</section>
+		</div>
 	`,
 })
-export class StorePage implements OnInit {
+export class StorePage {
 	private readonly route = inject(ActivatedRoute);
 	private readonly router = inject(Router);
 
 	readonly sortOptions = SORT_OPTIONS;
+	readonly ratingSteps = [4, 3, 2];
 
 	readonly products = signal<ProductCard[]>([]);
 	readonly categories = signal<ProductCategory[]>([]);
 	readonly categoryCounts = signal<CategoryCount[]>([]);
+	readonly priceRange = signal<{ minDollars: number; maxDollars: number } | null>(null);
 	readonly state = signal<"loading" | "ready" | "unavailable">("loading");
-	readonly adding = signal<string | null>(null);
 
-	// Filter state (mirrored from / written back to the URL query string).
+	// The filters, read from and written back to the URL.
 	readonly search = signal("");
 	readonly categoryId = signal<string | null>(null);
 	readonly minPriceCents = signal<number | null>(null);
 	readonly maxPriceCents = signal<number | null>(null);
-	readonly minRating = signal<number>(0);
+	readonly minRating = signal(0);
 	readonly sort = signal<StoreSort>("featured");
 
-	private searchDebounce: ReturnType<typeof setTimeout> | null = null;
+	readonly searchControl = new FormControl("", { nonNullable: true });
+	readonly sortControl = new FormControl<StoreSort>("featured", { nonNullable: true });
+	readonly priceForm = new FormGroup({
+		min: new FormControl("", { nonNullable: true }),
+		max: new FormControl("", { nonNullable: true }),
+	});
 
-	/** Category list joined with facet counts (counts come from the meta call). */
+	readonly hasFilters = computed(
+		() =>
+			this.search() !== "" ||
+			this.categoryId() !== null ||
+			this.minPriceCents() !== null ||
+			this.maxPriceCents() !== null ||
+			this.minRating() > 0,
+	);
+
+	/** The categories with their counts; empty ones drop out unless chosen. */
 	readonly categoriesWithCounts = computed(() => {
 		const counts = new Map(this.categoryCounts().map((c) => [c.categoryId, c.count]));
 		return this.categories()
@@ -262,100 +295,126 @@ export class StorePage implements OnInit {
 			.filter((c) => c.count > 0 || this.categoryId() === c.id);
 	});
 
-	readonly minPriceInput = computed(() =>
-		this.minPriceCents() != null ? String(Math.round(this.minPriceCents()! / 100)) : "",
-	);
-	readonly maxPriceInput = computed(() =>
-		this.maxPriceCents() != null ? String(Math.round(this.maxPriceCents()! / 100)) : "",
-	);
-	readonly minRatingValue = computed(() => String(this.minRating()));
+	readonly pricePlaceholder = computed(() => {
+		const range = this.priceRange();
+		return range
+			? { min: `$${Math.floor(range.minDollars)}`, max: `$${Math.ceil(range.maxDollars)}` }
+			: { min: "Min", max: "Max" };
+	});
 
-	readonly hasActiveFilters = computed(
-		() =>
-			!!this.search() ||
-			!!this.categoryId() ||
-			this.minPriceCents() != null ||
-			this.maxPriceCents() != null ||
-			this.minRating() > 0 ||
-			this.sort() !== "featured",
+	/** The cards with their price line and what ♡ Save and Compare keep. */
+	readonly cards = computed(() =>
+		this.products().map((p) => ({
+			...p,
+			priceLabel:
+				p.cheapestPriceCents != null
+					? `${p.hasMultipleVariants ? "From " : ""}${this.money(p.cheapestPriceCents)}`
+					: "View details",
+			saved: JSON.stringify({
+				id: p.id,
+				name: p.name,
+				image: p.coverImage ?? null,
+				priceCents: p.cheapestPriceCents ?? null,
+			}),
+		})),
 	);
 
-	async ngOnInit() {
+	constructor() {
 		this.readFiltersFromUrl();
-		// Categories are facet-stable; load once alongside the first grid.
-		const cats = await bdApi.categories();
-		this.categories.set(cats?.items ?? []);
-		await this.load();
+		this.searchControl.valueChanges
+			.pipe(debounceTime(300), distinctUntilChanged(), takeUntilDestroyed())
+			.subscribe((value) => {
+				this.search.set(value.trim());
+				void this.apply();
+			});
+		this.sortControl.valueChanges.pipe(takeUntilDestroyed()).subscribe((value) => {
+			this.sort.set(value);
+			void this.apply();
+		});
+		// The list loads in the browser; the server renders the page around it.
+		const destroyRef = inject(DestroyRef);
+		afterNextRender(() => {
+			void bdApi.categories().then((cats) => {
+				if (!destroyRef.destroyed) this.categories.set(cats?.items ?? []);
+			});
+			void this.load();
+		});
 	}
 
-	/** Hydrate the filter signals from the current query params (deep-link safe). */
+	/** The filters from the query string, so a shared link opens the same list. */
 	private readFiltersFromUrl() {
 		const qp = this.route.snapshot.queryParamMap;
 		this.search.set(qp.get("search") ?? "");
 		this.categoryId.set(qp.get("category"));
-		const min = qp.get("minPrice");
-		const max = qp.get("maxPrice");
-		this.minPriceCents.set(min ? Math.round(Number(min) * 100) : null);
-		this.maxPriceCents.set(max ? Math.round(Number(max) * 100) : null);
-		this.minRating.set(qp.get("rating") ? Number(qp.get("rating")) : 0);
-		const s = qp.get("sort") as StoreSort | null;
-		this.sort.set(
-			s && SORT_OPTIONS.some((o) => o.value === s) ? s : "featured",
+		this.minPriceCents.set(cents(qp.get("minPrice") ?? ""));
+		this.maxPriceCents.set(cents(qp.get("maxPrice") ?? ""));
+		const rating = Number(qp.get("rating"));
+		this.minRating.set(rating >= 1 && rating <= 5 ? rating : 0);
+		const sort = SORT_OPTIONS.find((o) => o.value === qp.get("sort"))?.value ?? "featured";
+		this.sort.set(sort);
+		this.searchControl.setValue(this.search(), { emitEvent: false });
+		this.sortControl.setValue(sort, { emitEvent: false });
+		this.priceForm.setValue(
+			{ min: qp.get("minPrice") ?? "", max: qp.get("maxPrice") ?? "" },
+			{ emitEvent: false },
 		);
 	}
 
-	/** Write the active filters into the URL (replaceUrl — no history spam). */
+	/** The filters into the URL; replaceUrl keeps each keystroke out of history. */
 	private syncUrl() {
-		const params: Record<string, string | null> = {
-			search: this.search() || null,
-			category: this.categoryId(),
-			minPrice: this.minPriceCents() != null ? String(this.minPriceCents()! / 100) : null,
-			maxPrice: this.maxPriceCents() != null ? String(this.maxPriceCents()! / 100) : null,
-			rating: this.minRating() > 0 ? String(this.minRating()) : null,
-			sort: this.sort() !== "featured" ? this.sort() : null,
-		};
+		const min = this.minPriceCents();
+		const max = this.maxPriceCents();
 		void this.router.navigate([], {
 			relativeTo: this.route,
-			queryParams: params,
+			queryParams: {
+				search: this.search() || null,
+				category: this.categoryId(),
+				minPrice: min != null ? String(min / 100) : null,
+				maxPrice: max != null ? String(max / 100) : null,
+				rating: this.minRating() > 0 ? String(this.minRating()) : null,
+				sort: this.sort() !== "featured" ? this.sort() : null,
+			},
 			queryParamsHandling: "merge",
 			replaceUrl: true,
 		});
 	}
 
 	private currentFilters(): StoreFilters {
+		const categoryId = this.categoryId();
+		const min = this.minPriceCents();
+		const max = this.maxPriceCents();
 		return {
-			limit: 24,
-			...(this.search() ? { search: this.search() } : {}),
-			...(this.categoryId() ? { categoryId: this.categoryId()! } : {}),
-			...(this.minPriceCents() != null ? { minPriceCents: this.minPriceCents()! } : {}),
-			...(this.maxPriceCents() != null ? { maxPriceCents: this.maxPriceCents()! } : {}),
-			...(this.minRating() > 0 ? { minRating: this.minRating() } : {}),
+			limit: 48,
 			sort: this.sort(),
+			...(this.search() ? { search: this.search() } : {}),
+			...(categoryId ? { categoryId } : {}),
+			...(min != null ? { minPriceCents: min } : {}),
+			...(max != null ? { maxPriceCents: max } : {}),
+			...(this.minRating() > 0 ? { minRating: this.minRating() } : {}),
 		};
 	}
 
+	private loadSeq = 0;
+
 	private async load() {
+		const seq = ++this.loadSeq;
 		this.state.set("loading");
 		const res = await bdApi.productsMeta(this.currentFilters());
+		// A newer filter change has started its own load.
+		if (seq !== this.loadSeq) return;
 		if (!res) {
 			this.state.set("unavailable");
 			return;
 		}
 		this.products.set(res.items);
 		this.categoryCounts.set(res.categoryCounts);
+		this.priceRange.set(res.priceRange ?? null);
 		this.state.set("ready");
 	}
 
-	/** Re-query + reflect into the URL after any filter change. */
 	private async apply() {
 		this.syncUrl();
 		await this.load();
-	}
-
-	onSearch(value: string) {
-		this.search.set(value);
-		if (this.searchDebounce) clearTimeout(this.searchDebounce);
-		this.searchDebounce = setTimeout(() => void this.apply(), 300);
 	}
 
 	setCategory(id: string | null) {
@@ -363,26 +422,15 @@ export class StorePage implements OnInit {
 		void this.apply();
 	}
 
-	onMinPrice(value: string) {
-		const n = value.trim() === "" ? null : Math.max(0, Math.round(Number(value) * 100));
-		this.minPriceCents.set(Number.isFinite(n as number) ? n : null);
+	setRating(rating: number) {
+		this.minRating.set(rating);
 		void this.apply();
 	}
 
-	onMaxPrice(value: string) {
-		const n = value.trim() === "" ? null : Math.max(0, Math.round(Number(value) * 100));
-		this.maxPriceCents.set(Number.isFinite(n as number) ? n : null);
-		void this.apply();
-	}
-
-	onMinRating(value: string) {
-		this.minRating.set(Number(value) || 0);
-		void this.apply();
-	}
-
-	onSort(value: string) {
-		const s = SORT_OPTIONS.find((o) => o.value === value)?.value ?? "featured";
-		this.sort.set(s);
+	applyPrice() {
+		const { min, max } = this.priceForm.getRawValue();
+		this.minPriceCents.set(cents(min));
+		this.maxPriceCents.set(cents(max));
 		void this.apply();
 	}
 
@@ -392,31 +440,13 @@ export class StorePage implements OnInit {
 		this.minPriceCents.set(null);
 		this.maxPriceCents.set(null);
 		this.minRating.set(0);
-		this.sort.set("featured");
+		this.searchControl.setValue("", { emitEvent: false });
+		this.priceForm.setValue({ min: "", max: "" }, { emitEvent: false });
 		void this.apply();
 	}
 
-	badges(p: ProductCard): Array<{ label: string; kind: "sale" | "tag" }> {
-		const out: Array<{ label: string; kind: "sale" | "tag" }> = [];
-		if (p.isBestSeller) out.push({ label: "Best seller", kind: "tag" });
-		if (p.isNew) out.push({ label: "New", kind: "tag" });
-		if (p.isOnSale) out.push({ label: "Sale", kind: "sale" });
-		if (p.isLowStock) out.push({ label: "Low stock", kind: "tag" });
-		return out;
-	}
-
+	/** Product prices are cents. */
 	money(cents: number): string {
 		return (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
-	}
-
-	stars(rating: number): string {
-		const n = Math.max(0, Math.min(5, Math.round(rating)));
-		return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
-	}
-
-	async add(productId: string) {
-		this.adding.set(productId);
-		await bdApi.addToCart(productId, 1);
-		this.adding.set(null);
 	}
 }

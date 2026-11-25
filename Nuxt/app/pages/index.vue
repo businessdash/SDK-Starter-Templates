@@ -2,8 +2,12 @@
 import About from "~/components/bd/About.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
 import BdHeader from "~/components/bd/BdHeader.vue";
+// [bd:blog]
 import Blog from "~/components/bd/Blog.vue";
+// [/bd:blog]
+// [bd:booking]
 import Booking from "~/components/bd/Booking.vue";
+// [/bd:booking]
 import ContactForm from "~/components/bd/ContactForm.vue";
 import Gallery from "~/components/bd/Gallery.vue";
 import Hero from "~/components/bd/Hero.vue";
@@ -49,8 +53,12 @@ useHead({
 			<About :body="data.about" />
 			<Services :services="data.services" />
 			<Gallery :items="data.gallery" />
+			<!-- [bd:booking] -->
 			<Booking :event-types="data.eventTypes" />
+			<!-- [/bd:booking] -->
+			<!-- [bd:blog] -->
 			<Blog :posts="data.blogPosts" />
+			<!-- [/bd:blog] -->
 			<ContactForm :schema="data.formSchema" :slug="data.formSlug" />
 		</main>
 		<BdFooter />

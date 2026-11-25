@@ -23,14 +23,23 @@ import { Route as UpdatesRouteImport } from './routes/updates'
 import { Route as DotwellKnownMcpDotjsonRouteImport } from './routes/[.]well-known.mcp[.]json'
 import { Route as AiProductFeedRouteImport } from './routes/ai.product-feed'
 import { Route as ApiMcpRouteImport } from './routes/api/mcp'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as DemoTanstackQueryRouteImport } from './routes/demo.tanstack-query'
 import { Route as ServicesIndexRouteImport } from './routes/services.index'
 import { Route as StoreIndexRouteImport } from './routes/store.index'
 import { Route as StoreIdRouteImport } from './routes/store.$id'
 import { Route as StoreCartRouteImport } from './routes/store.cart'
+import { Route as StoreCompareRouteImport } from './routes/store.compare'
+import { Route as StoreOrderRouteImport } from './routes/store.order'
+import { Route as StoreWishlistRouteImport } from './routes/store.wishlist'
 import { Route as ApiBdAuthSplatRouteImport } from './routes/api/bd-auth.$'
 import { Route as ApiBdRevalidateRouteImport } from './routes/api/bd/revalidate'
 import { Route as ServicesServiceAreaRouteImport } from './routes/services.$service.$area'
+import { Route as ApiBdCartAddRouteImport } from './routes/api/bd/cart/add'
+import { Route as ApiBdReviewsWriteRouteImport } from './routes/api/bd/reviews/write'
+import { Route as ApiBdBlogPostSlugCommentRouteImport } from './routes/api/bd/blog/post.$slug.comment'
+import { Route as ApiBdBlogPostSlugLikeRouteImport } from './routes/api/bd/blog/post.$slug.like'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -102,6 +111,16 @@ const ApiMcpRoute = ApiMcpRouteImport.update({
   path: '/api/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoTanstackQueryRoute = DemoTanstackQueryRouteImport.update({
   id: '/demo/tanstack-query',
   path: '/demo/tanstack-query',
@@ -127,6 +146,21 @@ const StoreCartRoute = StoreCartRouteImport.update({
   path: '/store/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
+const StoreCompareRoute = StoreCompareRouteImport.update({
+  id: '/store/compare',
+  path: '/store/compare',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreOrderRoute = StoreOrderRouteImport.update({
+  id: '/store/order',
+  path: '/store/order',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreWishlistRoute = StoreWishlistRouteImport.update({
+  id: '/store/wishlist',
+  path: '/store/wishlist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiBdAuthSplatRoute = ApiBdAuthSplatRouteImport.update({
   id: '/api/bd-auth/$',
   path: '/api/bd-auth/$',
@@ -140,6 +174,27 @@ const ApiBdRevalidateRoute = ApiBdRevalidateRouteImport.update({
 const ServicesServiceAreaRoute = ServicesServiceAreaRouteImport.update({
   id: '/services/$service/$area',
   path: '/services/$service/$area',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBdCartAddRoute = ApiBdCartAddRouteImport.update({
+  id: '/api/bd/cart/add',
+  path: '/api/bd/cart/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBdReviewsWriteRoute = ApiBdReviewsWriteRouteImport.update({
+  id: '/api/bd/reviews/write',
+  path: '/api/bd/reviews/write',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiBdBlogPostSlugCommentRoute =
+  ApiBdBlogPostSlugCommentRouteImport.update({
+    id: '/api/bd/blog/post/$slug/comment',
+    path: '/api/bd/blog/post/$slug/comment',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const ApiBdBlogPostSlugLikeRoute = ApiBdBlogPostSlugLikeRouteImport.update({
+  id: '/api/bd/blog/post/$slug/like',
+  path: '/api/bd/blog/post/$slug/like',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -158,14 +213,23 @@ export interface FileRoutesByFullPath {
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
   '/ai/product-feed': typeof AiProductFeedRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/store/$id': typeof StoreIdRoute
   '/store/cart': typeof StoreCartRoute
+  '/store/compare': typeof StoreCompareRoute
+  '/store/order': typeof StoreOrderRoute
+  '/store/wishlist': typeof StoreWishlistRoute
+  '/blog/': typeof BlogIndexRoute
   '/services/': typeof ServicesIndexRoute
   '/store/': typeof StoreIndexRoute
   '/api/bd-auth/$': typeof ApiBdAuthSplatRoute
   '/api/bd/revalidate': typeof ApiBdRevalidateRoute
   '/services/$service/$area': typeof ServicesServiceAreaRoute
+  '/api/bd/cart/add': typeof ApiBdCartAddRoute
+  '/api/bd/reviews/write': typeof ApiBdReviewsWriteRoute
+  '/api/bd/blog/post/$slug/comment': typeof ApiBdBlogPostSlugCommentRoute
+  '/api/bd/blog/post/$slug/like': typeof ApiBdBlogPostSlugLikeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -182,14 +246,23 @@ export interface FileRoutesByTo {
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
   '/ai/product-feed': typeof AiProductFeedRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/store/$id': typeof StoreIdRoute
   '/store/cart': typeof StoreCartRoute
+  '/store/compare': typeof StoreCompareRoute
+  '/store/order': typeof StoreOrderRoute
+  '/store/wishlist': typeof StoreWishlistRoute
+  '/blog': typeof BlogIndexRoute
   '/services': typeof ServicesIndexRoute
   '/store': typeof StoreIndexRoute
   '/api/bd-auth/$': typeof ApiBdAuthSplatRoute
   '/api/bd/revalidate': typeof ApiBdRevalidateRoute
   '/services/$service/$area': typeof ServicesServiceAreaRoute
+  '/api/bd/cart/add': typeof ApiBdCartAddRoute
+  '/api/bd/reviews/write': typeof ApiBdReviewsWriteRoute
+  '/api/bd/blog/post/$slug/comment': typeof ApiBdBlogPostSlugCommentRoute
+  '/api/bd/blog/post/$slug/like': typeof ApiBdBlogPostSlugLikeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -207,14 +280,23 @@ export interface FileRoutesById {
   '/.well-known/mcp.json': typeof DotwellKnownMcpDotjsonRoute
   '/ai/product-feed': typeof AiProductFeedRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
   '/store/$id': typeof StoreIdRoute
   '/store/cart': typeof StoreCartRoute
+  '/store/compare': typeof StoreCompareRoute
+  '/store/order': typeof StoreOrderRoute
+  '/store/wishlist': typeof StoreWishlistRoute
+  '/blog/': typeof BlogIndexRoute
   '/services/': typeof ServicesIndexRoute
   '/store/': typeof StoreIndexRoute
   '/api/bd-auth/$': typeof ApiBdAuthSplatRoute
   '/api/bd/revalidate': typeof ApiBdRevalidateRoute
   '/services/$service/$area': typeof ServicesServiceAreaRoute
+  '/api/bd/cart/add': typeof ApiBdCartAddRoute
+  '/api/bd/reviews/write': typeof ApiBdReviewsWriteRoute
+  '/api/bd/blog/post/$slug/comment': typeof ApiBdBlogPostSlugCommentRoute
+  '/api/bd/blog/post/$slug/like': typeof ApiBdBlogPostSlugLikeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -233,14 +315,23 @@ export interface FileRouteTypes {
     | '/.well-known/mcp.json'
     | '/ai/product-feed'
     | '/api/mcp'
+    | '/blog/$slug'
     | '/demo/tanstack-query'
     | '/store/$id'
     | '/store/cart'
+    | '/store/compare'
+    | '/store/order'
+    | '/store/wishlist'
+    | '/blog/'
     | '/services/'
     | '/store/'
     | '/api/bd-auth/$'
     | '/api/bd/revalidate'
     | '/services/$service/$area'
+    | '/api/bd/cart/add'
+    | '/api/bd/reviews/write'
+    | '/api/bd/blog/post/$slug/comment'
+    | '/api/bd/blog/post/$slug/like'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -257,14 +348,23 @@ export interface FileRouteTypes {
     | '/.well-known/mcp.json'
     | '/ai/product-feed'
     | '/api/mcp'
+    | '/blog/$slug'
     | '/demo/tanstack-query'
     | '/store/$id'
     | '/store/cart'
+    | '/store/compare'
+    | '/store/order'
+    | '/store/wishlist'
+    | '/blog'
     | '/services'
     | '/store'
     | '/api/bd-auth/$'
     | '/api/bd/revalidate'
     | '/services/$service/$area'
+    | '/api/bd/cart/add'
+    | '/api/bd/reviews/write'
+    | '/api/bd/blog/post/$slug/comment'
+    | '/api/bd/blog/post/$slug/like'
   id:
     | '__root__'
     | '/'
@@ -281,14 +381,23 @@ export interface FileRouteTypes {
     | '/.well-known/mcp.json'
     | '/ai/product-feed'
     | '/api/mcp'
+    | '/blog/$slug'
     | '/demo/tanstack-query'
     | '/store/$id'
     | '/store/cart'
+    | '/store/compare'
+    | '/store/order'
+    | '/store/wishlist'
+    | '/blog/'
     | '/services/'
     | '/store/'
     | '/api/bd-auth/$'
     | '/api/bd/revalidate'
     | '/services/$service/$area'
+    | '/api/bd/cart/add'
+    | '/api/bd/reviews/write'
+    | '/api/bd/blog/post/$slug/comment'
+    | '/api/bd/blog/post/$slug/like'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -306,14 +415,23 @@ export interface RootRouteChildren {
   DotwellKnownMcpDotjsonRoute: typeof DotwellKnownMcpDotjsonRoute
   AiProductFeedRoute: typeof AiProductFeedRoute
   ApiMcpRoute: typeof ApiMcpRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
   StoreIdRoute: typeof StoreIdRoute
   StoreCartRoute: typeof StoreCartRoute
+  StoreCompareRoute: typeof StoreCompareRoute
+  StoreOrderRoute: typeof StoreOrderRoute
+  StoreWishlistRoute: typeof StoreWishlistRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   ServicesIndexRoute: typeof ServicesIndexRoute
   StoreIndexRoute: typeof StoreIndexRoute
   ApiBdAuthSplatRoute: typeof ApiBdAuthSplatRoute
   ApiBdRevalidateRoute: typeof ApiBdRevalidateRoute
   ServicesServiceAreaRoute: typeof ServicesServiceAreaRoute
+  ApiBdCartAddRoute: typeof ApiBdCartAddRoute
+  ApiBdReviewsWriteRoute: typeof ApiBdReviewsWriteRoute
+  ApiBdBlogPostSlugCommentRoute: typeof ApiBdBlogPostSlugCommentRoute
+  ApiBdBlogPostSlugLikeRoute: typeof ApiBdBlogPostSlugLikeRoute
 }
 
 declare module '@tanstack/solid-router' {
@@ -416,6 +534,20 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof ApiMcpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo/tanstack-query': {
       id: '/demo/tanstack-query'
       path: '/demo/tanstack-query'
@@ -451,6 +583,27 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof StoreCartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/store/compare': {
+      id: '/store/compare'
+      path: '/store/compare'
+      fullPath: '/store/compare'
+      preLoaderRoute: typeof StoreCompareRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/order': {
+      id: '/store/order'
+      path: '/store/order'
+      fullPath: '/store/order'
+      preLoaderRoute: typeof StoreOrderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/wishlist': {
+      id: '/store/wishlist'
+      path: '/store/wishlist'
+      fullPath: '/store/wishlist'
+      preLoaderRoute: typeof StoreWishlistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/bd-auth/$': {
       id: '/api/bd-auth/$'
       path: '/api/bd-auth/$'
@@ -472,6 +625,34 @@ declare module '@tanstack/solid-router' {
       preLoaderRoute: typeof ServicesServiceAreaRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/bd/cart/add': {
+      id: '/api/bd/cart/add'
+      path: '/api/bd/cart/add'
+      fullPath: '/api/bd/cart/add'
+      preLoaderRoute: typeof ApiBdCartAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bd/reviews/write': {
+      id: '/api/bd/reviews/write'
+      path: '/api/bd/reviews/write'
+      fullPath: '/api/bd/reviews/write'
+      preLoaderRoute: typeof ApiBdReviewsWriteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bd/blog/post/$slug/comment': {
+      id: '/api/bd/blog/post/$slug/comment'
+      path: '/api/bd/blog/post/$slug/comment'
+      fullPath: '/api/bd/blog/post/$slug/comment'
+      preLoaderRoute: typeof ApiBdBlogPostSlugCommentRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/bd/blog/post/$slug/like': {
+      id: '/api/bd/blog/post/$slug/like'
+      path: '/api/bd/blog/post/$slug/like'
+      fullPath: '/api/bd/blog/post/$slug/like'
+      preLoaderRoute: typeof ApiBdBlogPostSlugLikeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -490,14 +671,23 @@ const rootRouteChildren: RootRouteChildren = {
   DotwellKnownMcpDotjsonRoute: DotwellKnownMcpDotjsonRoute,
   AiProductFeedRoute: AiProductFeedRoute,
   ApiMcpRoute: ApiMcpRoute,
+  BlogSlugRoute: BlogSlugRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
   StoreIdRoute: StoreIdRoute,
   StoreCartRoute: StoreCartRoute,
+  StoreCompareRoute: StoreCompareRoute,
+  StoreOrderRoute: StoreOrderRoute,
+  StoreWishlistRoute: StoreWishlistRoute,
+  BlogIndexRoute: BlogIndexRoute,
   ServicesIndexRoute: ServicesIndexRoute,
   StoreIndexRoute: StoreIndexRoute,
   ApiBdAuthSplatRoute: ApiBdAuthSplatRoute,
   ApiBdRevalidateRoute: ApiBdRevalidateRoute,
   ServicesServiceAreaRoute: ServicesServiceAreaRoute,
+  ApiBdCartAddRoute: ApiBdCartAddRoute,
+  ApiBdReviewsWriteRoute: ApiBdReviewsWriteRoute,
+  ApiBdBlogPostSlugCommentRoute: ApiBdBlogPostSlugCommentRoute,
+  ApiBdBlogPostSlugLikeRoute: ApiBdBlogPostSlugLikeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

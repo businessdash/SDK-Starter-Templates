@@ -1,3 +1,4 @@
+// [bd-file:blog]
 import { bd, el, empty, loading } from "../bd.js";
 
 function formatDate(iso) {
@@ -51,7 +52,7 @@ export async function renderBlog(target) {
 			posts.map((post) =>
 				el(
 					"a",
-					{ class: "bd-card blog-card", href: `/blog/${post.slug}` },
+					{ class: "bd-card blog-card", href: `/blog/${encodeURIComponent(post.slug)}` },
 					[
 						el("span", { class: "blog-card__meta" }, [
 							formatDate(post.publishedAt),
@@ -62,5 +63,8 @@ export async function renderBlog(target) {
 				),
 			),
 		),
+		el("p", { class: "blog-section__all" }, [
+			el("a", { class: "bd-btn bd-btn--ghost", href: "/blog" }, ["All posts"]),
+		]),
 	);
 }

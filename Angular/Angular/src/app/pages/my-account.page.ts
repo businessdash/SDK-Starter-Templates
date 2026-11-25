@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
-// [bd:saas]
+// [bd:subscriptions]
 import { computed } from "@angular/core";
-// [/bd:saas]
+// [/bd:subscriptions]
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute } from "@angular/router";
 import { BdSignInComponent } from "@businessdash/sdk/angular";
@@ -72,7 +72,7 @@ function safeNext(raw: string | null): string {
 					}
 				}
 
-				<!-- [bd:saas] -->
+				<!-- [bd:subscriptions] -->
 				<h2 class="section__subtitle">Your plan</h2>
 				@if (m.plan?.hasAccess) {
 					<p>
@@ -94,7 +94,7 @@ function safeNext(raw: string | null): string {
 				@if (planFailed()) {
 					<p class="error">We couldn't change your plan. Please try again.</p>
 				}
-				<!-- [/bd:saas] -->
+				<!-- [/bd:subscriptions] -->
 
 				<h2 class="section__subtitle">Leave a review</h2>
 				@if (reviewStatus() === "sent") {
@@ -151,7 +151,7 @@ export class MyAccountPage implements OnInit {
 		this.state.set("ready");
 	}
 
-	// [bd:saas]
+	// [bd:subscriptions]
 	// What just happened wins over the stored status, which lags until the
 	// payment provider confirms.
 	readonly planChange = signal<{ cancelAtPeriodEnd: boolean; accessUntil: string | null } | null>(
@@ -181,7 +181,7 @@ export class MyAccountPage implements OnInit {
 		if (res) this.planChange.set(res);
 		else this.planFailed.set(true);
 	}
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	async submitReview() {
 		if (this.reviewForm.invalid) return;

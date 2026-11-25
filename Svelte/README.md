@@ -60,8 +60,8 @@ Declared in `src/env.ts` and read when the app starts. Secrets come from `$app/e
 | --- | --- | --- |
 | **Hero / About / Services** | `src/routes/+page.server.ts` `load()` → `Hero/About/Services.svelte` | `bd.marketing.getPageBundle(...)` (via `fetchBundleSafe`) |
 | **Gallery** | `+page.server.ts`, const-generic field selection | `bd.gallery.list({ limit: 12, fields: [...] as const })` |
-| **Blog** | `+page.server.ts` → `Blog.svelte` | `bd.blog.listPosts({ limit: 6 })` |
-| **Booking** | event-types server-rendered; slots + confirm hit `/api/bd/scheduling/*` | `scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
+| **Blog** | `+page.server.ts` → `Blog.svelte` | `bd.blog.listPosts({ limit: 6 })` | <!-- [bd-line:blog] -->
+| **Booking** | event-types server-rendered; slots + confirm hit `/api/bd/scheduling/*` | `scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` | <!-- [bd-line:booking] -->
 | **Contact form** | schema server-rendered; submit hits `/api/bd/forms/[slug]` | `forms.schema(slug)`, `forms.submit(...)` |
 | **News banner** | `bundle.banner` → `Banner.svelte` (dismissible, remembered per message id) | bundle passthrough |
 
@@ -72,8 +72,10 @@ Visitor-token cart pattern: this app owns a UUID in the **httpOnly `bd_cart_visi
 
 | Route | File | SDK call |
 | --- | --- | --- |
-| Product list | `src/routes/store/+page.{server.ts,svelte}` | `storefront.listProducts(...)` |
-| Product detail | `src/routes/store/[id]/+page.{server.ts,svelte}` | `storefront.getProduct(id)` |
+| Product list: search, category, price, rating, sort | `src/routes/store/+page.{server.ts,svelte}` | `storefront.listProductsWithMeta(...)`, `storefront.listCategories()` |
+| Product detail: gallery, options, specs, reviews, add-ons, related, recently viewed | `src/routes/store/[id]/+page.{server.ts,svelte}` | `storefront.getProduct(id)`, `getProductReviews`, `getProductAddons`, `getRelatedProducts` |
+| Wishlist | `src/routes/store/wishlist/+page.{server.ts,svelte}` | none: kept in the browser |
+| Compare (up to four) | `src/routes/store/compare/+page.{server.ts,svelte}` | `storefront.getProduct(id)` per product |
 | Cart | `src/routes/store/cart/+page.{server.ts,svelte}` | `cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` |
 | Order / return | `src/routes/store/order/+page.{server.ts,svelte}` | `checkout.getStatus(sessionId)` |
 
@@ -88,25 +90,36 @@ src/routes/api/bd/cart/clear/+server.ts                 POST   clear
 src/routes/api/bd/checkout/start/+server.ts             POST   → Stripe URL
 ```
 
-The browser-side helpers in `src/lib/bd/cart-client.ts` wrap those endpoints and return the new `CartSnapshot`. Money: cart `unitPrice`/`subtotal` and variant `price` are **dollars** (`formatDollars`); subscription `amountCents` and checkout totals are **cents** (`formatCents`).
+The browser-side helpers in `src/lib/bd/cart-client.ts` wrap those endpoints and return the new `CartSnapshot`. `src/lib/bd/shop.ts` holds the rest of the shop's logic, framework-free: shaping a product for its page (photos per option, option groups, "from" prices, specs) and the wishlist, compare and recently viewed lists, which live in the browser's localStorage. Money: cart `unitPrice`/`subtotal` and variant `price` are **dollars** (`formatDollars`); subscription `amountCents` and checkout totals are **cents** (`formatCents`).
 <!-- [/bd:store] -->
 
-<!-- [bd:saas] -->
+<!-- [bd:blog] -->
+### Blog (`/blog`)
+
+| Route | File | SDK call |
+| --- | --- | --- |
+| Posts, by category or tag | `src/routes/blog/+page.{server.ts,svelte}` | `blog.listPosts(...)`, `blog.listCategories()`, `blog.listTags()` |
+| Post, likes, comments | `src/routes/blog/[slug]/+page.{server.ts,svelte}` | `blog.getPost(slug)`, `blog.listComments(slug)`, `blog.withSession(token).{likeStatus,toggleLike,postComment}` |
+
+Liking and commenting need a signed-in customer (the `bd_session` cookie from `/my-account`); they are form actions, so they work without JavaScript. A post's HTML is rebuilt from an allowlist by `safePostHtml` in `src/lib/bd/blog.ts` before it reaches the page, so a post can't carry a script.
+<!-- [/bd:blog] -->
+
+<!-- [bd:subscriptions] -->
 ### Plans (`/store/subscriptions`)
 
 - `src/routes/store/subscriptions/+page.{server.ts,svelte}` lists the org's recurring offerings with `subscriptions.list()`.
 - Subscribe posts to `src/routes/api/bd/subscriptions/[id]/checkout/+server.ts`, which calls `subscriptions.startCheckout(id, ...)` and sends the browser to Stripe.
 - Stripe sends them back to `src/routes/store/order/+page.{server.ts,svelte}`, which confirms with `checkout.getStatus(sessionId)`.
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
 
 ### Auth + customer portal
 
 - **Auth handler** — `src/routes/api/bd-auth/[...slug]/+server.ts` mounts `createAuthHandler` as a catch-all. Each sub-route (`sign-in`, `sign-up`, `callback`, `sign-out`, `password-reset`, `me`) receives `event.request` and returns the handler's `Response`. It sets the **httpOnly `bd_session`** cookie. Header links are plain `<a href="/api/bd-auth/sign-in">` etc.
 - **My account** — `src/routes/my-account/+page.server.ts` reads `bd_session` via `getTenantSession({ baseUrl, apiKey, cookieValue })`, then loads the work bundle with `customerPortal(orgId).withSession(token).getWork()` and exposes a `submitReview` **form action**. Signed-out → sign-in prompt; unconfigured → placeholder. Helpers in `src/lib/server/bd-portal.ts`.
 
-### Reviews wall (`/reviews`)
+### Business reviews (`/reviews`)
 
-`src/routes/reviews/+page.server.ts` ships the aggregate (average + count, off `bundle.reviews`) plus the first page from `reviews.list(...)`. "Load more" pages forward against `src/routes/api/bd/reviews/+server.ts`. Note the **two different shapes**: bundle reviews are `{ reviewee, description, date, rating }`; wall items are `{ reviewerName, text, timeCreated, rating }`.
+`src/routes/reviews/+page.server.ts` loads the rating with its count per star (off `bundle.reviews`) and the reviews from `reviews.list({ limit, offset, source })`. The page shows a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a link to it on Google or Yelp, and "Show more" (`?shown=`), all plain links. A signed-in customer writes a review with `ReviewWriter.svelte`, which posts to the page's `write` form action; it waits for the business to approve it. The rules (breakdown, platform names, safe links, what a review must be) are `src/lib/bd/reviews.ts`, the same in every BD starter, and the styles `src/lib/bd/bd-reviews.css`. `src/routes/api/bd/reviews/+server.ts` pages the reviews as JSON for your own components. Note the **two different shapes**: bundle reviews are `{ reviewee, description, date, rating }`; wall items are `{ reviewerName, text, timeCreated, rating }`.
 
 ### Updates feed (`/updates`)
 
@@ -160,29 +173,34 @@ src/
 │   ├── server/
 │   │   ├── bd.ts                               # SDK client (server-only)
 │   │   ├── bd-bundle.ts                        # bundle banner/updates/reviews + suspension
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │   │   ├── bd-store.ts                         # storefront/cart/checkout + visitor cookie
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
+│   │   ├── bd-blog.ts                          # blog reads, likes and comments <!-- [bd-line:blog] -->
 │   │   ├── bd-portal.ts                        # session + customer-portal helpers
 │   │   ├── bd-parallel.ts                      # parallel-pages + sitemap/robots URLs
 │   │   └── bd-seo.ts                           # JSON-LD builders
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │   ├── bd/cart-client.ts                       # browser cart helpers (call our endpoints)
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
+│   ├── bd/shop.ts                              # product shaping, wishlist, compare, recently viewed <!-- [bd-line:store] -->
+│   ├── bd/blog.ts                              # safe post HTML, reading time <!-- [bd-line:blog] -->
 │   └── components/bd/
 │       ├── Header.svelte  Footer.svelte  Hero.svelte  About.svelte
 │       ├── Services.svelte  Gallery.svelte  Blog.svelte
 │       ├── Booking.svelte  ContactForm.svelte    # Svelte 5 runes, client-driven
 │       ├── Banner.svelte                         # dismissible bundle.banner bar
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
+│       ├── SaveButtons.svelte  ProductRail.svelte  CompareBar.svelte <!-- [bd-line:store] -->
 │       └── StoreNav.svelte                       # storefront sub-nav + cart badge
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
 └── routes/
     ├── +page.{server.ts,svelte}                  # home: marketing + banner + JSON-LD
-<!-- [bd:store,saas] -->
-    ├── store/…                                   # storefront (list, [id], cart, subscriptions, order)
-<!-- [/bd:store,saas] -->
-    ├── reviews/+page.{server.ts,svelte}          # reviews wall + load-more
+<!-- [bd:store,subscriptions] -->
+    ├── store/…                                   # storefront (list, [id], wishlist, compare, cart, subscriptions, order)
+<!-- [/bd:store,subscriptions] -->
+    ├── blog/+page.{server.ts,svelte}  blog/[slug]/…  # blog index and posts <!-- [bd-line:blog] -->
+    ├── reviews/+page.{server.ts,svelte}          # business reviews: rating, filter, more, write
     ├── updates/+page.{server.ts,svelte}          # bundle.updates feed
     ├── my-account/+page.{server.ts,svelte}       # customer portal + review action
     ├── services/…                                # parallel-pages index + [service]/[area]

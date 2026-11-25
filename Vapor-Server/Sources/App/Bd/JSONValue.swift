@@ -4,9 +4,12 @@ import Vapor
 ///
 /// Two BD surfaces are schema-driven and genuinely can't be fixed structs,
 /// because the org defines their shape in the dashboard: the **marketing
-/// bundle**, and **custom-database records**. Everything else here is a real
-/// type — reaching for `JSONValue` on a typed endpoint means the type is
-/// wrong, not that the endpoint is dynamic.
+/// bundle**, and **custom-database records**. A third use is data this server
+/// only passes on: the product page, reviews and comments go to the shop and
+/// blog elements in the browser as BD sent them, and those elements own the
+/// shape. Everything else here is a real type — reaching for `JSONValue` on a
+/// typed endpoint this server reads means the type is wrong, not that the
+/// endpoint is dynamic.
 enum JSONValue: Content, Equatable {
     case string(String)
     case number(Double)
@@ -60,6 +63,7 @@ enum JSONValue: Content, Equatable {
     var stringValue: String? { if case .string(let v) = self { return v }; return nil }
     var boolValue: Bool? { if case .bool(let v) = self { return v }; return nil }
     var arrayValue: [JSONValue]? { if case .array(let v) = self { return v }; return nil }
+    var intValue: Int? { if case .number(let v) = self, v.isFinite { return Int(v) }; return nil }
 
     /// `bundle.string("sections", "hero", "headline") ?? "A business, in a box."`
     func string(_ path: String...) -> String? { self[path]?.stringValue }

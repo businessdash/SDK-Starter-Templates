@@ -19,9 +19,9 @@ import {
 	isCustomerPortalConfigured,
 	submitCustomerReview,
 } from "../../lib/bd-portal";
-// [bd:saas]
+// [bd:subscriptions]
 import { getCustomerSubscription, setPlanCancelled } from "../../lib/bd-portal";
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /** Where sign-in returns to: a path on this site, or the account page. */
 function safeNext(raw: string | null): string {
@@ -59,15 +59,15 @@ export const useAccount = routeLoader$(async ({ cookie, url }) => {
 					? ("createAccount" as const)
 					: ("signIn" as const),
 			next: safeNext(url.searchParams.get("next")),
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan: null,
-			// [/bd:saas]
+			// [/bd:subscriptions]
 		};
 	}
 	const work = await getCustomerWork(cookie);
-	// [bd:saas]
+	// [bd:subscriptions]
 	const plan = (await getCustomerSubscription(cookie))?.subscription ?? null;
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	return {
 		configured: true,
 		session: {
@@ -76,13 +76,13 @@ export const useAccount = routeLoader$(async ({ cookie, url }) => {
 			lastName: session.user.lastName,
 		},
 		work,
-		// [bd:saas]
+		// [bd:subscriptions]
 		plan,
-		// [/bd:saas]
+		// [/bd:subscriptions]
 	};
 });
 
-// [bd:saas]
+// [bd:subscriptions]
 /** Cancel the plan at the end of the paid period, or take the cancel back. */
 export const useChangePlan = routeAction$(
 	async (data, { cookie }) => {
@@ -102,7 +102,7 @@ export const useChangePlan = routeAction$(
 	},
 	zod$({ intent: z.enum(["cancel", "resume"]) }),
 );
-// [/bd:saas]
+// [/bd:subscriptions]
 
 export const useSubmitReview = routeAction$(
 	async (data, { cookie }) => {
@@ -178,7 +178,7 @@ export default component$(() => {
 	const review = useSubmitReview();
 	const signedIn = !!data.value.session;
 	const work = data.value.work;
-	// [bd:saas]
+	// [bd:subscriptions]
 	const changePlan = useChangePlan();
 	const plan = data.value.plan;
 	// What just happened wins over the stored status, which lags until the
@@ -188,7 +188,7 @@ export default component$(() => {
 		? changed.cancelAtPeriodEnd
 		: (plan?.cancelledButActive ?? false);
 	const accessUntil = changed?.accessUntil ?? plan?.expiresAt ?? null;
-	// [/bd:saas]
+	// [/bd:subscriptions]
 
 	return (
 		<>
@@ -235,7 +235,7 @@ export default component$(() => {
 								<WorkSummary work={work} />
 							) : null}
 
-							{/* [bd:saas] */}
+							{/* [bd:subscriptions] */}
 							<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
 								<h3>Your plan</h3>
 								{plan?.hasAccess ? (
@@ -287,7 +287,7 @@ export default component$(() => {
 									</div>
 								) : null}
 							</div>
-							{/* [/bd:saas] */}
+							{/* [/bd:subscriptions] */}
 
 							{/* Customer review submission */}
 							<div class="bd-card" style="padding: 2rem;">

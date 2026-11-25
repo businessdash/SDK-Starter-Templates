@@ -10,5 +10,5 @@
 		"allowJs": true,
 		"checkJs": false
 	},
-	"include": ["server.ts"]
+	"include": ["server.ts", "lib/shop/*.ts"]
 }

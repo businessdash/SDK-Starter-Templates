@@ -21,11 +21,18 @@ const STATIC_PATHS = [
 	"/reviews",
 	// [bd:store]
 	"/store",
+	"/store/wishlist",
+	"/store/compare",
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	"/store/subscriptions",
-	// [/bd:saas]
+	// [/bd:subscriptions]
+	// [bd:blog]
+	"/blog",
+	// [/bd:blog]
+	// [bd:booking]
 	"/book",
+	// [/bd:booking]
 ];
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -42,6 +49,9 @@ export async function loader({ request }: LoaderFunctionArgs) {
 					// [bd:store]
 					product: "/store",
 					// [/bd:store]
+					// [bd:blog]
+					blog: "/blog",
+					// [/bd:blog]
 				},
 				onSkip: (section, reason) =>
 					console.info(`[sitemap] skipped ${section}: ${reason}`),

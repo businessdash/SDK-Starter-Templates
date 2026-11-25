@@ -17,9 +17,9 @@ import type {
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle,
 } from "@businessdash/sdk/contracts";
-// [bd:saas]
+// [bd:subscriptions]
 import type { CustomerSubscriptionResponse } from "@businessdash/sdk/contracts";
-// [/bd:saas]
+// [/bd:subscriptions]
 import type { Cookie } from "@builder.io/qwik-city";
 
 const SESSION_COOKIE = "bd_session";
@@ -131,7 +131,7 @@ export async function submitCustomerReview(
 	return portalFor(session).submitReview(input);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 /**
  * Start a Stripe subscription checkout for the signed-in customer. Returns
  * null when nobody is signed in: a plan belongs to a person, and BD refuses a
@@ -178,4 +178,4 @@ export async function setPlanCancelled(cookie: Cookie, cancel: boolean) {
 	const portal = portalFor(session);
 	return cancel ? portal.cancelSubscription() : portal.resumeSubscription();
 }
-// [/bd:saas]
+// [/bd:subscriptions]

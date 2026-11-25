@@ -61,15 +61,22 @@ Sources/App/
     BdCache.swift      actor, tag-addressed; + Application storage
     BdWebhook.swift    HMAC verification
     Models.swift         Content structs
-    JSONValue.swift      for the two schema-driven surfaces
+    JSONValue.swift      the schema-driven surfaces + data passed to the elements
     Money.swift          cents vs decimal
+    PostHtml.swift       a post's HTML rebuilt from an allowlist; reading time, date
     Resources.swift      the call surface
+    Reviews.swift        the reviews' rules: breakdown, platforms, safe links, checks
     Donations.swift      giving page + checkout (see Donations below)
   Controllers/           one per surface + Contexts.swift
+    ShopSupport.swift    cart cookie, element JSON, stars, the JSON-POST guard
+    ShopContexts.swift   the store and blog pages' view contexts
   Forms/                 forms + quizzes, drawn here (FormPage, QuizPage)
 Sources/BdForms/         BD's forms + quiz engine — a generated copy, see below
-Resources/Views/         Leaf templates
+Resources/Views/         Leaf templates (store-nav.leaf: the store bar)
 Resources/Forms/         the sample form + quiz shown until BD is connected
+Public/shop/             the shop, blog and review elements, plain ES modules
+Public/bd-*.css          their styles (pages, shop, blog, reviews)
+Tests/AppTests/          `swift test`: the post sanitizer against the TypeScript's answers, the reviews' rules
 ```
 
 ## Feature parity
@@ -77,12 +84,13 @@ Resources/Forms/         the sample form + quiz shown until BD is connected
 | Surface | Route(s) | Calls |
 | --- | --- | --- |
 | **Home sections** | `/` | `pageBundle`, `products` |
-| **Storefront** | `/store`, `/store/:id` | `productGrid`, `product`, `productReviews` |
-| **Cart** | `/cart` + mutations | `cart`, `cartAdd`, `cartClear` — `bd_cart_visitor` httpOnly cookie |
-| **Checkout** | `POST /cart/checkout` | `startCheckout` → redirect to `stripeUrl` |
+| **Storefront** | `/store` (`?q`, `?category`, `?priceMin`, `?priceMax`, `?rating`, `?sort`), `/store/:id` (`<bd-product>`) | `productGrid`, `storeCategories`, `productData`, `productReviewPage`, `productAddons`, `relatedProducts` |
+| **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=a,b` | `productData`, `productReviewPage` — the lists live in the browser |
+| **Cart** | `/cart` + mutations, `POST /api/bd/cart/add` (JSON, from the product page) | `cart`, `cartAdd`, `cartClear` — `bd_cart_visitor` httpOnly cookie |
+| **Checkout** | `POST /cart/checkout`, back to `/store/order` | `startCheckout` → redirect to `stripeUrl`; `checkoutStatus` |
 | **Subscriptions** | `/subscriptions` | `subscriptions` |
-| **Blog** | `/blog`, `/blog/:slug` | `posts`, `post` |
-| **Reviews wall** | `/reviews` | `reviews` |
+| **Blog** | `/blog` (`?category`, `?tag`, `?cursor`), `/blog/:slug`, `POST /blog/:slug/like`, `POST /blog/:slug/comment` | `posts`, `post`, `blogCategories`, `blogTags`, `comments`, `likeStatus`, `toggleLike`, `postComment` |
+| **Business reviews** | `/reviews` (`?source=` filters, `?shown=` shows more), `POST /reviews/write` (`<bd-review-writer>`) | The bundle's `reviews` (average, count, count per star), `reviews(limit:offset:source:)`, `PortalResource.submitReview`. The rules are `Reviews` (`Sources/App/Bd/Reviews.swift`, tested in `ReviewsTests`), the same as `reviews.ts` in the other BD starters. |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallelVariants`, `renderParallelPage` |
 | **Custom database** | `/todos` | `allRecords` |
 | **Sign-in + account** | `/my-account` (the sign-in screen, rendered in Swift: `SignInController`, `Bd/SignInCore.swift`; `?next=/path` comes back after), `/api/bd-auth/customer/*`, `/api/bd-auth/sign-out` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord), `auth/me`, `customer-portal/work` — `bd_session` httpOnly cookie |
@@ -114,6 +122,40 @@ back so the page updates in place. Without JavaScript they're plain form posts.
   this site and BD's invite emails link to `/quiz-invite/<token>`. One that
   needs the invited account sends the visitor to `/my-account?next=…` and back.
 
+## The shop and blog elements
+
+The product page, the wishlist, the compare table, the save buttons, and a
+post's likes and comments are small custom elements, the same ones every BD
+starter ships, as plain ES modules in `Public/shop/`. There is no bundler and
+no npm at runtime: the browser loads them as they are.
+
+The controller reads the data and the template writes it inside the element as
+JSON (`<script type="application/json">#unsafeHTML(dataJSON)</script>`, with
+`<`, `>` and `&` escaped by `ElementData.json`); the element draws the page
+from it. The store list, filters, cart, blog list and post body are plain Leaf
+and work without JavaScript.
+
+- **The POSTs are guarded without CSRF middleware**, which Vapor doesn't have.
+  The add-to-cart, like and comment endpoints take JSON only (a form on another
+  site can't send that without a CORS preflight, which this app never answers)
+  and refuse a browser `Origin` that isn't this site (`PageJSON.refusal`). The
+  cookies are SameSite=Lax too. Keep both checks on any new endpoint that acts
+  with the visitor's cookies.
+- **Wishlist and compare** are kept in the shopper's browser (`localStorage`),
+  not at BD. The compare page puts its picks in the URL (`?ids=a,b`), so a
+  comparison can be shared.
+- **Post HTML** is rebuilt from an allowlist by `PostHtml.safe(_:)` before it
+  reaches the page: unknown tags are dropped, links and images are limited to
+  web, mail, phone and same-site addresses, and every attribute is escaped. It
+  is a port of the SDK's `safePostHtml`, and `swift test` replays the
+  TypeScript's answers (`Tests/AppTests/Fixtures/post-html-parity.json`) to
+  keep it so. Don't print `content` with `#unsafeHTML` anywhere else.
+- **Likes and comments** go out with the customer's `bd_session` cookie as
+  `X-BD-Session-Token`. Signed out, the like button and comment box become
+  links to `/my-account?next=…`, which comes back to the post.
+- **A literal `#` in a template is a Leaf tag** when a letter follows it
+  (`href="/#contact"`, even inside an HTML comment). Write `\#`.
+
 ## Five things that will bite you
 
 **1. The webhook needs the RAW body.** `WebhookController` reads `req.body.string`, never `req.content.decode`. Decoding and re-encoding changes key order and whitespace, so the HMAC stops matching — and it fails looking exactly like a wrong secret. Vapor doesn't consume the body before your handler the way Phoenix's `Plug.Parsers` does, so no custom body reader is needed here; just don't round-trip it.
@@ -129,11 +171,11 @@ back so the page updates in place. Without JavaScript they're plain form posts.
 ## What this starter does not do
 
 - **A small customer portal only.** `/my-account` has the sign-in screen (password, emailed codes, Google / Apple / GitHub / Discord — WorkOS underneath, through BD's `auth/customer/*`) and, signed in, the customer's jobs. The rest of `PortalResource` is there to build on.
-- **No tests.** The client is exercised by running it; a `XCTVapor` suite would be the natural next step.
+- **Few tests.** `swift test` covers the post sanitizer only. The client is exercised by running it; an `XCTVapor` suite would be the natural next step.
 
 ## Verification
 
-`swift build` passes under **Swift 6 language mode**, and `Sources/BdForms` also builds on Linux (Swift 6.0). The forms and quizzes were driven in a browser against the bundled samples and a stand-in for BD's API: a form's steps, validation, uploads and submit; practice, timed and invitation quizzes, including sign-in and back. The server has not been run against a live BD site from this machine.
+`swift build` passes under **Swift 6 language mode**, and `Sources/BdForms` also builds on Linux (Swift 6.0). The forms and quizzes were driven in a browser against the bundled samples and a stand-in for BD's API: a form's steps, validation, uploads and submit; practice, timed and invitation quizzes, including sign-in and back. The store and blog were driven in a browser at desktop and phone widths against a stand-in for BD's shop and blog API: filters and sort, options and price, add to cart, the cart's lines, wishlist, compare, the order page, the post list's tag filter, a post's body, and a signed-in like and comment. `swift test` passes. The server has not been run against a live BD site from this machine.
 
 <!-- [bd:donations] -->
 ## Donations

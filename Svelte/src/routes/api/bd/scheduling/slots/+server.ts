@@ -1,3 +1,4 @@
+// [bd-file:booking]
 import { error } from '@sveltejs/kit';
 
 import { bd } from '#lib/server/bd.ts';

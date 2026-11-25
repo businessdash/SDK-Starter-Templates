@@ -53,6 +53,10 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
     private val _state = MutableStateFlow<AccountState>(AccountState.Checking)
     val state: StateFlow<AccountState> = _state.asStateFlow()
 
+    /** The signed-in customer's session token, for liking, commenting and writing reviews. */
+    private val _token = MutableStateFlow<String?>(null)
+    val token: StateFlow<String?> = _token.asStateFlow()
+
     init {
         viewModelScope.launch { restore() }
     }
@@ -71,21 +75,25 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
                 AccountState.SignedOut
             } else {
                 store.saveName(session.user.displayName)
+                _token.value = token
                 AccountState.SignedIn(session.user.displayName)
             }
         } catch (_: BdException) {
+            _token.value = token
             AccountState.SignedIn(store.name)
         }
     }
 
     fun adopt(session: BdSignInSession) {
         store.save(session.sessionToken, session.displayName)
+        _token.value = session.sessionToken
         _state.value = AccountState.SignedIn(session.displayName)
     }
 
     /** BD's session tokens are signed, not stored: signing out is forgetting it. */
     fun signOut() {
         store.clear()
+        _token.value = null
         _state.value = AccountState.SignedOut
     }
 
@@ -133,8 +141,7 @@ class AccountViewModel(app: Application) : AndroidViewModel(app) {
  * is this business's alone; the login (WorkOS) is one per email.
  */
 @Composable
-fun AccountScreen(modifier: Modifier = Modifier) {
-    val model: AccountViewModel = viewModel()
+fun AccountScreen(modifier: Modifier = Modifier, model: AccountViewModel = viewModel()) {
     val state by model.state.collectAsState()
     val deleting by model.deleting.collectAsState()
     val deleteError by model.deleteError.collectAsState()

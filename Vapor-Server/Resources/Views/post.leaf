@@ -1,15 +1,59 @@
+<!-- One post. Its HTML was rebuilt from an allowlist (PostHtml.safe), so the
+     raw HTML never reaches the page. The like button and comments are
+     <bd-post-like> and <bd-post-comments> (Public/shop/blog-elements.js);
+     signed out, they lead to sign-in and back to the post. -->
 #extend("base"):
-  #export("title"):#(post.title)#endexport
+  #export("title"):#(title)#endexport
+  #export("head"):
+    <link rel="stylesheet" href="/bd-pages.css">
+    <link rel="stylesheet" href="/bd-blog.css">
+  #endexport
+  #export("mainClass"):bd-page#endexport
+  #export("scripts"):#if(found):<script type="module" src="/shop/blog-elements.js"></script>#endif#endexport
   #export("content"):
-    <article>
-      <h1>#(post.title)</h1>
-      <!-- Authored HTML from the dashboard, so it is rendered unescaped.
-           Leaf escapes by default; unsafeHTML is the deliberate opt-out,
-           safe here only because the source is the org's own editor. -->
-      <div class="post-body">#unsafeHTML(post.content)</div>
-      #if(isPaywalled):
-        <p class="muted">This is a preview — the full article is behind the paywall.</p>
-      #endif
-    </article>
+    #if(!configured):
+      <div class="bd-empty">The blog isn't connected yet. Add your BD env, then publish a post in Business Dash.</div>
+    #elseif(!found):
+      <div class="bd-empty">That post isn't available. <a href="/blog">See all posts</a></div>
+    #else:
+      <article class="post">
+        <a class="post__back" href="/blog">← All posts</a>
+        <header class="post__head">
+          <h1>#(heading)</h1>
+          <p class="post__meta">
+            #if(hasAvatar):<img alt="" referrerpolicy="no-referrer" src="#(avatar)">#endif
+            #if(hasAuthor):<span>#(author)</span>#endif
+            <span>#(date)</span>
+            <span>· #(minutes) min read</span>
+          </p>
+        </header>
+        #if(hasImage):
+          <img alt="" class="post__cover" referrerpolicy="no-referrer" src="#(image)">
+        #endif
+        #if(paywalled):
+          <div class="bd-empty">This post is for members.<p><a class="bd-btn" href="#(signInHref)">Sign in to read it</a></p></div>
+        #else:
+          <!-- Safe: PostHtml.safe rebuilt this from an allowlist. -->
+          <div class="post__body">#unsafeHTML(html)</div>
+        #endif
+        #if(hasCTA):
+          <aside class="bd-card post__cta">
+            #if(hasCTADescription):<p>#(ctaDescription)</p>#endif
+            <a class="bd-btn" href="#(ctaHref)">#(ctaLabel)</a>
+          </aside>
+        #endif
+        #if(hasTags):
+          <ul class="post__tags">
+            #for(tag in tags):<li><a href="#(tag.href)">#(tag.label)</a></li>#endfor
+          </ul>
+        #endif
+        <bd-post-like data-like-url="#(likeURL)" data-sign-in-href="#(signInHref)">
+          <script type="application/json">#unsafeHTML(likesJSON)</script>
+        </bd-post-like>
+      </article>
+      <bd-post-comments data-comment-url="#(commentURL)" data-sign-in-href="#(signInHref)">
+        <script type="application/json">#unsafeHTML(commentsJSON)</script>
+      </bd-post-comments>
+    #endif
   #endexport
 #endextend

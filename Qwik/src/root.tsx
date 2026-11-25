@@ -4,6 +4,16 @@ import { SdkSetupBanner } from "./components/bd/SdkSetupBanner";
 import { RouterHead } from "./components/router-head/router-head";
 
 import "./global.css";
+// [bd:store]
+// The shop's styles: store grid, product page, wishlist, compare.
+import "./bd-shop.css";
+// [/bd:store]
+// [bd:blog]
+// The blog's styles: post list, post body, likes and comments.
+import "./bd-blog.css";
+// [/bd:blog]
+// The reviews page's styles: the rating, the filter, the reviews, writing one.
+import "./bd-reviews.css";
 // SDK form styles — file-upload box, multi-step progress header (steps + bar),
 // and the availability/choice chips. Unstyled without this. The container
 // background is intentionally transparent; the template owns it (`.bd-card`).

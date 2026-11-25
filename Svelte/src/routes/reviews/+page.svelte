@@ -1,46 +1,28 @@
 <script lang="ts">
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
-	import type { ReviewWallItem } from '@businessdash/sdk/contracts';
+	import ReviewWriter from '#lib/components/bd/ReviewWriter.svelte';
+	import {
+		formatReviewDate,
+		platformName,
+		reviewerInitial,
+		reviewerName,
+		reviewLink,
+		reviewStars,
+		safeImage,
+		sourceLabel
+	} from '#lib/bd/reviews.ts';
+	import '#lib/bd/bd-reviews.css';
 	import type { PageData } from './$types';
 
+	/**
+	 * The business's reviews: the rating with a bar per star, a platform
+	 * filter, each review with its photos, Verified and a link to it on Google
+	 * or Yelp, "Show more", and writing one (ReviewWriter).
+	 */
 	let { data }: { data: PageData } = $props();
 
-	// Seed local state from the server's first page, then grow it via "Load
-	// more". Intentionally a one-time snapshot of `data`.
-	// svelte-ignore state_referenced_locally
-	let items = $state<ReviewWallItem[]>(data.items);
-	// svelte-ignore state_referenced_locally
-	let nextOffset = $state<number | null>(data.nextOffset);
-	let loading = $state(false);
-
-	function stars(rating: number): string {
-		const full = Math.round(rating);
-		return '★'.repeat(full) + '☆'.repeat(Math.max(0, 5 - full));
-	}
-
-	function formatDate(iso: string): string {
-		const d = new Date(iso);
-		return Number.isNaN(d.getTime())
-			? ''
-			: d.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-	}
-
-	async function loadMore() {
-		if (nextOffset == null) return;
-		loading = true;
-		try {
-			const res = await fetch(`/api/bd/reviews?limit=10&offset=${nextOffset}`);
-			const body = (await res.json()) as {
-				items: ReviewWallItem[];
-				nextOffset: number | null;
-			};
-			items = [...items, ...body.items];
-			nextOffset = body.nextOffset;
-		} finally {
-			loading = false;
-		}
-	}
+	const average = $derived(data.summary.average?.toFixed(1) ?? null);
 </script>
 
 <svelte:head><title>Reviews</title></svelte:head>
@@ -49,89 +31,121 @@
 
 <main class="bd-section bd-section--narrow">
 	<div class="bd-section__lead">
-		<span class="bd-section__eyebrow">What customers say</span>
-		<h1 class="bd-section__title">Reviews</h1>
-		{#if data.average != null}
-			<p class="bd-section__sub">
-				<strong>{data.average.toFixed(1)}</strong>
-				average across {data.totalCount} reviews.
-			</p>
-		{/if}
+		<span class="bd-section__eyebrow">Reviews</span>
+		<h1 class="bd-section__title">What customers say</h1>
 	</div>
 
 	{#if !data.configured}
 		<div class="bd-empty">
-			Reviews aren't connected. Once BD is configured, your aggregate rating and reviews appear
-			here.
+			Reviews aren't connected yet. Set BD_API_KEY and BD_SITE_ID, and your rating and reviews
+			appear here.
 		</div>
-	{:else if items.length === 0}
-		<div class="bd-empty">No reviews yet.</div>
 	{:else}
-		<div class="reviews-wall">
-			{#each items as review (review.id)}
-				<article class="bd-card review-card">
-					<div class="review-card__head">
-						<strong>{review.reviewerName}</strong>
-						<span class="review-card__stars" aria-label={`${review.rating} out of 5`}>
-							{stars(review.rating)}
-						</span>
-					</div>
-					<p class="review-card__body">{review.text}</p>
-					<div class="review-card__meta">
-						<span>{formatDate(review.timeCreated)}</span>
-						<span class="bd-badge">{review.source}</span>
-						{#if review.verified}<span class="review-card__verified">Verified</span>{/if}
-					</div>
-				</article>
-			{/each}
-		</div>
-
-		{#if nextOffset != null}
-			<div style="text-align: center; margin-top: 2rem;">
-				<button class="bd-btn bd-btn--ghost" onclick={loadMore} disabled={loading}>
-					{loading ? 'Loading…' : 'Load more reviews'}
-				</button>
+		<section class="reviews-summary" aria-label={average ? 'Rating' : 'Write a review'}>
+			{#if average}
+				<div class="reviews-summary__score">
+					<span class="reviews-summary__average">{average}</span>
+					<span class="review-stars" role="img" aria-label={`${average} out of 5`}
+						>{reviewStars(data.summary.average ?? 0)}</span
+					>
+					<span class="reviews-summary__count"
+						>{data.summary.total} {data.summary.total === 1 ? 'review' : 'reviews'}</span
+					>
+				</div>
+				<ul class="reviews-bars">
+					{#each data.summary.histogram as row (row.stars)}
+						<li aria-label={`${row.stars} stars: ${row.count}`}>
+							<span>{row.stars} ★</span>
+							<span class="reviews-bars__track"
+								><span class="reviews-bars__fill" style:width={`${Math.round(row.share * 100)}%`}
+								></span></span
+							>
+							<span>{row.count}</span>
+						</li>
+					{/each}
+				</ul>
+			{/if}
+			<div class="reviews-summary__write">
+				<ReviewWriter signedIn={data.signedIn} signInHref="/my-account?next=%2Freviews" />
 			</div>
+		</section>
+
+		{#if data.sources.length > 1}
+			<nav aria-label="Platform">
+				<ul class="reviews-filter">
+					<li><a href="/reviews" aria-current={data.source ? 'false' : 'true'}>All</a></li>
+					{#each data.sources as source (source)}
+						<li>
+							<a
+								href={`/reviews?source=${source}`}
+								aria-current={data.source === source ? 'true' : 'false'}>{sourceLabel(source)}</a
+							>
+						</li>
+					{/each}
+				</ul>
+			</nav>
+		{/if}
+
+		{#if data.reviews.length === 0}
+			<p class="reviews-empty">
+				{data.source
+					? `No ${sourceLabel(data.source)} reviews yet.`
+					: "No reviews yet. Connect Google or Yelp in BusinessDash, or add reviews in the dashboard, and they'll appear here."}
+			</p>
+		{:else}
+			<ul class="review-wall">
+				{#each data.reviews as review, i (review.id)}
+					{@const avatar = safeImage(review.reviewerImageUrl)}
+					{@const platform = platformName(review.source)}
+					{@const link = reviewLink(review)}
+					{@const photos = (review.photos ?? []).map(safeImage).filter((p) => p !== null)}
+					<li class="review-card" id={`review-${i}`}>
+						<div class="review-card__head">
+							{#if avatar}
+								<img class="review-card__avatar" src={avatar} alt="" loading="lazy" />
+							{:else}
+								<span class="review-card__avatar" aria-hidden="true">{reviewerInitial(review)}</span
+								>
+							{/if}
+							<div>
+								<p class="review-card__name">{reviewerName(review)}</p>
+								<p class="review-card__meta">
+									<span class="review-stars" role="img" aria-label={`${review.rating} out of 5`}
+										>{reviewStars(review.rating)}</span
+									>
+									· {formatReviewDate(review.timeCreated)}
+								</p>
+							</div>
+						</div>
+						<p class="review-card__text">{review.text}</p>
+						{#if photos.length}
+							<ul class="review-card__photos" aria-label="Photos from the reviewer">
+								{#each photos as photo (photo)}<li>
+										<img src={photo} alt="" loading="lazy" />
+									</li>{/each}
+							</ul>
+						{/if}
+						{#if platform || review.verified}
+							<p class="review-card__foot">
+								{#if platform}<span class="review-card__platform">{platform}</span>{/if}
+								{#if review.verified}<span class="review-card__verified">✓ Verified</span>{/if}
+								{#if link && platform}
+									<a class="review-card__link" href={link} target="_blank" rel="noopener noreferrer"
+										>Read on {platform}</a
+									>
+								{/if}
+							</p>
+						{/if}
+					</li>
+				{/each}
+			</ul>
+			{#if data.moreHref}
+				<p class="reviews-more">
+					<a class="bd-btn bd-btn--ghost" href={data.moreHref}>Show more reviews</a>
+				</p>
+			{/if}
 		{/if}
 	{/if}
 </main>
 
 <Footer />
-
-<style>
-	.reviews-wall {
-		display: flex;
-		flex-direction: column;
-		gap: 1rem;
-	}
-	.review-card {
-		padding: 1.5rem;
-		display: flex;
-		flex-direction: column;
-		gap: 0.6rem;
-	}
-	.review-card__head {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		gap: 1rem;
-	}
-	.review-card__stars {
-		color: var(--accent);
-		letter-spacing: 0.1em;
-	}
-	.review-card__body {
-		color: var(--text);
-	}
-	.review-card__meta {
-		display: flex;
-		align-items: center;
-		gap: 0.75rem;
-		color: var(--text-muted);
-		font-size: 0.8rem;
-	}
-	.review-card__verified {
-		color: var(--success);
-		font-weight: 600;
-	}
-</style>

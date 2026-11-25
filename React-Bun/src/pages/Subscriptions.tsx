@@ -1,11 +1,22 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import { useState } from "react";
 import { bd, money } from "../lib/bd";
 import { ErrorBox, PageHead, useApi } from "./ui";
+import { StoreNav } from "../components/StoreNav";
 
 const SIGN_IN = "/my-account?next=/subscriptions";
 
+/** The plans page, under the store bar. */
 export function Subscriptions() {
+	return (
+		<>
+			<StoreNav />
+			<SubscriptionsBody />
+		</>
+	);
+}
+
+function SubscriptionsBody() {
 	const { data, error, loading } = useApi(() => bd.subscriptions.list());
 	const items: Record<string, any>[] = data?.items ?? [];
 	const subscribed = new URLSearchParams(window.location.search).has("session_id");

@@ -1,4 +1,4 @@
-<!-- [bd-file:saas] -->
+<!-- [bd-file:subscriptions] -->
 <script lang="ts">
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';

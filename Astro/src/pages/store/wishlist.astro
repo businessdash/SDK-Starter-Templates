@@ -1,0 +1,32 @@
+---
+// [bd-file:store]
+/**
+ * The wishlist: products saved on this device with ♡ Save, to open and buy
+ * later. The list lives in this browser, so `<bd-wishlist>` (see
+ * `src/lib/bd-shop/shop-elements.ts`) draws it there.
+ */
+import "../../styles/bd-shop.css";
+
+import StoreNav from "../../components/StoreNav.astro";
+import Layout from "../../layouts/Layout.astro";
+
+export const prerender = false;
+---
+
+<Layout title="Wishlist — Store" description="Products you saved to come back to.">
+	<StoreNav />
+	<div class="bd-page">
+		<div class="bd-section__lead">
+			<span class="bd-section__eyebrow">Shop</span>
+			<h1 class="bd-section__title">Wishlist</h1>
+			<p class="bd-section__sub">Products you saved on this device.</p>
+		</div>
+		<bd-wishlist>
+			<p class="bd-loading">Loading your wishlist…</p>
+		</bd-wishlist>
+	</div>
+</Layout>
+
+<script>
+	import "../../lib/bd-shop/shop-elements";
+</script>

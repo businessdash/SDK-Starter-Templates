@@ -47,8 +47,8 @@ export type MarketingBundle = GetMarketingPageBundleResponse;
 export type BundleGallery = NonNullable<MarketingBundle["gallery"]>;
 export type BundleReviews = NonNullable<MarketingBundle["reviews"]>;
 
-/** First-page review bodies the bundle ships eagerly; deeper pages come
- *  from `client.reviews.list({ offset })` via `/api/reviews`. */
+/** First-page review bodies the bundle ships eagerly; the reviews page
+ *  reads its own with `client.reviews.list(...)`. */
 const REVIEWS_FIRST_PAGE = 10;
 
 const BUNDLE_TAGS = [

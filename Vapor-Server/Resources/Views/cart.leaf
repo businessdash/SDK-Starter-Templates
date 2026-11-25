@@ -1,5 +1,11 @@
 #extend("base"):
   #export("title"):Cart#endexport
+  #export("head"):
+    <link rel="stylesheet" href="/bd-pages.css">
+    <link rel="stylesheet" href="/bd-shop.css">
+  #endexport
+  #export("subnav"):#extend("store-nav")#endexport
+  #export("scripts"):<script type="module" src="/shop/shop-elements.js"></script>#endexport
   #export("content"):
     <h1>Cart</h1>
 
@@ -10,7 +16,7 @@
         #for(line in lines):
           <li>
             <span>#(line.name)</span>
-            <span class="muted">#(line.unitPrice) × #(line.quantity)</span>
+            <span class="muted">#(line.unitPrice) each × #(line.quantity)</span>
           </li>
         #endfor
       </ul>

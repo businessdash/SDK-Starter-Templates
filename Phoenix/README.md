@@ -76,7 +76,12 @@ lib/bd_starter_web/
   live/quiz_live.ex          a quiz   │ drawn by the forms engine
   live/sign_in_live.ex       sign-in  ┘
   components/form_components.ex  a form's fields, in the SDK's bd-* classes
+  components/shop_components.ex  the store bar, stars, an element's data as JSON
+  post_html.ex               a post's HTML rebuilt from an allowlist, reading time, dates
+  cart_visitor.ex            the cart cookie, and the item count for the store bar
   controllers/               one per surface, all dead views
+priv/static/shop/            the shop and blog elements (plain ES modules, no build)
+priv/static/bd-*.css         their styles: bd-pages (shared), bd-shop, bd-blog
 ```
 
 ## Feature parity
@@ -84,12 +89,13 @@ lib/bd_starter_web/
 | Surface | Route(s) | Calls |
 | --- | --- | --- |
 | **Home sections** | `/` | `marketing.page_bundle`, `storefront.list`, `blog.list` |
-| **Storefront** | `/store`, `/store/:id` | `storefront.grid`, `get`, `related`, `reviews` |
+| **Storefront** | `/store`, `/store/:id` | `storefront.grid` (search, category, price, rating and sort, all links in the URL), `categories`, `get`, `reviews`, `addons`, `related`. The product page has option photos, option and size buttons, add to cart with the chosen options (`POST /api/bd/cart/add`), save, compare, share, add-ons, reviews, related and recently viewed. |
+| **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=a,b` | Saved in the shopper's browser; the compare table loads each product with `storefront.get` |
 | **Cart** | `/cart` + mutations | `cart.*` — `bd_cart_visitor` httpOnly cookie |
-| **Checkout** | `POST /cart/checkout` | `checkout.start` → 303 to `stripeUrl` |
+| **Checkout** | `POST /cart/checkout` → Stripe → `/store/order` | `checkout.start` → 303 to `stripeUrl`; back from Stripe, `checkout.get` says whether it's paid |
 | **Subscriptions** | `/subscriptions` | `subscriptions.list`, `checkout` |
-| **Blog** | `/blog`, `/blog/:slug` | `blog.list`, `get`, `comments` |
-| **Reviews wall** | `/reviews` | `reviews.list` |
+| **Blog** | `/blog`, `/blog/:slug`, `POST /blog/:slug/like`, `POST /blog/:slug/comment` | `blog.list` (category, tag, paging), `categories`, `tags`, `get` (HTML made safe on the server), `comments`, `like_status`, `toggle_like`, `post_comment` — liking and commenting need a signed-in customer |
+| **Business reviews** | `/reviews` (`?source=` filters, `?shown=` shows more), `POST /reviews/write` | The bundle's `reviews` (average, count, count per star), `reviews.list` (limit, offset, source), `portal.submit_review`. The page shows the rating with a bar per star, a platform filter, each review with its photos, Verified and a link to it on Google or Yelp, and more on demand; a signed-in customer writes one with `<bd-review-writer>` (`priv/static/shop/reviews-elements.js`) and it waits for approval. The rules are `BdStarter.Reviews` (tested in `test/reviews_test.exs`), the same as `reviews.ts` in the other BD starters. |
 | **Programmatic SEO** | `/services`, `/services/:service/:area` | `parallel_pages.variants`, `render` |
 | **Auth + portal** | `/my-account` (sign-in screen, a LiveView: `SignInLive`, words, checks and brand colours in `BdStarter.Bd.SignInCore`), `/my-account/session`, `/api/bd-auth/customer/*`, `/api/bd-auth/*` | `auth/customer/*` (password, codes, Google / Apple / GitHub / Discord links — WorkOS underneath), `auth.*`, `portal.work`, `submit_review` |
 | **Custom database** | `/todos` | `data_model.list` + `forms.submit` |
@@ -136,6 +142,36 @@ so the page updates in place.
 **4. Two different session headers.** `auth/me` takes a lowercase `x-bd-session`. Cart and customer-portal routes take `X-BD-Session-Token`. Not interchangeable, and the wrong one reads as "signed out" rather than as an error.
 
 **5. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — so a client that only matches on status renders a silently empty page. `Client.handle/1` checks the body clause first, deliberately above the status clause.
+
+## The shop and blog elements
+
+The product page, the wishlist, the compare table, the save buttons, and a
+post's likes and comments are small custom elements, the same ones every BD
+starter ships, as plain ES modules in `priv/static/shop/`. esbuild doesn't
+touch them: the browser loads them as they are.
+
+The controller reads the data and the template writes it inside the element as
+JSON (`<.element_data>`); the element draws the page from it. The store list,
+filters, cart, blog list and post body are plain HEEx and work without
+JavaScript. A page asks for the styles and modules through its assigns:
+`store_nav: true` for the store bar, `blog: :list` or `blog: :post`.
+
+- **CSRF.** The JSON POSTs go through the `:page_json` pipeline, which keeps the
+  session and `protect_from_forgery`. The elements send the root layout's
+  `<meta name="csrf-token">` as `X-CSRF-Token`.
+- **Wishlist and compare** are kept in the shopper's browser (`localStorage`),
+  not at BD. The compare page puts its picks in the URL (`?ids=a,b`), so a
+  comparison can be shared.
+- **Post HTML** is rebuilt from an allowlist by `BdStarterWeb.PostHtml.safe/1`
+  before it reaches the page: unknown tags are dropped, links and images are
+  limited to web, mail, phone and same-site addresses, and every attribute is
+  escaped. It is a port of the SDK's `safePostHtml`, and
+  `test/post_html_test.exs` replays the TypeScript's answers
+  (`test/fixtures/post-html-parity.json`) to keep it so. Don't pass `content`
+  to `raw/1` anywhere else.
+- **Likes and comments** go out with the customer's `bd_session` cookie as
+  `X-BD-Session-Token`. Signed out, the like button and comment box become
+  links to `/my-account?next=…`, which comes back to the post.
 
 ## The CDN pin
 

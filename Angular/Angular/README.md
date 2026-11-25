@@ -82,14 +82,18 @@ These run the SDK CLI via `tsx` against `bd.config.ts` (the marketing schema + b
 | Path | Component | What it shows |
 | --- | --- | --- |
 | `/` | `pages/home.page.ts` | Hero, About, Services, reviews teaser, updates, blog, contact. |
-| `/store` | `pages/store.page.ts` | Storefront product list + add-to-cart + load-more. | <!-- [bd-line:store] -->
-| `/store/:id` | `pages/product-detail.page.ts` | Product detail + add-to-cart. | <!-- [bd-line:store] -->
+| `/store` | `pages/store.page.ts` | Products with search, category, price, rating and sort, all in the URL; each card saves to the wishlist or the comparison. | <!-- [bd-line:store] -->
+| `/store/:id` | `pages/product-detail.page.ts` | One product, drawn by `<bd-product>`: option photos, option and size buttons, add to cart with the chosen options, save, compare, share, add-ons, reviews, related and recently viewed. | <!-- [bd-line:store] -->
+| `/store/wishlist` | `pages/wishlist.page.ts` | Products saved in this browser (`<bd-wishlist>`). | <!-- [bd-line:store] -->
+| `/store/compare?ids=a,b` | `pages/compare.page.ts` | Up to four products side by side (`<bd-compare>`). | <!-- [bd-line:store] -->
 | `/cart` | `pages/cart.page.ts` | Cart: qty update/remove, coupon apply/remove (reactive form), clear, Stripe checkout. | <!-- [bd-line:store] -->
-| `/subscriptions` | `pages/subscriptions.page.ts` | Recurring plans list. | <!-- [bd-line:saas] -->
+| `/subscriptions` | `pages/subscriptions.page.ts` | Recurring plans list. | <!-- [bd-line:subscriptions] -->
+| `/blog` | `pages/blog.page.ts` | Posts with category and tag filters and paging, all in the URL. | <!-- [bd-line:blog] -->
+| `/blog/:slug` | `pages/blog-post.page.ts` | One post, its HTML made safe on the server; likes and comments for signed-in customers. | <!-- [bd-line:blog] -->
 | `/my-account` | `pages/my-account.page.ts` | Signed-in user + work bundle (jobs) + review-submit form. |
-| `/reviews` | `pages/reviews.page.ts` | Reviews wall: aggregate + paginated load-more. |
+| `/reviews` | `pages/reviews.page.ts` | The average and a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a "Read on Google/Yelp" link, "Show more" (`?shown=`), and "Write a review" for signed-in customers (`<bd-review-writer>`). |
 | `/updates` | `pages/updates.page.ts` | News/updates feed (`bundle.updates`). |
-| `/booking` | `pages/booking.page.ts` | Scheduling: event types → slots → confirm booking. |
+| `/booking` | `pages/booking.page.ts` | Scheduling: event types → slots → confirm booking. | <!-- [bd-line:booking] -->
 | `/services` | `pages/services-index.page.ts` | Lists `service × area` parallel-page variants. |
 | `/services/:service/:area` | `pages/service-area.page.ts` | Renders one programmatic SEO page (`parallelPages.render`). |
 
@@ -102,21 +106,52 @@ Mounted by `mountBdApi(app)` in `src/server.ts`, all in `src/server/bd-api.ts`:
 | Method + path | SDK surface |
 | --- | --- |
 | `GET /api/bd/home` | `marketing.getPageBundle` → hero/about/services/reviews/banner/updates |
-| `GET /api/bd/blog` | `blog.listPosts` |
+| `GET /api/bd/blog` | `blog.listPosts` (the home section) | <!-- [bd-line:blog] -->
+| `GET /api/bd/blog/posts` `…/categories` `…/tags` | `blog.listPosts` / `listCategories` / `listTags` | <!-- [bd-line:blog] -->
+| `GET /api/bd/blog/post/:slug` | `blog.getPost` (HTML rebuilt by `safePostHtml`), `likeStatus`, `listComments` | <!-- [bd-line:blog] -->
+| `POST /api/bd/blog/post/:slug/like` `…/comment` | `blog.withSession(token).toggleLike` / `postComment` | <!-- [bd-line:blog] -->
 | `GET /api/bd/store/products` `…/:id` | `storefront.listProducts` / `getProduct` | <!-- [bd-line:store] -->
-| `GET /api/bd/subscriptions` | `subscriptions.list` | <!-- [bd-line:saas] -->
+| `GET /api/bd/store/products-meta` `…/categories` | `storefront.listProductsWithMeta` / `listCategories` | <!-- [bd-line:store] -->
+| `GET /api/bd/store/products/:id/reviews` `…/related` `…/addons` | `storefront.getProductReviews` / `getRelatedProducts` / `getProductAddons` | <!-- [bd-line:store] -->
+| `POST /api/bd/cart/add` | `cart.forVisitor(token).addItem` with options → `{ ok, itemCount }` | <!-- [bd-line:store] -->
+| `GET /api/bd/subscriptions` | `subscriptions.list` | <!-- [bd-line:subscriptions] -->
 | `GET /api/bd/cart`, `POST …/items`, `PATCH/DELETE …/items/:id`, `POST/DELETE …/coupon`, `POST …/clear` | `cart.forVisitor(token).*` | <!-- [bd-line:store] -->
 | `POST /api/bd/checkout/start` | `checkout.forVisitor(token).start` → Stripe URL | <!-- [bd-line:store] -->
 | `POST /api/bd/contact` | `forms.submit(slug, data, opts)` |
 | `GET /api/bd/reviews` | `reviews.list({ limit, offset })` |
+| `GET /api/bd/reviews/page` | the reviews page's data: `bundle.reviews` (`rating`, `counts`) + `reviews.list({ limit, offset, source })` (`loadReviewsPage`, `src/app/shop/reviews-page.ts`) |
+| `POST /api/bd/reviews/write` | `customerPortal(…).submitReview`, JSON only, for the signed-in customer |
 | `GET /api/bd/portal/me` | `getTenantSession` + `customerPortal(org).withSession(token).getWork` |
 | `POST /api/bd/portal/review` | `customerPortal(…).submitReview` |
-| `GET /api/bd/scheduling/event-types` `…/:slug/slots` `POST …/:slug/book` | `scheduling.*` |
+| `GET /api/bd/scheduling/event-types` `…/:slug/slots` `POST …/:slug/book` | `scheduling.*` | <!-- [bd-line:booking] -->
 | `GET /api/bd/services` `…/:service/:area` | `parallelPages.listVariants` / `render` |
 | `GET /api/bd/public-config` | browser-safe config (analytics key only, never the server key) |
 | `ALL /api/bd-auth/{*splat}` | `createAuthHandler` (sign-in/up/out/callback/me) |
 | `POST /api/bd/revalidate` | `createGenericRevalidateHandler` (HMAC-verified) |
 | `GET /sitemap.xml`, `/robots.txt` | proxied from `parallelPages.sitemapUrl()` / `robotsUrl()` |
+
+<!-- [bd:store,blog] -->
+### Shop and blog elements
+
+The product page, wishlist, compare table and the store bar's counts, and a
+post's likes and comments, are small custom elements in `src/app/shop/`,
+shared with the other starters. Angular renders them as ordinary tags
+(`schemas: [CUSTOM_ELEMENTS_SCHEMA]`) and hands them their data as a property
+(`<bd-product [data]="data()">`). The browser loads them after the first
+render (`afterNextRender` → `import()`), so server rendering never touches
+them. Their styles are `src/bd-shop.css` and `src/bd-blog.css`, pulled into
+`styles.scss`. Product prices are cents; cart amounts are dollars.
+<!-- [/bd:store,blog] -->
+
+### Reviews
+
+`/reviews` draws the business's reviews with the rules every BD starter
+shares (`src/app/shop/reviews.ts`). Writing one is `<bd-review-writer>`
+(`src/app/shop/reviews-elements.ts`), loaded the same way as the shop's and
+blog's elements: it posts JSON to `/api/bd/reviews/write`, which checks the
+review again and sends it with the customer's session; signed out, it's a
+link to sign in. The styles are `src/bd-reviews.css`, pulled into
+`styles.scss`.
 
 ### Cart visitor token
 
@@ -148,6 +183,8 @@ src/
 │   ├── bd-api.ts                 # all /api/bd* + /api/bd-auth + sitemap/robots endpoints
 │   └── bd-seo.ts                 # localBusiness + website JSON-LD for the home head
 ├── styles.scss                     # global visual language (reaches routed components)
+├── bd-shop.css                     # the store's styles <!-- [bd-line:store] -->
+├── bd-blog.css                     # the blog's styles <!-- [bd-line:blog] -->
 └── app/
     ├── app.ts / app.html           # shell: banner + header + <router-outlet> + footer
     ├── app.routes.ts               # lazy routes for every surface
@@ -156,11 +193,10 @@ src/
     ├── lib/
     │   ├── bd-api.client.ts      # browser → /api/bd* fetch client (no key)
     │   └── bd.service.ts         # signals facade (hero/about/services/blog/banner/updates/reviews)
-    ├── pages/                       # store, product-detail, cart, subscriptions,
-    │   └── …                        # my-account, reviews, updates, booking,
-    │                                # services-index, service-area, home
+    ├── pages/                       # one component per route (the table above)
+    ├── shop/                        # the store's, blog's and reviews' custom elements + safePostHtml
     └── sections/                    # hero, about, services, reviews-summary, updates,
-        └── …                        # blog, contact-form, news-banner, header, footer
+        └── …                        # blog, contact-form, news-banner, header, footer, store-nav
 ```
 
 ## Angular conventions

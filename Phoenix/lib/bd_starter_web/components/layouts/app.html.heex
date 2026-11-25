@@ -19,16 +19,17 @@
     <a href={~p"/services"}>Services</a>
     <a href={~p"/blog"}>Blog</a>
     <a href={~p"/reviews"}>Reviews</a>
-    <a href={~p"/subscriptions"}>Plans</a>
     <a href={~p"/todos"}>Todos</a>
     <a href={~p"/quiz"}>Quiz</a>
     <a href={~p"/chat"}>Chat</a>
-    <a href={~p"/cart"}>Cart</a>
     <a href={~p"/my-account"}>My account</a>
   </nav>
 </header>
 
-<main>
+<%!-- The store bar (Products, Plans, Wishlist, Compare, Cart) on store and plan pages. --%>
+<.store_nav :if={assigns[:store_nav]} count={assigns[:cart_count] || 0} />
+
+<main class={assigns[:main_class]}>
   <p :if={Phoenix.Flash.get(@flash, :info)} class="notice">
     {Phoenix.Flash.get(@flash, :info)}
   </p>

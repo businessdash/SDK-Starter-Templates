@@ -1,33 +1,21 @@
 import type { BundleReviews } from "@/server/lib/bd";
 
-import { ReviewsLoadMore } from "./ReviewsLoadMore";
+import {
+	formatReviewDate,
+	platformName,
+	reviewStars,
+	safeImage,
+} from "./reviews/reviews";
 
 /**
- * Reviews wall. The aggregate (average + total count) and the first page of
- * bodies ride the marketing bundle; the "Load more" button pages deeper via
- * the `bd.reviewsPage` tRPC procedure. Renders an empty-state note when the
- * org has no reviews yet (or BD is unconfigured).
+ * The home page's reviews: the rating and a few of the newest, from the
+ * marketing bundle, and a link to every review on /reviews. Renders an
+ * empty-state note when the org has no reviews yet (or BD is unconfigured).
  */
-
-function formatDate(iso: string): string {
-	const d = new Date(iso);
-	return Number.isNaN(d.getTime())
-		? ""
-		: d.toLocaleDateString(undefined, { year: "numeric", month: "short" });
-}
-
-function Stars({ rating }: { rating: number }) {
-	const full = Math.round(rating);
-	return (
-		<span aria-label={`${rating} out of 5`} className="review-stars" role="img">
-			{"★".repeat(full)}
-			{"☆".repeat(Math.max(0, 5 - full))}
-		</span>
-	);
-}
+const SHOWN_HERE = 3;
 
 export function Reviews({ reviews }: { reviews: BundleReviews | null }) {
-	const items = reviews?.items ?? [];
+	const items = (reviews?.items ?? []).slice(0, SHOWN_HERE);
 	const total = reviews?.totalCount ?? items.length;
 	const average = reviews?.rating ?? null;
 
@@ -39,7 +27,14 @@ export function Reviews({ reviews }: { reviews: BundleReviews | null }) {
 				{average != null ? (
 					<p className="bd-section__sub">
 						<span className="review-aggregate">
-							<Stars rating={average} /> {average.toFixed(1)}
+							<span
+								aria-label={`${average.toFixed(1)} out of 5`}
+								className="review-stars"
+								role="img"
+							>
+								{reviewStars(average)}
+							</span>{" "}
+							{average.toFixed(1)}
 						</span>{" "}
 						from {total} review{total === 1 ? "" : "s"}
 					</p>
@@ -57,25 +52,56 @@ export function Reviews({ reviews }: { reviews: BundleReviews | null }) {
 				</div>
 			) : (
 				<>
-					<div className="bd-grid-3">
-						{items.map((r) => (
-							<article className="bd-card review-card" key={r.id}>
-								<Stars rating={r.rating} />
-								<p className="review-card__body">{r.description}</p>
-								<footer className="review-card__meta">
-									<span>{r.reviewee}</span>
-									<span>
-										{r.platform} · {formatDate(r.date)}
-									</span>
-								</footer>
-							</article>
-						))}
-					</div>
-					<ReviewsLoadMore
-						initialNextOffset={items.length < total ? items.length : null}
-						shownCount={items.length}
-						totalCount={total}
-					/>
+					<ul className="bd-grid-3 review-wall">
+						{items.map((r) => {
+							const avatar = safeImage(r.image);
+							const platform = platformName(r.platform);
+							return (
+								<li className="review-card" key={r.id}>
+									<div className="review-card__head">
+										{avatar ? (
+											<img
+												alt=""
+												className="review-card__avatar"
+												loading="lazy"
+												src={avatar}
+											/>
+										) : (
+											<span aria-hidden="true" className="review-card__avatar">
+												{(r.reviewee.trim() || "A").charAt(0).toUpperCase()}
+											</span>
+										)}
+										<div>
+											<p className="review-card__name">
+												{r.reviewee.trim() || "Anonymous"}
+											</p>
+											<p className="review-card__meta">
+												<span
+													aria-label={`${r.rating} out of 5`}
+													className="review-stars"
+													role="img"
+												>
+													{reviewStars(r.rating)}
+												</span>{" "}
+												· {formatReviewDate(r.date)}
+											</p>
+										</div>
+									</div>
+									<p className="review-card__text">{r.description}</p>
+									{platform ? (
+										<p className="review-card__foot">
+											<span className="review-card__platform">{platform}</span>
+										</p>
+									) : null}
+								</li>
+							);
+						})}
+					</ul>
+					<p className="reviews-more">
+						<a className="bd-btn bd-btn--ghost" href="/reviews">
+							See all {total} reviews
+						</a>
+					</p>
 				</>
 			)}
 		</section>

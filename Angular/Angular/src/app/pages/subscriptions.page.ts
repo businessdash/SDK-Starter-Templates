@@ -1,10 +1,8 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
 import { ActivatedRoute } from "@angular/router";
-// [bd:store]
-import { RouterLink } from "@angular/router";
-// [/bd:store]
 import { bdApi, type Subscription } from "../lib/bd-api.client";
+import { StoreNavComponent } from "../sections/store-nav.component";
 
 const SIGN_IN = "/my-account?next=/subscriptions";
 
@@ -16,12 +14,9 @@ const SIGN_IN = "/my-account?next=/subscriptions";
 @Component({
 	selector: "bd-subscriptions-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [
-		// [bd:store]
-		RouterLink,
-		// [/bd:store]
-	],
+	imports: [StoreNavComponent],
 	template: `
+		<bd-store-nav />
 		<section class="section">
 			<h1 class="section__title">Plans &amp; subscriptions</h1>
 			@if (subscribed) {
@@ -54,9 +49,6 @@ const SIGN_IN = "/my-account?next=/subscriptions";
 			@if (failed()) {
 				<p class="error">Couldn't start checkout. Please try again.</p>
 			}
-			<!-- [bd:store] -->
-			<p class="store-links"><a routerLink="/store">Back to store</a></p>
-			<!-- [/bd:store] -->
 		</section>
 	`,
 })

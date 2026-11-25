@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 import { component$ } from "@builder.io/qwik";
 import { type DocumentHead, routeLoader$ } from "@builder.io/qwik-city";
 
@@ -55,11 +55,11 @@ export default component$(() => {
 							Continue shopping
 						</a>
 						{/* [/bd:store] */}
-						{/* [bd:saas] */}
+						{/* [bd:subscriptions] */}
 						<a class="bd-btn bd-btn--ghost" href="/my-account">
 							See your plan
 						</a>
-						{/* [/bd:saas] */}
+						{/* [/bd:subscriptions] */}
 					</div>
 				</section>
 			</main>

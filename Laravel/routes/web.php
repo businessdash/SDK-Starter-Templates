@@ -7,6 +7,7 @@ use App\Http\Controllers\CartController;
 use App\Http\Controllers\FormPageController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\PortalController;
+use App\Http\Controllers\ReviewsController;
 use App\Http\Controllers\SeoController;
 use App\Http\Controllers\ServiceAreaController;
 use App\Http\Controllers\StoreController;
@@ -27,7 +28,12 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/blog', [BlogController::class, 'index'])->name('blog');
 Route::get('/blog/{slug}', [BlogController::class, 'show'])->name('blog.show');
-Route::get('/reviews', [HomeController::class, 'reviews'])->name('reviews');
+// Like and comment, for signed-in customers (JSON, from the post's elements).
+Route::post('/blog/{slug}/like', [BlogController::class, 'like'])->name('blog.like');
+Route::post('/blog/{slug}/comment', [BlogController::class, 'comment'])->name('blog.comment');
+Route::get('/reviews', [ReviewsController::class, 'index'])->name('reviews');
+// Writing a review, for signed-in customers (JSON, from <bd-review-writer>).
+Route::post('/reviews/write', [ReviewsController::class, 'write'])->name('reviews.write');
 Route::get('/updates', [HomeController::class, 'updates'])->name('updates');
 
 // Programmatic SEO — one template, N variants, copy owned by the dashboard.
@@ -37,7 +43,12 @@ Route::get('/services/{service}/{area}', [ServiceAreaController::class, 'show'])
 
 // ── Store ──────────────────────────────────────────────────────────────────
 Route::get('/store', [StoreController::class, 'index'])->name('store');
+Route::get('/store/wishlist', [StoreController::class, 'wishlist'])->name('store.wishlist');
+Route::get('/store/compare', [StoreController::class, 'compare'])->name('store.compare');
+Route::get('/store/order', [StoreController::class, 'order'])->name('store.order');
 Route::get('/store/{id}', [StoreController::class, 'show'])->name('store.product');
+// Add to cart for the product page's <bd-product> (JSON).
+Route::post('/api/bd/cart/add', [CartController::class, 'addJson'])->name('cart.add.json');
 
 Route::get('/cart', [CartController::class, 'show'])->name('cart');
 Route::post('/cart/items', [CartController::class, 'addItem'])->name('cart.add');

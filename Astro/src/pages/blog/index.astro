@@ -1,0 +1,161 @@
+---
+// [bd-file:blog]
+/**
+ * The blog: posts newest first (pinned ones lead the first page), with
+ * category and tag filters and "Older posts" paging, all in the URL
+ * (?category, ?tag, ?cursor), so it is plain server-rendered links.
+ */
+import "../../styles/bd-blog.css";
+
+import Layout from "../../layouts/Layout.astro";
+import {
+	isBlogConfigured,
+	listBlogCategories,
+	listBlogPosts,
+	listBlogTags,
+} from "../../lib/bd-blog";
+import { formatPostDate, readingMinutes } from "../../lib/bd-shop/blog";
+
+export const prerender = false;
+
+/** Posts on a page. With a tag filter, more are read and filtered here. */
+const PAGE = 12;
+
+const params = Astro.url.searchParams;
+const categoryId = params.get("category") || null;
+const tag = params.get("tag") || null;
+const rawCursor = Number.parseInt(params.get("cursor") ?? "", 10);
+const cursor = Number.isFinite(rawCursor) ? rawCursor : null;
+const paged = cursor !== null;
+
+const configured = isBlogConfigured();
+const [page, categories, tags] = configured
+	? await Promise.all([
+			listBlogPosts({ limit: tag ? 50 : PAGE, cursor, ...(categoryId ? { categoryId } : {}) }),
+			listBlogCategories(),
+			listBlogTags(),
+		])
+	: [null, [], []];
+const filtered = (page?.items ?? []).filter((post) => !tag || post.tags.includes(tag));
+const posts = paged ? filtered : [...filtered].sort((a, b) => Number(b.isPinned) - Number(a.isPinned));
+const nextCursor = page?.nextCursor ?? null;
+const active = categories.find((c) => c.id === categoryId);
+
+/** This page with one filter changed and the paging reset. */
+function filterHref(key: "category" | "tag", value: string | null): string {
+	const next = new URLSearchParams();
+	if (categoryId) next.set("category", categoryId);
+	if (tag) next.set("tag", tag);
+	if (value) next.set(key, value);
+	else next.delete(key);
+	const query = next.toString();
+	return query ? `/blog?${query}` : "/blog";
+}
+
+function nextHref(next: number): string {
+	const query = new URLSearchParams();
+	if (categoryId) query.set("category", categoryId);
+	query.set("cursor", String(next));
+	return `/blog?${query}`;
+}
+---
+
+<Layout title={active ? `${active.name} — Blog` : "Blog — Your Business"} description={active?.description ?? "News, guides and stories."}>
+	<div class="bd-page">
+		{
+			!configured ? (
+				<div class="bd-empty">
+					The blog isn't connected yet. Add your BD env, then publish a post in Business Dash.
+				</div>
+			) : (
+				<>
+					<div class="bd-section__lead">
+						<span class="bd-section__eyebrow">Blog</span>
+						<h1 class="bd-section__title">{active?.name ?? "From the blog"}</h1>
+						{active?.description ? <p class="bd-section__sub">{active.description}</p> : null}
+					</div>
+
+					{categories.length > 0 || tags.length > 0 ? (
+						<nav aria-label="Blog topics" class="blog-filters">
+							{categories.length > 0 ? (
+								<ul>
+									<li>
+										<a aria-current={!categoryId ? "true" : undefined} href={filterHref("category", null)}>
+											All
+										</a>
+									</li>
+									{categories.map((category) => (
+										<li>
+											<a
+												aria-current={categoryId === category.id ? "true" : undefined}
+												href={filterHref("category", category.id)}
+											>
+												{category.name}
+											</a>
+										</li>
+									))}
+								</ul>
+							) : null}
+							{tags.length > 0 ? (
+								<ul class="blog-filters__tags">
+									{tags.map((t) => (
+										<li>
+											<a aria-current={tag === t ? "true" : undefined} href={filterHref("tag", tag === t ? null : t)}>
+												#{t}
+											</a>
+										</li>
+									))}
+								</ul>
+							) : null}
+						</nav>
+					) : null}
+
+					{posts.length === 0 ? (
+						<div class="bd-empty">
+							{tag || categoryId
+								? "No posts here yet."
+								: "No posts published yet. Write one in Business Dash and it'll appear here."}
+						</div>
+					) : (
+						<>
+							<ul class="posts">
+								{posts.map((post, i) => (
+									<li class={`bd-card post-card${i === 0 && !paged ? " post-card--lead" : ""}`}>
+										<a class="post-card__link" href={`/blog/${encodeURIComponent(post.slug)}`}>
+											{post.imageUrl ? (
+												<img
+													alt=""
+													class="post-card__img"
+													loading="lazy"
+													referrerpolicy="no-referrer"
+													src={post.imageUrl}
+												/>
+											) : null}
+											<div class="post-card__body">
+												<p class="post-card__meta">
+													{post.isPinned ? <span class="bd-badge">Pinned</span> : null}
+													<span>{formatPostDate(post.publishedAt)}</span>
+													<span>· {readingMinutes(post.content || post.excerpt || "")} min read</span>
+												</p>
+												<h2>{post.title}</h2>
+												{post.excerpt ? <p class="post-card__excerpt">{post.excerpt}</p> : null}
+												{post.authorName ? <p class="post-card__author">{post.authorName}</p> : null}
+											</div>
+										</a>
+									</li>
+								))}
+							</ul>
+							{nextCursor !== null && !tag ? (
+								<p class="posts__more">
+									<a class="bd-btn bd-btn--ghost" href={nextHref(nextCursor)}>
+										Older posts
+									</a>
+								</p>
+							) : null}
+						</>
+					)}
+				</>
+			)
+		}
+	</div>
+</Layout>

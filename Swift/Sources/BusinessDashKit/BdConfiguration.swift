@@ -13,16 +13,20 @@ public struct BdConfiguration: Sendable {
     public let publishableKey: String
     public let siteID: String
     public let authCallbackURL: String?
+    /// The business's website, for share links (`<site>/store/<id>`,
+    /// `<site>/blog/<slug>`). Optional: without it there is nothing to share.
+    public let siteURL: URL?
 
-    public init(host: URL, publishableKey: String, siteID: String, authCallbackURL: String? = nil) {
+    public init(host: URL, publishableKey: String, siteID: String, authCallbackURL: String? = nil, siteURL: URL? = nil) {
         self.host = host
         self.publishableKey = publishableKey
         self.siteID = siteID
         self.authCallbackURL = authCallbackURL
+        self.siteURL = siteURL
     }
 
     /// Reads `BDHost`, `BDPublishableKey`, `BDSiteID`, and optionally
-    /// `BDAuthCallbackURL` from the main bundle.
+    /// `BDAuthCallbackURL` and `BDSiteURL` from the main bundle.
     ///
     /// Returns `nil` when they're absent, which is a supported state: the
     /// starter renders local fallback content and shows a setup notice rather
@@ -49,7 +53,9 @@ public struct BdConfiguration: Sendable {
             host: host,
             publishableKey: key,
             siteID: siteID,
-            authCallbackURL: string("BDAuthCallbackURL")
+            authCallbackURL: string("BDAuthCallbackURL"),
+            // A value an xcconfig cut at `//` ("https:") has no host: no links.
+            siteURL: string("BDSiteURL").flatMap(URL.init(string:)).flatMap { $0.host() == nil ? nil : $0 }
         )
     }
 

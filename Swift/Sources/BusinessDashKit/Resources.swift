@@ -19,10 +19,14 @@ public struct StorefrontResource: Sendable {
     /// The full shop grid: enriched cards plus `categoryCounts` and the
     /// catalog-wide `priceRange` for a filter UI.
     ///
+    /// Prices are in **cents** here, although `priceRange` answers in dollars.
     /// `sort` is one of featured | newest | price-asc | price-desc | rating-desc.
     public func grid(
         search: String? = nil,
         categoryID: String? = nil,
+        minPriceCents: Int? = nil,
+        maxPriceCents: Int? = nil,
+        minRating: Int? = nil,
         sort: String? = nil,
         limit: Int = 24
     ) async throws -> ProductGridResponse {
@@ -32,6 +36,9 @@ public struct StorefrontResource: Sendable {
                 "meta": "1",
                 "search": search?.nilIfEmpty,
                 "categoryId": categoryID,
+                "minPriceCents": minPriceCents.map(String.init),
+                "maxPriceCents": maxPriceCents.map(String.init),
+                "minRating": minRating.map(String.init),
                 "sort": sort,
                 "limit": String(limit)
             ]
@@ -46,18 +53,32 @@ public struct StorefrontResource: Sendable {
         try await client.get("storefront/products/\(BdClient.escape(id))")
     }
 
-    public func related(_ id: String, limit: Int = 4) async throws -> ProductListResponse {
+    /// The product page's data: variants, their photos, option groups (Size,
+    /// Colour…) and specifications. Their shape is loose, so it comes back as
+    /// ``JSONValue`` and ``ProductView`` reads it (see Shop.swift).
+    public func detail(_ id: String) async throws -> ProductView {
+        let raw: JSONValue = try await client.get("storefront/products/\(BdClient.escape(id))")
+        return ProductView(raw)
+    }
+
+    /// "You may also like": not cards — see ``RelatedProduct``.
+    public func related(_ id: String, limit: Int = 6) async throws -> RelatedProductListResponse {
         try await client.get(
             "storefront/products/\(BdClient.escape(id))/related",
             query: ["limit": String(limit)]
         )
     }
 
-    public func reviews(_ id: String, limit: Int = 5) async throws -> ReviewListResponse {
+    /// One page of a product's reviews, with its average and total.
+    public func reviews(_ id: String, limit: Int = 10) async throws -> ProductReviewPage {
         try await client.get(
             "storefront/products/\(BdClient.escape(id))/reviews",
             query: ["limit": String(limit)]
         )
+    }
+
+    public func addons(_ id: String) async throws -> AddonListResponse {
+        try await client.get("storefront/products/\(BdClient.escape(id))/addons")
     }
 }
 
@@ -114,6 +135,12 @@ public struct CartResource: Sendable {
     public func startCheckout(_ urls: CheckoutURLs) async throws -> CheckoutSession {
         try await client.post("checkout/start", body: urls, headers: headers)
     }
+
+    /// Whether the order went through, once Stripe sends the customer back
+    /// with `session_id`.
+    public func checkoutStatus(sessionID: String) async throws -> CheckoutStatus {
+        try await client.get("checkout/\(BdClient.escape(sessionID))", headers: headers)
+    }
 }
 
 // MARK: - Blog
@@ -121,8 +148,50 @@ public struct CartResource: Sendable {
 public struct BlogResource: Sendable {
     let client: BdClient
 
-    public func posts(limit: Int = 20) async throws -> BlogListResponse {
-        try await client.get("blog/posts", query: ["limit": String(limit)])
+    /// One page of posts, newest first. `cursor` is the last page's
+    /// `nextCursor`. The API filters by category only; tags are matched by
+    /// the caller.
+    public func posts(limit: Int = 20, cursor: Int? = nil, categoryID: String? = nil) async throws -> BlogListResponse {
+        try await client.get(
+            "blog/posts",
+            query: ["limit": String(limit), "cursor": cursor.map(String.init), "categoryId": categoryID]
+        )
+    }
+
+    public func categories() async throws -> BlogCategoryListResponse {
+        try await client.get("blog/categories")
+    }
+
+    public func tags() async throws -> BlogTagListResponse {
+        try await client.get("blog/tags")
+    }
+
+    // Liking and commenting are done as the signed-in customer: their session
+    // token goes out as **`X-BD-Session-Token`** (the portal's header, not the
+    // `x-bd-session` that `auth/me` takes).
+
+    /// Whether this customer likes the post, and its count. Without a session
+    /// it is just the count.
+    public func likes(slug: String, sessionToken: String?) async throws -> PostLikes {
+        try await client.get(
+            "blog/posts/\(BdClient.escape(slug))/like",
+            headers: sessionToken.map { ["X-BD-Session-Token": $0] } ?? [:]
+        )
+    }
+
+    /// Like or unlike.
+    public func toggleLike(slug: String, sessionToken: String) async throws -> PostLikes {
+        try await client.post("blog/posts/\(BdClient.escape(slug))/like", headers: ["X-BD-Session-Token": sessionToken])
+    }
+
+    /// Up to 5,000 characters. Check `moderation.isApproved`: false means it
+    /// shows once the business approves it.
+    public func comment(slug: String, content: String, sessionToken: String) async throws -> BlogCommentPosted {
+        try await client.post(
+            "blog/posts/\(BdClient.escape(slug))/comments",
+            body: BlogCommentInput(content: content),
+            headers: ["X-BD-Session-Token": sessionToken]
+        )
     }
 
     public func post(slug: String) async throws -> BlogPostDetail {
@@ -142,8 +211,20 @@ public struct BlogResource: Sendable {
 public struct ReviewsResource: Sendable {
     let client: BdClient
 
-    public func list(limit: Int = 10, offset: Int = 0) async throws -> ReviewListResponse {
-        try await client.get("reviews", query: ["limit": String(limit), "offset": String(offset)])
+    /// One page of the business's reviews, newest first. `source` narrows to
+    /// one platform (`google`, `yelp`, `housecall_pro`, `other`).
+    public func list(limit: Int = 10, offset: Int = 0, source: String? = nil) async throws -> ReviewListResponse {
+        try await client.get("reviews", query: ["limit": String(limit), "offset": String(offset), "source": source])
+    }
+
+    /// The average, count and stars breakdown over every review. They ride
+    /// the marketing bundle; nil when the business has reviews turned off.
+    public func summary() async throws -> ReviewSummary? {
+        let envelope: ReviewSummaryEnvelope = try await client.get(
+            client.sitePath("marketing/bundle"),
+            query: ["pageKey": "home"]
+        )
+        return envelope.reviews
     }
 }
 
@@ -298,8 +379,9 @@ public struct PortalResource: Sendable {
         try await client.get("customer-portal/work", headers: headers)
     }
 
+    /// Writes a review of the business. It shows once the business approves it.
     @discardableResult
-    public func submitReview(_ input: ReviewInput) async throws -> JSONValue {
+    public func submitReview(_ input: ReviewInput) async throws -> ReviewSubmitted {
         try await client.post("customer-portal/reviews", body: input, headers: headers)
     }
 

@@ -82,8 +82,8 @@ The output is a Node server by default; Nitro presets cover Vercel / Cloudflare 
 | --- | --- | --- |
 | **Hero / About / Services** | `useFetch('/api/bd/home')` reads marketing bundle, passes to component props | `bd.marketing.getPageBundle(...)` |
 | **Gallery** | Same endpoint with const-generic field selection | `bd.gallery.list({ limit: 12, fields: [...] as const })` |
-| **Blog** | Same endpoint | `bd.blog.listPosts({ limit: 6 })` |
-| **Booking** | Event-type list server-rendered; slots + confirm via `/api/bd/scheduling/{slots,bookings}` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
+| **Blog** | Same endpoint | `bd.blog.listPosts({ limit: 6 })` | <!-- [bd-line:blog] -->
+| **Booking** | Event-type list server-rendered; slots + confirm via `/api/bd/scheduling/{slots,bookings}` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` | <!-- [bd-line:booking] -->
 | **Contact form** | Form schema server-rendered; submit via `/api/bd/forms/[slug]` | `bd.forms.schema(slug)`, `bd.forms.submit(...)` |
 | **News banner** | `bundle.banner` surfaced by the home aggregator → `components/bd/NewsBanner.vue` (dismissible bar) | `bd.marketing.getPageBundle(...)` (untyped `banner` passthrough) |
 | **JSON-LD** | `useFetch('/api/bd/jsonld')` → injected into `<head>` via `useHead({ script })` | `localBusiness()` + `website()` + `renderJsonLdToHtml()` from `@businessdash/sdk/seo` |
@@ -95,19 +95,34 @@ Visitor-token cart pattern: a UUID stored in an httpOnly cookie named `bd_cart_v
 
 | Surface | Page | Endpoint(s) | SDK call |
 | --- | --- | --- | --- |
-| **Product list** | `app/pages/store/index.vue` | `GET /api/bd/store/products` | `bd.storefront.listProducts(...)` |
-| **Product detail** | `app/pages/store/[id].vue` | `GET /api/bd/store/product/[id]` | `bd.storefront.getProduct(id)` |
+| **Product list**: search, category, price, rating, sort | `app/pages/store/index.vue` | `GET /api/bd/store/products-meta` | `bd.storefront.listProductsWithMeta(...)`, `listCategories()` |
+| **Product detail**: photos per option, option buttons, specs, add-ons, reviews, related, recently viewed | `app/pages/store/[id].vue` | `GET /api/bd/store/product/[id]?reviews=` | `bd.storefront.getProduct(id)`, `getProductReviews`, `getProductAddons`, `getRelatedProducts` |
+| **Wishlist** | `app/pages/store/wishlist.vue` | none: kept in the browser | |
+| **Compare** (up to four) | `app/pages/store/compare.vue` | `GET /api/bd/store/compare?ids=` | `bd.storefront.getProduct(id)` per product |
 | **Cart** | `app/pages/cart.vue` (via `composables/useCart.ts`) | `GET /api/bd/cart`, `POST /api/bd/cart/{add,update,remove,coupon,clear}` | `bd.cart.forVisitor(token).{get,addItem,updateItem,removeItem,applyCoupon,removeCoupon,clear}` |
 | **Checkout** | Cart page "Checkout" button | `POST /api/bd/checkout/start` → redirect to Stripe | `bd.checkout.forVisitor(token).start({ successUrl, cancelUrl })` |
+
+The shop's logic is framework-free, in `shared/bd/shop.ts` (Nuxt's `#shared`, usable from the app and the server): shaping a product for its page (photos per option, option groups, "from" prices, specs) and the wishlist, compare and recently viewed lists, which live in the browser's localStorage. The chosen options travel with the cart line (`options: { Size: "42" }`), and the cart prices them. Styles are in `app/assets/css/bd-shop.css`.
 <!-- [/bd:store] -->
 
-<!-- [bd:saas] -->
+<!-- [bd:blog] -->
+### Blog
+
+| Surface | Page | Endpoint(s) | SDK call |
+| --- | --- | --- | --- |
+| **Posts**, by category or tag | `app/pages/blog/index.vue` | `GET /api/bd/blog/posts` | `bd.blog.listPosts(...)`, `listCategories()`, `listTags()` |
+| **Post**, likes, comments | `app/pages/blog/[slug].vue` | `GET /api/bd/blog/post/[slug]`, `POST …/like`, `POST …/comment` | `bd.blog.getPost(slug)`, `listComments(slug)`, `withSession(token).{likeStatus,toggleLike,postComment}` |
+
+Liking and commenting need a signed-in customer (the `bd_session` cookie from `/my-account`). A post's HTML is rebuilt from an allowlist by `safePostHtml` in `shared/bd/blog.ts` on the server, and only that rebuilt HTML reaches the page, so a post can't carry a script. Styles are in `app/assets/css/bd-blog.css`.
+<!-- [/bd:blog] -->
+
+<!-- [bd:subscriptions] -->
 ### Plans
 
 | Surface | Page | Endpoint(s) | SDK call |
 | --- | --- | --- | --- |
 | **Subscriptions** | `app/pages/subscriptions.vue` | `GET /api/bd/store/subscriptions` | `bd.subscriptions.list()` |
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
 
 ### Auth + customer portal
 
@@ -123,7 +138,7 @@ Sign-in / sign-up / sign-out are plain links (`<a href="/api/bd-auth/sign-in">` 
 
 | Surface | Page / route | Endpoint | SDK call |
 | --- | --- | --- | --- |
-| **Reviews wall** | `app/pages/reviews.vue` (aggregate + first page + "load more") | `GET /api/bd/reviews?limit=&offset=` | `bd.reviews.list({ limit, offset })` |
+| **Business reviews** | `app/pages/reviews.vue`: the rating with a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a link to it on Google or Yelp, "Show more" (`?shown=`); `components/bd/ReviewWriter.vue` writes one, which waits for approval. The rules are `shared/bd/reviews.ts`, the same in every BD starter. | `GET /api/bd/reviews/page?source=&shown=`, `POST /api/bd/reviews/write`, `GET /api/bd/reviews?limit=&offset=&source=` (JSON paging for your own components) | the bundle's `reviews` (count per star), `bd.reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview(...)` |
 | **Updates feed** | `app/pages/updates.vue` | `GET /api/bd/home` (`updates`) | `bundle.updates` (untyped passthrough) |
 | **Sitemap** | `server/routes/sitemap.xml.ts` (proxy) | `GET /sitemap.xml` | `bd.parallelPages.sitemapUrl()` |
 | **robots.txt** | `server/routes/robots.txt.ts` (proxy) | `GET /robots.txt` | `bd.parallelPages.robotsUrl()` |
@@ -168,7 +183,8 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 │       └── bd/
 │           ├── home.get.ts                     # Aggregator (sections + banner + updates + company)
 │           ├── jsonld.get.ts                   # JSON-LD (LocalBusiness + WebSite)
-│           ├── reviews.get.ts                  # Reviews wall page (paginated)
+│           ├── reviews.get.ts                  # Reviews, a page at a time (JSON)
+│           ├── reviews/page.get.ts  write.post.ts  # The reviews page's data; writing one
 │           ├── revalidate.post.ts              # Webhook receiver
 <!-- [bd:store] -->
 │           ├── cart/
@@ -177,16 +193,17 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 │           │   ├── coupon.post.ts  clear.post.ts
 │           ├── checkout/start.post.ts          # Stripe-hosted checkout
 <!-- [/bd:store] -->
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │           ├── store/
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
 <!-- [bd:store] -->
-│           │   ├── products.get.ts
+│           │   ├── products.get.ts  products-meta.get.ts  compare.get.ts
 │           │   └── product/[id].get.ts
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 │           │   └── subscriptions.get.ts
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
+│           ├── blog/posts.get.ts  blog/post/[slug]{.get,/like.post,/comment.post}.ts <!-- [bd-line:blog] -->
 │           ├── portal/
 │           │   ├── context.get.ts              # Session + work bundle
 │           │   └── submit-review.post.ts
@@ -200,20 +217,24 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 │   ├── pages/
 │   │   ├── index.vue                           # Home (useFetch + sections + banner + JSON-LD)
 <!-- [bd:store] -->
-│   │   ├── store/index.vue  store/[id].vue  cart.vue
+│   │   ├── store/index.vue  store/[id].vue  store/wishlist.vue  store/compare.vue  cart.vue
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 │   │   ├── subscriptions.vue
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
+│   │   ├── blog/index.vue  blog/[slug].vue <!-- [bd-line:blog] -->
 │   │   ├── my-account.vue  reviews.vue  updates.vue
 │   │   └── services/index.vue  services/[service]/[area].vue
 │   ├── components/bd/
 │   │   ├── BdHeader.vue  BdFooter.vue
 │   │   ├── Hero.vue  About.vue  Services.vue  Gallery.vue  Blog.vue
 │   │   ├── Booking.vue  ContactForm.vue
+│   │   ├── StoreNav.vue  SaveButtons.vue  StarRating.vue  ProductRail.vue  CompareBar.vue <!-- [bd-line:store] -->
 │   │   ├── NewsBanner.vue                      # Dismissible bundle.banner bar
-│   │   └── ReviewForm.vue                      # Customer review form
-│   └── assets/css/bd-tokens.css              # BD CSS variables
+│   │   ├── ReviewWriter.vue                    # Write a review (the reviews page)
+│   │   └── ReviewForm.vue                      # Customer review form (my account)
+│   └── assets/css/bd-tokens.css              # BD CSS variables (+ bd-shop.css, bd-blog.css, bd-reviews.css)
+├── shared/bd/shop.ts  blog.ts  reviews.ts     # Shop, blog and reviews logic for app + server
 ├── .env.example
 └── package.json
 ```

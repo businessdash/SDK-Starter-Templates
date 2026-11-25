@@ -1,3 +1,4 @@
+// [bd-file:booking]
 import { bd, el, empty } from "../bd.js";
 
 /**

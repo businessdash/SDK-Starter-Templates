@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Home, reviews wall, updates feed, newsletter.
+ * Home, updates feed, newsletter.
  *
  * Every read goes through `Bd::remember()` with a local fallback, so this
  * renders a complete page with no BD credentials at all.
@@ -42,23 +42,6 @@ class HomeController extends Controller
             'bundle' => $bundle,
             'products' => $products['items'] ?? [],
             'posts' => $posts['items'] ?? [],
-        ]);
-    }
-
-    public function reviews(Request $request): View
-    {
-        $offset = max(0, (int) $request->query('offset', 0));
-
-        $reviews = Bd::remember(
-            "reviews:{$offset}",
-            ['bd:reviews'],
-            static fn (Client $c) => $c->reviews()->list(limit: 10, offset: $offset),
-            default: ['items' => []],
-        );
-
-        return view('pages.reviews', [
-            'reviews' => $reviews['items'] ?? [],
-            'offset' => $offset,
         ]);
     }
 

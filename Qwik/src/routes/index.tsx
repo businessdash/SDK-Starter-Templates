@@ -4,8 +4,12 @@ import { initBdAnalytics } from "@businessdash/sdk/analytics-core";
 
 import { About } from "../components/bd/About";
 import { Banner } from "../components/bd/Banner";
+// [bd:blog]
 import { Blog, type BlogPost } from "../components/bd/Blog";
+// [/bd:blog]
+// [bd:booking]
 import { Booking, type EventType } from "../components/bd/Booking";
+// [/bd:booking]
 import {
 	ContactForm,
 	type FormSchema,
@@ -30,11 +34,25 @@ import {
  * server-only.
  */
 
+// [bd:!booking]
+/** Without booking, the hero's button goes to the contact form. */
+const CONTACT_CTA = {
+	tagline: "Tell us what you need. We'll handle the rest.",
+	ctaLabel: "Get in touch",
+	ctaHref: "#contact",
+};
+// [/bd:!booking]
+
 const HERO_DEFAULTS: HeroData = {
+	// [bd:!booking]
+	...CONTACT_CTA,
+	// [/bd:!booking]
 	title: "Service that shows up — on time.",
+	// [bd:booking]
 	tagline: "Book in 60 seconds. We'll handle the rest.",
 	ctaLabel: "Book a consult",
 	ctaHref: "#booking",
+	// [/bd:booking]
 };
 
 const ABOUT_FALLBACK =
@@ -88,8 +106,12 @@ export const useBdData = routeLoader$(async ({ url }) => {
 			about: ABOUT_FALLBACK,
 			services: SERVICES_FALLBACK,
 			gallery: [] as GalleryItem[],
+			// [bd:booking]
 			eventTypes: [] as EventType[],
+			// [/bd:booking]
+			// [bd:blog]
 			blogPosts: [] as BlogPost[],
+			// [/bd:blog]
 			formSchema: FORM_FALLBACK,
 			formSlug: FORM_SLUG,
 			bannerMessages: [] as BundleBannerMessage[],
@@ -103,19 +125,31 @@ export const useBdData = routeLoader$(async ({ url }) => {
 		};
 	}
 
-	const [bundle, gallery, eventTypes, blog, formSchema] = await Promise.all([
+	// [bd:booking]
+	const eventTypesRequest = bd.scheduling
+		.listEventTypes()
+		.catch(() => []) as Promise<EventType[]>;
+	// [/bd:booking]
+	// [bd:blog]
+	const blogRequest = bd.blog
+		.listPosts({ limit: 6 })
+		.catch(() => ({ items: [] as BlogPost[] }));
+	// [/bd:blog]
+	const [bundle, gallery, formSchema] = await Promise.all([
 		bd.marketing
 			.getPageBundle({ pageKey: "home", locale: "en" })
 			.catch(() => null),
 		bd.gallery
 			.list({ limit: 12, fields: GALLERY_FIELDS })
 			.catch(() => []) as Promise<GalleryItem[]>,
-		bd.scheduling.listEventTypes().catch(() => []) as Promise<EventType[]>,
-		bd.blog
-			.listPosts({ limit: 6 })
-			.catch(() => ({ items: [] as BlogPost[] })),
 		bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK),
 	]);
+	// [bd:booking]
+	const eventTypes = await eventTypesRequest;
+	// [/bd:booking]
+	// [bd:blog]
+	const blog = await blogRequest;
+	// [/bd:blog]
 
 	function readSection(name: string): Record<string, unknown> | null {
 		const raw = (bundle as { sections?: Record<string, unknown> })?.sections?.[
@@ -158,8 +192,12 @@ export const useBdData = routeLoader$(async ({ url }) => {
 				? (servicesSection.items as Service[])
 				: SERVICES_FALLBACK,
 		gallery,
+		// [bd:booking]
 		eventTypes,
+		// [/bd:booking]
+		// [bd:blog]
 		blogPosts: ((blog as { items?: BlogPost[] })?.items as BlogPost[]) ?? [],
+		// [/bd:blog]
 		formSchema,
 		formSlug: FORM_SLUG,
 		bannerMessages: banner?.messages ?? [],
@@ -206,8 +244,12 @@ export default component$(() => {
 				<About body={data.value.about} />
 				<Services services={data.value.services} />
 				<Gallery items={data.value.gallery} />
+				{/* [bd:booking] */}
 				<Booking eventTypes={data.value.eventTypes} />
+				{/* [/bd:booking] */}
+				{/* [bd:blog] */}
 				<Blog posts={data.value.blogPosts} />
+				{/* [/bd:blog] */}
 				<ContactForm schema={data.value.formSchema} slug={data.value.formSlug} />
 			</main>
 			<Footer />

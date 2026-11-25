@@ -29,7 +29,7 @@
       </section>
     #endif
 
-    <section class="contact">
+    <section class="contact" id="contact">
       <h2>Get in touch</h2>
       #unsafeHTML(contactForm)
     </section>

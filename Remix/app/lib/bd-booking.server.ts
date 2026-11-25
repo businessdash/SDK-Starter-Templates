@@ -1,3 +1,4 @@
+// [bd-file:booking]
 import type {
 	SchedulingEventType,
 	SchedulingSlot,

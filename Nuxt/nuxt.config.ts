@@ -10,7 +10,17 @@ export default defineNuxtConfig({
 	 * form container background on purpose (it's transparent) so the template owns
 	 * the surface; don't add one in the SDK layer.
 	 */
-	css: ["~/assets/css/bd-tokens.css", "@businessdash/sdk/bd-forms.css"],
+	css: [
+		"~/assets/css/bd-tokens.css",
+		"@businessdash/sdk/bd-forms.css",
+		// [bd:store]
+		"~/assets/css/bd-shop.css",
+		// [/bd:store]
+		// [bd:blog]
+		"~/assets/css/bd-blog.css",
+		// [/bd:blog]
+		"~/assets/css/bd-reviews.css",
+	],
 	/**
 	 * `@businessdash/sdk/vue` ships its `<BdForm>` binding as raw source (a `.vue`
 	 * SFC + `.ts`), so Nuxt must run it through its own Vue/Vite pipeline rather

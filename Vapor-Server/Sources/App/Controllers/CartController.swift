@@ -4,12 +4,12 @@ import Vapor
 /// lives at BD. Nothing about the cart is in a session or a database, which
 /// is why this works unchanged behind a load balancer with no sticky sessions.
 enum CartController {
-    private static let cookieName = "bd_cart_visitor"
+    private static let cookieName = CartVisitor.cookieName
 
     static func show(req: Request) async throws -> View {
         guard let bd = req.bd, let token = visitorToken(req) else {
             return try await req.view.render("cart", CartContext(
-                configured: req.application.bdConfigured, lines: [], subtotal: "", isEmpty: true
+                configured: req.application.bdConfigured, lines: [], subtotal: "", isEmpty: true, cartCount: 0
             ))
         }
 
@@ -37,6 +37,44 @@ enum CartController {
         return response
     }
 
+    struct AddItemJSON: Content {
+        let productId: String?
+        let quantity: Int?
+        let variantId: String?
+        let options: [String: JSONValue]?
+    }
+
+    /// Add to cart for the product page's `<bd-product>`: JSON in
+    /// (`productId`, `quantity`, `variantId`, `options`), `{ok, itemCount}`
+    /// or `{ok: false, error}` out.
+    static func addJSON(req: Request) async throws -> Response {
+        if let refusal = PageJSON.refusal(req) { return refusal }
+        guard let bd = req.bd else {
+            return PageJSON.reply(.serviceUnavailable, ["ok": .bool(false), "error": .string("The store isn't connected yet.")])
+        }
+        guard let input = try? req.content.decode(AddItemJSON.self), let productID = input.productId?.nilIfEmpty else {
+            return PageJSON.reply(.badRequest, ["ok": .bool(false), "error": .string("Choose a product.")])
+        }
+        let options = (input.options ?? [:]).compactMapValues(\.stringValue)
+
+        let (token, cookie) = CartVisitor.ensure(req)
+        let response: Response
+        do {
+            let cart = try await bd.cartAdd(visitor: token, CartAddItemInput(
+                productId: productID,
+                quantity: min(99, max(1, input.quantity ?? 1)),
+                variantId: input.variantId?.nilIfEmpty,
+                options: options.isEmpty ? nil : options
+            ))
+            response = PageJSON.reply(.ok, ["ok": .bool(true), "itemCount": .number(Double(cart.itemCount ?? 0))])
+        } catch {
+            req.logger.debug("cart add: \(error)")
+            response = PageJSON.reply(.badGateway, ["ok": .bool(false), "error": .string("Couldn't add that to your cart. Try again.")])
+        }
+        if let cookie { response.cookies[cookieName] = cookie }
+        return response
+    }
+
     static func clear(req: Request) async throws -> Response {
         if let bd = req.bd, let token = visitorToken(req) {
             _ = try? await bd.cartClear(visitor: token)
@@ -54,7 +92,7 @@ enum CartController {
         let origin = Environment.get("BD_SITE_ORIGIN") ?? "http://localhost:8080"
         let urls = CheckoutURLs(
             // Stripe substitutes the real id for the placeholder.
-            successUrl: "\(origin)/store?session_id={CHECKOUT_SESSION_ID}",
+            successUrl: "\(origin)/store/order?session_id={CHECKOUT_SESSION_ID}",
             cancelUrl: "\(origin)/cart"
         )
 
@@ -65,28 +103,11 @@ enum CartController {
         return req.redirect(to: session.stripeUrl, redirectType: .normal)
     }
 
-    // MARK: - Visitor token
+    // MARK: - Visitor token (see `CartVisitor`)
 
-    private static func visitorToken(_ req: Request) -> String? {
-        req.cookies[cookieName]?.string.nilIfEmpty
-    }
+    private static func visitorToken(_ req: Request) -> String? { CartVisitor.token(req) }
 
-    /// Mint on first write. There is no round trip to get one — the platform
-    /// keys the cart on whatever arrives in the header. (`cart/session` exists
-    /// but mints a tokenized iframe-embed URL, a different feature.)
-    private static func ensureVisitorToken(_ req: Request) -> (String, HTTPCookies.Value?) {
-        if let existing = visitorToken(req) { return (existing, nil) }
-
-        let token = UUID().uuidString
-        let cookie = HTTPCookies.Value(
-            string: token,
-            expires: Date().addingTimeInterval(60 * 60 * 24 * 30),
-            isSecure: req.url.scheme == "https",
-            isHTTPOnly: true,
-            sameSite: .lax
-        )
-        return (token, cookie)
-    }
+    private static func ensureVisitorToken(_ req: Request) -> (String, HTTPCookies.Value?) { CartVisitor.ensure(req) }
 
     private static func context(_ snapshot: CartSnapshot, configured: Bool) -> CartContext {
         CartContext(
@@ -94,14 +115,15 @@ enum CartController {
             lines: snapshot.items.map {
                 CartLine(
                     id: $0.id,
-                    name: $0.name ?? "Item",
+                    name: [$0.productName ?? "Item", $0.variantTitle].compactMap { $0?.nilIfEmpty }.joined(separator: " · "),
                     quantity: $0.quantity,
                     // Cart lines arrive DECIMAL, unlike product prices.
                     unitPrice: Money.amount($0.unitPrice, currency: snapshot.currency)
                 )
             },
             subtotal: Money.amount(snapshot.subtotal, currency: snapshot.currency),
-            isEmpty: snapshot.items.isEmpty
+            isEmpty: snapshot.items.isEmpty,
+            cartCount: snapshot.itemCount ?? snapshot.items.reduce(0) { $0 + $1.quantity }
         )
     }
 }

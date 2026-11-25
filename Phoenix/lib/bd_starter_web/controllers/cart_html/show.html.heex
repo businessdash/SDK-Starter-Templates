@@ -9,7 +9,10 @@
 <div :if={items != []}>
   <ul class="cart-lines">
     <li :for={item <- items}>
-      <span>{item["name"]}</span>
+      <span>
+        {item["productName"]}<span :if={item["variantTitle"]}> · {item["variantTitle"]}</span>
+        <span class="muted">{amount(item["unitPrice"])} each</span>
+      </span>
 
       <form method="post" action={~p"/cart/items/#{item["id"]}"}>
         <input type="hidden" name="_csrf_token" value={get_csrf_token()} />

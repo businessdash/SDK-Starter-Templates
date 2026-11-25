@@ -55,18 +55,29 @@ export async function getCartCountAction(): Promise<number> {
 	return snapshot?.itemCount ?? 0;
 }
 
-export async function addToCartAction(input: {
+/**
+ * Add to cart from the product page: the chosen options (such as
+ * `{ Size: "42" }`) go with the item, so the cart prices them. Answers with
+ * the cart's new item count for the cart badge.
+ */
+export async function addItemAction(input: {
 	productId: string;
-	variantId?: string | null;
-	quantity?: number;
-}): Promise<CartActionResult> {
-	return run((cart) =>
+	variantId?: string;
+	quantity: number;
+	options?: Record<string, string>;
+}): Promise<{ ok: true; itemCount: number } | { ok: false; error: string }> {
+	const res = await run((cart) =>
 		cart.addItem({
 			productId: input.productId,
-			variantId: input.variantId ?? undefined,
-			quantity: input.quantity ?? 1,
+			variantId: input.variantId,
+			quantity: input.quantity,
+			options:
+				input.options && Object.keys(input.options).length > 0
+					? input.options
+					: undefined,
 		}),
 	);
+	return res.ok ? { ok: true, itemCount: res.snapshot.itemCount } : res;
 }
 
 export async function updateCartItemAction(

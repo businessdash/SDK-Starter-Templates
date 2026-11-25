@@ -12,11 +12,13 @@ import { buildHomeJsonLd } from "~/lib/bd-seo.server";
 import { isServiceSuspended } from "~/lib/bd.server";
 import {
 	loadAbout,
-	loadBlog,
 	loadGallery,
 	loadHero,
 	loadServices,
 } from "~/lib/sdk-sections.server";
+// [bd:blog]
+import { loadBlog } from "~/lib/sdk-sections.server";
+// [/bd:blog]
 
 export const meta: MetaFunction = () => [
 	{ title: "Your Business — built on BD" },
@@ -39,11 +41,13 @@ export async function loader(_: LoaderFunctionArgs) {
 		else throw err;
 	}
 
-	const [hero, about, services, blog, gallery] = await Promise.all([
+	// [bd:blog]
+	const blogCall = loadBlog();
+	// [/bd:blog]
+	const [hero, about, services, gallery] = await Promise.all([
 		loadHero(),
 		loadAbout(),
 		loadServices(),
-		loadBlog(),
 		loadGallery(),
 	]);
 
@@ -68,7 +72,9 @@ export async function loader(_: LoaderFunctionArgs) {
 		hero,
 		about,
 		services,
-		blog,
+		// [bd:blog]
+		blog: await blogCall,
+		// [/bd:blog]
 		gallery,
 		bannerMessage,
 		jsonLd: buildHomeJsonLd(bundle),
@@ -76,8 +82,9 @@ export async function loader(_: LoaderFunctionArgs) {
 }
 
 export default function Index() {
-	const { suspended, hero, about, services, blog, gallery, bannerMessage, jsonLd } =
-		useLoaderData<typeof loader>();
+	const page = useLoaderData<typeof loader>();
+	const { suspended, hero, about, services, gallery, bannerMessage, jsonLd } =
+		page;
 
 	if (suspended) {
 		return (
@@ -108,17 +115,21 @@ export default function Index() {
 					<a href="#about">About</a>
 					<a href="#services">Services</a>
 					<a href="#gallery">Gallery</a>
-					<a href="#blog">Blog</a>
+					{/* [bd:blog] */}
+					<Link to="/blog">Blog</Link>
+					{/* [/bd:blog] */}
 					{/* [bd:store] */}
 					<Link to="/store">Store</Link>
 					{/* [/bd:store] */}
-					{/* [bd:saas] */}
+					{/* [bd:subscriptions] */}
 					{/* [bd:!store] */}
 					<Link to="/store/subscriptions">Plans</Link>
 					{/* [/bd:!store] */}
-					{/* [/bd:saas] */}
+					{/* [/bd:subscriptions] */}
 					<Link to="/reviews">Reviews</Link>
+					{/* [bd:booking] */}
 					<Link to="/book">Book</Link>
+					{/* [/bd:booking] */}
 					<Link to="/my-account">Account</Link>
 				</nav>
 			</header>
@@ -176,26 +187,35 @@ export default function Index() {
 						</div>
 					)}
 				</section>
+				{/* [bd:blog] */}
 				<section className="section" id="blog">
 					<h2 className="section__title">From the blog</h2>
-					{blog.length === 0 ? (
+					{page.blog.length === 0 ? (
 						<p className="muted">
 							No posts yet — author them in BD and they appear here.
 						</p>
 					) : (
 						<ul className="post-list">
-							{blog.map((post) => (
+							{page.blog.map((post) => (
 								<li key={post.slug}>
-									<a href={`/blog/${post.slug}`}>
+									<Link to={`/blog/${post.slug}`}>
 										<strong>{post.title}</strong>
 										<span className="muted">{post.publishedAt}</span>
-									</a>
+									</Link>
 									<p>{post.excerpt}</p>
 								</li>
 							))}
 						</ul>
 					)}
+					{page.blog.length > 0 ? (
+						<p>
+							<Link className="bd-btn" to="/blog">
+								All posts
+							</Link>
+						</p>
+					) : null}
 				</section>
+				{/* [/bd:blog] */}
 				{/* Schema-driven drop-in. `<BdForm>` (the contact island) fetches
 				    the schema and submits through the same-origin /api/bd/forms
 				    resource route, so the bearer key stays server-side. */}

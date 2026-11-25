@@ -1,20 +1,15 @@
 ---
 /**
- * Server-rendered nav. Reads the customer session + cart count server-side so
- * the header reflects signed-in state and cart contents without client JS.
+ * Server-rendered nav. Reads the customer session server-side so the header
+ * reflects signed-in state without client JS. The cart, wishlist and compare
+ * links live in the store bar (`StoreNav.astro`) on the store's pages.
  *
  * Auth uses plain `<a href="/api/bd-auth/*">` links (the handler is mounted
  * at that catch-all). Sign-out points at the same handler, which clears the
  * `bd_session` cookie and redirects home.
  */
-// [bd:store]
-import { getCartCount } from "../lib/bd-store";
-// [/bd:store]
 import { getCustomerSession } from "../lib/bd-portal";
 
-// [bd:store]
-const cartCount = await getCartCount(Astro.cookies);
-// [/bd:store]
 const session = await getCustomerSession(Astro.cookies).catch(() => null);
 const firstName = session?.user.firstName ?? null;
 ---
@@ -27,22 +22,23 @@ const firstName = session?.user.firstName ?? null;
 			<!-- [bd:store] -->
 			<a href="/store">Store</a>
 			<!-- [/bd:store] -->
-			<!-- [bd:saas] -->
+			<!-- [bd:subscriptions] -->
+			<!-- [bd:!store] -->
 			<a href="/store/subscriptions">Plans</a>
-			<!-- [/bd:saas] -->
+			<!-- [/bd:!store] -->
+			<!-- [/bd:subscriptions] -->
 			<a href="/#gallery">Gallery</a>
+			<!-- [bd:booking] -->
 			<a href="/#booking">Book</a>
+			<!-- [/bd:booking] -->
 			<a href="/reviews">Reviews</a>
 			<a href="/updates">Updates</a>
-			<a href="/#blog">Blog</a>
+			<!-- [bd:blog] -->
+			<a href="/blog">Blog</a>
+			<!-- [/bd:blog] -->
 			<a href="/#contact">Contact</a>
 		</nav>
 		<div class="app-header__actions">
-			<!-- [bd:store] -->
-			<a class="app-header__cart" href="/store/cart" aria-label="Cart">
-				Cart{cartCount > 0 ? <span class="app-header__cart-count">{cartCount}</span> : null}
-			</a>
-			<!-- [/bd:store] -->
 			{
 				session ? (
 					<>

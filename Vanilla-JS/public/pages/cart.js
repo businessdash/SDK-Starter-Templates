@@ -2,8 +2,10 @@
 /** /cart — line items, quantity, coupon, clear, and Stripe checkout. */
 import { bd, el, dollars } from "/bd.js";
 import { errBox, pageHead } from "./_ui.js";
+import { mountStoreNav } from "./_store-nav.js";
 
 export default async function render(root) {
+	mountStoreNav();
 	root.replaceChildren(pageHead("Your cart"), el("p", { class: "page__loading" }, ["Loading…"]));
 	let snap;
 	try {
@@ -16,6 +18,8 @@ export default async function render(root) {
 }
 
 function paint(root, snap) {
+	// The store bar's cart count follows this event.
+	window.dispatchEvent(new CustomEvent("bd:cart-count", { detail: Number(snap?.itemCount) || 0 }));
 	const items = snap?.items ?? [];
 	const currency = snap?.currency ?? "USD";
 	const nodes = [pageHead("Your cart")];

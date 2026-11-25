@@ -2,216 +2,81 @@
 import {
 	ChangeDetectionStrategy,
 	Component,
-	OnInit,
+	CUSTOM_ELEMENTS_SCHEMA,
+	PLATFORM_ID,
 	inject,
 	signal,
 } from "@angular/core";
+import { isPlatformBrowser } from "@angular/common";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { Title } from "@angular/platform-browser";
 import { ActivatedRoute, RouterLink } from "@angular/router";
-import {
-	bdApi,
-	type Product,
-	type ProductAddon,
-	type ProductReview,
-	type ProductReviewsPayload,
-	type RelatedProduct,
-} from "../lib/bd-api.client";
+import { bdApi } from "../lib/bd-api.client";
+import { StoreNavComponent } from "../sections/store-nav.component";
+import type { ProductPageData } from "../shop/shop-elements";
+
+/** Reviews shown at first; each "Show more" adds this many (?reviews=20). */
+const REVIEWS_PAGE = 10;
 
 /**
- * Product detail. Pulls a single product from `/api/bd/store/products/:id`
- * and offers "Add to cart". Enriched with approved reviews (avg + count), a
- * companion-addons rail, and a "you may also like" related grid — each pulled
- * from its own server endpoint and gracefully hidden when empty. Shows a
- * not-found state when the product isn't live or BD is unconfigured.
+ * One product. The browser loads the product, its reviews, add-ons and
+ * related products, and `<bd-product>` (src/app/shop/shop-elements.ts) draws
+ * the page from them: option photos, option and size buttons, the price for
+ * what's chosen, add to cart (POST /api/bd/cart/add), save, compare, share.
  */
 @Component({
 	selector: "bd-product-detail-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [RouterLink],
+	imports: [RouterLink, StoreNavComponent],
+	schemas: [CUSTOM_ELEMENTS_SCHEMA],
 	template: `
-		<section class="section">
-			@if (state() === "loading") {
-				<p class="muted">Loading…</p>
-			} @else if (state() === "missing") {
-				<h1 class="section__title">Product not found</h1>
-				<p class="muted">It may be unavailable. <a routerLink="/store">Back to store</a>.</p>
-			} @else if (product(); as p) {
-				<a routerLink="/store" class="muted">← Store</a>
-				<h1 class="section__title">{{ p.name }}</h1>
-
-				@if (reviews(); as rv) {
-					@if (rv.totalCount > 0) {
-						<p class="product__rating-summary">
-							<span class="review__stars">{{ stars(rv.avgRating) }}</span>
-							<span class="muted">{{ rv.avgRating.toFixed(1) }} · {{ rv.totalCount }} {{ rv.totalCount === 1 ? "review" : "reviews" }}</span>
-						</p>
-					}
-				}
-
-				@if (firstImage(p); as img) {
-					<img class="product__img" [src]="img" [alt]="p.name" />
-				}
-				@if (description(p); as d) {
-					<p>{{ d }}</p>
-				}
-				<button class="bd-btn" type="button" (click)="add(p.id)" [disabled]="adding()">
-					{{ adding() ? "Adding…" : "Add to cart" }}
-				</button>
-
-				<!-- ── Companion addons rail ──────────────────────────── -->
-				@if (addons().length > 0) {
-					<h2 class="section__subtitle">Complete your purchase</h2>
-					<div class="grid addon-rail">
-						@for (a of addons(); track a.id) {
-							<article class="card addon-card">
-								@if (a.imageUrl) {
-									<img class="card__img" [src]="a.imageUrl" [alt]="a.addonName" />
-								}
-								<h3>{{ a.addonName }}</h3>
-								@if (a.addonDescription) {
-									<p>{{ a.addonDescription }}</p>
-								}
-								@if (a.priceCents != null) {
-									<p class="addon-card__price">
-										<span class="price">{{ money(a.priceCents) }}</span>
-										@if (a.originalPriceCents != null && a.originalPriceCents > a.priceCents) {
-											<span class="product-card__compare">{{ money(a.originalPriceCents) }}</span>
-										}
-									</p>
-								}
-								<button
-									class="bd-btn bd-btn--ghost addon-card__add"
-									type="button"
-									(click)="add(a.addonProductId)"
-									[disabled]="adding()"
-								>
-									Add
-								</button>
-							</article>
-						}
-					</div>
-				}
-
-				<!-- ── Reviews list ───────────────────────────────────── -->
-				@if (reviewItems().length > 0) {
-					<h2 class="section__subtitle">Reviews</h2>
-					<ul class="review-list">
-						@for (r of reviewItems(); track r.id) {
-							<li class="review">
-								<div class="review__head">
-									<strong>{{ r.reviewerName || "Verified buyer" }}</strong>
-									<span class="review__stars">{{ stars(r.rating) }}</span>
-								</div>
-								@if (r.title) {
-									<p class="review__title"><strong>{{ r.title }}</strong></p>
-								}
-								@if (reviewBody(r); as body) {
-									<p>{{ body }}</p>
-								}
-							</li>
-						}
-					</ul>
-				}
-
-				<!-- ── You may also like ──────────────────────────────── -->
-				@if (related().length > 0) {
-					<h2 class="section__subtitle">You may also like</h2>
-					<div class="grid store-grid">
-						@for (r of related(); track r.id) {
-							<article class="card product-card">
-								<a class="product-card__media" [routerLink]="['/store', r.id]">
-									@if (r.coverImageUrl) {
-										<img class="card__img" [src]="r.coverImageUrl" [alt]="r.name" />
-									} @else {
-										<span class="product-card__placeholder" aria-hidden="true"></span>
-									}
-								</a>
-								<h3><a [routerLink]="['/store', r.id]">{{ r.name }}</a></h3>
-								@if (r.minPriceDollars != null) {
-									<p class="product-card__price">
-										<span class="muted product-card__from">From</span>
-										<span class="price">{{ dollars(r.minPriceDollars) }}</span>
-									</p>
-								}
-							</article>
-						}
-					</div>
-				}
-
-				<p class="store-links"><a routerLink="/cart">View cart</a></p>
+		<bd-store-nav />
+		<div class="bd-page">
+			@if (state() === "missing") {
+				<div class="bd-empty">
+					That product isn't available. <a routerLink="/store">Browse the store</a>
+				</div>
+			} @else if (!data()) {
+				<p class="bd-loading">Loading…</p>
 			}
-		</section>
+			<bd-product
+				data-add-url="/api/bd/cart/add"
+				data-cart-href="/cart"
+				data-contact-href="/#contact"
+				[data]="data()"
+			/>
+		</div>
 	`,
 })
-export class ProductDetailPage implements OnInit {
+export class ProductDetailPage {
 	private readonly route = inject(ActivatedRoute);
-	readonly product = signal<Product | null>(null);
+	private readonly title = inject(Title);
+
+	readonly data = signal<ProductPageData | null>(null);
 	readonly state = signal<"loading" | "ready" | "missing">("loading");
-	readonly adding = signal(false);
+	private loadSeq = 0;
 
-	readonly reviews = signal<ProductReviewsPayload | null>(null);
-	readonly reviewItems = signal<ProductReview[]>([]);
-	readonly addons = signal<ProductAddon[]>([]);
-	readonly related = signal<RelatedProduct[]>([]);
+	constructor() {
+		const browser = isPlatformBrowser(inject(PLATFORM_ID));
+		// The same page shows the next product when only the id changes.
+		this.route.paramMap.pipe(takeUntilDestroyed()).subscribe((params) => {
+			if (browser) void this.load(params.get("id") ?? "");
+		});
+	}
 
-	async ngOnInit() {
-		const id = this.route.snapshot.paramMap.get("id");
-		if (!id) {
+	private async load(id: string) {
+		const seq = ++this.loadSeq;
+		const asked = Number(this.route.snapshot.queryParamMap.get("reviews"));
+		const reviewLimit = Math.min(100, asked > REVIEWS_PAGE ? asked : REVIEWS_PAGE);
+		const data = id ? await bdApi.productPage(id, reviewLimit) : null;
+		if (seq !== this.loadSeq) return;
+		if (!data) {
 			this.state.set("missing");
+			this.title.setTitle("Product — Store");
 			return;
 		}
-		const p = await bdApi.product(id);
-		if (!p) {
-			this.state.set("missing");
-			return;
-		}
-		this.product.set(p);
+		this.data.set(data);
 		this.state.set("ready");
-
-		// Enrichment loads in parallel; each degrades to empty (and stays hidden)
-		// independently, so a missing reviews/addons/related endpoint never blocks
-		// the core product view.
-		const [rv, ad, rel] = await Promise.all([
-			bdApi.productReviews(id, 20),
-			bdApi.productAddons(id),
-			bdApi.relatedProducts(id, 6),
-		]);
-		if (rv) {
-			this.reviews.set(rv);
-			this.reviewItems.set(rv.items);
-		}
-		this.addons.set(ad?.items ?? []);
-		this.related.set(rel?.items ?? []);
-	}
-
-	firstImage(p: Product): string | null {
-		return Array.isArray(p.images) && p.images.length > 0 ? p.images[0] : null;
-	}
-
-	description(p: Product): string | null {
-		const d = (p as Record<string, unknown>)["description"];
-		return typeof d === "string" ? d : null;
-	}
-
-	reviewBody(r: ProductReview): string | null {
-		return r.body || r.content || null;
-	}
-
-	money(cents: number): string {
-		return (cents / 100).toLocaleString(undefined, { style: "currency", currency: "USD" });
-	}
-
-	dollars(amount: number): string {
-		return amount.toLocaleString(undefined, { style: "currency", currency: "USD" });
-	}
-
-	stars(rating: number): string {
-		const n = Math.max(0, Math.min(5, Math.round(rating)));
-		return "★★★★★".slice(0, n) + "☆☆☆☆☆".slice(0, 5 - n);
-	}
-
-	async add(id: string) {
-		this.adding.set(true);
-		await bdApi.addToCart(id, 1);
-		this.adding.set(false);
+		this.title.setTitle(`${data.product.name} — Store`);
 	}
 }

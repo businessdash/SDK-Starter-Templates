@@ -20,6 +20,17 @@ public final class BdEnvironment {
     public private(set) var session: TenantSession?
     public private(set) var visitorToken: String = ""
 
+    /// The wishlist, the compare picks and recently viewed, on this device.
+    public let saved = SavedLists()
+
+    /// The tab on screen, so a screen can send the customer to another one
+    /// ("View cart", "Sign in to comment").
+    public var tab: BdTab = .shop
+
+    /// Units in the cart, for the Cart tab's badge. Set from every cart
+    /// answer (`noteCart`), so it follows adds without a refetch.
+    public private(set) var cartCount = 0
+
     /// Held in memory alongside `session` so `portal` is a plain computed
     /// property rather than something every call site has to await.
     /// The Keychain remains the source of truth across launches.
@@ -59,6 +70,7 @@ public final class BdEnvironment {
     /// stored session token.
     public func bootstrap() async {
         visitorToken = await sessions.visitorToken()
+        if let cart, let snapshot = try? await cart.snapshot() { noteCart(snapshot) }
 
         guard let auth else { return }
         let token = await sessions.sessionToken()
@@ -103,6 +115,15 @@ public final class BdEnvironment {
         sessionToken = nil
     }
 
+    /// Keep the badge in step with what the cart says now.
+    public func noteCart(_ snapshot: CartSnapshot) {
+        cartCount = snapshot.units
+    }
+
+    /// The signed-in customer's session token, for liking and commenting on
+    /// posts; nil when nobody is signed in.
+    var memberSessionToken: String? { session == nil ? nil : sessionToken }
+
     public var cart: CartResource? {
         guard let client, !visitorToken.isEmpty else { return nil }
         return client.cart(visitorToken: visitorToken)
@@ -136,3 +157,8 @@ public final class BdEnvironment {
 // isolation boundary and the compiler rejects the conformance. The
 // `@Observable` path has no such requirement — there is no default to
 // construct off the main actor.
+
+/// The starter's tabs.
+public enum BdTab: Hashable, Sendable {
+    case shop, cart, blog, chat, account
+}

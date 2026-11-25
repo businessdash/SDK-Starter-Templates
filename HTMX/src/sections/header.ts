@@ -8,13 +8,22 @@ export function renderHeader(): string {
 			<nav>
 				<a href="#about">About</a>
 				<a href="#services">Services</a>
+				<!-- [bd:store] -->
 				<a href="/store">Store</a>
+				<!-- [/bd:store] -->
+				<!-- The store bar links the plans when there is a store. -->
+				<!-- [bd:subscriptions] -->
+				<!-- [bd:!store] -->
 				<a href="/subscriptions">Plans</a>
+				<!-- [/bd:!store] -->
+				<!-- [/bd:subscriptions] -->
+				<!-- [bd:blog] -->
+				<a href="/blog">Blog</a>
+				<!-- [/bd:blog] -->
 				<a href="/reviews">Reviews</a>
 				<a href="/updates">Updates</a>
 				<a href="/todos">Todos</a>
 				<a href="/quiz">Quiz</a>
-				<a href="/cart">Cart</a>
 				<a href="/my-account">Account</a>
 			</nav>
 		</header>

@@ -3,9 +3,9 @@ import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, Show } from "solid-js";
 
 import { getMyAccount, submitCustomerReview } from "../lib/bd-server-fns";
-// [bd:saas]
+// [bd:subscriptions]
 import { changePlan, type MyAccountData } from "../lib/bd-server-fns";
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /** Where sign-in returns to: a path on this site. */
 function safeNext(raw: unknown): string | undefined {
@@ -108,9 +108,9 @@ function MyAccount() {
 							<WorkSummary work={work()} />
 						</div>
 
-						{/* [bd:saas] */}
+						{/* [bd:subscriptions] */}
 						<PlanCard plan={data().plan} />
-						{/* [/bd:saas] */}
+						{/* [/bd:subscriptions] */}
 
 						<ReviewForm />
 
@@ -276,7 +276,7 @@ function ReviewForm() {
 	);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 function formatDate(iso: string): string {
 	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(
 		new Date(iso),
@@ -362,4 +362,4 @@ function PlanCard(props: { plan: MyAccountData["plan"] }) {
 		</div>
 	);
 }
-// [/bd:saas]
+// [/bd:subscriptions]

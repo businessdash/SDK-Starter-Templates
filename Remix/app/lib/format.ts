@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 /**
  * Pure display helpers — safe in both server and client bundles (no `.server`
  * suffix, no SDK/secret imports). The cart component uses `formatCents`

@@ -25,6 +25,11 @@ public struct Product: Decodable, Sendable, Identifiable, Equatable {
     public let avgRating: Double?
     public let reviewCount: Int?
     public let isOnSale: Bool?
+    // The grid's card flags (`meta=1`).
+    public let hasMultipleVariants: Bool?
+    public let isNew: Bool?
+    public let isBestSeller: Bool?
+    public let isLowStock: Bool?
 
     public var imageURL: URL? { coverImage.flatMap(URL.init(string:)) }
 }
@@ -48,21 +53,83 @@ public struct ProductGridResponse: Decodable, Sendable {
     public var products: [Product] { items }
 }
 
-public struct CategoryCount: Decodable, Sendable, Identifiable, Equatable {
-    public let id: String
-    public let name: String
+/// How many products of a category the list has: `categoryId`, not `id` and
+/// `name` — the names come from `storefront/categories`.
+public struct CategoryCount: Decodable, Sendable, Equatable {
+    public let categoryId: String
     public let count: Int?
 }
 
+/// The catalogue's cheapest and dearest price, in **dollars** (not cents).
 public struct PriceRange: Decodable, Sendable, Equatable {
-    public let minCents: Int?
-    public let maxCents: Int?
+    public let minDollars: Double
+    public let maxDollars: Double
+}
+
+public struct StoreCategory: Decodable, Sendable, Identifiable, Equatable {
+    public let id: String
+    public let name: String
 }
 
 public struct CategoryListResponse: Decodable, Sendable {
-    public let items: [CategoryCount]
+    public let items: [StoreCategory]
 
-    public var categories: [CategoryCount] { items }
+    public var categories: [StoreCategory] { items }
+}
+
+/// A product review: `title` and `content` (older rows: `body`), unlike the
+/// review wall's `text`. One page of them comes with the product's average.
+public struct ProductReview: Decodable, Sendable, Identifiable, Equatable {
+    public let id: String
+    public let rating: Double
+    public let title: String?
+    public let content: String?
+    public let body: String?
+    public let reviewerName: String?
+    public let createdAt: String?
+
+    public var text: String? { content?.nilIfEmpty ?? body?.nilIfEmpty }
+}
+
+public struct ProductReviewPage: Decodable, Sendable, Equatable {
+    public let items: [ProductReview]
+    public let avgRating: Double
+    public let totalCount: Int
+}
+
+/// "Complete your …": a product sold alongside this one.
+public struct StoreAddon: Decodable, Sendable, Identifiable, Equatable {
+    public let id: String
+    public let addonProductId: String
+    public let addonName: String
+    public let groupLabel: String?
+    /// **Integer cents.**
+    public let priceCents: Int?
+    public let imageUrl: String?
+    public let variants: [JSONValue]?
+
+    /// The variant the Add button puts in the cart: the add-on's first. Its
+    /// id is `variantId`; `id` is read too, as the web starters do.
+    public var firstVariantID: String? {
+        variants?.first?["variantId"]?.stringValue ?? variants?.first?["id"]?.stringValue
+    }
+}
+
+public struct AddonListResponse: Decodable, Sendable {
+    public let items: [StoreAddon]
+}
+
+/// "You may also like". Not a card: `coverImageUrl`, and a price in
+/// **dollars** (`minPriceDollars`).
+public struct RelatedProduct: Decodable, Sendable, Identifiable, Equatable {
+    public let id: String
+    public let name: String
+    public let coverImageUrl: String?
+    public let minPriceDollars: Double?
+}
+
+public struct RelatedProductListResponse: Decodable, Sendable {
+    public let items: [RelatedProduct]
 }
 
 // MARK: - Cart
@@ -73,8 +140,13 @@ public struct CartSnapshot: Decodable, Sendable, Equatable {
     public let subtotal: Double?
     public let currency: String?
     public let couponCode: String?
+    /// Units across every line, for the cart badge.
+    public let itemCount: Int?
 
     public var isEmpty: Bool { items.isEmpty }
+
+    /// Units in the cart, from `itemCount` or added up from the lines.
+    public var units: Int { itemCount ?? items.reduce(0) { $0 + $1.quantity } }
 
     /// What a screen shows before the first load, and when the app isn't
     /// configured. A struct's memberwise init is internal, so without this a
@@ -83,32 +155,44 @@ public struct CartSnapshot: Decodable, Sendable, Equatable {
         items: [], subtotal: nil, currency: nil, couponCode: nil
     )
 
-    public init(items: [CartItem], subtotal: Double?, currency: String?, couponCode: String?) {
+    public init(items: [CartItem], subtotal: Double?, currency: String?, couponCode: String?, itemCount: Int? = nil) {
         self.items = items
         self.subtotal = subtotal
         self.currency = currency
         self.couponCode = couponCode
+        self.itemCount = itemCount
     }
 }
 
+/// A cart line names its product `productName` and the chosen variant (size,
+/// colour) `variantTitle` — there is no `name`.
 public struct CartItem: Decodable, Sendable, Identifiable, Equatable {
     public let id: String
     public let productId: String?
-    public let name: String?
+    public let productName: String?
+    public let variantTitle: String?
     public let quantity: Int
     /// **Already decimal.**
     public let unitPrice: Double?
+
+    /// "Everyday Trainer · Size 42".
+    public var title: String {
+        [productName?.nilIfEmpty ?? "Item", variantTitle?.nilIfEmpty].compactMap(\.self).joined(separator: " · ")
+    }
 }
 
 public struct CartAddItemInput: Encodable, Sendable {
     public let productId: String
     public let variantId: String?
     public let quantity: Int
+    /// The option picks, by group title: `["Size": "42"]`.
+    public let options: [String: String]?
 
-    public init(productId: String, variantId: String? = nil, quantity: Int = 1) {
+    public init(productId: String, variantId: String? = nil, quantity: Int = 1, options: [String: String]? = nil) {
         self.productId = productId
         self.variantId = variantId
         self.quantity = quantity
+        self.options = options
     }
 }
 
@@ -144,6 +228,14 @@ public struct CheckoutSession: Decodable, Sendable {
     public var stripeURL: URL? { URL(string: stripeUrl) }
 }
 
+/// `checkout/{sessionId}`, read when Stripe sends the customer back.
+public struct CheckoutStatus: Decodable, Sendable, Equatable {
+    public let paymentStatus: String?
+    public let customerEmail: String?
+
+    public var isPaid: Bool { paymentStatus == "paid" }
+}
+
 // MARK: - Blog
 
 /// `blog/posts/{slug}` wraps the post: `{ post, access }`. `access` is
@@ -168,6 +260,52 @@ public struct BlogPost: Decodable, Sendable, Identifiable, Equatable {
     public let publishedAt: String?
     /// `public` | `followers` | `paid`.
     public let accessLevel: String?
+    public let isPinned: Bool?
+    public let authorName: String?
+    public let authorAvatarUrl: String?
+    public let tags: [String]?
+    public let likes: Int?
+    /// The post's call to action: a button under the body.
+    public let ctaLabel: String?
+    public let ctaHref: String?
+    public let ctaDescription: String?
+}
+
+public struct BlogCategory: Decodable, Sendable, Identifiable, Equatable {
+    public let id: String
+    public let name: String
+    public let description: String?
+}
+
+public struct BlogCategoryListResponse: Decodable, Sendable {
+    public let items: [BlogCategory]
+}
+
+public struct BlogTagListResponse: Decodable, Sendable {
+    public let items: [String]
+}
+
+/// `{ liked, likesCount }` for the signed-in customer.
+public struct PostLikes: Decodable, Sendable, Equatable {
+    public let liked: Bool
+    public let likesCount: Int
+
+    public init(liked: Bool, likesCount: Int) {
+        self.liked = liked
+        self.likesCount = likesCount
+    }
+}
+
+public struct BlogCommentInput: Encodable, Sendable {
+    public let content: String
+}
+
+/// A posted comment: `moderation.isApproved` false means it waits for review.
+public struct BlogCommentPosted: Decodable, Sendable {
+    public struct Moderation: Decodable, Sendable {
+        public let isApproved: Bool
+    }
+    public let moderation: Moderation
 }
 
 public struct BlogListResponse: Decodable, Sendable {
@@ -180,6 +318,7 @@ public struct BlogListResponse: Decodable, Sendable {
 public struct BlogComment: Decodable, Sendable, Identifiable, Equatable {
     public let id: String
     public let authorName: String?
+    public let authorAvatarUrl: String?
     /// A comment's text is `content` — even though `authorName` IS the right
     /// name here. The platform is not uniform about this; check per surface.
     public let content: String
@@ -194,33 +333,145 @@ public struct BlogCommentListResponse: Decodable, Sendable {
 
 // MARK: - Reviews
 
-/// A review-wall item. Note `text` and `reviewerName` — not `body` and
-/// `authorName`, which is what most APIs would call them.
+/// A business review from the review wall: Google, Yelp, Housecall Pro, or
+/// one added in the dashboard (`other`). Note `text` and `reviewerName` — not
+/// `body` and `authorName`, which is what most APIs would call them.
 public struct Review: Decodable, Sendable, Identifiable, Equatable {
     public let id: String
     public let rating: Double
     public let text: String?
     public let reviewerName: String?
     public let reviewerImageUrl: String?
+    /// `google`, `yelp`, `housecall_pro` or `other`; `ReviewSource.label`
+    /// names it.
     public let source: String?
     public let verified: Bool?
     public let timeCreated: String?
+    /// The review on its own site. Open only http(s) links.
+    public let reviewUrl: String?
+    /// Photos the reviewer attached.
+    public let photos: [String]?
+
+    public init(
+        id: String, rating: Double, text: String?, reviewerName: String?, reviewerImageUrl: String? = nil,
+        source: String?, verified: Bool? = nil, timeCreated: String?, reviewUrl: String? = nil, photos: [String]? = nil
+    ) {
+        self.id = id
+        self.rating = rating
+        self.text = text
+        self.reviewerName = reviewerName
+        self.reviewerImageUrl = reviewerImageUrl
+        self.source = source
+        self.verified = verified
+        self.timeCreated = timeCreated
+        self.reviewUrl = reviewUrl
+        self.photos = photos
+    }
 }
 
 public struct ReviewListResponse: Decodable, Sendable {
     public let items: [Review]
+    /// Reviews matching the source filter, for "N reviews".
+    public let totalCount: Int?
+    /// Pass back as `offset` for the next page; nil once there are no more.
+    public let nextOffset: Int?
 
     public var reviews: [Review] { items }
 }
 
-public struct ReviewInput: Encodable, Sendable {
-    public let rating: Int
-    public let body: String
-
-    public init(rating: Int, body: String) {
-        self.rating = rating
-        self.body = body
+/// The platforms a business review comes from, by name. `other` is a review
+/// added in the dashboard or imported from a CSV.
+public enum ReviewSource {
+    public static func label(_ source: String?) -> String {
+        switch source {
+        case "google": "Google"
+        case "yelp": "Yelp"
+        case "housecall_pro": "Housecall Pro"
+        default: "Other"
+        }
     }
+
+    /// The platform's name where one is worth showing on a review.
+    public static func platform(_ source: String?) -> String? {
+        source == "google" || source == "yelp" || source == "housecall_pro" ? label(source) : nil
+    }
+}
+
+/// The business's rating over all its reviews, from the marketing bundle:
+/// the average, the count, and how many gave each star.
+public struct ReviewSummary: Decodable, Sendable, Equatable {
+    public struct StarCount: Decodable, Sendable, Equatable {
+        public let rating: Int
+        public let count: Int
+
+        public init(rating: Int, count: Int) {
+            self.rating = rating
+            self.count = count
+        }
+    }
+
+    /// The bundle's own shape for its first page of reviews.
+    public struct Item: Decodable, Sendable, Equatable {
+        public let reviewee: String
+        public let rating: Double
+        public let image: String?
+        public let description: String
+        public let date: String
+        public let photos: [String]?
+        public let platform: String
+    }
+
+    public let rating: Double?
+    public let totalCount: Int?
+    public let counts: [StarCount]?
+    public let items: [Item]
+
+    public init(rating: Double?, totalCount: Int?, counts: [StarCount]?, items: [Item] = []) {
+        self.rating = rating
+        self.totalCount = totalCount
+        self.counts = counts
+        self.items = items
+    }
+
+    /// 5 stars down to 1, each with its count and its share of all reviews
+    /// (0...1). Missing stars count 0.
+    public var histogram: [(stars: Int, count: Int, share: Double)] {
+        let byStars = Dictionary((counts ?? []).map { ($0.rating, $0.count) }, uniquingKeysWith: +)
+        let total = max(1, byStars.values.reduce(0, +))
+        return (1...5).reversed().map { stars in
+            let count = byStars[stars] ?? 0
+            return (stars, count, Double(count) / Double(total))
+        }
+    }
+}
+
+struct ReviewSummaryEnvelope: Decodable, Sendable {
+    let reviews: ReviewSummary?
+}
+
+/// A review a signed-in customer writes. It waits for the business to
+/// approve it before it shows on the wall.
+public struct ReviewInput: Encodable, Sendable {
+    /// 1 to 5.
+    public let rating: Int
+    public let title: String?
+    /// Up to 5,000 characters.
+    public let body: String
+    /// Ties the review to one of the customer's jobs.
+    public let jobId: String?
+
+    public init(rating: Int, title: String? = nil, body: String, jobId: String? = nil) {
+        self.rating = rating
+        self.title = title
+        self.body = body
+        self.jobId = jobId
+    }
+}
+
+public struct ReviewSubmitted: Decodable, Sendable {
+    public let id: String?
+    /// `pending` until the business approves it.
+    public let status: String?
 }
 
 // MARK: - Subscriptions

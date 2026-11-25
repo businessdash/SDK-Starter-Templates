@@ -1,4 +1,4 @@
-// [bd-file:saas]
+// [bd-file:subscriptions]
 import type { APIRoute } from "astro";
 
 import { setPlanCancelled } from "../../../../lib/bd-portal";

@@ -1,73 +1,93 @@
-import { useEffect, useState } from "react";
-import { bd } from "../lib/bd";
-import type { Loose } from "../lib/bd";
-import { ErrorBox, PageHead } from "./ui";
+import { useEffect } from "react";
 
-function stars(n: any): string {
-	const full = Math.max(0, Math.min(5, Math.round(Number(n) || 0)));
-	return "★".repeat(full) + "☆".repeat(5 - full);
-}
+import type { ReviewsPageData } from "../components/reviews/reviews-page";
+import { ReviewsView } from "../components/reviews/ReviewsView";
+import {
+	type ReviewSendResult,
+	type ReviewToSend,
+	ReviewWriter,
+} from "../components/reviews/ReviewWriter";
+import { useSearchParams } from "../lib/router";
+import { ErrorBox, useApi } from "./ui";
 
+/**
+ * The business's reviews: the rating with a bar per star, a platform filter
+ * (`?source=`), each review with its photos, Verified and a link to it on
+ * Google or Yelp, "Show more" (`?shown=`), and writing one. The server
+ * gathers the page (`GET /api/bd/reviews/page`) and takes a written review
+ * (`POST /api/bd/reviews/write`); the rules are
+ * `components/reviews/reviews.ts`, the same in every BD starter.
+ */
 export function Reviews() {
-	const [items, setItems] = useState<Record<string, any>[]>([]);
-	const [offset, setOffset] = useState<number | null>(0);
-	const [total, setTotal] = useState<number | null>(null);
-	const [error, setError] = useState<unknown>(null);
-	const [loading, setLoading] = useState(false);
+	const params = useSearchParams();
+	const source = params.get("source") ?? "";
+	const shown = params.get("shown") ?? "";
+	const { data, error } = useApi(
+		() => getReviewsPage(source, shown),
+		[source, shown],
+	);
 
-	const load = async (o: number) => {
-		setLoading(true);
-		try {
-			const res: Loose = await bd.reviews.list({ limit: 10, offset: o });
-			setItems((prev) => [...prev, ...(res.items ?? [])]);
-			setTotal(typeof res.totalCount === "number" ? res.totalCount : null);
-			setOffset(res.nextOffset ?? null);
-		} catch (e) {
-			setError(e);
-		} finally {
-			setLoading(false);
-		}
-	};
-
+	// "Show more" leads to the first new review, which is there once the
+	// page has loaded.
 	useEffect(() => {
-		void load(0);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+		const id = decodeURIComponent(window.location.hash.slice(1));
+		if (data && id) document.getElementById(id)?.scrollIntoView();
+	}, [data]);
 
 	return (
-		<main className="page">
-			<PageHead title="Reviews" sub="What customers say." />
-			{total != null ? (
-				<p className="review-count muted">
-					{total} review{total === 1 ? "" : "s"}
-				</p>
-			) : null}
-			{error && items.length === 0 ? <ErrorBox error={error} /> : null}
-			<ul className="review-list">
-				{items.map((r) => (
-					<li key={r.id} className="review-card">
-						<div className="review-card__head">
-							{r.reviewerImageUrl ? <img className="review-card__avatar" src={r.reviewerImageUrl} alt="" /> : null}
-							<div className="review-card__who">
-								<div className="review-card__name">{r.reviewerName ?? "Anonymous"}</div>
-								<div className="review-card__stars" aria-label={`${r.rating} out of 5`}>
-									{stars(r.rating)}
-								</div>
-							</div>
-							{r.source ? <span className="review-card__source">{r.source}</span> : null}
-						</div>
-						<p className="review-card__text">{r.text ?? ""}</p>
-					</li>
-				))}
-			</ul>
-			{!loading && items.length === 0 && !error ? <p className="muted">No reviews yet.</p> : null}
-			<div className="review-more">
-				{offset != null ? (
-					<button className="btn btn--ghost" type="button" disabled={loading} onClick={() => void load(offset)}>
-						{loading ? "Loading…" : "Load more"}
-					</button>
-				) : null}
-			</div>
+		<main className="bd-page">
+			{error && !data ? (
+				<ErrorBox error={error} />
+			) : !data ? (
+				<p className="bd-loading">Loading reviews…</p>
+			) : (
+				<ReviewsView
+					data={data}
+					writer={
+						<ReviewWriter
+							send={sendReview}
+							signedIn={data.signedIn}
+							signInHref="/my-account?next=%2Freviews"
+						/>
+					}
+				/>
+			)}
 		</main>
 	);
+}
+
+async function getReviewsPage(
+	source: string,
+	shown: string,
+): Promise<ReviewsPageData> {
+	const query = new URLSearchParams();
+	if (source) query.set("source", source);
+	if (shown) query.set("shown", shown);
+	const search = query.toString();
+	const res = await fetch(`/api/bd/reviews/page${search ? `?${search}` : ""}`);
+	if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+	return (await res.json()) as ReviewsPageData;
+}
+
+/** The writer's `send`: the review as JSON to the server. */
+async function sendReview(review: ReviewToSend): Promise<ReviewSendResult> {
+	try {
+		const res = await fetch("/api/bd/reviews/write", {
+			method: "POST",
+			headers: { "content-type": "application/json" },
+			body: JSON.stringify(review),
+		});
+		const reply = (await res.json().catch(() => null)) as {
+			ok?: boolean;
+			error?: string;
+		} | null;
+		if (res.ok && reply?.ok) return { ok: true };
+		return {
+			ok: false,
+			error: reply?.error ?? "Couldn't send your review. Try again.",
+			signedOut: res.status === 401,
+		};
+	} catch {
+		return { ok: false, error: "Couldn't send your review. Try again." };
+	}
 }

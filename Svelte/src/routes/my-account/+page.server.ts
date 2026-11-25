@@ -10,9 +10,9 @@ import {
 	isCustomerPortalConfigured,
 	submitCustomerReview
 } from '#lib/server/bd-portal.ts';
-// [bd:saas]
+// [bd:subscriptions]
 import { getCustomerSubscription, setPlanCancelled } from '#lib/server/bd-portal.ts';
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /**
  * Customer portal. Reads + validates the `bd_session` cookie via
@@ -26,9 +26,9 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			configured: false as const,
 			session: null,
 			work: null,
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan: null,
-			// [/bd:saas]
+			// [/bd:subscriptions]
 		};
 	}
 	const cookieValue = cookies.get(SESSION_COOKIE);
@@ -38,23 +38,23 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			configured: true as const,
 			session: null,
 			work: null,
-			// [bd:saas]
+			// [bd:subscriptions]
 			plan: null,
-			// [/bd:saas]
+			// [/bd:subscriptions]
 		};
 	}
 	const work = await getCustomerWork(cookieValue);
-	// [bd:saas]
+	// [bd:subscriptions]
 	const plan = await getCustomerSubscription(cookieValue);
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	return {
 		configured: true as const,
 		// Only hand the client the display-safe fields — never the token.
 		session: { user: session.user, role: session.role },
 		work,
-		// [bd:saas]
+		// [bd:subscriptions]
 		plan,
-		// [/bd:saas]
+		// [/bd:subscriptions]
 	};
 };
 
@@ -65,7 +65,7 @@ export type ReviewState =
 	| { status: 'success'; message: string; reviewStatus?: string }
 	| { status: 'error'; message: string; fieldErrors: ReviewFieldErrors };
 
-// [bd:saas]
+// [bd:subscriptions]
 /** Result of cancelling a plan, or taking the cancel back. */
 export type PlanChangeState =
 	| { status: 'ok'; cancelAtPeriodEnd: boolean; accessUntil: string | null }
@@ -90,7 +90,7 @@ async function changePlan(cookieValue: string | undefined, cancel: boolean) {
 		});
 	}
 }
-// [/bd:saas]
+// [/bd:subscriptions]
 
 const reviewSchema = z.object({
 	rating: z.coerce.number().int().min(1).max(5),
@@ -104,12 +104,12 @@ const reviewSchema = z.object({
 });
 
 export const actions: Actions = {
-	// [bd:saas]
+	// [bd:subscriptions]
 	/** Stop the renewal. Access runs to the end of the paid period. */
 	cancelPlan: async ({ cookies }) => changePlan(cookies.get(SESSION_COOKIE), true),
 	/** Take a pending cancel back. */
 	resumePlan: async ({ cookies }) => changePlan(cookies.get(SESSION_COOKIE), false),
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	/** Validate + submit a customer review via the BD portal. */
 	submitReview: async ({ request, cookies }) => {
 		if (!isCustomerPortalConfigured()) {

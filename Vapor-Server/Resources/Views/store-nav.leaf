@@ -1,0 +1,19 @@
+<!-- The bar under the header on every store and plan page: products and plans
+     on the left; wishlist, compare and the cart with their counts on the right.
+     Included with \#extend("store-nav"); it reads `cartCount`.
+
+     The cart count comes from the server; after that <bd-cart-count> follows
+     each `bd:cart-count` event the product page sends when it adds. The
+     wishlist and compare lists live in this browser, so the shop elements
+     (Public/shop/shop-elements.js) fill in their counts there. -->
+<nav aria-label="Store" class="store-nav">
+  <div class="store-nav__links">
+    <a href="/store">Products</a>
+    <a href="/subscriptions">Plans</a>
+  </div>
+  <div class="store-nav__links">
+    <a href="/store/wishlist">Wishlist<bd-saved-count data-list="wishlist"></bd-saved-count></a>
+    <a href="/store/compare">Compare<bd-saved-count data-list="compare"></bd-saved-count></a>
+    <a class="store-nav__cart" href="/cart">Cart<bd-cart-count data-count="#(cartCount)">#if(cartCount > 0):<span class="store-nav__badge">#(cartCount)</span>#endif</bd-cart-count></a>
+  </div>
+</nav>

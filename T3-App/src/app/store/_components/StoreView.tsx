@@ -5,6 +5,10 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { type FormEvent, useMemo } from "react";
 
+import { CompareBar } from "@/app/_components/bd/shop/CompareBar";
+import { SaveButtons } from "@/app/_components/bd/shop/SaveButtons";
+import { StarRating } from "@/app/_components/bd/shop/StarRating";
+
 import { Notice } from "./Notice";
 
 /** Enriched grid card from `storefront.listProductsWithMeta`. */
@@ -71,21 +75,11 @@ function priceLabel(cents: number | null): string {
 	}
 }
 
-/** Filled-star rating, e.g. "★★★★☆". Half-rounded to whole stars. */
-function Stars({ rating }: { rating: number }) {
-	const filled = Math.round(rating);
-	return (
-		<span
-			aria-label={`${rating.toFixed(1)} out of 5`}
-			className="store-stars"
-			role="img"
-		>
-			{"★★★★★".slice(0, filled)}
-			<span className="store-stars__empty">{"★★★★★".slice(filled)}</span>
-		</span>
-	);
-}
-
+/**
+ * The product list: search, category, price and rating filters with a sort,
+ * all in the URL (?q, ?category, ?price, ?rating, ?sort), so a filtered list
+ * can be shared. Each card can be saved or added to the comparison.
+ */
 export function StoreView({
 	status,
 	meta,
@@ -136,13 +130,13 @@ export function StoreView({
 	};
 
 	return (
-		<div>
-			<div className="bd-section__lead" style={{ textAlign: "left" }}>
+		<>
+			<div className="bd-section__lead">
 				<span className="bd-section__eyebrow">Shop</span>
 				<h1 className="bd-section__title">Products</h1>
-				<p className="bd-section__sub" style={{ margin: 0 }}>
-					Filterable grid + facets via{" "}
-					<code className="bd-code">storefront.listProductsWithMeta()</code>
+				<p className="bd-section__sub">
+					Filter, sort, and open a product to choose its options and add it to
+					your cart.
 				</p>
 			</div>
 
@@ -158,16 +152,17 @@ export function StoreView({
 				/>
 			) : (
 				<div className="store-layout">
-					{/* Sidebar facets */}
 					<aside className="store-sidebar">
 						<form onSubmit={onSearch}>
 							<label className="bd-label" htmlFor="store-search">
 								Search
 							</label>
 							<input
+								autoComplete="off"
 								className="bd-input"
 								defaultValue={filters.search ?? ""}
 								id="store-search"
+								key={filters.search ?? ""}
 								name="q"
 								placeholder="Search products…"
 								type="search"
@@ -180,27 +175,28 @@ export function StoreView({
 								<ul className="store-facet__list">
 									<li>
 										<button
-											className={`store-facet__btn${filters.categoryId ? "" : " is-active"}`}
+											className={`store-facet__item${filters.categoryId ? "" : " store-facet__item--active"}`}
 											onClick={() => setParam("category", null)}
 											type="button"
 										>
-											<span>All products</span>
+											All products
 										</button>
 									</li>
 									{categories.map((c) => {
 										const active = filters.categoryId === c.id;
-										const count = countByCategory.get(c.id) ?? 0;
 										return (
 											<li key={c.id}>
 												<button
-													className={`store-facet__btn${active ? " is-active" : ""}`}
+													className={`store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}`}
 													onClick={() =>
 														setParam("category", active ? null : c.id)
 													}
 													type="button"
 												>
 													<span>{c.name}</span>
-													<span className="store-facet__count">{count}</span>
+													<span className="store-facet__count">
+														{countByCategory.get(c.id) ?? 0}
+													</span>
 												</button>
 											</li>
 										);
@@ -211,24 +207,33 @@ export function StoreView({
 
 						<form className="store-facet" onSubmit={onPrice}>
 							<p className="store-facet__title">Price</p>
-							<div className="store-facet__price">
+							<div className="store-price">
 								<input
+									aria-label="Lowest price"
 									className="bd-input"
 									defaultValue={filters.minDollars ?? ""}
 									inputMode="numeric"
+									key={`min${filters.minDollars ?? ""}`}
 									name="min"
 									placeholder={`$${meta.priceRange.minDollars}`}
 								/>
-								<span aria-hidden>–</span>
+								<span aria-hidden="true" className="store-price__sep">
+									–
+								</span>
 								<input
+									aria-label="Highest price"
 									className="bd-input"
 									defaultValue={filters.maxDollars ?? ""}
 									inputMode="numeric"
+									key={`max${filters.maxDollars ?? ""}`}
 									name="max"
 									placeholder={`$${meta.priceRange.maxDollars}`}
 								/>
 							</div>
-							<button className="bd-btn bd-btn--ghost" type="submit">
+							<button
+								className="bd-btn bd-btn--ghost store-price__apply"
+								type="submit"
+							>
 								Apply
 							</button>
 						</form>
@@ -241,15 +246,14 @@ export function StoreView({
 									return (
 										<li key={r}>
 											<button
-												className={`store-facet__btn${active ? " is-active" : ""}`}
+												className={`store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}`}
 												onClick={() =>
 													setParam("rating", active ? null : String(r))
 												}
 												type="button"
 											>
-												<span>
-													<Stars rating={r} /> &amp; up
-												</span>
+												<StarRating rating={r} />
+												<span className="store-facet__count">&amp; up</span>
 											</button>
 										</li>
 									);
@@ -259,7 +263,7 @@ export function StoreView({
 
 						{hasFilters ? (
 							<button
-								className="store-facet__clear"
+								className="store-clear"
 								onClick={() => router.push(pathname, { scroll: false })}
 								type="button"
 							>
@@ -268,12 +272,11 @@ export function StoreView({
 						) : null}
 					</aside>
 
-					{/* Grid */}
 					<div className="store-results">
 						<div className="store-results__bar">
-							<p className="bd-loading" style={{ fontStyle: "normal" }}>
-								{meta.items.length} product
-								{meta.items.length === 1 ? "" : "s"}
+							<p className="bd-loading">
+								{meta.items.length}{" "}
+								{meta.items.length === 1 ? "product" : "products"}
 							</p>
 							<label className="store-sort">
 								<span>Sort</span>
@@ -297,76 +300,93 @@ export function StoreView({
 						</div>
 
 						{meta.items.length === 0 ? (
-							<Notice
-								body="No products match these filters. Try clearing a filter or broadening your search."
-								title="Nothing here yet"
-							/>
+							<div className="bd-empty">
+								{hasFilters
+									? "No products match these filters. Try clearing a filter or broadening your search."
+									: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
+							</div>
 						) : (
 							<div className="bd-grid-3">
 								{meta.items.map((p) => (
-									<Link
-										className="bd-card store-card"
-										href={`/store/${p.id}`}
-										key={p.id}
-									>
-										<div className="store-card__media">
-											{p.coverImage ? (
-												// eslint-disable-next-line @next/next/no-img-element
-												<img
-													alt={p.name}
-													loading="lazy"
-													referrerPolicy="no-referrer"
-													src={p.coverImage}
-												/>
-											) : (
-												<span className="store-card__noimg">No image</span>
-											)}
-											<div className="store-card__badges">
-												{p.isBestSeller ? (
-													<span className="bd-badge">Best seller</span>
-												) : null}
-												{p.isNew ? <span className="bd-badge">New</span> : null}
-												{p.isOnSale ? (
-													<span className="bd-badge store-badge--sale">
-														Sale
-													</span>
-												) : null}
-											</div>
-										</div>
-										<div className="store-card__body">
-											<div className="store-card__head">
-												<h3>{p.name}</h3>
-											</div>
-											{p.reviewCount > 0 ? (
-												<div className="store-card__rating">
-													<Stars rating={p.avgRating} />
-													<span className="store-card__reviews">
-														({p.reviewCount})
-													</span>
+									<div className="bd-card product-card" key={p.id}>
+										<Link
+											className="product-card__link"
+											href={`/store/${p.id}`}
+										>
+											<div className="product-card__media">
+												{p.coverImage ? (
+													// eslint-disable-next-line @next/next/no-img-element
+													<img
+														alt={p.name}
+														className="product-card__img"
+														loading="lazy"
+														referrerPolicy="no-referrer"
+														src={p.coverImage}
+													/>
+												) : (
+													<div className="product-card__noimg">No image</div>
+												)}
+												<div className="product-card__badges">
+													{p.isBestSeller ? (
+														<span className="bd-badge">Best seller</span>
+													) : null}
+													{p.isNew ? (
+														<span className="bd-badge">New</span>
+													) : null}
+													{p.isOnSale ? (
+														<span className="bd-badge product-card__badge--sale">
+															Sale
+														</span>
+													) : null}
 												</div>
-											) : null}
-											<div className="store-card__pricing">
-												<span className="store-card__price">
-													{p.hasMultipleVariants ? "From " : ""}
-													{priceLabel(p.cheapestPriceCents)}
-												</span>
-												{p.isOnSale && p.comparePriceCents != null ? (
-													<span className="store-card__compare">
-														{priceLabel(p.comparePriceCents)}
+											</div>
+											<div className="product-card__body">
+												<h3>{p.name || "Untitled"}</h3>
+												{p.reviewCount > 0 ? (
+													<div className="product-card__rating">
+														<StarRating rating={p.avgRating} />
+														<span className="product-card__count">
+															({p.reviewCount})
+														</span>
+													</div>
+												) : null}
+												<div className="product-card__price">
+													<span className="product-card__amount">
+														{p.hasMultipleVariants ? "From " : ""}
+														{priceLabel(p.cheapestPriceCents)}
+													</span>
+													{p.isOnSale && p.comparePriceCents != null ? (
+														<span className="product-card__compare">
+															{priceLabel(p.comparePriceCents)}
+														</span>
+													) : null}
+												</div>
+												{p.isLowStock ? (
+													<span className="product-card__lowstock">
+														Low stock
 													</span>
 												) : null}
 											</div>
-											{p.isLowStock ? (
-												<span className="store-card__lowstock">Low stock</span>
-											) : null}
+										</Link>
+										<div className="product-card__save">
+											<SaveButtons
+												compact
+												product={{
+													id: p.id,
+													name: p.name,
+													image: p.coverImage,
+													priceCents: p.cheapestPriceCents,
+												}}
+											/>
 										</div>
-									</Link>
+									</div>
 								))}
 							</div>
 						)}
+						<CompareBar />
 					</div>
 				</div>
 			)}
-		</div>
+		</>
 	);
 }

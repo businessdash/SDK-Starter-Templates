@@ -1,4 +1,5 @@
 ---
+// [bd-file:blog]
 import { bd } from "../lib/bd";
 
 type BlogPost = {
@@ -59,4 +60,7 @@ function formatDate(iso: string | null | undefined): string {
 			</div>
 		)
 	}
+	<p class="blog-section__all">
+		<a class="bd-btn bd-btn--ghost" href="/blog">All posts</a>
+	</p>
 </section>

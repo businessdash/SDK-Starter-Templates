@@ -18,16 +18,21 @@ import { RouterLink, RouterLinkActive } from "@angular/router";
 				<!-- [bd:store] -->
 				<a routerLink="/store" routerLinkActive="is-active">Store</a>
 				<!-- [/bd:store] -->
-				<!-- [bd:saas] -->
+				<!-- The store bar links the plans when there is a store. -->
+				<!-- [bd:subscriptions] -->
+				<!-- [bd:!store] -->
 				<a routerLink="/subscriptions" routerLinkActive="is-active">Plans</a>
-				<!-- [/bd:saas] -->
+				<!-- [/bd:!store] -->
+				<!-- [/bd:subscriptions] -->
+				<!-- [bd:blog] -->
+				<a routerLink="/blog" routerLinkActive="is-active">Blog</a>
+				<!-- [/bd:blog] -->
+				<!-- [bd:booking] -->
 				<a routerLink="/booking" routerLinkActive="is-active">Book</a>
+				<!-- [/bd:booking] -->
 				<a routerLink="/reviews" routerLinkActive="is-active">Reviews</a>
 				<a routerLink="/updates" routerLinkActive="is-active">Updates</a>
 				<a routerLink="/todos" routerLinkActive="is-active">Todos</a>
-				<!-- [bd:store] -->
-				<a routerLink="/cart" routerLinkActive="is-active">Cart</a>
-				<!-- [/bd:store] -->
 				<a routerLink="/my-account" routerLinkActive="is-active">Account</a>
 			</nav>
 		</header>

@@ -1,6 +1,8 @@
+// [bd-file:blog]
 import { useEffect, useState } from "react";
 
 import { bd } from "../lib/bd";
+import { Link } from "../lib/router";
 
 type BlogPost = {
 	id: string;
@@ -65,20 +67,27 @@ export function Blog() {
 			) : (
 				<div className="bd-grid-3">
 					{posts.map((post) => (
-						<a
+						<Link
 							className="bd-card blog-card"
-							href={`/blog/${post.slug}`}
 							key={post.id}
+							to={`/blog/${post.slug}`}
 						>
 							<span className="blog-card__meta">
 								{formatDate(post.publishedAt)}
 							</span>
 							<h3>{post.title}</h3>
 							{post.excerpt ? <p>{post.excerpt}</p> : null}
-						</a>
+						</Link>
 					))}
 				</div>
 			)}
+			{posts && posts.length > 0 ? (
+				<p className="blog-section__all">
+					<Link className="bd-btn bd-btn--ghost" to="/blog">
+						All posts
+					</Link>
+				</p>
+			) : null}
 		</section>
 	);
 }

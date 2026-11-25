@@ -1,3 +1,4 @@
+// [bd-file:blog]
 import { getBd } from "../bd";
 import { html, render } from "../html";
 
@@ -34,7 +35,7 @@ export async function renderBlog(): Promise<string> {
 			${posts.map(
 				(p) => html`
 					<li>
-						<a href="/blog/${p.slug}">
+						<a href="/blog/${encodeURIComponent(p.slug)}">
 							<strong>${p.title}</strong>
 							<span class="muted">${p.publishedAt}</span>
 						</a>
@@ -48,6 +49,7 @@ export async function renderBlog(): Promise<string> {
 		<section class="section" id="blog">
 			<h2 class="section__title">From the blog</h2>
 			${posts.length === 0 ? empty : list}
+			<p class="blog-section__all"><a class="btn btn--ghost" href="/blog">All posts</a></p>
 		</section>
 	`);
 }

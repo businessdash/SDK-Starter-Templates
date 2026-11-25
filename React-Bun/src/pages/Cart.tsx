@@ -4,8 +4,19 @@ import { bd, dollars } from "../lib/bd";
 import type { Loose } from "../lib/bd";
 import { Link } from "../lib/router";
 import { ErrorBox, PageHead, useApi } from "./ui";
+import { StoreNav } from "../components/StoreNav";
 
+/** The cart, under the store bar. */
 export function Cart() {
+	return (
+		<>
+			<StoreNav />
+			<CartBody />
+		</>
+	);
+}
+
+function CartBody() {
 	const { data, error, loading } = useApi<Loose>(() => bd.cart.get());
 	const [cart, setCart] = useState<Loose | null>(null);
 	const [couponMsg, setCouponMsg] = useState("");
@@ -69,18 +80,18 @@ export function Cart() {
 									{it.variantTitle ? <div className="cart-item__variant">{it.variantTitle}</div> : null}
 									<div className="cart-item__price">{dollars(it.unitPrice, it.currency ?? currency)} each</div>
 								</div>
-								<div className="qty">
+								<div className="cart-qty">
 									<button
-										className="qty__btn"
+										className="cart-qty__btn"
 										type="button"
 										aria-label="Decrease"
 										onClick={async () => setCart(await bd.cart.update(it.id, Math.max(0, it.quantity - 1)))}
 									>
 										−
 									</button>
-									<span className="qty__n">{it.quantity}</span>
+									<span className="cart-qty__n">{it.quantity}</span>
 									<button
-										className="qty__btn"
+										className="cart-qty__btn"
 										type="button"
 										aria-label="Increase"
 										onClick={async () => setCart(await bd.cart.update(it.id, it.quantity + 1))}

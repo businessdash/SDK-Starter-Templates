@@ -45,13 +45,16 @@ export type GalleryItem = {
 	blurDataURL?: string | null;
 };
 
+// [bd:booking]
 export type EventType = {
 	id: string;
 	name: string;
 	slug: string;
 	durationMinutes: number;
 };
+// [/bd:booking]
 
+// [bd:blog]
 export type BlogPost = {
 	id: string;
 	slug: string;
@@ -59,6 +62,7 @@ export type BlogPost = {
 	excerpt?: string | null;
 	publishedAt?: string | null;
 };
+// [/bd:blog]
 
 export type FieldDef = {
 	id: string;
@@ -77,11 +81,25 @@ export type FormSchema = {
 	fields: FieldDef[];
 };
 
+// [bd:!booking]
+/** Without booking, the hero's button goes to the contact form. */
+const CONTACT_CTA = {
+	tagline: "Tell us what you need. We'll handle the rest.",
+	ctaLabel: "Get in touch",
+	ctaHref: "#contact",
+};
+// [/bd:!booking]
+
 const HERO_DEFAULTS: HeroData = {
 	title: "Service that shows up — on time.",
+	// [bd:!booking]
+	...CONTACT_CTA,
+	// [/bd:!booking]
+	// [bd:booking]
 	tagline: "Book in 60 seconds. We'll handle the rest.",
 	ctaLabel: "Book a consult",
 	ctaHref: "#booking",
+	// [/bd:booking]
 };
 
 const ABOUT_FALLBACK =
@@ -148,24 +166,36 @@ export const bdRouter = createTRPCRouter({
 				about: ABOUT_FALLBACK,
 				services: SERVICES_FALLBACK,
 				gallery: [] as GalleryItem[],
+				// [bd:booking]
 				eventTypes: [] as EventType[],
+				// [/bd:booking]
+				// [bd:blog]
 				blogPosts: [] as BlogPost[],
+				// [/bd:blog]
 				formSchema: FORM_FALLBACK,
 				formSlug: FORM_SLUG,
 			};
 		}
 
-		const [bundle, gallery, eventTypes, blog, formSchema] = await Promise.all([
+		// Started together with the calls below, so the page waits for the slowest.
+		// [bd:booking]
+		const eventTypesCall = bd.scheduling
+			.listEventTypes()
+			.catch(() => []) as Promise<EventType[]>;
+		// [/bd:booking]
+		// [bd:blog]
+		const blogCall = bd.blog
+			.listPosts({ limit: 6 })
+			.then((page): BlogPost[] => page.items)
+			.catch((): BlogPost[] => []);
+		// [/bd:blog]
+		const [bundle, gallery, formSchema] = await Promise.all([
 			bd.marketing
 				.getPageBundle({ pageKey: "home", locale: "en" })
 				.catch(() => null),
 			bd.gallery
 				.list({ limit: 12, fields: GALLERY_FIELDS })
 				.catch(() => []) as Promise<GalleryItem[]>,
-			bd.scheduling.listEventTypes().catch(() => []) as Promise<EventType[]>,
-			bd.blog
-				.listPosts({ limit: 6 })
-				.catch(() => ({ items: [] as BlogPost[] })),
 			bd.forms.schema(FORM_SLUG).catch(() => FORM_FALLBACK),
 		]);
 
@@ -204,13 +234,18 @@ export const bdRouter = createTRPCRouter({
 					? (servicesSection.items as Service[])
 					: SERVICES_FALLBACK,
 			gallery,
-			eventTypes,
-			blogPosts: ((blog as { items?: BlogPost[] })?.items as BlogPost[]) ?? [],
+			// [bd:booking]
+			eventTypes: await eventTypesCall,
+			// [/bd:booking]
+			// [bd:blog]
+			blogPosts: await blogCall,
+			// [/bd:blog]
 			formSchema,
 			formSlug: FORM_SLUG,
 		};
 	}),
 
+	// [bd:booking]
 	fetchSlots: publicProcedure
 		.input(
 			z.object({
@@ -276,6 +311,7 @@ export const bdRouter = createTRPCRouter({
 				});
 			}
 		}),
+	// [/bd:booking]
 
 	submitForm: publicProcedure
 		.input(

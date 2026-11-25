@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 /**
  * Server-only storefront helpers — thin wrappers over the SDK's
  * `storefront` / `cart` / `checkout` / `subscriptions` / `coupons`
@@ -28,9 +28,9 @@ import type {
 } from "@businessdash/sdk/contracts";
 import type { Cookie } from "@builder.io/qwik-city";
 // [/bd:store]
-// [bd:saas]
+// [bd:subscriptions]
 import type { SubscriptionOfferingsListResponse } from "@businessdash/sdk/contracts";
-// [/bd:saas]
+// [/bd:subscriptions]
 
 import { getBd } from "./bd";
 
@@ -175,7 +175,7 @@ export async function getStoreProductAddons(
 
 // [/bd:store]
 
-// [bd:saas]
+// [bd:subscriptions]
 export async function listStoreSubscriptions(): Promise<SubscriptionOfferingsListResponse | null> {
 	const bd = getBd();
 	if (!bd) return null;
@@ -186,7 +186,7 @@ export async function listStoreSubscriptions(): Promise<SubscriptionOfferingsLis
 	}
 }
 
-// [/bd:saas]
+// [/bd:subscriptions]
 
 // [bd:store]
 /** Current cart snapshot, or null when unconfigured or no cart exists yet (no
@@ -290,6 +290,18 @@ export async function startCheckout(
 		return { ok: true, url: res.stripeUrl };
 	} catch (err) {
 		return { ok: false, error: sdkErrorMessage(err) };
+	}
+}
+
+/** Cart amounts are DOLLARS: 24.5 + "usd" → "$24.50". */
+export function formatDollars(amount: number, currency: string): string {
+	try {
+		return new Intl.NumberFormat(undefined, {
+			style: "currency",
+			currency: (currency || "usd").toUpperCase(),
+		}).format(amount);
+	} catch {
+		return `${amount.toFixed(2)} ${(currency || "usd").toUpperCase()}`;
 	}
 }
 

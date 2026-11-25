@@ -2,7 +2,7 @@
 
 A full generic business site built on **Astro SSR** (`output: "server"`, Node adapter). The data-fetch pattern is the cleanest of any framework — no separate proxy process, no in-browser SDK client. Each `.astro` component renders on the server and calls `bd.X.method(...)` directly during render; interactive surfaces ship a tiny inline `<script>` "island" that talks to same-origin Astro endpoints (which call the SDK). The bearer key never leaves the server.
 
-This template is at **BD SDK feature parity** with the reference consumer (DGP-2026): marketing sections, scheduling, forms, storefront + cart + checkout, subscriptions, customer auth + portal, reviews wall, news banner, updates feed, JSON-LD + sitemap/robots, programmatic service-area pages, and graceful suspension handling.
+This template is at **BD SDK feature parity** with the reference consumer (DGP-2026): marketing sections, scheduling, forms, storefront + cart + checkout, subscriptions, customer auth + portal, reviews, news banner, updates feed, JSON-LD + sitemap/robots, programmatic service-area pages, and graceful suspension handling.
 
 ## Why this shape
 
@@ -65,24 +65,30 @@ Composed in `src/pages/index.astro` through the shared `src/layouts/Layout.astro
 | --- | --- | --- |
 | **Hero / About / Services** | `bd.marketing.getPageBundle({ pageKey: "home" })` | Server-only |
 | **Gallery** | `bd.gallery.list({ limit, fields: [...] as const })` | Server-only, typed const-generic field selection |
-| **Reviews** | aggregate + first page from `bundle.reviews`; "load more" via `/api/bd/reviews` (`reviews.list`) | Server-render + island |
-| **Blog** | `bd.blog.listPosts({ limit: 6 })` | Server-only |
-| **Booking** | `bd.scheduling.listEventTypes()` + `/api/bd/scheduling/*` island | Hybrid |
+| **Reviews** | home: the average and the first few from `bundle.reviews`, linking to `/reviews`; `/reviews`: bars per star, platform filter, "Show more", writing one (`reviews.list`, `submitReview`) | Server-render + custom element |
+| **Blog** | `bd.blog.listPosts({ limit: 6 })`, with a link to `/blog` | Server-only | <!-- [bd-line:blog] -->
+| **Booking** | `bd.scheduling.listEventTypes()` + `/api/bd/scheduling/*` island | Hybrid | <!-- [bd-line:booking] -->
 | **Contact form** | `bd.forms.schema(slug)` + `/api/bd/forms/[slug]` island | Hybrid |
 
 <!-- [bd:store] -->
 ### Storefront (`/store`)
 
-- `src/pages/store/index.astro` — product list via `storefront.listProducts()`
-- `src/pages/store/[id].astro` — product detail via `storefront.getProduct(id)` + an add-to-cart island
+The same shop as the Business Dash demo store, server-rendered:
+
+- `src/pages/store/index.astro` — the product list via `storefront.listProductsWithMeta()`: search, category, price, rating and sort, all in the URL (`?q`, `?category`, `?min`, `?max`, `?rating`, `?sort`). The facets are links and the rest are GET forms, so it works without JavaScript and a filtered list can be shared.
+- `src/pages/store/[id].astro` — one product: photos that follow the chosen option, option and size buttons, the price for what's chosen, quantity, add to cart, save, compare, share, details and specs, add-ons, reviews (`?reviews=20` shows more), related products and recently viewed.
+- `src/pages/store/wishlist.astro` and `compare.astro` — saved products, and up to four side by side (`?ids=a,b`, so a comparison can be shared).
 - `src/pages/store/cart.astro` — full cart: quantity / remove / coupon / clear / checkout, all driven by islands that POST to the cart endpoints and re-render from the returned `CartSnapshot`
+- `src/components/StoreNav.astro` — the bar on every store page: products and plans, then wishlist, compare and the cart with their counts.
+
+The interactive parts are framework-free custom elements in `src/lib/bd-shop/shop-elements.ts` (`<bd-product>`, `<bd-save-buttons>`, `<bd-compare-bar>`, `<bd-wishlist>`, `<bd-compare>`), styled by `src/styles/bd-shop.css`. The server renders the data into each one as JSON, and a page's `<script>` imports the module, so no UI framework is needed. The wishlist, compare picks and recently viewed live in the shopper's browser (`localStorage`).
 
 Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `checkout/start`. The shopper is identified by a **visitor token** — an httpOnly `bd_cart_visitor` cookie minted on the first mutation (`src/lib/bd-store.ts`):
 
 | Endpoint | SDK call |
 | --- | --- |
 | `GET  /api/bd/cart/get` | `cart.forVisitor(t).get()` (read-only, no mint) |
-| `POST /api/bd/cart/add` | `cart.forVisitor(t).addItem(...)` (mints cookie) |
+| `POST /api/bd/cart/add` | `cart.forVisitor(t).addItem({ productId, variantId, quantity, options })` (mints cookie; answers `{ ok, itemCount, cart }`) |
 | `POST /api/bd/cart/update` | `cart.forVisitor(t).updateItem(id, { quantity })` |
 | `POST /api/bd/cart/remove` | `cart.forVisitor(t).removeItem(id)` |
 | `POST /api/bd/cart/coupon` | `applyCoupon({ code })` / `removeCoupon()` |
@@ -90,21 +96,36 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 | `POST /api/bd/checkout/start` | `checkout.forVisitor(t).start({ successUrl, cancelUrl })` → Stripe redirect |
 <!-- [/bd:store] -->
 
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 ### Plans (`/store/subscriptions`)
 
 - `src/pages/store/subscriptions.astro` — recurring offerings via `subscriptions.list()`
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
+
+<!-- [bd:blog] -->
+### Blog (`/blog`)
+
+- `src/pages/blog/index.astro` — posts newest first (pinned ones lead), category and tag filters and "Older posts" paging, all links in the URL (`?category`, `?tag`, `?cursor`).
+- `src/pages/blog/[slug].astro` — one post. Its HTML is rebuilt from an allowlist on the server (`safePostHtml` in `src/lib/bd-shop/blog.ts`) and only that reaches the page. Members-only posts ask the reader to sign in.
+- Likes and comments are for signed-in customers: `<bd-post-like>` and `<bd-post-comments>` (`src/lib/bd-shop/blog-elements.ts`) post to `/api/bd/blog/[slug]/like` and `/comment`, which call the SDK with the customer's session (`src/lib/bd-blog.ts`). Signed out, they lead to sign-in and back.
+<!-- [/bd:blog] -->
 
 ### Auth + customer portal
 
 - **Auth handler** — `src/pages/api/bd-auth/[...slug].ts` mounts `createAuthHandler` as a catch-all. Astro hands an `APIRoute` a web `Request` and expects a web `Response`, which is exactly the handler's `GET`/`POST` shape, so the request passes straight through. It serves `sign-in`, `sign-up`, `callback`, `sign-out`, `password-reset`, `me` and sets the `bd_session` httpOnly cookie.
-- **Header links** — `src/components/Header.astro` reads the session server-side and renders plain `<a href="/api/bd-auth/sign-in">` / `sign-up` / `sign-out` links plus the live cart count.
+- **Header links** — `src/components/Header.astro` reads the session server-side and renders plain `<a href="/api/bd-auth/sign-in">` / `sign-up` / `sign-out` links. The cart and its count are in the store bar (`StoreNav.astro`).
 - **My account** — `src/pages/my-account.astro` reads the `bd_session` cookie via `getTenantSession` (`src/lib/bd-portal.ts`), shows the user + their work bundle (`customerPortal(org).withSession(token).getWork()` → jobs / quotes / invoices), and a review-submit form that posts to `/api/bd/portal/submit-review` (which calls the portal's `submitReview`).
 
-### Reviews wall (`/reviews`)
+### Reviews (`/reviews`)
 
-`src/pages/reviews.astro` reuses the `Reviews` section (aggregate from `bundle.reviews` + first page, then a "load more" island paginating `/api/bd/reviews` → `reviews.list({ offset, limit })`).
+`src/pages/reviews.astro` shows the business's reviews from Google, Yelp and the ones added in the dashboard:
+
+- the average and a bar per star, from the marketing bundle's `reviews` (`rating`, `counts`);
+- a platform filter (`?source=google`), and "Show more reviews", which is a link (`?shown=20`);
+- each review with the reviewer's photo or initial, the stars, the date, the text, any photos, the platform, Verified, and a "Read on Google/Yelp" link;
+- "Write a review" for a signed-in customer: `<bd-review-writer>` (`src/lib/bd-shop/reviews-elements.ts`) posts JSON to `/api/bd/reviews/write`, which checks it again and sends it with `submitReview`. It shows once the business approves it. Signed out, it's a link to sign in.
+
+The page's data comes from `loadReviewsPage` (`src/lib/bd-shop/reviews-page.ts`, which reads `reviews.list({ limit, offset, source })`); `src/lib/bd-shop/reviews.ts` holds the rules every BD starter shares, and `src/styles/bd-reviews.css` the styles. The home page's `Reviews` section shows the average and the first few, with a link here.
 
 ### News banner + updates feed
 
@@ -150,37 +171,45 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 │   ├── lib/
 │   │   ├── bd.ts                    # server createBdClient + getBdEnv()
 │   │   ├── bd-bundle.ts             # bundle fetch + banner / updates / reviews extraction
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │   │   ├── bd-store.ts              # storefront / cart / checkout / subscriptions helpers
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
+│   │   ├── bd-shop/                 # the shop, blog and review custom elements and helpers
+│   │   ├── bd-blog.ts               # blog posts, likes and comments (server) <!-- [bd-line:blog] -->
 │   │   ├── bd-portal.ts             # session + customer-portal (getWork / submitReview)
 │   │   ├── bd-seo.ts                # localBusiness + website JSON-LD
 │   │   └── bd-suspension.ts         # payment-lapsed / service-suspended handling
 │   ├── layouts/Layout.astro           # shared shell: banner + JSON-LD + header + footer
 │   ├── styles/global.css              # BD tokens + section styles
 │   ├── components/
-│   │   ├── Header.astro               # nav + cart count + auth links (server session)
+│   │   ├── Header.astro               # nav + auth links (server session)
+│   │   ├── StoreNav.astro             # the store bar: products, plans, wishlist, compare, cart <!-- [bd-line:store,subscriptions] -->
 │   │   ├── Banner.astro               # bundle.banner dismissible strip
 │   │   ├── Hero / About / Services / Gallery / Blog / Booking / ContactForm / Reviews
 │   │   └── Footer.astro
 │   └── pages/
 │       ├── index.astro                # home (marketing sections)
-│       ├── reviews.astro              # reviews wall
+│       ├── reviews.astro              # reviews: rating + bars, platform filter, show more, write one
 │       ├── updates.astro              # updates feed (bundle.updates)
 │       ├── my-account.astro           # customer portal
 │       ├── sitemap.xml.ts             # proxy → BD sitemap
 │       ├── robots.txt.ts              # proxy → BD robots
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │       ├── store/
 <!-- [bd:store] -->
 │       │   ├── index.astro            # product list
-│       │   ├── [id].astro             # product detail + add-to-cart island
+│       │   ├── [id].astro             # product page (<bd-product>)
+│       │   ├── wishlist.astro         # saved products
+│       │   ├── compare.astro          # products side by side
 │       │   ├── cart.astro             # cart (update/remove/coupon/clear/checkout)
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 │       │   └── subscriptions.astro    # subscription offerings
-<!-- [/bd:saas] -->
-<!-- [/bd:store,saas] -->
+<!-- [/bd:subscriptions] -->
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:blog] -->
+│       ├── blog/                      # index.astro (posts) + [slug].astro (one post)
+<!-- [/bd:blog] -->
 │       ├── services/
 │       │   ├── index.astro            # service-area variant index
 │       │   └── [service]/[area].astro # programmatic service-area page
@@ -188,8 +217,9 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 │           ├── bd-auth/[...slug].ts # createAuthHandler catch-all
 │           └── bd/
 │               ├── revalidate.ts      # webhook receiver
-│               ├── reviews.ts         # GET — paginate reviews.list
-│               ├── scheduling/        # slots.ts (GET) + bookings.ts (POST)
+│               ├── reviews/write.ts   # POST — write a review as the signed-in customer
+│               ├── scheduling/        # slots.ts (GET) + bookings.ts (POST) <!-- [bd-line:booking] -->
+│               ├── blog/[slug]/       # like.ts + comment.ts (POST, signed in) <!-- [bd-line:blog] -->
 │               ├── forms/[slug].ts    # POST — submit a form
 │               ├── portal/submit-review.ts  # POST — customer review via portal
 <!-- [bd:store] -->

@@ -138,13 +138,22 @@ function navBar(): Raw {
 	return html`<header class="docnav">
 		<a class="docnav__brand" href="/">Your&nbsp;Business</a>
 		<nav class="docnav__links">
+			<!-- [bd:store] -->
 			<a href="/store">Store</a>
+			<!-- [/bd:store] -->
+			<!-- The store bar links the plans when there is a store. -->
+			<!-- [bd:subscriptions] -->
+			<!-- [bd:!store] -->
 			<a href="/subscriptions">Plans</a>
+			<!-- [/bd:!store] -->
+			<!-- [/bd:subscriptions] -->
+			<!-- [bd:blog] -->
+			<a href="/blog">Blog</a>
+			<!-- [/bd:blog] -->
 			<a href="/reviews">Reviews</a>
 			<a href="/updates">Updates</a>
 			<a href="/todos">Todos</a>
 			<a href="/quiz">Quiz</a>
-			<a href="/cart">Cart</a>
 			<a href="/my-account">Account</a>
 		</nav>
 		<span class="docnav__auth">
@@ -183,12 +192,19 @@ function analyticsScript(): Raw {
 }
 
 /** Render a full feature-page document. `body` is trusted HTML (a Raw or a
- *  string produced by this app's own renderers). */
+ *  string produced by this app's own renderers). The store and blog pages add
+ *  their stylesheet (`styles`), their custom elements (`modules`), the store
+ *  bar under the header (`subnav`) and the `bd-page` body (`mainClass`). */
 export async function page(opts: {
 	origin: string;
 	title: string;
 	description?: string;
 	body: Raw | string;
+	styles?: string[];
+	modules?: string[];
+	subnav?: Raw;
+	mainClass?: string;
+	image?: string | null;
 }): Promise<string> {
 	const jsonLd = await siteJsonLd(opts.origin);
 	const banner = await bannerHtml();
@@ -200,7 +216,9 @@ export async function page(opts: {
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
 	<title>${opts.title}</title>
 	${opts.description ? html`<meta name="description" content="${opts.description}" />` : ""}
+	${opts.image ? html`<meta property="og:image" content="${opts.image}" />` : ""}
 	<link rel="stylesheet" href="/styles.css" />
+	${(opts.styles ?? []).map((href) => html`<link rel="stylesheet" href="${href}" />`)}
 	<!-- SDK forms stylesheet (file-upload box, multi-step header, choice chips). -->
 	<link rel="stylesheet" href="/bd-forms.css" />
 	<!-- Forms and quizzes rendered on this server (src/form.ts, src/quiz.ts). -->
@@ -217,12 +235,14 @@ export async function page(opts: {
 		integrity="sha384-SsScJKzATF/w6suEEdLbgYGsYFLzeKfOA6PY+/C5ZPxOSuA+ARquqtz/BZz9JWU8"
 		crossorigin="anonymous"
 	></script>
+	${(opts.modules ?? []).map((src) => html`<script type="module" src="${src}"></script>`)}
 	${raw(jsonLd)}
 </head>
 <body>
 	${banner}
 	${navBar()}
-	<main class="page">${bodyNode}</main>
+	${opts.subnav ?? ""}
+	<main class="${opts.mainClass ?? "page"}">${bodyNode}</main>
 	<footer class="app-footer"><div>© Your Business — built on @businessdash/sdk</div></footer>
 	${analyticsScript()}
 	${raw(setupBannerHtml())}

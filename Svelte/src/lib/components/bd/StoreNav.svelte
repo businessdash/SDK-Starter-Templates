@@ -1,4 +1,4 @@
-<!-- [bd-file:store,saas] -->
+<!-- [bd-file:store,subscriptions] -->
 <script lang="ts">
 	/**
 	 * Compact storefront sub-nav with a cart-count indicator. Reused by
@@ -6,6 +6,24 @@
 	 * re-fetched client-side after mutations so the badge stays live.
 	 */
 	let { cartCount = 0 }: { cartCount?: number } = $props();
+	// [bd:store]
+	import { onMount } from 'svelte';
+	import { compareList, wishlist } from '#lib/bd/shop.ts';
+
+	// The saved lists live in this browser, so their counts arrive after load.
+	let saved = $state(0);
+	let comparing = $state(0);
+	onMount(() => {
+		saved = wishlist.read().length;
+		comparing = compareList.read().length;
+		const offWish = wishlist.subscribe((items) => (saved = items.length));
+		const offCompare = compareList.subscribe((items) => (comparing = items.length));
+		return () => {
+			offWish();
+			offCompare();
+		};
+	});
+	// [/bd:store]
 </script>
 
 <nav class="store-nav">
@@ -13,17 +31,27 @@
 		<!-- [bd:store] -->
 		<a href="/store">Products</a>
 		<!-- [/bd:store] -->
-		<!-- [bd:saas] -->
+		<!-- [bd:subscriptions] -->
 		<a href="/store/subscriptions">Subscriptions</a>
-		<!-- [/bd:saas] -->
+		<!-- [/bd:subscriptions] -->
 	</div>
 	<!-- [bd:store] -->
-	<a class="store-nav__cart" href="/store/cart">
-		Cart
-		{#if cartCount > 0}
-			<span class="store-nav__badge">{cartCount}</span>
-		{/if}
-	</a>
+	<div class="store-nav__links">
+		<a href="/store/wishlist">
+			Wishlist
+			{#if saved > 0}<span class="store-nav__count">{saved}</span>{/if}
+		</a>
+		<a href="/store/compare">
+			Compare
+			{#if comparing > 0}<span class="store-nav__count">{comparing}</span>{/if}
+		</a>
+		<a class="store-nav__cart" href="/store/cart">
+			Cart
+			{#if cartCount > 0}
+				<span class="store-nav__badge">{cartCount}</span>
+			{/if}
+		</a>
+	</div>
 	<!-- [/bd:store] -->
 </nav>
 
@@ -40,8 +68,28 @@
 	}
 	.store-nav__links {
 		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
 		gap: 1.25rem;
 		font-size: 0.92rem;
+	}
+	/* Narrow screens: one row of links that scrolls sideways. */
+	@media (max-width: 640px) {
+		.store-nav {
+			justify-content: flex-start;
+			gap: 1.25rem;
+			overflow-x: auto;
+			white-space: nowrap;
+			scrollbar-width: none;
+		}
+		.store-nav__links {
+			flex-wrap: nowrap;
+		}
+	}
+	.store-nav__count {
+		margin-left: 0.2rem;
+		color: var(--text-muted);
+		font-size: 0.8rem;
 	}
 	.store-nav__cart {
 		display: inline-flex;

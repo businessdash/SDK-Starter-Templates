@@ -2,17 +2,19 @@ import { Injectable, signal } from "@angular/core";
 import {
 	bdApi,
 	type BannerPayload,
-	type BlogPost,
 	type HomePayload,
 	type ReviewsAggregate,
 	type UpdateItem,
 } from "./bd-api.client";
+// [bd:blog]
+import type { BlogPost } from "./bd-api.client";
+// [/bd:blog]
 // [bd:store]
 import type { CartSnapshot, Product } from "./bd-api.client";
 // [/bd:store]
-// [bd:saas]
+// [bd:subscriptions]
 import type { Subscription } from "./bd-api.client";
-// [/bd:saas]
+// [/bd:subscriptions]
 
 /**
  * Marketing/state facade over the local BD endpoints.
@@ -27,7 +29,9 @@ import type { Subscription } from "./bd-api.client";
 type Hero = { title: string; tagline: string; ctaLabel: string; ctaHref: string };
 type AboutBlock = { heading: string; body: string };
 type Service = { id: string; name: string; description: string; priceLabel: string };
+// [bd:blog]
 type BlogEntry = { slug: string; title: string; excerpt: string; publishedAt: string };
+// [/bd:blog]
 
 const heroDefaults: Hero = {
 	title: "Service that shows up — on time.",
@@ -55,7 +59,9 @@ export class BdService {
 	readonly hero = signal<Hero>(heroDefaults);
 	readonly about = signal<AboutBlock[]>(aboutDefaults);
 	readonly services = signal<Service[]>(servicesDefaults);
+	// [bd:blog]
 	readonly blog = signal<BlogEntry[]>([]);
+	// [/bd:blog]
 	readonly banner = signal<BannerPayload | null>(null);
 	readonly updates = signal<UpdateItem[]>([]);
 	readonly reviewsAggregate = signal<ReviewsAggregate | null>(null);
@@ -102,6 +108,7 @@ export class BdService {
 		if (home.reviews) this.reviewsAggregate.set(home.reviews);
 	}
 
+	// [bd:blog]
 	async loadBlog(): Promise<void> {
 		const res = await bdApi.blog();
 		const items: BlogPost[] = res?.items ?? [];
@@ -116,6 +123,7 @@ export class BdService {
 			);
 		}
 	}
+	// [/bd:blog]
 
 	// Thin pass-throughs the route components use directly.
 	// [bd:store]
@@ -126,11 +134,11 @@ export class BdService {
 		return bdApi.product(id);
 	}
 	// [/bd:store]
-	// [bd:saas]
+	// [bd:subscriptions]
 	subscriptions(): Promise<{ items: Subscription[] } | null> {
 		return bdApi.subscriptions();
 	}
-	// [/bd:saas]
+	// [/bd:subscriptions]
 	// [bd:store]
 	cart(): Promise<CartSnapshot> {
 		return bdApi.cart();

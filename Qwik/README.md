@@ -6,7 +6,7 @@ Same generic business site as the other framework starters, built on **Qwik City
 
 Qwik has two built-in primitives that map directly onto the consumer-DX principle:
 
-- **`routeLoader$`** — runs on the server during render. We use it in `src/routes/index.tsx` to fan five SDK calls (`marketing.getPageBundle`, `gallery.list`, `scheduling.listEventTypes`, `blog.listPosts`, `forms.schema`) into a single `Promise.all`. The page renders with the data already resolved.
+- **`routeLoader$`** — runs on the server during render. We use it in `src/routes/index.tsx` to fan the home page's SDK calls (`marketing.getPageBundle`, `gallery.list`, `scheduling.listEventTypes`, `blog.listPosts`, `forms.schema`) out in parallel. The page renders with the data already resolved.
 - **`server$`** — defines a function whose body only ever runs on the server, callable from any client component. We use it inside `Booking.tsx` and `ContactForm.tsx` for slot-fetching, booking confirmation, and form submission. Qwik compiles the call sites into transparent fetches — no API endpoint files needed.
 
 The `$` suffix on both is Qwik's marker that everything *inside* is server-only and serializable. The bearer key in `src/lib/bd.ts` is only imported from `$`-wrapped functions, so Qwik's optimizer drops it from the browser bundle.
@@ -51,8 +51,8 @@ bun run build
 | --- | --- | --- |
 | **Hero / About / Services** | `routeLoader$` reads marketing bundle, passes to component props | `bd.marketing.getPageBundle(...)` |
 | **Gallery** | `routeLoader$` with const-generic field selection | `bd.gallery.list({ limit: 12, fields: [...] as const })` |
-| **Blog** | `routeLoader$` → `<Blog />` | `bd.blog.listPosts({ limit: 6 })` |
-| **Booking** | Event-type list from `routeLoader$`; slot fetch + confirm via `server$` RPCs declared inside `Booking.tsx` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` |
+| **Blog** | `routeLoader$` → `<Blog />` | `bd.blog.listPosts({ limit: 6 })` | <!-- [bd-line:blog] -->
+| **Booking** | Event-type list from `routeLoader$`; slot fetch + confirm via `server$` RPCs declared inside `Booking.tsx` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` | <!-- [bd-line:booking] -->
 | **Contact form** | Form schema from `routeLoader$`; submit via `server$` inside `ContactForm.tsx` | `bd.forms.schema(slug)`, `bd.forms.submit(...)` |
 
 ## Adding a new SDK surface
@@ -79,32 +79,61 @@ bundle.
 | `src/lib/bd.ts` | The `createBdClient` factory (returns `null` when unconfigured). |
 | `src/lib/bd-store.ts` | Storefront / cart / checkout / subscriptions. Owns the `bd_cart_visitor` httpOnly cookie (read with `getVisitorToken`, mint with `ensureVisitorToken`). |
 | `src/lib/bd-portal.ts` | `getTenantSession` on the `bd_session` cookie + `customerPortal(org).withSession(token)` (work bundle, review submit). |
-| `src/lib/bd-content.ts` | `bundle.banner` / `bundle.updates` extraction, reviews-wall pagination (`reviews.list`), and `localBusiness` + `website` JSON-LD via `@businessdash/sdk/seo`. |
+| `src/lib/bd-content.ts` | `bundle.banner` / `bundle.updates` extraction and `localBusiness` + `website` JSON-LD via `@businessdash/sdk/seo`. |
 
 <!-- [bd:store] -->
 ### Storefront + commerce
 
 | Surface | File | SDK call |
 | --- | --- | --- |
-| **Product list** | `src/routes/store/index.tsx` | `storefront.listProducts()` |
-| **Product detail + add to cart** | `src/routes/store/[id]/index.tsx` | `storefront.getProduct(id)`, `cart.forVisitor(token).addItem(...)` via `server$` |
+| **Product list** (search, category, price, rating, sort; save and compare on each card) | `src/routes/store/index.tsx` | `storefront.listProductsWithMeta(...)`, `storefront.listCategories()` |
+| **Product page** (option photos, options, add to cart, add-ons, reviews, related) | `src/routes/store/[id]/index.tsx` → `<bd-product>` | `storefront.getProduct(id)`, reviews, add-ons, related |
+| **Add to cart** for `<bd-product>` | `src/routes/api/bd/cart/add/index.ts` (`POST`, JSON) | `cart.forVisitor(token).addItem(...)` |
+| **Wishlist** · **Compare** | `src/routes/store/wishlist/index.tsx` · `src/routes/store/compare/index.tsx` | `storefront.getProduct(id)` per compared product |
 | **Cart** (update / remove / coupon / clear / checkout) | `src/routes/cart/index.tsx` | `cart.forVisitor(token).*`, `checkout.forVisitor(token).start(...)` via `server$` |
 | **Order confirmation** | `src/routes/store/order/index.tsx` | `checkout.getStatus(sessionId)` |
 
 The cart is keyed on a visitor token we own — an httpOnly `bd_cart_visitor`
-cookie minted on the first mutation through Qwik's RequestEvent `cookie` API. No
-separate API endpoint files: cart/checkout mutations are `server$` RPCs that
-read/write the cookie via `this.cookie` and return a fresh `CartSnapshot`.
+cookie minted on the first mutation through Qwik's RequestEvent `cookie` API.
+The cart page's mutations are `server$` RPCs that read/write the cookie via
+`this.cookie` and return a fresh `CartSnapshot`. Cart amounts are dollars
+(`formatDollars`); product prices are cents (`formatMoney`).
+
+#### Shop elements
+
+The product page, wishlist, compare table, save buttons and the store bar's
+counts are custom elements in `src/lib/shop/` (`shop-elements.ts`), the same
+ones every BD starter ships. A loader reads the data on the server and the
+page writes it into the element as JSON (`elementHtml` in
+`src/lib/bd-elements.ts`); `<StoreNav />` loads the elements in the browser.
+The wishlist and the compare picks are saved in the browser. Styles:
+`src/bd-shop.css`.
 <!-- [/bd:store] -->
 
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
 ### Plans
 
 `src/routes/subscriptions/index.tsx` lists `subscriptions.list()`; Subscribe calls
 `subscriptions.startCheckout(id, ...)` in a `server$` RPC and sends the customer to
 Stripe, which returns them to `src/routes/store/order/index.tsx`
 (`checkout.getStatus(sessionId)`).
-<!-- [/bd:saas] -->
+<!-- [/bd:subscriptions] -->
+
+<!-- [bd:blog] -->
+### Blog
+
+| Surface | File | SDK call |
+| --- | --- | --- |
+| **Post list** (pinned first, category and tag filters, older posts) | `src/routes/blog/index.tsx` | `blog.listPosts(...)`, `blog.listCategories()`, `blog.listTags()` |
+| **Post** (body, cover, call to action, tags) | `src/routes/blog/[slug]/index.tsx` | `blog.getPost(slug)`, `blog.likeStatus(slug)`, `blog.listComments(slug)` |
+| **Like** · **Comment** (signed-in customers) | `src/routes/api/bd/blog/post/[slug]/like/index.ts` · `…/comment/index.ts` | `blog.withSession(token).toggleLike(slug)` · `.postComment(slug, …)` |
+
+The loader rebuilds the post's HTML from an allowlist (`safePostHtml` in
+`src/lib/shop/blog.ts`), so the raw HTML never reaches the page. The like
+button and comments are `<bd-post-like>` and `<bd-post-comments>`
+(`src/lib/shop/blog-elements.ts`); signed out, they lead to sign-in and back
+to the post. Styles: `src/bd-blog.css`.
+<!-- [/bd:blog] -->
 
 ### Auth + customer portal
 
@@ -123,7 +152,7 @@ sign-in vs. account state is resolved server-side per route from the validated
 
 | Surface | File | SDK call |
 | --- | --- | --- |
-| **Reviews wall** (aggregate + load-more) | `src/routes/reviews/index.tsx` | `reviews.list({ limit, offset })` paginated via `server$` |
+| **Reviews**: the average and a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a "Read on Google/Yelp" link, "Show more" (`?shown=`), and "Write a review" for signed-in customers | `src/routes/reviews/index.tsx` (data from `loadReviewsPage`, `src/lib/shop/reviews-page.ts`); `<bd-review-writer>` (`src/lib/shop/reviews-elements.ts`) posts to `src/routes/api/bd/reviews/write/` | `bundle.reviews` (`rating`, `counts`), `reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview(...)` |
 | **News banner** (dismissible) | `src/components/bd/Banner.tsx` (fed by the home loader) | `bundle.banner` |
 | **Updates feed** | `src/routes/updates/index.tsx` | `bundle.updates` |
 
@@ -175,36 +204,64 @@ bd.config.ts                                 # marketing schema + parallel-page 
 src/
 ├── lib/
 │   ├── bd.ts                                # SDK client (server-only)
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
 │   ├── bd-store.ts                          # storefront / cart / checkout / subs + visitor cookie
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
 │   ├── bd-portal.ts                         # session + customer portal
-│   └── bd-content.ts                        # banner / updates / reviews / JSON-LD
+│   ├── bd-content.ts                        # banner / updates / reviews / JSON-LD
+│   ├── bd-elements.ts                       # writes a custom element with its data
+<!-- [bd:store] -->
+│   ├── shop/shop.ts · shop-elements.ts      # product page, wishlist, compare, save buttons
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   ├── shop/blog.ts · blog-elements.ts      # safePostHtml, like button, comments
+<!-- [/bd:blog] -->
+│   ├── shop/reviews.ts · reviews-page.ts · reviews-elements.ts  # review rules, page data, writer
+│   └── shop/bd-dom.ts                       # the elements' small DOM helpers
 ├── global.css                                 # BD CSS vars + section styles
+├── bd-shop.css                                # shop styles <!-- [bd-line:store] -->
+├── bd-blog.css                                # blog styles <!-- [bd-line:blog] -->
+├── bd-reviews.css                             # reviews page styles
 ├── components/bd/
 │   ├── Header.tsx                             # home anchor nav
-│   ├── SiteHeader.tsx                         # cross-page nav (store/cart/auth)
+│   ├── SiteHeader.tsx                         # cross-page nav (store/blog/auth)
+<!-- [bd:store,subscriptions] -->
+│   ├── StoreNav.tsx                           # store bar: products, plans, wishlist, compare, cart
+<!-- [/bd:store,subscriptions] -->
+<!-- [bd:store] -->
+│   ├── ShopStars.tsx                          # star rating in the shop's markup
+<!-- [/bd:store] -->
 │   ├── Banner.tsx                             # dismissible bundle.banner bar
 │   ├── Footer.tsx
-│   ├── Hero.tsx · About.tsx · Services.tsx · Gallery.tsx · Blog.tsx
-│   ├── Booking.tsx                            # useSignal + server$ RPCs
+│   ├── Hero.tsx · About.tsx · Services.tsx · Gallery.tsx
+│   ├── Blog.tsx                               # latest posts on the home page <!-- [bd-line:blog] -->
+│   ├── Booking.tsx                            # useSignal + server$ RPCs <!-- [bd-line:booking] -->
 │   └── ContactForm.tsx                        # useSignal + server$ RPC
 └── routes/
     ├── index.tsx                              # routeLoader$ + banner + JSON-LD
 <!-- [bd:store] -->
     ├── store/index.tsx                        # product list
-    ├── store/[id]/index.tsx                   # product detail + add to cart
+    ├── store/[id]/index.tsx                   # product page (<bd-product>)
+    ├── store/wishlist/index.tsx               # saved products
+    ├── store/compare/index.tsx                # products side by side
+    ├── api/bd/cart/add/index.ts               # add to cart for <bd-product>
 <!-- [/bd:store] -->
-<!-- [bd:store,saas] -->
+<!-- [bd:store,subscriptions] -->
     ├── store/order/index.tsx                  # Stripe checkout return
-<!-- [/bd:store,saas] -->
+<!-- [/bd:store,subscriptions] -->
 <!-- [bd:store] -->
     ├── cart/index.tsx                         # cart mutations + checkout
 <!-- [/bd:store] -->
-<!-- [bd:saas] -->
+<!-- [bd:subscriptions] -->
     ├── subscriptions/index.tsx               # subscription plans
-<!-- [/bd:saas] -->
-    ├── reviews/index.tsx                      # reviews wall + load more
+<!-- [/bd:subscriptions] -->
+<!-- [bd:blog] -->
+    ├── blog/index.tsx                         # post list + filters
+    ├── blog/[slug]/index.tsx                  # post, likes, comments
+    ├── api/bd/blog/post/[slug]/like/index.ts  # like (signed in)
+    ├── api/bd/blog/post/[slug]/comment/index.ts # comment (signed in)
+<!-- [/bd:blog] -->
+    ├── reviews/index.tsx                      # reviews: rating + bars, filter, show more, write one
     ├── updates/index.tsx                      # bundle.updates feed
     ├── my-account/index.tsx                   # portal: work bundle + review form
     ├── services/index.tsx                     # parallel-page variant index

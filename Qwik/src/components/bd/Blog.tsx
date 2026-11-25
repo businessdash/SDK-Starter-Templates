@@ -1,3 +1,4 @@
+// [bd-file:blog]
 import { component$ } from "@builder.io/qwik";
 
 export interface BlogPost {
@@ -48,6 +49,9 @@ export const Blog = component$<{ posts: BlogPost[] }>(({ posts }) => {
 					))}
 				</div>
 			)}
+			<a class="blog-section__all" href="/blog">
+				All posts →
+			</a>
 		</section>
 	);
 });

@@ -1,0 +1,244 @@
+/* The store and blog pages: the names the shop and blog styles
+   (bd-shop.css, bd-blog.css) and their custom elements use, mapped onto
+   this starter's five colours in styles.css, plus the cards, buttons and
+   inputs those pages are built from. Dark mode follows styles.css. */
+
+:root {
+	--text: var(--fg);
+	--title: var(--fg);
+	--text-muted: var(--muted);
+	--subtitle: var(--muted);
+	--border: var(--line);
+	--border-strong: color-mix(in srgb, var(--fg) 22%, var(--bg));
+	--card: var(--bg);
+	--surface: var(--bg);
+	--glass-card: var(--bg);
+	--bg-soft: color-mix(in srgb, var(--fg) 5%, var(--bg));
+	--accent-bg: color-mix(in srgb, var(--accent) 12%, var(--bg));
+	--accent-border: color-mix(in srgb, var(--accent) 45%, transparent);
+	--accent-strong: color-mix(in srgb, var(--accent) 82%, var(--fg));
+	--danger: #c5221f;
+	--danger-bg: color-mix(in srgb, #d93025 12%, var(--bg));
+	--success: #188038;
+	--success-bg: color-mix(in srgb, #188038 12%, var(--bg));
+	--card-neu-shadow: color-mix(in srgb, var(--fg) 10%, transparent);
+	--mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* The page body. styles.css gives every <button>, <input> and heading its
+   own look; inside these pages the shop and blog styles draw them instead,
+   so those rules are set back to the browser's here. Each rule below weighs
+   one element, as styles.css's do, and comes later, so it wins over them;
+   any class in bd-shop.css or bd-blog.css still wins over it. */
+main.bd-page {
+	max-width: 68rem;
+	padding: 2.5rem 1.25rem 4rem;
+}
+:where(.bd-page) :is(button, input, select, textarea) {
+	all: revert;
+	box-sizing: border-box;
+	font: inherit;
+	color: inherit;
+}
+:where(.bd-page) button {
+	cursor: pointer;
+}
+:where(.bd-page) :is(h1, h2, h3, h4, p) {
+	margin: 0;
+}
+:where(.bd-page) :is(h1, h2, h3, h4) {
+	color: var(--title);
+	font-size: revert;
+	line-height: 1.15;
+	letter-spacing: -0.015em;
+}
+:where(.bd-page) a:hover {
+	text-decoration: none;
+}
+:where(.bd-page) blockquote {
+	border-left: 0;
+	padding: 0;
+}
+
+.bd-card {
+	background: var(--card);
+	border: 1px solid var(--border);
+	border-radius: 0.75rem;
+	box-shadow: 0 1px 2px var(--card-neu-shadow);
+}
+.bd-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.4em;
+	padding: 0.625rem 1.25rem;
+	background: var(--accent);
+	color: #fff;
+	border: 1px solid var(--accent);
+	border-radius: 9999px;
+	font-weight: 600;
+	font-size: 0.9rem;
+	text-decoration: none;
+	cursor: pointer;
+}
+.bd-btn:hover {
+	background: var(--accent-strong);
+	text-decoration: none;
+}
+.bd-btn:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+.bd-btn--ghost {
+	background: transparent;
+	color: var(--accent);
+	border-color: var(--accent-border);
+}
+.bd-btn--ghost:hover {
+	background: var(--accent-bg);
+}
+.bd-badge {
+	display: inline-block;
+	padding: 0.15rem 0.6rem;
+	background: var(--accent-bg);
+	color: var(--accent);
+	border: 1px solid var(--accent-border);
+	border-radius: 9999px;
+	font-size: 0.72rem;
+	font-weight: 600;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+.bd-page .bd-input,
+.bd-page .bd-textarea,
+.bd-page .bd-select {
+	box-sizing: border-box;
+	width: 100%;
+	padding: 0.6rem 0.8rem;
+	background: var(--surface);
+	border: 1px solid var(--border-strong);
+	border-radius: 0.5rem;
+	color: var(--text);
+	font: inherit;
+}
+.bd-page .bd-input:focus,
+.bd-page .bd-textarea:focus,
+.bd-page .bd-select:focus {
+	outline: none;
+	border-color: var(--accent);
+	box-shadow: 0 0 0 3px var(--accent-bg);
+}
+.bd-page .bd-textarea {
+	min-height: 8rem;
+	resize: vertical;
+}
+.bd-label {
+	display: block;
+	font-size: 0.85rem;
+	font-weight: 600;
+	color: var(--subtitle);
+	margin-bottom: 0.3rem;
+}
+.bd-section__lead {
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+	margin-bottom: 2rem;
+}
+.bd-section__eyebrow {
+	color: var(--accent);
+	font-size: 0.78rem;
+	font-weight: 700;
+	letter-spacing: 0.14em;
+	text-transform: uppercase;
+}
+.bd-page .bd-section__title {
+	font-size: clamp(1.75rem, 4vw, 2.4rem);
+}
+.bd-section__sub {
+	color: var(--text-muted);
+	max-width: 36rem;
+}
+.bd-loading {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+}
+.bd-empty {
+	color: var(--text-muted);
+	font-size: 0.9rem;
+	padding: 2rem;
+	text-align: center;
+	border: 1px dashed var(--border-strong);
+	border-radius: 0.75rem;
+}
+.bd-grid-3 {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: 1.25rem;
+}
+
+/* The store's filters are links here, so the back button steps through
+   them. */
+a.store-facet__item {
+	display: block;
+}
+a.store-facet__item--row,
+a.store-facet__rating {
+	display: flex;
+}
+
+/* Store bar: under the header on store and plan pages. */
+.store-nav {
+	max-width: 68rem;
+	margin: 0 auto;
+	padding: 1rem 1.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	border-bottom: 1px solid var(--border);
+}
+.store-nav__links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1.25rem;
+	font-size: 0.92rem;
+}
+/* Narrow screens: one row of links that scrolls sideways. */
+@media (max-width: 640px) {
+	.store-nav {
+		justify-content: flex-start;
+		gap: 1.25rem;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+	.store-nav__links {
+		flex-wrap: nowrap;
+	}
+}
+.store-nav__count {
+	margin-left: 0.2rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+.store-nav__cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
+}
+.store-nav__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.4rem;
+	border-radius: 9999px;
+	background: var(--accent);
+	color: white;
+	font-size: 0.75rem;
+	font-weight: 700;
+}

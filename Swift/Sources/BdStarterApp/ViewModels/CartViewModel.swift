@@ -19,6 +19,7 @@ final class CartViewModel: ScreenViewModel {
             return
         }
         state = await LoadState { try await cart.snapshot() }
+        if case .loaded(let snapshot) = state { bd?.noteCart(snapshot) }
     }
 
     /// Quantity 0 removes the line, which is what a stepper hitting its floor
@@ -31,6 +32,7 @@ final class CartViewModel: ScreenViewModel {
                 ? try await cart.remove(itemID: item.id)
                 : try await cart.setQuantity(itemID: item.id, quantity: quantity)
         }
+        if case .loaded(let snapshot) = state { bd?.noteCart(snapshot) }
     }
 
     /// Mint a Stripe Checkout session and hand back its URL.
@@ -53,22 +55,5 @@ final class CartViewModel: ScreenViewModel {
         )
         // Note the field name: `stripeUrl`, not `url`.
         return try? await cart.startCheckout(urls).stripeURL
-    }
-}
-
-/// The blog list.
-@MainActor
-@Observable
-final class BlogViewModel: ScreenViewModel {
-    var bd: BdEnvironment?
-
-    private(set) var state: LoadState<[BlogPost]> = .loading
-
-    func load() async {
-        guard let client else {
-            state = .loaded([])
-            return
-        }
-        state = await LoadState { try await client.blog.posts().posts }
     }
 }

@@ -166,13 +166,22 @@ extension String {
         hasSuffix(suffix) ? String(dropLast(suffix.count)) : self
     }
 
+    /// One path segment: everything but letters, digits and `-._~` is
+    /// encoded, `/` included, so an id or slug can't reach another path.
     var pathEscaped: String {
-        addingPercentEncoding(withAllowedCharacters: .urlPathAllowed) ?? self
+        addingPercentEncoding(withAllowedCharacters: .bdUnreserved) ?? self
     }
 
+    /// One query value: `&`, `=`, `+` and `#` are encoded too, so a search
+    /// for "socks & shoes" stays one value.
     var queryEscaped: String {
-        addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? self
+        addingPercentEncoding(withAllowedCharacters: .bdUnreserved) ?? self
     }
 
     var nilIfEmpty: String? { isEmpty ? nil : self }
+}
+
+extension CharacterSet {
+    /// RFC 3986's unreserved characters: what `encodeURIComponent` leaves alone, less `!'()*`.
+    static let bdUnreserved = CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._~")
 }

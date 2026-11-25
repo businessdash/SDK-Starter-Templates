@@ -525,37 +525,41 @@ main {
 	font-size: 0.9rem;
 }
 
-/* [bd:store] */
-.app-header__cart {
-	color: var(--text);
-	display: inline-flex;
-	align-items: center;
-	gap: 0.35rem;
-}
-
-.app-header__cart:hover {
-	color: var(--accent);
-}
-
-.app-header__cart-count {
-	display: inline-grid;
-	place-items: center;
-	min-width: 1.25rem;
-	height: 1.25rem;
-	padding: 0 0.35rem;
-	background: var(--accent);
-	color: white;
-	border-radius: 9999px;
-	font-size: 0.7rem;
-	font-weight: 700;
-}
-/* [/bd:store] */
-
+/* Narrow screens: the links move under the brand, one row that scrolls sideways. */
 @media (max-width: 860px) {
+	.app-header__inner {
+		flex-wrap: wrap;
+		row-gap: 0.6rem;
+	}
 	.app-header nav {
-		display: none;
+		order: 3;
+		flex: 1 0 100%;
+		min-width: 0;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
 	}
 }
+
+/* Store, blog and other full pages: the content column. */
+.bd-page {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 2.5rem 1.25rem 4rem;
+}
+.blog-section__all {
+	margin-top: 1.5rem;
+	text-align: center;
+}
+/* The facets are links here, so the back button steps through filters. */
+a.store-facet__item {
+	display: block;
+}
+a.store-facet__item--row,
+a.store-facet__rating {
+	display: flex;
+}
+
 
 /* News banner */
 .bd-banner {
@@ -603,29 +607,85 @@ main {
 	opacity: 1;
 }
 
-/* Review cards (Reviews section + /reviews page) */
-.review-card {
+/* Review cards (the home page's Reviews section) */
+.review-teaser {
 	padding: 1.5rem;
 	display: flex;
 	flex-direction: column;
 	gap: 0.75rem;
 }
 
-.review-card__stars {
+.review-teaser__stars {
 	color: var(--accent);
 	letter-spacing: 0.1em;
 	font-size: 1rem;
 }
 
-.review-card__text {
+.review-teaser__text {
 	color: var(--text);
 	font-size: 0.95rem;
 }
 
-.review-card__meta {
+.review-teaser__meta {
 	display: flex;
 	justify-content: space-between;
 	color: var(--text-muted);
 	font-size: 0.82rem;
 	margin-top: auto;
+}
+
+/* ── Store links ───────────────────────────────────────────────── */
+.store-nav {
+	max-width: 72rem;
+	margin: 0 auto;
+	padding: 1rem 1.25rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+	border-bottom: 1px solid var(--border);
+}
+.store-nav__links {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 1.25rem;
+	font-size: 0.92rem;
+}
+/* Narrow screens: one row of links that scrolls sideways. */
+@media (max-width: 640px) {
+	.store-nav {
+		justify-content: flex-start;
+		gap: 1.25rem;
+		overflow-x: auto;
+		white-space: nowrap;
+		scrollbar-width: none;
+	}
+	.store-nav__links {
+		flex-wrap: nowrap;
+	}
+}
+.store-nav__count {
+	margin-left: 0.2rem;
+	color: var(--text-muted);
+	font-size: 0.8rem;
+}
+.store-nav__cart {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.4rem;
+	font-weight: 600;
+}
+.store-nav__badge {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 1.4rem;
+	height: 1.4rem;
+	padding: 0 0.4rem;
+	border-radius: 9999px;
+	background: var(--accent);
+	color: white;
+	font-size: 0.75rem;
+	font-weight: 700;
 }

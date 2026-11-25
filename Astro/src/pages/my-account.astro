@@ -18,9 +18,9 @@ import {
 	getCustomerWork,
 	isCustomerPortalConfigured,
 } from "../lib/bd-portal";
-// [bd:saas]
+// [bd:subscriptions]
 import { getCustomerSubscription } from "../lib/bd-portal";
-// [/bd:saas]
+// [/bd:subscriptions]
 import Layout from "../layouts/Layout.astro";
 
 export const prerender = false;
@@ -36,7 +36,7 @@ const next =
 	rawNext.startsWith("/") && !rawNext.startsWith("//") && !rawNext.startsWith("/\\")
 		? rawNext
 		: "/my-account";
-// [bd:saas]
+// [bd:subscriptions]
 const plan = session
 	? ((await getCustomerSubscription(Astro.cookies))?.subscription ?? null)
 	: null;
@@ -55,7 +55,7 @@ function formatDate(iso: string): string {
 		new Date(iso),
 	);
 }
-// [/bd:saas]
+// [/bd:subscriptions]
 
 const fullName = session
 	? [session.user.firstName, session.user.lastName].filter(Boolean).join(" ") ||
@@ -151,7 +151,7 @@ function money(n: number): string {
 						</div>
 					) : null}
 
-					{/* [bd:saas] */}
+					{/* [bd:subscriptions] */}
 					<div class="account-section">
 						<h3>Your plan</h3>
 						<div class="bd-card account-card">
@@ -202,7 +202,7 @@ function money(n: number): string {
 							) : null}
 						</div>
 					</div>
-					{/* [/bd:saas] */}
+					{/* [/bd:subscriptions] */}
 
 					<div class="account-section">
 						<h3>Leave a review</h3>
@@ -313,12 +313,12 @@ function money(n: number): string {
 		flex-direction: column;
 		gap: 0.6rem;
 	}
-	/* [bd:saas] */
+	/* [bd:subscriptions] */
 	.account-error {
 		color: var(--danger);
 		font-size: 0.9rem;
 	}
-	/* [/bd:saas] */
+	/* [/bd:subscriptions] */
 	.account-row {
 		padding: 0.85rem 1.25rem;
 		display: flex;

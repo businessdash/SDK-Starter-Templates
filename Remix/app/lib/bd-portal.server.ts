@@ -4,10 +4,9 @@ import type {
 	CustomerReviewSubmitResponse,
 	CustomerWorkBundle,
 } from "@businessdash/sdk/contracts";
-// [bd:saas]
+// [bd:subscriptions]
 import type { CustomerSubscriptionResponse } from "@businessdash/sdk/contracts";
-// [/bd:saas]
-import { createCookie } from "react-router";
+// [/bd:subscriptions]
 
 import { getServerConfig } from "./bd.server";
 
@@ -25,13 +24,26 @@ import { getServerConfig } from "./bd.server";
  * `Request`. Mirrors DGP `bd-portal.ts`.
  */
 
-/** Cookie used only to PARSE the incoming `bd_session` value — the auth
- *  handler owns writing it. Marked httpOnly to match. */
-const sessionCookie = createCookie("bd_session", {
-	httpOnly: true,
-	sameSite: "lax",
-	path: "/",
-});
+/**
+ * The `bd_session` cookie's raw value. The SDK's auth handler writes the
+ * token as it is; React Router's `createCookie().parse()` expects its own
+ * base64 JSON encoding and turns a raw token into `{}`, so it's read here
+ * straight from the header.
+ */
+export function readSessionToken(request: Request): string | null {
+	for (const part of (request.headers.get("Cookie") ?? "").split(";")) {
+		const eq = part.indexOf("=");
+		if (eq === -1 || part.slice(0, eq).trim() !== "bd_session") continue;
+		const value = part.slice(eq + 1).trim();
+		if (!value) return null;
+		try {
+			return decodeURIComponent(value);
+		} catch {
+			return value;
+		}
+	}
+	return null;
+}
 
 /** True when BD customer auth can run (API key + base URL set). */
 export function isCustomerPortalConfigured(): boolean {
@@ -58,9 +70,7 @@ export async function getCustomerSession(
 ): Promise<CustomerSession | null> {
 	const cfg = getServerConfig();
 	if (!cfg) return null;
-	const token = (await sessionCookie.parse(request.headers.get("Cookie"))) as
-		| string
-		| null;
+	const token = readSessionToken(request);
 	if (!token) return null;
 	try {
 		const session = await getTenantSession({
@@ -120,7 +130,7 @@ export async function submitCustomerReview(
 	return portalFor(session).submitReview(input);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 /**
  * Start a Stripe subscription checkout for the signed-in customer. Returns
  * null when nobody is signed in: a plan belongs to a person, and BD refuses a
@@ -167,4 +177,4 @@ export async function setPlanCancelled(request: Request, cancel: boolean) {
 	const portal = portalFor(session);
 	return cancel ? portal.cancelSubscription() : portal.resumeSubscription();
 }
-// [/bd:saas]
+// [/bd:subscriptions]

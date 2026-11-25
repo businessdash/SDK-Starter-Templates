@@ -7,13 +7,17 @@
  * server-render. Booking and ContactForm ship a tiny client island that talks
  * to Astro endpoints under `/api/bd/*`.
  *
- * The shared `Layout` adds the news banner, JSON-LD, header (with cart + auth
+ * The shared `Layout` adds the news banner, JSON-LD, header (with auth
  * state), and footer. Same canonical section set as the React-Bun and
  * Vanilla-JS starters — only the framework + render strategy changes.
  */
 import About from "../components/About.astro";
+// [bd:blog]
 import Blog from "../components/Blog.astro";
+// [/bd:blog]
+// [bd:booking]
 import Booking from "../components/Booking.astro";
+// [/bd:booking]
 import Gallery from "../components/Gallery.astro";
 import Hero from "../components/Hero.astro";
 import Reviews from "../components/Reviews.astro";
@@ -39,9 +43,13 @@ export const prerender = false;
 	<About />
 	<Services />
 	<Gallery />
+	<!-- [bd:booking] -->
 	<Booking />
+	<!-- [/bd:booking] -->
 	<Reviews />
+	<!-- [bd:blog] -->
 	<Blog />
+	<!-- [/bd:blog] -->
 	<ContactForm />
 	{/* React drop-in (after `npx astro add react`): <ContactForm client:load /> */}
 </Layout>

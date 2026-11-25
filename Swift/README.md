@@ -4,7 +4,7 @@ Three products in one package:
 
 - **`BusinessDashKit`** — the data layer. No dependencies; the Package API is plain REST with a bearer key, so `URLSession` + `Codable` covers all of it.
 - **`BdForms`** — BD forms rendered natively in SwiftUI, with the form's conditions, steps, calculations, validation, uploads and submission. No dependencies, not even `BusinessDashKit`. See [Forms](#forms).
-- **`BdStarterApp`** — SwiftUI screens built on both: shop, cart, blog, Front Desk chat, forms, and the customer portal.
+- **`BdStarterApp`** — SwiftUI screens built on both: the shop (filters, product pages, wishlist, compare), cart and checkout, the blog with likes and comments, the business's reviews, Front Desk chat, forms, and the customer portal.
 
 ## The one rule that shapes everything here
 
@@ -34,6 +34,7 @@ Configuration lives in Info.plist — there is no `.env` in an app bundle. `BdSt
 | `BDHost` | defaults to `https://businessdash.us` |
 | `BDPublishableKey` | `pk_…` — never a secret `bd_…` key |
 | `BDSiteID` | the site UUID |
+| `BDSiteURL` | optional: your website, e.g. `https://example.com`. With it, products and posts get a Share button linking to `/store/<id>` and `/blog/<slug>` there. |
 
 **With no keys at all the app still runs** — screens render their empty states and a setup notice appears. A starter you can't launch before signing up isn't a starter.
 
@@ -104,7 +105,22 @@ Sources/BusinessDashKit/
   Resources.swift         storefront · cart · checkout · blog · forms · portal
                           reviews · subscriptions · marketing · parallel pages
                           · data model
+  Shop.swift              the product page's rules: photos per option, size
+                          order, "from" prices, the cart line's options
+  PostHtml.swift          the post HTML allowlist, reading time and dates —
+                          the same rules as the web starters
+  PostBlocks.swift        a post's safe HTML as native blocks to draw
 ```
+
+## The shop, the blog and reviews
+
+The same experience as the web starters, drawn natively.
+
+- **Store** — search, category chips with counts, a price and rating filter sheet, sorting, and a grid of cards with badges, stars, sale and "from" prices. ♡ saves to a wishlist and ⇄ picks up to four products for the compare table. All three lists, recently viewed too, live on the device (`SavedLists.swift`), like the web starters keep them in the browser.
+- **Product page** — photos for the chosen option, option and size buttons (sold-out ones struck through), the price for what's chosen, quantity, add to cart, add-ons, details and specifications, reviews with "Show more", related products, recently viewed, and Share when `BDSiteURL` is set. "Ask us" opens the Chat tab.
+- **Cart and checkout** — the Cart tab carries a count badge. Checkout opens Stripe and comes back to `bdstarter://checkout/success?session_id=…`, which opens the order screen. **Register the `bdstarter` URL scheme** on your app target (Info ▸ URL Types) for that return to land.
+- **Blog** — category chips, tags, pinned posts first, older posts on demand. A post's HTML goes through the allowlist and is drawn as native text, lists, quotes, code, images and tables (`PostBlocks`), so nothing in it runs. Liking and commenting need a signed-in customer; signed out, the buttons lead to the Account tab. Comments are up to 5,000 characters, and a held one says it shows once approved.
+- **Business reviews** — the business's own reviews from Google, Yelp, Housecall Pro and the dashboard. The store opens with the rating ("★ 4.6 · 128 reviews"), which leads to the reviews screen: the average with a bar per star, a platform filter, each review with its photos, a Verified mark and a link to it on Google or Yelp, and more on demand. A signed-in customer can write one; it waits for the business to approve it. The average and the stars breakdown ride the marketing bundle (`client.reviews.summary()`); the reviews page in with `client.reviews.list(limit:offset:source:)`.
 
 ## Five things that will bite you
 
@@ -192,7 +208,7 @@ Leaving the loop — or SwiftUI cancelling the `.task` on disappear — tears th
 
 ## Verification
 
-`swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal. `BdForms` adds the forms-core parity fixtures and the controller's behavior: conditions, repeaters, calculations, uploads, server issue mapping and every submit outcome.
+`swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal. The shop, blog and reviews tests pin the post HTML allowlist to the web starters' fixture case for case, the product page's option and price rules, the wire shapes (category counts, cents filters, cart line names, the reviews page and summary), and what a written review sends. `BdForms` adds the forms-core parity fixtures and the controller's behavior: conditions, repeaters, calculations, uploads, server issue mapping and every submit outcome.
 
 <!-- [bd:donations] -->
 ## Donations

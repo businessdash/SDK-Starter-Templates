@@ -1,8 +1,12 @@
 import { createFileRoute } from "@tanstack/solid-router";
 
 import { About } from "../components/bd/About";
+// [bd:blog]
 import { Blog } from "../components/bd/Blog";
+// [/bd:blog]
+// [bd:booking]
 import { Booking } from "../components/bd/Booking";
+// [/bd:booking]
 import { ContactForm } from "../components/bd/ContactForm";
 import { BdFooter } from "../components/bd/Footer";
 import { Gallery } from "../components/bd/Gallery";
@@ -55,8 +59,12 @@ function App() {
 				<About body={home().about} />
 				<Services services={home().services} />
 				<Gallery items={home().gallery} />
+				{/* [bd:booking] */}
 				<Booking eventTypes={home().eventTypes} />
+				{/* [/bd:booking] */}
+				{/* [bd:blog] */}
 				<Blog posts={home().blogPosts} />
+				{/* [/bd:blog] */}
 				<ContactForm schema={home().formSchema} slug={home().formSlug} />
 			</main>
 			<BdFooter />

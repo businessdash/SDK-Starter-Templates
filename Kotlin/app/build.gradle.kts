@@ -38,6 +38,8 @@ android {
         buildConfigField("String", "BD_FORM", "\"${properties.getProperty("bd.form") ?: ""}\"")
         // A practice quiz's slug for the Quiz tab. Empty: a bundled sample quiz.
         buildConfigField("String", "BD_QUIZ", "\"${properties.getProperty("bd.quiz") ?: ""}\"")
+        // The web store's address, for a product's "Copy link". Empty: no link.
+        buildConfigField("String", "BD_SITE_URL", "\"${properties.getProperty("bd.siteUrl") ?: ""}\"")
     }
 
     buildFeatures {
@@ -45,6 +47,10 @@ android {
         buildConfig = true
     }
 
+    testOptions {
+        // Robolectric reads the app's manifest and resources.
+        unitTests.isIncludeAndroidResources = true
+    }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
@@ -53,6 +59,11 @@ android {
 
 kotlin {
     jvmToolchain(17)
+}
+
+tasks.withType<Test>().configureEach {
+    // Robolectric runs Android 15 on Java 21.
+    javaLauncher.set(javaToolchains.launcherFor { languageVersion.set(JavaLanguageVersion.of(21)) })
 }
 
 dependencies {
@@ -67,4 +78,13 @@ dependencies {
     implementation(libs.compose.material.icons.core)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(platform(libs.compose.bom))
+    testImplementation(libs.compose.ui.test.junit4)
+    testImplementation(libs.ktor.client.mock)
+    debugImplementation(libs.compose.ui.test.manifest)
 }

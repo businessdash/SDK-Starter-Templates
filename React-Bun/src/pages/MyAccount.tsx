@@ -2,9 +2,9 @@ import { BdSignIn } from "@businessdash/sdk/react";
 import { useState } from "react";
 import { bd } from "../lib/bd";
 import type { Loose } from "../lib/bd";
-// [bd:saas]
+// [bd:subscriptions]
 import type { CustomerPlan } from "../lib/bd";
-// [/bd:saas]
+// [/bd:subscriptions]
 import { ErrorBox, PageHead, useApi } from "./ui";
 
 /** Where sign-in returns to: a path on this site, or the account page. */
@@ -102,9 +102,9 @@ export function MyAccount() {
 					))}
 				</ul>
 			)}
-			{/* [bd:saas] */}
+			{/* [bd:subscriptions] */}
 			<PlanCard plan={data.plan ?? null} />
-			{/* [/bd:saas] */}
+			{/* [/bd:subscriptions] */}
 			<section className="review-form">
 				<h2 className="section-title">Leave a review</h2>
 				<div className="rf__row">
@@ -135,7 +135,7 @@ export function MyAccount() {
 	);
 }
 
-// [bd:saas]
+// [bd:subscriptions]
 function formatDate(iso: string): string {
 	return new Intl.DateTimeFormat(undefined, { dateStyle: "long" }).format(new Date(iso));
 }
@@ -204,4 +204,4 @@ function PlanCard({ plan }: { plan: CustomerPlan | null }) {
 		</section>
 	);
 }
-// [/bd:saas]
+// [/bd:subscriptions]

@@ -3,18 +3,22 @@ import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@ang
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { bdApi, type CartSnapshot } from "../lib/bd-api.client";
+import { StoreNavComponent } from "../sections/store-nav.component";
 
 /**
  * Cart view: line items with quantity controls, coupon apply/remove
  * (reactive form), clear, and "Checkout" → Stripe. All mutations go through
  * the server `/api/bd/cart/*` endpoints which carry the httpOnly visitor
  * cookie. ?status=success|cancel (from the Stripe return) shows a banner.
+ * Cart amounts are dollars. Each change sends the new item count
+ * (`bd:cart-count`) to the store bar.
  */
 @Component({
 	selector: "bd-cart-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ReactiveFormsModule, RouterLink],
+	imports: [ReactiveFormsModule, RouterLink, StoreNavComponent],
 	template: `
+		<bd-store-nav />
 		<section class="section">
 			<h1 class="section__title">Your cart</h1>
 
@@ -31,7 +35,12 @@ import { bdApi, type CartSnapshot } from "../lib/bd-api.client";
 					<ul class="cart-list">
 						@for (item of c.items; track item.id) {
 							<li class="cart-row">
-								<span class="cart-row__name">{{ item.productName || "Item" }}</span>
+								<span class="cart-row__name">
+									{{ item.productName || "Item" }}
+									@if (item.variantTitle) {
+										<span class="cart-row__variant">{{ item.variantTitle }}</span>
+									}
+								</span>
 								<span class="cart-row__qty">
 									<button type="button" (click)="setQty(item.id, item.quantity - 1)" aria-label="Decrease">−</button>
 									{{ item.quantity }}
@@ -86,8 +95,9 @@ export class CartPage implements OnInit {
 		this.cart.set(await bdApi.cart());
 	}
 
-	money(cents: number, currency: string): string {
-		const value = (cents ?? 0) / 100;
+	/** Cart amounts are dollars. */
+	money(amount: number, currency: string): string {
+		const value = amount ?? 0;
 		try {
 			return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format(value);
 		} catch {
@@ -95,31 +105,37 @@ export class CartPage implements OnInit {
 		}
 	}
 
+	/** The cart after a change, and its count for the store bar. */
+	private show(next: CartSnapshot) {
+		this.cart.set(next);
+		window.dispatchEvent(new CustomEvent("bd:cart-count", { detail: next?.itemCount ?? 0 }));
+	}
+
 	async setQty(itemId: string, quantity: number) {
 		const next = await bdApi.updateCartItem(itemId, Math.max(0, quantity));
-		if (next !== null) this.cart.set(next);
+		if (next !== null) this.show(next);
 	}
 
 	async remove(itemId: string) {
 		const next = await bdApi.removeCartItem(itemId);
-		if (next !== null) this.cart.set(next);
+		if (next !== null) this.show(next);
 	}
 
 	async applyCoupon() {
 		const code = this.couponForm.controls.code.value.trim();
 		if (!code) return;
 		const next = await bdApi.applyCoupon(code);
-		if (next !== null) this.cart.set(next);
+		if (next !== null) this.show(next);
 	}
 
 	async removeCoupon() {
 		const next = await bdApi.removeCoupon();
-		if (next !== null) this.cart.set(next);
+		if (next !== null) this.show(next);
 	}
 
 	async clear() {
 		const next = await bdApi.clearCart();
-		if (next !== null) this.cart.set(next);
+		if (next !== null) this.show(next);
 	}
 
 	async checkout() {

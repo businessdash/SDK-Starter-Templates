@@ -1,4 +1,4 @@
-// [bd-file:store,saas]
+// [bd-file:store,subscriptions]
 import Link from "next/link";
 
 import { getCheckoutStatus } from "@/server/lib/bd-store";
@@ -77,11 +77,11 @@ export default async function OrderPage({
 					Back to store
 				</Link>
 				{/* [/bd:store] */}
-				{/* [bd:saas] */}
+				{/* [bd:subscriptions] */}
 				<Link className="bd-btn bd-btn--ghost" href="/my-account">
 					See your plan
 				</Link>
-				{/* [/bd:saas] */}
+				{/* [/bd:subscriptions] */}
 			</div>
 		</div>
 	);

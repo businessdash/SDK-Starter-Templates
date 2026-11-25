@@ -49,6 +49,8 @@ export function useCart() {
 		productId: string;
 		variantId?: string | null;
 		quantity?: number;
+		/** Chosen options, such as `{ Size: "42" }`. */
+		options?: Record<string, string>;
 	}) => mutate("/api/bd/cart/add", input);
 	const updateItem = (itemId: string, quantity: number) =>
 		mutate("/api/bd/cart/update", { itemId, quantity });
