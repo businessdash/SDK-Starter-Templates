@@ -1,0 +1,2 @@
+<!-- Add to cart; "Choose options" until every option is picked, Sold out when there's none. -->
+<button class="bd-btn buy__add" data-bd-add#if(detail.add.disabled): disabled#endif type="button">#(detail.add.label)</button>

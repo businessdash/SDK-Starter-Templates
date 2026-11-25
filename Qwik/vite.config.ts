@@ -6,6 +6,7 @@ import { defineConfig, type UserConfig } from "vite";
 import { qwikVite } from "@builder.io/qwik/optimizer";
 import { qwikCity } from "@builder.io/qwik-city/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
+import tailwindcss from "@tailwindcss/vite"; // [bd-line:tailwind]
 import pkg from "./package.json";
 
 type PkgDep = Record<string, string>;
@@ -21,7 +22,12 @@ errorOnDuplicatesPkgDeps(devDependencies, dependencies);
  */
 export default defineConfig(({ command, mode }): UserConfig => {
   return {
-    plugins: [qwikCity(), qwikVite(), tsconfigPaths({ root: "." })],
+    plugins: [
+      qwikCity(),
+      qwikVite(),
+      tsconfigPaths({ root: "." }),
+      tailwindcss(), // [bd-line:tailwind]
+    ],
     /**
      * Expose the canonical `PUBLIC_BD_*` names to the browser bundle
      * via `import.meta.env` (matching the T3 starter + the SDK), alongside

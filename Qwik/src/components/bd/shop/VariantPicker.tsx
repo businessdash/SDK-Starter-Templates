@@ -1,0 +1,43 @@
+// [bd-file:store]
+import { formatDollars, type ProductVariant } from "../../../lib/shop/shop";
+
+/**
+ * A button per variant (Cloud, Storm…), the chosen one pressed; sold-out
+ * ones can't be pressed. Nothing shows for a product with one variant. A
+ * variant's price shows on its button while it has no options of its own.
+ */
+export function VariantPicker({
+	variants,
+	selected,
+	showPrices,
+}: {
+	variants: ProductVariant[];
+	selected: string;
+	showPrices: boolean;
+}) {
+	if (variants.length <= 1) return null;
+	return (
+		<fieldset class="choice">
+			<legend class="bd-label">Option</legend>
+			<div class="choice__values">
+				{variants.map((v) => (
+					<button
+						aria-pressed={v.id === selected ? "true" : "false"}
+						class={`choice__value${v.id === selected ? " choice__value--on" : ""}`}
+						data-bd-variant={v.id}
+						disabled={!v.available}
+						key={v.id}
+						type="button"
+					>
+						{v.name}
+						{v.price != null ? (
+							<small data-bd-variant-price="" hidden={!showPrices}>
+								{` ${formatDollars(v.price)}`}
+							</small>
+						) : null}
+					</button>
+				))}
+			</div>
+		</fieldset>
+	);
+}

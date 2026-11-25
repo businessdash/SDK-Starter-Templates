@@ -375,3 +375,24 @@ class ReviewStrip extends StatelessWidget {
     );
   }
 }
+
+/// A centred title and, optionally, a line under it: an empty list, or a
+/// screen that couldn't load.
+class EmptyNote extends StatelessWidget {
+  const EmptyNote(this.title, {super.key, this.detail});
+
+  final String title;
+  final String? detail;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          spacing: 6,
+          children: [
+            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+            if (detail != null) Text(detail!, textAlign: TextAlign.center),
+          ],
+        ),
+      );
+}

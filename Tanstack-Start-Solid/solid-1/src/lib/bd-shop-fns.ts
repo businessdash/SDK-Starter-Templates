@@ -8,7 +8,8 @@ import { createServerFn } from "@tanstack/solid-start";
 
 import { devwarn, getBd } from "./bd";
 import { getCart, isSuspensionError } from "./bd-server-fns";
-import type { CompareColumn, ProductPageData } from "./shop/shop-elements";
+import type { ProductPageData } from "./shop/shop";
+import type { CompareColumn } from "./shop/shop-elements";
 
 /** SDK records have open `[key: string]: unknown` fields that fail the
  *  output type check though they serialize fine (see bd-server-fns.ts). */
@@ -21,7 +22,7 @@ export type ProductPageResult =
 	| { ok: true; data: ProductPageData }
 	| { ok: false; reason: "unconfigured" | "suspended" | "notfound" };
 
-/** One product with its reviews, add-ons and related products, for `<bd-product>`. */
+/** One product with its reviews, add-ons and related products, for `<ProductDetail>`. */
 export const getProductPage = createServerFn({
 	method: "GET",
 	strict: SDK_OUTPUT,

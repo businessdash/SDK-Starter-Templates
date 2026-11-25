@@ -1,0 +1,21 @@
+<!-- The product's reviews: the average, each review, and Show more reviews. -->
+<section class="product-section" id="reviews">
+  <h2 class="product-section__title">Reviews</h2>
+  #if(detail.reviews.hasReviews):
+    <p class="reviews__summary">#unsafeHTML(detail.reviews.starsHTML)<strong>#(detail.reviews.average) out of 5</strong><span>from #(detail.reviews.total) reviews</span></p>
+    <div class="review-list">
+      #for(review in detail.reviews.items):
+        <article class="review">
+          <div class="review__head">#unsafeHTML(review.starsHTML)<span class="review__name">#(review.name)</span><span class="review__date">#(review.date)</span></div>
+          #if(review.hasTitle):<p class="review__title">#(review.title)</p>#endif
+          #if(review.hasBody):<p class="review__body">#(review.body)</p>#endif
+        </article>
+      #endfor
+    </div>
+    #if(detail.reviews.hasMore):
+      <a class="bd-btn bd-btn--ghost reviews__more" href="#(detail.reviews.moreHref)">Show more reviews</a>
+    #endif
+  #else:
+    <p class="reviews__none">No reviews yet.</p>
+  #endif
+</section>

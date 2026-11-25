@@ -5,7 +5,7 @@ import { getBd } from "../../../../../lib/bd";
 import { ensureVisitorToken } from "../../../../../lib/bd-store";
 
 /**
- * Add to the cart for `<bd-product>`: JSON `{ productId, variantId?,
+ * Add to the cart, for the product page: JSON `{ productId, variantId?,
  * quantity?, options? }` in; `{ ok, itemCount }` or `{ ok: false, error }`
  * out. The first add mints the visitor's cart cookie.
  */

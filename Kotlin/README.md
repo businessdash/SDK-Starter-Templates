@@ -116,6 +116,28 @@ The same shop, blog and reviews as the web starters and the Swift, React Native 
 
 Screens open over the tabs on a small stack in `AppState` (no navigation library); Back closes the top one, and the one under it keeps its scroll position and what it loaded. Signing in on the Account tab is what the blog and reviews use: `AccountViewModel.token` feeds `AppState.sessionToken`, and liking, commenting and writing a review send it as `X-BD-Session-Token`. Photos load with [Coil](https://coil-kt.github.io/coil/).
 
+### Laying out the screens your way
+
+Every screen is laid out from public composables, each taking plain values and callbacks rather than the screen's state, so you can rearrange, restyle, drop or replace any of them, or lay out a screen of your own (`PartsTest.kt` builds a product page that way, with the button under the name):
+
+- **Product page** (`ProductParts.kt`): `ProductGallery`, `ProductTitle`, `ProductPriceText`, `StockNote`, `VariantPicker`, `OptionPicker` / `OptionRow`, `QuantityStepper`, `AddToCartButton`, `ProductNotice`, `ProductAddons` / `AddonRow`, `ProductDetails`, `ProductReviews` / `ProductReviewRow`.
+- **Store and cart** (`StoreParts.kt`, `ShopParts.kt`): `StoreSearchField`, `CategoryChips`, `StoreResultsBar`, `StoreEmpty`, `StoreFilterSheet`, `ProductCard`, `ProductBadge`, `SaveButtons`, `CompareBar`, `ProductRail`, `ReviewStrip`, `CartLine`, `CouponField`, `CartSummaryBar`; and the small pieces `StarRating`, `Photo`, `Notice` and `EmptyNote`.
+- **Blog** (`BlogParts.kt`): `BlogFilters` / `ChipRow`, `PostCard`, `PostMeta`, `PostCover`, `PostBody` (`BlogScreens.kt`), `MembersOnly`, `PostCta`, `PostTags`, `LikeButton`, `CommentForm`, `CommentRow`, `InfoPanel`.
+- **Reviews** (`ReviewParts.kt`): `ReviewSummaryCard`, `ReviewSourceFilter`, `ReviewCard`, `ReviewWriter`.
+
+The rules the parts follow are `ProductView`'s, in `:bd`:
+
+```kotlin
+val price = view.price(variantId, chosen)
+ProductGallery(view.gallery(variantId), view.name)
+ProductPriceText(price)
+VariantPicker(view.variants, variantId) { variantId = it; chosen = emptyMap() }
+for (group in view.optionGroups(variantId)) {
+    OptionPicker(group, chosen[group.id]) { chosen = chosen + (group.id to it) }
+}
+AddToCartButton(price, adding = false, hasOptions = true) { /* client.cartAdd(…) */ }
+```
+
 ## Five things that will bite you
 
 **1. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — a client that only checks the status code decodes an empty screen and never notices. `decode` inspects the body **before** the status, and a test pins that order.
@@ -173,8 +195,8 @@ Built with Gradle 9.8, AGP 8.7, Kotlin 2.0 and JDK 21 (toolchain 17). There is n
 
 - `gradle :bd:test` passes, including the forms parity suite that replays the TypeScript forms-core fixtures. It needs no Android SDK. `ShopBlogReviewsTest.kt` replays the post-HTML cases every BD starter checks its port against (`post-html-parity.json`) and pins the product, review and request rules.
 - `gradle :bd-forms:testDebugUnitTest` and `gradle :bd-sign-in:testDebugUnitTest` pass.
-- `gradle :app:testDebugUnitTest` passes: Compose tests run on the JVM by Robolectric (no emulator) against a fake BD — the store's categories and filters, a product's options going into the cart and the cart count, a coupon BD refuses and one it takes, the blog's pinned posts, a tag and a post liked and commented on as a signed-in customer, the reviews' summary, "Show more", a platform filter and a written review, the saved lists outlasting a relaunch, and Stripe's return link. Robolectric's Android 15 needs Java 21 to run the tests; the build sets that up.
-- `gradle :app:assembleDebug` builds and `gradle :app:lintDebug` is clean. The Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit. The store, product, compare, cart, order, blog, post and reviews screens were checked at phone and tablet size, light and dark, against a mock BD.
+- `gradle :app:testDebugUnitTest` passes: Compose tests run on the JVM by Robolectric (no emulator) against a fake BD — the store's categories and filters, a product's options going into the cart and the cart count, a coupon BD refuses and one it takes, the blog's pinned posts, a tag and a post liked and commented on as a signed-in customer, the reviews' summary, "Show more", a platform filter and a written review, the saved lists outlasting a relaunch, and Stripe's return link. `PartsTest.kt` lays out a product page from the public parts and drives its style, size, quantity and add to cart, and checks the store, cart and blog parts on their own. Robolectric's Android 15 needs Java 21 to run the tests; the build sets that up.
+- `gradle :app:assembleDebug` builds and `gradle :app:lintDebug` is clean. The Form tab was walked through on an API 36 emulator: steps, conditions, calculations, validation, pickers, rich text and submit. The store, product, compare, cart, order, blog, post and reviews screens were checked at phone and tablet size, light and dark, against a mock BD. Splitting the screens into parts left the store, product, cart, blog, post and reviews pixel for pixel the same in Robolectric renders.
 - `BdPackageFormsBackend` and the shop against a live site have not been run from this app; they need a real site id and publishable key.
 
 <!-- [bd:donations] -->

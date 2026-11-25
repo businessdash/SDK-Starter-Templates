@@ -44,9 +44,9 @@ enum CartController {
         let options: [String: JSONValue]?
     }
 
-    /// Add to cart for the product page's `<bd-product>`: JSON in
-    /// (`productId`, `quantity`, `variantId`, `options`), `{ok, itemCount}`
-    /// or `{ok: false, error}` out.
+    /// Add to cart for the product page's `<bd-product-form>` and
+    /// `<bd-addon>`: JSON in (`productId`, `quantity`, `variantId`,
+    /// `options`), `{ok, itemCount}` or `{ok: false, error}` out.
     static func addJSON(req: Request) async throws -> Response {
         if let refusal = PageJSON.refusal(req) { return refusal }
         guard let bd = req.bd else {

@@ -48,6 +48,12 @@ bun run build      # tsc + vite build → dist/
 bun run preview    # bun server.ts serves dist/ + /api/bd/* on the same port
 ```
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `src/tailwind.css` is imported in `src/main.tsx`, and `@tailwindcss/vite` builds it. Use its classes anywhere in `src/`. The starter's pages, shop, blog and reviews style themselves with `index.css` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `src/tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## What's in each section
 
 Every section under `src/components/` exercises one SDK surface:
@@ -182,12 +188,34 @@ The store is the same shop as the Business Dash demo: a product list with search
 - The product list keeps every filter in the URL (`?q`, `?category`, `?min`, `?max`, `?rating`, `?sort`), so a filtered list can be shared and the back button steps through filters. The router (`src/lib/router.tsx`) tracks the query string for this.
 - Add to cart sends the chosen options (`{ Size: "42" }`) through `POST /api/bd/cart/add`, which mints the `bd_cart_visitor` cookie on the first add; the store bar's cart count updates in place.
 - The wishlist and compare picks live in this browser (`localStorage`). `/store/compare?ids=a,b,c` can be shared.
+
+### The shop's parts
+
+`<ProductDetail>` is the whole product page, and the store and cart pages are laid out from the same kind of parts. Each part is its own file, so you can move, restyle or drop one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | the filters (`StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`), `ProductGrid`, `ProductCard`, `StarRating`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary`, `CartActions` |
+| Wishlist, compare | `WishlistView`, `CompareTable` |
+
+The product page's parts are in `src/components/shop/`; so are the store page's (`ProductCard`, `ProductGrid`, and `StoreFilters.tsx`: `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`) and the cart's, which take the cart calls as props.
 <!-- [/bd:store] -->
 
 <!-- [bd:blog] -->
 ## The blog
 
 `/blog` lists posts newest first (pinned posts lead the first page) with category and tag filters and "Older posts" paging, all in the URL. `/blog/:slug` shows one post. The Bun server rebuilds the post's HTML from an allowlist (`safePostHtml` in `src/components/blog/blog.ts`) in `GET /api/bd/blog/post`, so only that reaches the browser. Signed-in customers can like posts and comment (`POST /api/bd/blog/like`, `POST /api/bd/blog/comment`, which read the `bd_session` cookie); signed out, those buttons lead to sign-in and back.
+
+### The blog's parts
+
+`<BlogIndex>` and `<BlogPost>` are the whole pages, built from parts in `src/components/blog/`, one file each:
+
+| Page | Parts |
+| --- | --- |
+| Blog (`BlogIndex`) | `BlogFilters` (categories and tags), `PostCard` |
+| Post (`BlogPost`) | `PostMeta`, `PostBody` (or `MembersOnly` for a members-only post signed out), `PostCta`, `PostTags`, `LikeButton`, `Comments` (`CommentForm`, `CommentList`) |
 <!-- [/bd:blog] -->
 
 ## Reviews
@@ -198,6 +226,8 @@ The store is the same shop as the Business Dash demo: a product list with search
 - a platform filter (`?source=google`), and "Show more reviews", which is a link (`?shown=20`);
 - each review with the reviewer's photo or initial, the stars, the date, the text, any photos, the platform, Verified, and a "Read on Google/Yelp" link;
 - "Write a review" for a signed-in customer, which shows once the business approves it. Signed out, it's a link to sign in.
+
+`<ReviewsView>` is the whole page, built from `RatingSummary` (the average and a bar per star, with the writer beside it), `ReviewFilter` (the platform links) and `ReviewCard` (one review), each its own file in `src/components/reviews/`, so you can lay them out your own way.
 
 The Bun server gathers the page in `GET /api/bd/reviews/page` (with `loadReviewsPage` from `src/components/reviews/reviews-page.ts`) and takes a written review in `POST /api/bd/reviews/write`, which checks it again and sends it with `submitReview`. The page parts are `src/components/reviews/` (the same in every React starter), styled by `src/bd-reviews.css`; `reviews.ts` holds the rules every BD starter shares.
 

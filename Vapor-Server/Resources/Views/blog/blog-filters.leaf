@@ -1,0 +1,19 @@
+<!-- All and a link per category, then the tags; choosing one resets the paging. -->
+#if(hasFilterNav):
+  <nav aria-label="Blog topics" class="blog-filters">
+    #if(hasCategories):
+      <ul>
+        #for(link in categories):
+          <li><a#if(link.current): aria-current="true"#endif href="#(link.href)">#(link.label)</a></li>
+        #endfor
+      </ul>
+    #endif
+    #if(hasTags):
+      <ul class="blog-filters__tags">
+        #for(link in tags):
+          <li><a#if(link.current): aria-current="true"#endif href="#(link.href)">#(link.label)</a></li>
+        #endfor
+      </ul>
+    #endif
+  </nav>
+#endif

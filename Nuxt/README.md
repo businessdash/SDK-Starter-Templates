@@ -74,6 +74,12 @@ node .output/server/index.mjs
 
 The output is a Node server by default; Nitro presets cover Vercel / Cloudflare / Netlify / Deno / Bun / static — set the preset via `NITRO_PRESET=vercel npm run build` or `nuxt.config.ts`.
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `app/assets/css/tailwind.css` is in `nuxt.config.ts`'s `css` list, and `@tailwindcss/vite` builds it. Use its classes anywhere in `app/`. The starter's pages, shop, blog and reviews style themselves with `bd-tokens.css` and the other files in `app/assets/css/`, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## What's in each section
 
 ### Home (baseline)
@@ -103,6 +109,18 @@ Visitor-token cart pattern: a UUID stored in an httpOnly cookie named `bd_cart_v
 | **Checkout** | Cart page "Checkout" button | `POST /api/bd/checkout/start` → redirect to Stripe | `bd.checkout.forVisitor(token).start({ successUrl, cancelUrl })` |
 
 The shop's logic is framework-free, in `shared/bd/shop.ts` (Nuxt's `#shared`, usable from the app and the server): shaping a product for its page (photos per option, option groups, "from" prices, specs) and the wishlist, compare and recently viewed lists, which live in the browser's localStorage. The chosen options travel with the cart line (`options: { Size: "42" }`), and the cart prices them. Styles are in `app/assets/css/bd-shop.css`.
+
+#### The shop's parts
+
+`<ProductDetail>` is the whole product page, and the store and cart pages are laid out from the same kind of parts. Each part is its own file in `app/components/bd/shop/`, so you can move, restyle or drop one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`, `ProductGrid`, `ProductCard`, `StarRating`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `RecentlyViewed`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary`, `CartActions` |
+
+`ProductDetail` holds what's chosen (option, sizes, photo, quantity) and hands it to the parts as props; the gallery's photo and the quantity are `v-model`s. The parts tell the page what happened through events (`@pick`, `@add`, `@search`…), so the store page keeps its filters in the URL and the cart page calls `useCart`. `StarRating`, `SaveButtons`, `ProductRail` and `CompareBar` are in `app/components/bd/`.
 <!-- [/bd:store] -->
 
 <!-- [bd:blog] -->
@@ -114,6 +132,17 @@ The shop's logic is framework-free, in `shared/bd/shop.ts` (Nuxt's `#shared`, us
 | **Post**, likes, comments | `app/pages/blog/[slug].vue` | `GET /api/bd/blog/post/[slug]`, `POST …/like`, `POST …/comment` | `bd.blog.getPost(slug)`, `listComments(slug)`, `withSession(token).{likeStatus,toggleLike,postComment}` |
 
 Liking and commenting need a signed-in customer (the `bd_session` cookie from `/my-account`). A post's HTML is rebuilt from an allowlist by `safePostHtml` in `shared/bd/blog.ts` on the server, and only that rebuilt HTML reaches the page, so a post can't carry a script. Styles are in `app/assets/css/bd-blog.css`.
+
+#### The blog's parts
+
+Both pages are laid out from parts in `app/components/bd/blog/`, one file each:
+
+| Page | Parts |
+| --- | --- |
+| Blog | `BlogFilters` (categories and tags), `PostCard` |
+| Post | `PostMeta`, `PostBody` (or `MembersOnly` for a members-only post signed out), `PostCta`, `PostTags`, `LikeButton`, `Comments` (`CommentForm`, `CommentList`) |
+
+`LikeButton` posts to its `like-url` and `CommentForm` to its `comment-url`; after a comment, `refresh` reloads the list.
 <!-- [/bd:blog] -->
 
 <!-- [bd:subscriptions] -->
@@ -138,7 +167,7 @@ Sign-in / sign-up / sign-out are plain links (`<a href="/api/bd-auth/sign-in">` 
 
 | Surface | Page / route | Endpoint | SDK call |
 | --- | --- | --- | --- |
-| **Business reviews** | `app/pages/reviews.vue`: the rating with a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a link to it on Google or Yelp, "Show more" (`?shown=`); `components/bd/ReviewWriter.vue` writes one, which waits for approval. The rules are `shared/bd/reviews.ts`, the same in every BD starter. | `GET /api/bd/reviews/page?source=&shown=`, `POST /api/bd/reviews/write`, `GET /api/bd/reviews?limit=&offset=&source=` (JSON paging for your own components) | the bundle's `reviews` (count per star), `bd.reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview(...)` |
+| **Business reviews** | `app/pages/reviews.vue`: the rating with a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a link to it on Google or Yelp, "Show more" (`?shown=`); the page is laid out from `RatingSummary`, `ReviewFilter` and `ReviewCard` in `components/bd/reviews/`, one file each; `components/bd/ReviewWriter.vue` writes one, which waits for approval. The rules are `shared/bd/reviews.ts`, the same in every BD starter. | `GET /api/bd/reviews/page?source=&shown=`, `POST /api/bd/reviews/write`, `GET /api/bd/reviews?limit=&offset=&source=` (JSON paging for your own components) | the bundle's `reviews` (count per star), `bd.reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview(...)` |
 | **Updates feed** | `app/pages/updates.vue` | `GET /api/bd/home` (`updates`) | `bundle.updates` (untyped passthrough) |
 | **Sitemap** | `server/routes/sitemap.xml.ts` (proxy) | `GET /sitemap.xml` | `bd.parallelPages.sitemapUrl()` |
 | **robots.txt** | `server/routes/robots.txt.ts` (proxy) | `GET /robots.txt` | `bd.parallelPages.robotsUrl()` |
@@ -230,6 +259,9 @@ Nuxt SSR re-fetches per request so the callback is a logger today — when you a
 │   │   ├── Hero.vue  About.vue  Services.vue  Gallery.vue  Blog.vue
 │   │   ├── Booking.vue  ContactForm.vue
 │   │   ├── StoreNav.vue  SaveButtons.vue  StarRating.vue  ProductRail.vue  CompareBar.vue <!-- [bd-line:store] -->
+│   │   ├── shop/                               # The store, product and cart pages' parts <!-- [bd-line:store] -->
+│   │   ├── blog/                               # The blog pages' parts <!-- [bd-line:blog] -->
+│   │   ├── reviews/                            # The reviews page's parts
 │   │   ├── NewsBanner.vue                      # Dismissible bundle.banner bar
 │   │   ├── ReviewWriter.vue                    # Write a review (the reviews page)
 │   │   └── ReviewForm.vue                      # Customer review form (my account)

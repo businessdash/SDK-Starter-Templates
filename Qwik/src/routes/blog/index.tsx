@@ -4,11 +4,12 @@ import { type DocumentHead, Link, routeLoader$ } from "@builder.io/qwik-city";
 
 import type { BlogCategory, BlogPublicPost } from "@businessdash/sdk/contracts";
 
+import { BlogFilters } from "../../components/bd/blog/BlogFilters";
+import { PostCard } from "../../components/bd/blog/PostCard";
 import { Footer } from "../../components/bd/Footer";
 import { SiteHeader } from "../../components/bd/SiteHeader";
 import { getBd } from "../../lib/bd";
 import { getCustomerSession } from "../../lib/bd-portal";
-import { formatPostDate, readingMinutes } from "../../lib/shop/blog";
 
 const PAGE = 12;
 
@@ -17,6 +18,8 @@ const PAGE = 12;
  * tag, with "Older posts" paging. Filters live in the URL (?category, ?tag,
  * ?cursor) and the loader reads the posts on the server. A tag is matched
  * here, over the newest 50 posts, because the API filters by category only.
+ * The page is laid out from the blog's parts (src/components/bd/blog/):
+ * BlogFilters and a PostCard per post.
  */
 export const useBlogIndex = routeLoader$(async ({ cookie, query }) => {
 	const categoryId = query.get("category") || "";
@@ -57,17 +60,6 @@ export const useBlogIndex = routeLoader$(async ({ cookie, query }) => {
 	};
 });
 
-/** This page with one filter changed and the paging reset. */
-function filterHref(current: { categoryId: string; tag: string }, key: "category" | "tag", value: string | null): string {
-	const params = new URLSearchParams();
-	if (current.categoryId) params.set("category", current.categoryId);
-	if (current.tag) params.set("tag", current.tag);
-	if (value) params.set(key, value);
-	else params.delete(key);
-	const qs = params.toString();
-	return qs ? `/blog?${qs}` : "/blog";
-}
-
 export default component$(() => {
 	const data = useBlogIndex();
 	const { posts, categories, tags, categoryId, tag, paged, nextCursor } = data.value;
@@ -90,43 +82,7 @@ export default component$(() => {
 					{activeCategory?.description ? <p class="bd-section__sub">{activeCategory.description}</p> : null}
 				</div>
 
-				{categories.length > 0 || tags.length > 0 ? (
-					<nav aria-label="Blog topics" class="blog-filters">
-						{categories.length > 0 ? (
-							<ul>
-								<li>
-									<Link aria-current={categoryId ? undefined : "true"} href={filterHref({ categoryId, tag }, "category", null)}>
-										All
-									</Link>
-								</li>
-								{categories.map((category) => (
-									<li key={category.id}>
-										<Link
-											aria-current={categoryId === category.id ? "true" : undefined}
-											href={filterHref({ categoryId, tag }, "category", category.id)}
-										>
-											{category.name}
-										</Link>
-									</li>
-								))}
-							</ul>
-						) : null}
-						{tags.length > 0 ? (
-							<ul class="blog-filters__tags">
-								{tags.map((t) => (
-									<li key={t}>
-										<Link
-											aria-current={tag === t ? "true" : undefined}
-											href={filterHref({ categoryId, tag }, "tag", tag === t ? null : t)}
-										>
-											#{t}
-										</Link>
-									</li>
-								))}
-							</ul>
-						) : null}
-					</nav>
-				) : null}
+				<BlogFilters categories={categories} category={categoryId} tag={tag} tags={tags} />
 
 				{posts.length === 0 ? (
 					<div class="bd-empty">
@@ -138,23 +94,7 @@ export default component$(() => {
 					<>
 						<ul class="posts">
 							{posts.map((post, i) => (
-								<li class={`bd-card post-card${i === 0 && !paged ? " post-card--lead" : ""}`} key={post.id}>
-									<Link class="post-card__link" href={`/blog/${encodeURIComponent(post.slug)}`}>
-										{post.imageUrl ? (
-											<img alt="" class="post-card__img" loading="lazy" referrerPolicy="no-referrer" src={post.imageUrl} />
-										) : null}
-										<div class="post-card__body">
-											<p class="post-card__meta">
-												{post.isPinned ? <span class="bd-badge">Pinned</span> : null}
-												<span>{formatPostDate(post.publishedAt)}</span>
-												<span>· {readingMinutes(post.content || post.excerpt || "")} min read</span>
-											</p>
-											<h2>{post.title}</h2>
-											{post.excerpt ? <p class="post-card__excerpt">{post.excerpt}</p> : null}
-											{post.authorName ? <p class="post-card__author">{post.authorName}</p> : null}
-										</div>
-									</Link>
-								</li>
+								<PostCard key={post.id} lead={i === 0 && !paged} post={post} />
 							))}
 						</ul>
 						{olderHref ? (

@@ -1,0 +1,8 @@
+<!-- Clear the cart, and Checkout: on to Stripe. -->
+<form method="post" action="/cart/clear">
+  <button type="submit">Clear</button>
+</form>
+
+<form method="post" action="/cart/checkout">
+  <button type="submit" class="button">Checkout</button>
+</form>

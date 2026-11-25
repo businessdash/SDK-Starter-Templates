@@ -1,9 +1,13 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite"; // [bd-line:tailwind]
 
 // https://vite.dev/config/
 export default defineConfig({
-	plugins: [react()],
+	plugins: [
+		react(),
+		tailwindcss(), // [bd-line:tailwind]
+	],
 	// Expose both prefixes to the browser bundle: VITE_ (the Vite default) and
 	// VITE_ (the canonical names the BD wizard emits). Only non-secret
 	// browser-safe vars ever carry these prefixes — the secret BD_API_KEY never

@@ -69,6 +69,7 @@ lib/bd_starter/forms/  the form + quiz engine, ported from the SDK (see below)
                      parallel_pages portal data_model reviews
                      subscriptions followers donations
 lib/bd_starter/bd.ex     app-facing entry: cache tags + fallbacks
+lib/bd_starter/shop.ex   the product page's rules (option photos, prices, "from")
 lib/bd_starter_web/
   plugs/cache_body_reader.ex the raw-body stash (see below)
   live/chat_live.ex          Front Desk chat
@@ -76,7 +77,11 @@ lib/bd_starter_web/
   live/quiz_live.ex          a quiz   │ drawn by the forms engine
   live/sign_in_live.ex       sign-in  ┘
   components/form_components.ex  a form's fields, in the SDK's bd-* classes
-  components/shop_components.ex  the store bar, stars, an element's data as JSON
+  components/shop_components.ex     the store bar, stars, an element's data as JSON
+  components/product_components.ex  the product page's parts, and product_detail/1
+  components/store_components.ex    the store list's and the cart's parts
+  components/blog_components.ex     the blog's parts
+  components/review_components.ex   the reviews' parts
   post_html.ex               a post's HTML rebuilt from an allowlist, reading time, dates
   cart_visitor.ex            the cart cookie, and the item count for the store bar
   controllers/               one per surface, all dead views
@@ -143,17 +148,43 @@ so the page updates in place.
 
 **5. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — so a client that only matches on status renders a silently empty page. `Client.handle/1` checks the body clause first, deliberately above the status clause.
 
-## The shop and blog elements
+## The shop's, blog's and reviews' parts
 
-The product page, the wishlist, the compare table, the save buttons, and a
-post's likes and comments are small custom elements, the same ones every BD
-starter ships, as plain ES modules in `priv/static/shop/`. esbuild doesn't
-touch them: the browser loads them as they are.
+The pages are laid out from parts, one function component each, so you can
+move, restyle, drop or replace any of them, or lay a page out your own way:
 
-The controller reads the data and the template writes it inside the element as
-JSON (`<.element_data>`); the element draws the page from it. The store list,
-filters, cart, blog list and post body are plain HEEx and work without
-JavaScript. A page asks for the styles and modules through its assigns:
+- **Product page** (`BdStarterWeb.ProductComponents`): `<.product_detail>`
+  lays it out from `product_breadcrumbs`, `product_gallery`, `product_title`,
+  `product_price`, `variant_picker`, `option_picker`, `stock_note`,
+  `quantity_stepper`, `add_to_cart_button`, `cart_notice`, `save_buttons`,
+  `share_button`, `product_policies`, `product_specs`, `product_addons`,
+  `product_reviews`, `product_rail`, `recently_viewed` and `compare_bar`.
+- **Store list and cart** (`BdStarterWeb.StoreComponents`): `store_search`,
+  `category_filter`, `price_filter`, `rating_filter`, `clear_filters`,
+  `sort_select`, `product_grid` and `product_card`; `cart_line`,
+  `cart_summary`, `coupon_form` and `cart_actions`.
+- **Blog** (`BdStarterWeb.BlogComponents`): `blog_filters` and `post_card` for
+  the list; `post_meta`, `post_body`, `members_only`, `post_cta`,
+  `post_tags`, `like_button` and `comments` for a post.
+- **Reviews** (`BdStarterWeb.ReviewComponents`): `rating_summary`,
+  `review_filter` and `review_card`.
+
+The product page is drawn on the server as it opens (the first option that
+can be bought, nothing else chosen; the rules are `BdStarter.Shop`, the same
+as `shop.js`, and `test/shop_test.exs` replays the TypeScript's answers to
+keep them so). Then small custom elements, the same ones every BD starter
+ships, bring the parts to life: `<bd-gallery>` steps through the photos and
+follows the chosen option, and `<bd-product-form>` keeps the option buttons,
+price, stock, quantity and add to cart current. They find the parts by their
+`data-bd-*` attributes, so keep those on anything you restyle. The save
+buttons, compare bar, add-ons, share button, recently viewed, the wishlist
+and compare pages, and a post's likes and comments are elements too. They're
+plain ES modules in `priv/static/shop/`; esbuild doesn't touch them, and the
+browser loads them as they are.
+
+Where an element needs server data, the template writes it inside the
+element as JSON (`<.element_data>`). The store list, filters, cart, blog list
+and post body are plain HEEx and work without JavaScript. A page asks for the styles and modules through its assigns:
 `store_nav: true` for the store bar, `blog: :list` or `blog: :post`.
 
 - **CSRF.** The JSON POSTs go through the `:page_json` pipeline, which keeps the

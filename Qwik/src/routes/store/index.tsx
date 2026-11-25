@@ -1,12 +1,6 @@
 // [bd-file:store]
-import { $, component$, useSignal } from "@builder.io/qwik";
-import {
-	type DocumentHead,
-	Link,
-	routeLoader$,
-	useLocation,
-	useNavigate,
-} from "@builder.io/qwik-city";
+import { component$ } from "@builder.io/qwik";
+import { type DocumentHead, routeLoader$ } from "@builder.io/qwik-city";
 
 import {
 	BdPaymentLapsedError,
@@ -19,34 +13,27 @@ import type {
 } from "@businessdash/sdk/contracts";
 
 import { Footer } from "../../components/bd/Footer";
-import { ShopStars } from "../../components/bd/ShopStars";
+import { CompareBar } from "../../components/bd/shop/CompareBar";
+import { ProductGrid } from "../../components/bd/shop/ProductGrid";
+import {
+	CategoryFilter,
+	ClearFilters,
+	PriceFilter,
+	RatingFilter,
+	SORT_VALUES,
+	SortSelect,
+	StoreSearch,
+	useStoreFilters,
+} from "../../components/bd/shop/StoreFilters";
 import { SiteHeader } from "../../components/bd/SiteHeader";
 import { StoreNav } from "../../components/bd/StoreNav";
 import { getBd } from "../../lib/bd";
-import { elementHtml } from "../../lib/bd-elements";
 import {
-	formatMoney,
 	getCartSnapshot,
 	listStoreCategories,
 	listStoreProductsWithMeta,
 } from "../../lib/bd-store";
 import { getCustomerSession } from "../../lib/bd-portal";
-
-const SORT_VALUES: readonly StorefrontSort[] = [
-	"featured",
-	"newest",
-	"price-asc",
-	"price-desc",
-	"rating-desc",
-];
-
-const SORT_LABELS: Record<StorefrontSort, string> = {
-	featured: "Featured",
-	newest: "Newest",
-	"price-asc": "Price: low to high",
-	"price-desc": "Price: high to low",
-	"rating-desc": "Top rated",
-};
 
 /** Parse a `min-max` price param (either side optional) into dollar bounds. */
 function parsePrice(raw: string | undefined): {
@@ -66,10 +53,11 @@ function parsePrice(raw: string | undefined): {
  * Storefront product list. `routeLoader$` reads the filterable catalog
  * server-side via `storefront.listProductsWithMeta` (facets + ratings +
  * badges) plus the category list for the sidebar. Filters are driven by URL
- * search params (`q`, `category`, `price`, `rating`, `sort`). Each card saves
- * to the wishlist or the comparison (`<bd-save-buttons>`), and
- * `<bd-compare-bar>` shows the picks. Suspension errors degrade to a minimal
- * "unavailable" state instead of crashing.
+ * search params (`q`, `category`, `price`, `rating`, `sort`). The page is laid
+ * out from the shop's parts (src/components/bd/shop/): the filters, the grid
+ * of product cards (each saves to the wishlist or the comparison), and the
+ * compare bar. Suspension errors degrade to a minimal "unavailable" state
+ * instead of crashing.
  */
 export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 	const bd = getBd();
@@ -137,33 +125,7 @@ export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 
 export default component$(() => {
 	const data = useStoreData();
-	const loc = useLocation();
-	const nav = useNavigate();
-
-	const search = loc.url.searchParams.get("q") ?? "";
-	const activeCategory = loc.url.searchParams.get("category") ?? "";
-	const activeRating = Number(loc.url.searchParams.get("rating") ?? "0");
-	const activeSort = (loc.url.searchParams.get("sort") as StorefrontSort) ?? "featured";
-	const price = loc.url.searchParams.get("price") ?? "";
-	const [minPriceStr = "", maxPriceStr = ""] = price.split("-");
-
-	const minPrice = useSignal(minPriceStr);
-	const maxPrice = useSignal(maxPriceStr);
-
-	const hasFilters = Boolean(search || activeCategory || activeRating || price);
-
-	/** Replace one search param (drop when empty/featured) and navigate. */
-	const setParam = $(async (key: string, value: string | null) => {
-		const params = new URLSearchParams(loc.url.searchParams);
-		if (value === null || value === "") params.delete(key);
-		else params.set(key, value);
-		const qs = params.toString();
-		await nav(qs ? `/store?${qs}` : "/store");
-	});
-
-	const countByCategory = new Map(
-		data.value.categoryCounts.map((c) => [c.categoryId, c.count]),
-	);
+	const { active: hasFilters } = useStoreFilters();
 
 	return (
 		<>
@@ -190,152 +152,19 @@ export default component$(() => {
 				) : (
 					<div class="store-layout">
 						<aside aria-label="Product filters" class="store-sidebar">
-							<form
-								preventdefault:submit
-								role="search"
-								onSubmit$={(e) => {
-									const fd = new FormData(e.target as HTMLFormElement);
-									const q = String(fd.get("q") ?? "").trim();
-									setParam("q", q || null);
-								}}
-							>
-								<label class="bd-label" for="store-search">
-									Search
-								</label>
-								<input
-									autoComplete="off"
-									class="bd-input"
-									id="store-search"
-									name="q"
-									placeholder="Search products…"
-									type="search"
-									value={search}
-								/>
-							</form>
-
-							{data.value.categories.length > 0 ? (
-								<div class="store-facet">
-									<p class="store-facet__title">Category</p>
-									<ul class="store-facet__list">
-										<li>
-											<button
-												aria-pressed={!activeCategory}
-												class={`store-facet__item${activeCategory ? "" : " store-facet__item--active"}`}
-												onClick$={() => setParam("category", null)}
-												type="button"
-											>
-												All products
-											</button>
-										</li>
-										{data.value.categories.map((c) => {
-											const active = activeCategory === c.id;
-											return (
-												<li key={c.id}>
-													<button
-														aria-pressed={active}
-														class={`store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}`}
-														onClick$={() => setParam("category", active ? null : c.id)}
-														type="button"
-													>
-														<span>{c.name}</span>
-														<span class="store-facet__count">
-															{countByCategory.get(c.id) ?? 0}
-														</span>
-													</button>
-												</li>
-											);
-										})}
-									</ul>
-								</div>
-							) : null}
-
-							<form
-								class="store-facet"
-								preventdefault:submit
-								onSubmit$={() => {
-									const min = minPrice.value.trim();
-									const max = maxPrice.value.trim();
-									setParam("price", min || max ? `${min}-${max}` : null);
-								}}
-							>
-								<p class="store-facet__title">Price</p>
-								<div class="store-price">
-									<input
-										aria-label="Lowest price"
-										bind:value={minPrice}
-										class="bd-input"
-										inputMode="decimal"
-										placeholder={`$${Math.floor(data.value.priceRange.minDollars)}`}
-									/>
-									<span aria-hidden="true" class="store-price__sep">
-										–
-									</span>
-									<input
-										aria-label="Highest price"
-										bind:value={maxPrice}
-										class="bd-input"
-										inputMode="decimal"
-										placeholder={`$${Math.ceil(data.value.priceRange.maxDollars)}`}
-									/>
-								</div>
-								<button class="bd-btn bd-btn--ghost store-price__apply" type="submit">
-									Apply
-								</button>
-							</form>
-
-							<div class="store-facet">
-								<p class="store-facet__title">Rating</p>
-								<ul class="store-facet__list">
-									{[4, 3, 2].map((r) => {
-										const active = activeRating === r;
-										return (
-											<li key={r}>
-												<button
-													aria-pressed={active}
-													class={`store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}`}
-													onClick$={() => setParam("rating", active ? null : String(r))}
-													type="button"
-												>
-													<ShopStars rating={r} />
-													<span class="store-facet__count">&amp; up</span>
-												</button>
-											</li>
-										);
-									})}
-								</ul>
-							</div>
-
-							{hasFilters ? (
-								<button class="store-clear" onClick$={() => nav("/store")} type="button">
-									Clear all filters
-								</button>
-							) : null}
+							<StoreSearch />
+							<CategoryFilter categories={data.value.categories} counts={data.value.categoryCounts} />
+							<PriceFilter range={data.value.priceRange} />
+							<RatingFilter />
+							<ClearFilters />
 						</aside>
 
 						<div class="store-results">
 							<div class="store-results__bar">
 								<p class="bd-loading">
-									{data.value.items.length}{" "}
-									{data.value.items.length === 1 ? "product" : "products"}
+									{data.value.items.length} {data.value.items.length === 1 ? "product" : "products"}
 								</p>
-								<div class="store-sort">
-									<label for="store-sort">Sort</label>
-									<select
-										class="bd-select"
-										id="store-sort"
-										onChange$={(e) => {
-											const value = (e.target as HTMLSelectElement).value;
-											setParam("sort", value === "featured" ? null : value);
-										}}
-										value={activeSort}
-									>
-										{SORT_VALUES.map((s) => (
-											<option key={s} value={s}>
-												{SORT_LABELS[s]}
-											</option>
-										))}
-									</select>
-								</div>
+								<SortSelect />
 							</div>
 
 							{data.value.items.length === 0 ? (
@@ -345,70 +174,9 @@ export default component$(() => {
 										: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
 								</div>
 							) : (
-								<div class="bd-grid-3">
-									{data.value.items.map((p) => (
-										<div class="bd-card product-card" key={p.id}>
-											<Link class="product-card__link" href={`/store/${p.id}`}>
-												<div class="product-card__media">
-													{p.coverImage ? (
-														<img
-															alt={p.name}
-															class="product-card__img"
-															loading="lazy"
-															referrerPolicy="no-referrer"
-															src={p.coverImage}
-														/>
-													) : (
-														<div class="product-card__noimg">No image</div>
-													)}
-													<div class="product-card__badges">
-														{p.isBestSeller ? <span class="bd-badge">Best seller</span> : null}
-														{p.isNew ? <span class="bd-badge">New</span> : null}
-														{p.isOnSale ? (
-															<span class="bd-badge product-card__badge--sale">Sale</span>
-														) : null}
-													</div>
-												</div>
-												<div class="product-card__body">
-													<h3>{p.name || "Untitled"}</h3>
-													{p.reviewCount > 0 ? (
-														<div class="product-card__rating">
-															<ShopStars rating={p.avgRating} />
-															<span class="product-card__count">({p.reviewCount})</span>
-														</div>
-													) : null}
-													<div class="product-card__price">
-														<span class="product-card__amount">
-															{p.cheapestPriceCents != null
-																? `${p.hasMultipleVariants ? "From " : ""}${formatMoney(p.cheapestPriceCents, "usd")}`
-																: "View details"}
-														</span>
-														{p.isOnSale && p.comparePriceCents != null ? (
-															<span class="product-card__compare">
-																{formatMoney(p.comparePriceCents, "usd")}
-															</span>
-														) : null}
-													</div>
-													{p.isLowStock ? <span class="product-card__lowstock">Low stock</span> : null}
-												</div>
-											</Link>
-											<div
-												class="product-card__save"
-												dangerouslySetInnerHTML={elementHtml("bd-save-buttons", {
-													compact: true,
-													"data-product": JSON.stringify({
-														id: p.id,
-														name: p.name,
-														image: p.coverImage ?? null,
-														priceCents: p.cheapestPriceCents ?? null,
-													}),
-												})}
-											/>
-										</div>
-									))}
-								</div>
+								<ProductGrid products={data.value.items} />
 							)}
-							<div dangerouslySetInnerHTML={elementHtml("bd-compare-bar", {})} />
+							<CompareBar />
 						</div>
 					</div>
 				)}

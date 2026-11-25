@@ -55,6 +55,12 @@ For production:
 bun run start
 ```
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup. There's no bundler here, so the server builds `src/tailwind.css` with Tailwind's engine (`src/tailwind.ts`) and serves it at `/tailwind.css`, which every page links. Use Tailwind's classes anywhere in `src/` or `public/`; in development a new class shows up on reload, and in production the CSS is built once. The starter's pages, shop, blog and reviews style themselves with `public/styles.css` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `src/tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## The shape, file-by-file
 
 ```
@@ -84,10 +90,13 @@ SDK-Starter-Templates/HTMX/
     ├── store-nav.ts           # the store bar: products, plans, wishlist, compare, cart <!-- [bd-line:store,subscriptions] -->
     ├── blog-pages.ts          # the blog: the post list, a post, likes and comments <!-- [bd-line:blog] -->
     ├── elements.ts            # bundles src/shop/ for the browser, served at /shop/*.js <!-- [bd-line:store,blog] -->
-    ├── shop/                  # the store's and blog's custom elements + safePostHtml <!-- [bd-line:store,blog] -->
+    ├── shop/                  # the store's rules and custom elements, the blog's elements + safePostHtml <!-- [bd-line:store,blog] -->
     └── sections/
         ├── header.ts          # also exports renderFooter()
-        └── hero.ts  about.ts  services.ts  blog.ts  subscribe.ts
+        ├── hero.ts  about.ts  services.ts  blog.ts  subscribe.ts
+        ├── shop/              # the store's parts: product page, store, cart <!-- [bd-line:store] -->
+        ├── blog/              # the blog's parts: post card, meta, body, likes, comments <!-- [bd-line:blog] -->
+        └── reviews/           # the reviews page's parts: summary, filter, card
 ```
 
 > The contact form is rendered on the server by `src/form.ts`, from the form's
@@ -224,13 +233,42 @@ below is server-rendered HTML and degrades gracefully when BD env is unset.
 Cart, reviews, and the contact form all work with **zero client JS framework** —
 just HTMX attributes (`hx-post` / `hx-get` + `hx-target` + `hx-swap`).
 
-<!-- [bd:store,blog] -->
-The store's product page, wishlist and compare table, and a post's likes and
-comments, are small custom elements (`src/shop/*.ts`). There is still no
-bundler: the server builds them with `Bun.build` and serves them at
-`/shop/*.js`. The server loads each page's data and puts it inside the element
-as JSON, so the page arrives whole.
-<!-- [/bd:store,blog] -->
+<!-- [bd:store] -->
+Every store page is laid out from parts in `src/sections/shop/`, one function
+per file returning its HTML, so you can move, restyle or drop one, or build
+your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `storeSearch`, `categoryFilter`, `priceFilter`, `ratingFilter`, `clearFilters`, `sortSelect` (with `store-filters.ts` for the URL), `productGrid`, `productCard`, `saveButtons`, `compareBar` |
+| Product (`productDetail`) | `productBreadcrumbs`, `productGallery`, `productTitle`, `productPrice`, `variantPicker`, `optionPicker`, `stockNote`, `quantityStepper`, `addToCartButton`, `cartNotice`, `saveButtons`, `shareButton`, `productPolicies`, `productSpecs`, `productAddons`, `productReviews`, `productRail`, `recentlyViewed`, `compareBar` |
+| Cart | `cartLine`, `couponForm`, `cartSummary`, `cartActions` |
+
+They're drawn on the server, so the product page arrives whole. What changes
+in the browser comes from small custom elements (`src/shop/shop-elements.ts`):
+`<bd-product-form>` keeps the price, options, stock, quantity and add to cart
+in step with what's chosen, `<bd-gallery>` follows the chosen option's photos,
+and `<bd-share>`, `<bd-addon>`, `<bd-save-buttons>`, `<bd-recently-viewed>` and
+`<bd-compare-bar>` do one job each. They find the parts by their `data-bd-*`
+attributes, so keep those when you change a part's markup. The wishlist and
+compare table (`<bd-wishlist>`, `<bd-compare>`) draw themselves, since those
+lists live in the shopper's browser.
+<!-- [/bd:store] -->
+
+<!-- [bd:blog] -->
+The blog's pages are laid out from parts in `src/sections/blog/`: `blogFilters`
+and `postCard` for the list; `postMeta`, `postBody` (or `membersOnly`),
+`postCta`, `postTags`, `likeButton` and `comments` for a post. Likes and
+comments are small custom elements (`src/shop/blog-elements.ts`), given their
+data as JSON inside them.
+<!-- [/bd:blog] -->
+
+The reviews page is laid out from `src/sections/reviews/`: `ratingSummary`
+(the average, a bar per star and the writer), `reviewFilter` (the platform
+links) and `reviewCard` (one review).
+
+There is still no bundler: the server builds the custom elements with
+`Bun.build` and serves them at `/shop/*.js`.
 
 ### Environment
 

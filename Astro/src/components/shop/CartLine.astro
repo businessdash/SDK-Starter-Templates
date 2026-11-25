@@ -1,0 +1,107 @@
+---
+// [bd-file:store]
+/**
+ * One line of the cart: photo, name and option, the price each, the
+ * quantity, Remove, and the line's total. The cart page's script finds the
+ * line and its controls by their data-* attributes (data-item-id, data-qty,
+ * data-remove, data-line-subtotal), so keep those when you change it.
+ */
+import type { CartSnapshot } from "@businessdash/sdk/contracts";
+
+import { cartMoney } from "./cart-money";
+
+interface Props {
+	item: CartSnapshot["items"][number];
+}
+const { item } = Astro.props;
+---
+
+<li class="bd-card cart-item" data-item-id={item.id}>
+	{
+		item.productImage ? (
+			<img class="cart-item__img" src={item.productImage} alt={item.productName ?? "Item"} />
+		) : (
+			<div class="cart-item__img cart-item__img--empty" />
+		)
+	}
+	<div class="cart-item__info">
+		<div class="cart-item__name">{item.productName ?? "Item"}</div>
+		{item.variantTitle ? <div class="cart-item__variant">{item.variantTitle}</div> : null}
+		<div class="cart-item__unit">{cartMoney(item.unitPrice, item.currency)} each</div>
+	</div>
+	<div class="cart-item__controls">
+		<input
+			class="bd-input cart-item__qty"
+			type="number"
+			min="0"
+			value={String(item.quantity)}
+			data-qty
+			aria-label="Quantity"
+		/>
+		<button class="cart-item__remove" data-remove type="button" aria-label="Remove">Remove</button>
+	</div>
+	<div class="cart-item__subtotal" data-line-subtotal>{cartMoney(item.subtotal, item.currency)}</div>
+</li>
+
+<style>
+	.cart-item {
+		display: grid;
+		grid-template-columns: 4rem 1fr auto auto;
+		gap: 1rem;
+		align-items: center;
+		padding: 0.85rem 1.25rem;
+	}
+	.cart-item__img {
+		width: 4rem;
+		height: 4rem;
+		object-fit: cover;
+		border-radius: 0.6rem;
+	}
+	.cart-item__img--empty {
+		background: var(--bg-soft);
+	}
+	.cart-item__name {
+		font-weight: 600;
+		color: var(--title);
+	}
+	.cart-item__variant,
+	.cart-item__unit {
+		font-size: 0.82rem;
+		color: var(--text-muted);
+	}
+	.cart-item__controls {
+		display: flex;
+		flex-direction: column;
+		gap: 0.4rem;
+		align-items: flex-end;
+	}
+	.cart-item__qty {
+		width: 4.5rem;
+		text-align: center;
+	}
+	.cart-item__remove {
+		background: none;
+		border: none;
+		color: var(--danger);
+		font-size: 0.8rem;
+		padding: 0;
+		text-decoration: underline;
+	}
+	.cart-item__subtotal {
+		font-weight: 700;
+		color: var(--title);
+		min-width: 5rem;
+		text-align: right;
+	}
+	@media (max-width: 560px) {
+		.cart-item {
+			grid-template-columns: 3rem 1fr;
+		}
+		.cart-item__controls,
+		.cart-item__subtotal {
+			grid-column: 1 / -1;
+			align-items: flex-start;
+			text-align: left;
+		}
+	}
+</style>

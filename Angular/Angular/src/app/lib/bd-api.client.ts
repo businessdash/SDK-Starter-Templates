@@ -13,8 +13,9 @@
  */
 
 // [bd:store]
-// Types only: the elements themselves load in the browser.
-import type { CompareColumn, ProductPageData } from "../shop/shop-elements";
+// Types only: the shop's rules and elements load in the browser.
+import type { ProductPageData } from "../shop/shop";
+import type { CompareColumn } from "../shop/shop-elements";
 // [/bd:store]
 // [bd:blog]
 import type {

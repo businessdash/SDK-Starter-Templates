@@ -1,6 +1,14 @@
 // [bd-file:store]
-/** /cart — line items, quantity, coupon, clear, and Stripe checkout. */
-import { bd, el, dollars } from "/bd.js";
+/**
+ * /cart — line items, quantity, coupon, clear, and Stripe checkout, laid
+ * out from the shop's parts (/sections/shop/): a cart line per item, the
+ * coupon form, the summary and the actions.
+ */
+import { bd, el } from "/bd.js";
+import { cartActions } from "/sections/shop/cart-actions.js";
+import { cartLine } from "/sections/shop/cart-line.js";
+import { cartSummary } from "/sections/shop/cart-summary.js";
+import { couponForm } from "/sections/shop/coupon-form.js";
 import { errBox, pageHead } from "./_ui.js";
 import { mountStoreNav } from "./_store-nav.js";
 
@@ -22,126 +30,36 @@ function paint(root, snap) {
 	window.dispatchEvent(new CustomEvent("bd:cart-count", { detail: Number(snap?.itemCount) || 0 }));
 	const items = snap?.items ?? [];
 	const currency = snap?.currency ?? "USD";
-	const nodes = [pageHead("Your cart")];
 
 	if (!items.length) {
-		nodes.push(el("p", { class: "muted" }, ["Your cart is empty. ", el("a", { href: "/store" }, ["Browse the store →"])]));
-		root.replaceChildren(...nodes);
+		root.replaceChildren(
+			pageHead("Your cart"),
+			el("p", { class: "muted" }, ["Your cart is empty. ", el("a", { href: "/store" }, ["Browse the store →"])]),
+		);
 		return;
 	}
 
 	const repaint = (next) => paint(root, next);
-
-	nodes.push(
+	root.replaceChildren(
+		pageHead("Your cart"),
 		el(
 			"ul",
 			{ class: "cart-list" },
-			items.map((it) =>
-				el("li", { class: "cart-item" }, [
-					it.productImage ? el("img", { class: "cart-item__img", src: it.productImage, alt: it.productName ?? "" }) : null,
-					el("div", { class: "cart-item__main" }, [
-						el("div", { class: "cart-item__name" }, [it.productName ?? "Item"]),
-						it.variantTitle ? el("div", { class: "cart-item__variant" }, [it.variantTitle]) : null,
-						el("div", { class: "cart-item__price" }, [`${dollars(it.unitPrice, it.currency ?? currency)} each`]),
-					]),
-					qtyControl(it, repaint),
-					el("div", { class: "cart-item__subtotal" }, [dollars(it.subtotal, it.currency ?? currency)]),
-					el("button", {
-						class: "cart-item__remove",
-						type: "button",
-						"aria-label": "Remove",
-						onClick: async () => repaint(await bd.cart.remove(it.id)),
-					}, ["Remove"]),
-				]),
+			items.map((item) =>
+				cartLine(item, currency, {
+					onQuantity: async (quantity) => repaint(await bd.cart.update(item.id, quantity)),
+					onRemove: async () => repaint(await bd.cart.remove(item.id)),
+				}),
 			),
 		),
+		couponForm(snap.couponCode, {
+			onApply: async (code) => repaint(await bd.cart.applyCoupon(code)),
+			onRemove: async () => repaint(await bd.cart.removeCoupon()),
+		}),
+		cartSummary(snap, currency),
+		...cartActions({
+			onCheckout: async () => (await bd.checkout.start({ origin: location.origin })).url,
+			onClear: async () => repaint(await bd.cart.clear()),
+		}),
 	);
-
-	nodes.push(couponRow(snap, repaint));
-
-	nodes.push(
-		el("div", { class: "cart-summary" }, [
-			el("div", { class: "cart-summary__row" }, [
-				el("span", {}, [`Subtotal (${snap.itemCount} item${snap.itemCount === 1 ? "" : "s"})`]),
-				el("strong", {}, [dollars(snap.subtotal, currency)]),
-			]),
-		]),
-	);
-
-	const checkoutStatus = el("p", { class: "cart-checkout__status" }, []);
-	const checkoutBtn = el("button", {
-		class: "btn btn--primary btn--lg",
-		type: "button",
-		onClick: async () => {
-			checkoutBtn.disabled = true;
-			checkoutStatus.textContent = "Starting checkout…";
-			try {
-				const { url } = await bd.checkout.start({ origin: location.origin });
-				location.href = url;
-			} catch (err) {
-				checkoutStatus.textContent = `Couldn't start checkout: ${err?.message ?? err}`;
-				checkoutBtn.disabled = false;
-			}
-		},
-	}, ["Checkout"]);
-
-	nodes.push(
-		el("div", { class: "cart-actions" }, [
-			el("button", {
-				class: "btn btn--ghost",
-				type: "button",
-				onClick: async () => repaint(await bd.cart.clear()),
-			}, ["Clear cart"]),
-			checkoutBtn,
-		]),
-		checkoutStatus,
-	);
-
-	root.replaceChildren(...nodes);
-}
-
-function qtyControl(it, repaint) {
-	const dec = el("button", {
-		class: "qty__btn",
-		type: "button",
-		"aria-label": "Decrease quantity",
-		onClick: async () => repaint(await bd.cart.update(it.id, Math.max(0, it.quantity - 1))),
-	}, ["−"]);
-	const inc = el("button", {
-		class: "qty__btn",
-		type: "button",
-		"aria-label": "Increase quantity",
-		onClick: async () => repaint(await bd.cart.update(it.id, it.quantity + 1)),
-	}, ["+"]);
-	return el("div", { class: "qty" }, [dec, el("span", { class: "qty__n" }, [String(it.quantity)]), inc]);
-}
-
-function couponRow(snap, repaint) {
-	if (snap.couponCode) {
-		return el("div", { class: "coupon coupon--applied" }, [
-			el("span", {}, [`Coupon ${snap.couponCode} applied`]),
-			el("button", {
-				class: "btn btn--ghost btn--sm",
-				type: "button",
-				onClick: async () => repaint(await bd.cart.removeCoupon()),
-			}, ["Remove"]),
-		]);
-	}
-	const input = el("input", { class: "coupon__input", type: "text", placeholder: "Coupon code", "aria-label": "Coupon code" });
-	const msg = el("span", { class: "coupon__msg" }, []);
-	const apply = el("button", {
-		class: "btn btn--ghost btn--sm",
-		type: "button",
-		onClick: async () => {
-			const code = input.value.trim();
-			if (!code) return;
-			msg.textContent = "Applying…";
-			try {
-				repaint(await bd.cart.applyCoupon(code));
-			} catch (err) {
-				msg.textContent = err?.message ?? "Invalid code";
-			}
-		},
-	}, ["Apply"]);
-	return el("div", { class: "coupon" }, [input, apply, msg]);
 }

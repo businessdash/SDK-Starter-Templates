@@ -2,8 +2,9 @@
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { For, Show } from "solid-js";
 
+import { BlogFilters } from "../components/bd/blog/BlogFilters";
+import { PostCard } from "../components/bd/blog/PostCard";
 import { getBlogIndex } from "../lib/bd-blog-fns";
-import { formatPostDate, readingMinutes } from "../lib/shop/blog";
 
 /**
  * The blog: posts newest first (pinned ones lead), filtered by category or
@@ -52,25 +53,8 @@ function BlogIndex() {
 		data().categories.find((c) => c.id === search().category);
 	const paged = () => search().cursor != null;
 
-	/**
-	 * This page with one filter changed and the paging reset. The topic
-	 * filters are plain links, not <Link>: <Link> sets aria-current itself, to
-	 * "page" whenever its search partly matches, so "All" would count as
-	 * current on every topic.
-	 */
-	const filterHref = (key: "category" | "tag", value: string | undefined) => {
-		const next: BlogSearch = {
-			category: search().category,
-			tag: search().tag,
-			[key]: value,
-		};
-		const query = new URLSearchParams();
-		if (next.category) query.set("category", next.category);
-		if (next.tag) query.set("tag", next.tag);
-		const qs = query.toString();
-		return qs ? `/blog?${qs}` : "/blog";
-	};
-
+	// Laid out from the blog's parts (src/components/bd/blog/): the topic
+	// filters and a <PostCard> per post.
 	return (
 		<main class="bd-page">
 			<div class="bd-section__lead">
@@ -83,55 +67,12 @@ function BlogIndex() {
 				</Show>
 			</div>
 
-			<Show when={data().categories.length > 0 || data().tags.length > 0}>
-				<nav aria-label="Blog topics" class="blog-filters">
-					<Show when={data().categories.length > 0}>
-						<ul>
-							<li>
-								<a
-									aria-current={search().category ? undefined : "true"}
-									href={filterHref("category", undefined)}
-								>
-									All
-								</a>
-							</li>
-							<For each={data().categories}>
-								{(category) => (
-									<li>
-										<a
-											aria-current={
-												search().category === category.id ? "true" : undefined
-											}
-											href={filterHref("category", category.id)}
-										>
-											{category.name}
-										</a>
-									</li>
-								)}
-							</For>
-						</ul>
-					</Show>
-					<Show when={data().tags.length > 0}>
-						<ul class="blog-filters__tags">
-							<For each={data().tags}>
-								{(t) => (
-									<li>
-										<a
-											aria-current={search().tag === t ? "true" : undefined}
-											href={filterHref(
-												"tag",
-												search().tag === t ? undefined : t,
-											)}
-										>
-											#{t}
-										</a>
-									</li>
-								)}
-							</For>
-						</ul>
-					</Show>
-				</nav>
-			</Show>
+			<BlogFilters
+				categories={data().categories}
+				category={search().category}
+				tag={search().tag}
+				tags={data().tags}
+			/>
 
 			<Show
 				when={data().posts.length > 0}
@@ -145,46 +86,7 @@ function BlogIndex() {
 			>
 				<ul class="posts">
 					<For each={data().posts}>
-						{(post, i) => (
-							<li
-								class={`bd-card post-card${i() === 0 && !paged() ? " post-card--lead" : ""}`}
-							>
-								<Link
-									class="post-card__link"
-									params={{ slug: post.slug }}
-									to="/blog/$slug"
-								>
-									<Show when={post.imageUrl}>
-										<img
-											alt=""
-											class="post-card__img"
-											loading="lazy"
-											referrerpolicy="no-referrer"
-											src={post.imageUrl ?? ""}
-										/>
-									</Show>
-									<div class="post-card__body">
-										<p class="post-card__meta">
-											<Show when={post.isPinned}>
-												<span class="bd-badge">Pinned</span>
-											</Show>
-											<span>{formatPostDate(post.publishedAt)}</span>
-											<span>
-												· {readingMinutes(post.content || post.excerpt || "")}{" "}
-												min read
-											</span>
-										</p>
-										<h2>{post.title}</h2>
-										<Show when={post.excerpt}>
-											<p class="post-card__excerpt">{post.excerpt}</p>
-										</Show>
-										<Show when={post.authorName}>
-											<p class="post-card__author">{post.authorName}</p>
-										</Show>
-									</div>
-								</Link>
-							</li>
-						)}
+						{(post, i) => <PostCard lead={i() === 0 && !paged()} post={post} />}
 					</For>
 				</ul>
 				<Show when={data().nextCursor != null}>

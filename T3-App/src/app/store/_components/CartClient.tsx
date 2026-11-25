@@ -15,14 +15,18 @@ import {
 	updateCartItemAction,
 } from "@/app/_actions/store";
 
-import { usd } from "./store-utils";
+import { CartLine } from "./CartLine";
+import { CartSummary } from "./CartSummary";
+import { CouponForm } from "./CouponForm";
 
 /** Interactive cart: line-item qty +/-, remove, clear, apply/remove coupon,
  *  and "checkout" which redirects to the Stripe-hosted URL. Each mutation
- *  swaps in the fresh `CartSnapshot` the Server Action returns. */
+ *  swaps in the fresh `CartSnapshot` the Server Action returns.
+ *
+ *  It's laid out from the shop's parts: a <CartLine> per item, <CouponForm>
+ *  and <CartSummary>. */
 export function CartClient({ initial }: { initial: CartSnapshot }) {
 	const [snapshot, setSnapshot] = useState<CartSnapshot>(initial);
-	const [couponCode, setCouponCode] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [pending, startTransition] = useTransition();
 	const [checkoutPending, setCheckoutPending] = useState(false);
@@ -58,117 +62,33 @@ export function CartClient({ initial }: { initial: CartSnapshot }) {
 		<div className="cart">
 			<ul className="cart__items">
 				{snapshot.items.map((item) => (
-					<li className="cart__item" key={item.id}>
-						<div className="cart__thumb">
-							{item.productImage ? (
-								// eslint-disable-next-line @next/next/no-img-element
-								<img
-									alt={item.productName ?? "Product"}
-									src={item.productImage}
-								/>
-							) : null}
-						</div>
-						<div className="cart__line">
-							<div className="cart__lineTop">
-								<div>
-									<p className="cart__name">{item.productName ?? "Product"}</p>
-									{item.variantTitle ? (
-										<p className="cart__variant">{item.variantTitle}</p>
-									) : null}
-								</div>
-								<p className="cart__subtotal">{usd(item.subtotal, currency)}</p>
-							</div>
-							<div className="cart__controls">
-								<button
-									className="cart__step"
-									disabled={pending}
-									onClick={() =>
-										apply(() =>
-											updateCartItemAction(
-												item.id,
-												Math.max(1, item.quantity - 1),
-											),
-										)
-									}
-									type="button"
-								>
-									−
-								</button>
-								<span className="cart__qty">{item.quantity}</span>
-								<button
-									className="cart__step"
-									disabled={pending}
-									onClick={() =>
-										apply(() =>
-											updateCartItemAction(item.id, item.quantity + 1),
-										)
-									}
-									type="button"
-								>
-									+
-								</button>
-								<span className="cart__unit">
-									{usd(item.unitPrice, currency)} ea
-								</span>
-								<button
-									className="cart__remove"
-									disabled={pending}
-									onClick={() => apply(() => removeCartItemAction(item.id))}
-									type="button"
-								>
-									Remove
-								</button>
-							</div>
-						</div>
-					</li>
+					<CartLine
+						currency={currency}
+						disabled={pending}
+						item={item}
+						key={item.id}
+						onQuantity={(quantity) =>
+							apply(() => updateCartItemAction(item.id, quantity))
+						}
+						onRemove={() => apply(() => removeCartItemAction(item.id))}
+					/>
 				))}
 			</ul>
 
 			<div className="cart__summary bd-card">
 				<h2>Summary</h2>
 
-				{snapshot.couponCode ? (
-					<div className="cart__coupon">
-						<span className="cart__couponOk">
-							Coupon: {snapshot.couponCode}
-						</span>
-						<button
-							className="cart__remove"
-							disabled={pending}
-							onClick={() => apply(() => removeCouponAction())}
-							type="button"
-						>
-							Remove
-						</button>
-					</div>
-				) : (
-					<div className="cart__couponRow">
-						<input
-							className="bd-input"
-							onChange={(e) => setCouponCode(e.target.value)}
-							placeholder="Coupon code"
-							value={couponCode}
-						/>
-						<button
-							className="bd-btn bd-btn--ghost"
-							disabled={pending || !couponCode.trim()}
-							onClick={() => apply(() => applyCouponAction(couponCode.trim()))}
-							type="button"
-						>
-							Apply
-						</button>
-					</div>
-				)}
-
-				<div className="cart__total">
-					<span>
-						Subtotal ({snapshot.itemCount} item
-						{snapshot.itemCount === 1 ? "" : "s"})
-					</span>
-					<span className="cart__totalAmount">
-						{usd(snapshot.subtotal, currency)}
-					</span>
-				</div>
+				<CouponForm
+					code={snapshot.couponCode}
+					disabled={pending}
+					onApply={(code) => apply(() => applyCouponAction(code))}
+					onRemove={() => apply(() => removeCouponAction())}
+				/>
+				<CartSummary
+					currency={currency}
+					itemCount={snapshot.itemCount}
+					subtotal={snapshot.subtotal}
+				/>
 
 				<button
 					className="bd-btn cart__checkout"

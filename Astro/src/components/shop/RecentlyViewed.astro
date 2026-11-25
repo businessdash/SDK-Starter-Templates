@@ -1,0 +1,17 @@
+---
+// [bd-file:store]
+/**
+ * What this browser opened before, as a rail; this product joins the list
+ * for next time. The list lives in this browser, so `<bd-recently-viewed>`
+ * draws it.
+ */
+import type { SavedProduct } from "../../lib/bd-shop/shop";
+
+interface Props {
+	product: SavedProduct;
+	storeHref?: string;
+}
+const { product, storeHref = "/store" } = Astro.props;
+---
+
+<bd-recently-viewed data-product={JSON.stringify(product)} data-store-href={storeHref}></bd-recently-viewed>

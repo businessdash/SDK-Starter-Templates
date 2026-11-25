@@ -4,15 +4,19 @@ import { ref, watch } from "vue";
 import BdHeader from "~/components/bd/BdHeader.vue";
 import StoreNav from "~/components/bd/StoreNav.vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
+import CartActions from "~/components/bd/shop/CartActions.vue";
+import CartLine from "~/components/bd/shop/CartLine.vue";
+import CartSummary from "~/components/bd/shop/CartSummary.vue";
+import CouponForm from "~/components/bd/shop/CouponForm.vue";
 import { useCart } from "~/composables/useCart";
-// Cart amounts are dollars (not cents), so they are formatted as they are.
-import { formatDollars } from "#shared/bd/shop";
 
 /**
  * Cart page. Loads the visitor's cart, edits line quantities, applies /
  * removes a coupon, clears the cart, and starts Stripe-hosted checkout.
  * All mutations go through Nitro endpoints — the SDK + API key never
- * reach the browser.
+ * reach the browser. The page is laid out from the shop's parts in
+ * `components/bd/shop/`: a cart line per item, the coupon, the subtotal, and
+ * Clear cart / Checkout.
  */
 const {
 	cart,
@@ -38,15 +42,8 @@ watch(
 	},
 );
 
-const couponInput = ref("");
 const checkoutError = ref<string | null>(null);
 const checkingOut = ref(false);
-
-async function handleApplyCoupon() {
-	if (!couponInput.value.trim()) return;
-	const ok = await applyCoupon(couponInput.value.trim());
-	if (ok) couponInput.value = "";
-}
 
 async function handleCheckout() {
 	checkingOut.value = true;
@@ -87,105 +84,28 @@ useHead({ title: "Cart — Your Business" });
 				</div>
 
 				<div v-else class="bd-card cart">
-					<div v-for="item in cart.items" :key="item.id" class="cart-line">
-						<img
-							v-if="item.productImage"
-							:alt="item.productName ?? 'Item'"
-							class="cart-line__img"
-							:src="item.productImage"
-						/>
-						<div class="cart-line__info">
-							<div class="cart-line__name">{{ item.productName }}</div>
-							<div v-if="item.variantTitle" class="cart-line__variant">
-								{{ item.variantTitle }}
-							</div>
-							<div class="cart-line__price">
-								{{ formatDollars(item.subtotal, cart.currency) }}
-							</div>
-						</div>
-						<div class="cart-line__qty">
-							<button
-								aria-label="Decrease quantity"
-								class="qty-btn"
-								:disabled="busy"
-								type="button"
-								@click="updateItem(item.id, item.quantity - 1)"
-							>
-								−
-							</button>
-							<span>{{ item.quantity }}</span>
-							<button
-								aria-label="Increase quantity"
-								class="qty-btn"
-								:disabled="busy"
-								type="button"
-								@click="updateItem(item.id, item.quantity + 1)"
-							>
-								+
-							</button>
-						</div>
-						<button
-							class="bd-btn bd-btn--ghost cart-line__remove"
-							:disabled="busy"
-							type="button"
-							@click="removeItem(item.id)"
-						>
-							Remove
-						</button>
-					</div>
-
-					<div class="cart__coupon">
-						<template v-if="cart.couponCode">
-							<span class="bd-badge">Coupon: {{ cart.couponCode }}</span>
-							<button
-								class="bd-btn bd-btn--ghost"
-								:disabled="busy"
-								type="button"
-								@click="removeCoupon"
-							>
-								Remove coupon
-							</button>
-						</template>
-						<template v-else>
-							<input
-								v-model="couponInput"
-								class="bd-input"
-								placeholder="Coupon code"
-							/>
-							<button
-								class="bd-btn bd-btn--ghost"
-								:disabled="busy || !couponInput.trim()"
-								type="button"
-								@click="handleApplyCoupon"
-							>
-								Apply
-							</button>
-						</template>
-					</div>
-
-					<div class="cart__totals">
-						<span>Subtotal</span>
-						<strong>{{ formatDollars(cart.subtotal, cart.currency) }}</strong>
-					</div>
-
-					<div class="cart__actions">
-						<button
-							class="bd-btn bd-btn--ghost"
-							:disabled="busy"
-							type="button"
-							@click="clear"
-						>
-							Clear cart
-						</button>
-						<button
-							class="bd-btn"
-							:disabled="checkingOut || busy"
-							type="button"
-							@click="handleCheckout"
-						>
-							{{ checkingOut ? "Starting…" : "Checkout" }}
-						</button>
-					</div>
+					<CartLine
+						v-for="item in cart.items"
+						:key="item.id"
+						:item="item"
+						:currency="cart.currency"
+						:busy="busy"
+						@quantity="(quantity) => updateItem(item.id, quantity)"
+						@remove="removeItem(item.id)"
+					/>
+					<CouponForm
+						:code="cart.couponCode"
+						:busy="busy"
+						:apply="applyCoupon"
+						@remove="removeCoupon"
+					/>
+					<CartSummary :subtotal="cart.subtotal" :currency="cart.currency" />
+					<CartActions
+						:busy="busy"
+						:checking-out="checkingOut"
+						@clear="clear"
+						@checkout="handleCheckout"
+					/>
 
 					<div
 						v-if="error || checkoutError"

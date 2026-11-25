@@ -1,0 +1,6 @@
+{
+  "//": "[bd-file:tailwind] Tailwind CSS: Angular's build runs src/tailwind.css through this plugin.",
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}

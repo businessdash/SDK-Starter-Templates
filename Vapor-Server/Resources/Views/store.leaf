@@ -1,7 +1,8 @@
 <!-- The product list: search, category, price and rating filters with a sort.
-     Each card saves to the wishlist or the comparison (<bd-save-buttons>), and
-     <bd-compare-bar> shows the picks. StoreController.index works out every
-     link and label. -->
+     StoreController.index works out every link and label. It's laid out from
+     the shop's parts (Resources/Views/shop/, one file each): the filters, the
+     sort, and a product card per product, which saves to the wishlist or the
+     comparison (<bd-save-buttons>); shop/compare-bar shows the picks. -->
 #extend("base"):
   #export("title"):Store#endexport
   #export("head"):
@@ -27,75 +28,17 @@
     #else:
       <div class="store-layout">
         <aside aria-label="Product filters" class="store-sidebar">
-          <search>
-            <form action="/store" method="get">
-              <label class="bd-label" for="store-search">Search</label>
-              <input autocomplete="off" class="bd-input" id="store-search" name="q" placeholder="Search products…" type="search" value="#(search)">
-              #for(field in keepForSearch):<input type="hidden" name="#(field.name)" value="#(field.value)">#endfor
-            </form>
-          </search>
-
-          #if(hasCategories):
-            <div class="store-facet">
-              <p class="store-facet__title">Category</p>
-              <ul class="store-facet__list">
-                <li>
-                  <a class="store-facet__item#if(allActive): store-facet__item--active#endif" href="#(allHref)">All products</a>
-                </li>
-                #for(category in categories):
-                  <li>
-                    <a class="store-facet__item store-facet__item--row#if(category.active): store-facet__item--active#endif" href="#(category.href)">
-                      <span>#(category.label)</span>
-                      <span class="store-facet__count">#(category.productCount)</span>
-                    </a>
-                  </li>
-                #endfor
-              </ul>
-            </div>
-          #endif
-
-          <form action="/store" class="store-facet" method="get">
-            <p class="store-facet__title">Price</p>
-            <div class="store-price">
-              <input aria-label="Lowest price" class="bd-input" inputmode="decimal" name="priceMin" placeholder="#(priceMinPlaceholder)" value="#(priceMin)">
-              <span aria-hidden="true" class="store-price__sep">–</span>
-              <input aria-label="Highest price" class="bd-input" inputmode="decimal" name="priceMax" placeholder="#(priceMaxPlaceholder)" value="#(priceMax)">
-            </div>
-            #for(field in keepForPrice):<input type="hidden" name="#(field.name)" value="#(field.value)">#endfor
-            <button class="bd-btn bd-btn--ghost store-price__apply" type="submit">Apply</button>
-          </form>
-
-          <div class="store-facet">
-            <p class="store-facet__title">Rating</p>
-            <ul class="store-facet__list">
-              #for(rating in ratings):
-                <li>
-                  <a class="store-facet__item store-facet__rating#if(rating.active): store-facet__item--active#endif" href="#(rating.href)">
-                    #unsafeHTML(rating.starsHTML)<span class="store-facet__count">&amp; up</span>
-                  </a>
-                </li>
-              #endfor
-            </ul>
-          </div>
-
-          #if(hasFilters):
-            <a class="store-clear" href="/store">Clear all filters</a>
-          #endif
+          #extend("shop/store-search")
+          #extend("shop/category-filter")
+          #extend("shop/price-filter")
+          #extend("shop/rating-filter")
+          #if(hasFilters):#extend("shop/clear-filters")#endif
         </aside>
 
         <div class="store-results">
           <div class="store-results__bar">
             <p class="bd-loading">#(countLabel)</p>
-            <form action="/store" class="store-sort" method="get">
-              <label for="store-sort">Sort</label>
-              <select class="bd-select" id="store-sort" name="sort" onchange="this.form.requestSubmit()">
-                #for(sort in sorts):
-                  <option value="#(sort.value)"#if(sort.selected): selected#endif>#(sort.label)</option>
-                #endfor
-              </select>
-              #for(field in keepForSort):<input type="hidden" name="#(field.name)" value="#(field.value)">#endfor
-              <noscript><button class="bd-btn bd-btn--ghost" type="submit">Sort</button></noscript>
-            </form>
+            #extend("shop/sort-select")
           </div>
 
           #if(isEmpty):
@@ -107,45 +50,9 @@
               #endif
             </div>
           #else:
-            <div class="bd-grid-3">
-              #for(product in products):
-                <div class="bd-card product-card">
-                  <a class="product-card__link" href="#(product.href)">
-                    <div class="product-card__media">
-                      #if(product.hasImage):
-                        <img alt="#(product.name)" class="product-card__img" loading="lazy" referrerpolicy="no-referrer" src="#(product.image)">
-                      #else:
-                        <div class="product-card__noimg">No image</div>
-                      #endif
-                      <div class="product-card__badges">
-                        #if(product.isBestSeller):<span class="bd-badge">Best seller</span>#endif
-                        #if(product.isNew):<span class="bd-badge">New</span>#endif
-                        #if(product.isOnSale):<span class="bd-badge product-card__badge--sale">Sale</span>#endif
-                      </div>
-                    </div>
-                    <div class="product-card__body">
-                      <h3>#(product.name)</h3>
-                      #if(product.hasReviews):
-                        <div class="product-card__rating">
-                          #unsafeHTML(product.starsHTML)
-                          <span class="product-card__count">(#(product.reviewCount))</span>
-                        </div>
-                      #endif
-                      <div class="product-card__price">
-                        <span class="product-card__amount">#(product.price)</span>
-                        #if(product.hasCompare):<span class="product-card__compare">#(product.compare)</span>#endif
-                      </div>
-                      #if(product.isLowStock):<span class="product-card__lowstock">Low stock</span>#endif
-                    </div>
-                  </a>
-                  <div class="product-card__save">
-                    <bd-save-buttons compact data-product="#(product.saveData)"></bd-save-buttons>
-                  </div>
-                </div>
-              #endfor
-            </div>
+            #extend("shop/product-grid")
           #endif
-          <bd-compare-bar></bd-compare-bar>
+          #extend("shop/compare-bar")
         </div>
       </div>
     #endif

@@ -1,0 +1,39 @@
+---
+// [bd-file:store]
+/** Details: the feature list, then a table per spec group. */
+import type { SpecGroup } from "../../lib/bd-shop/shop";
+
+interface Props {
+	features: string[];
+	specs: SpecGroup[];
+}
+const { features, specs } = Astro.props;
+---
+
+{
+	features.length > 0 || specs.length > 0 ? (
+		<section class="product-section" id="specs">
+			<h2 class="product-section__title">Details</h2>
+			{features.length > 0 ? (
+				<ul class="features">
+					{features.map((feature) => (
+						<li>{feature}</li>
+					))}
+				</ul>
+			) : null}
+			{specs.map((group) => (
+				<table class="specs">
+					<caption>{group.name}</caption>
+					<tbody>
+						{group.rows.map((row) => (
+							<tr>
+								<th scope="row">{row.label}</th>
+								<td>{row.value}</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			))}
+		</section>
+	) : null
+}

@@ -1,0 +1,6 @@
+<!-- − and + around how many to add, from 1 up to what's in stock. -->
+<div aria-label="Quantity" class="qty" role="group">
+  <button aria-label="One fewer" data-bd-qty="-1"#if(detail.quantity.minusDisabled): disabled#endif type="button">−</button>
+  <span aria-live="polite" data-bd-qty-value>#(detail.quantity.value)</span>
+  <button aria-label="One more" data-bd-qty="1"#if(detail.quantity.plusDisabled): disabled#endif type="button">+</button>
+</div>

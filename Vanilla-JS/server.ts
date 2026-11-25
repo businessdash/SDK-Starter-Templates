@@ -44,6 +44,7 @@ import {
 	TODO_IMAGES_OBJECT_ID,
 } from "./bd.data-model.config";
 import { cached, invalidateTags } from "./lib/cache";
+import { tailwindCss } from "./lib/tailwind"; // [bd-line:tailwind]
 // [bd:blog]
 import { readingMinutes, safePostHtml } from "./lib/shop/blog";
 // [/bd:blog]
@@ -327,6 +328,7 @@ async function pageShell(opts: {
   <!-- SDK form styles (file-upload box, multi-step progress, choice chips). The
        container background is intentionally transparent — the template owns it. -->
   <link rel="stylesheet" href="/bd-forms.css" />
+  <link rel="stylesheet" href="/tailwind.css" /><!-- [bd-line:tailwind] -->
   ${publicConfigScript()}
   ${jsonLd}
 </head>
@@ -1289,12 +1291,15 @@ async function serveSdkSignIn(): Promise<Response> {
 
 /**
  * The shop's, the blog's and the reviews' custom elements (`lib/shop/*.ts`)
- * for the browser. The pages load plain ES modules with no bundler, so the server
- * bundles each entry with Bun.build and serves it under /shop/. Built once in
- * production; rebuilt on every request in development, so edits show up.
+ * for the browser, and the shop's rules (shop.ts: prices, options, photos)
+ * for the parts in public/sections/shop/. The pages load plain ES modules
+ * with no bundler, so the server bundles each entry with Bun.build and
+ * serves it under /shop/. Built once in production; rebuilt on every request
+ * in development, so edits show up.
  */
 const ELEMENT_BUNDLES: Record<string, string> = {
 	// [bd:store]
+	"/shop/shop.js": "./lib/shop/shop.ts",
 	"/shop/shop-elements.js": "./lib/shop/shop-elements.ts",
 	// [/bd:store]
 	// [bd:blog]
@@ -1352,7 +1357,9 @@ async function serveHome(): Promise<Response | null> {
 	const html = await file.text();
 	const injected = html.replace(
 		"</head>",
-		`  <link rel="stylesheet" href="/bd-forms.css" />\n    ${publicConfigScript()}\n  </head>`,
+		`  <link rel="stylesheet" href="/bd-forms.css" />\n` +
+			`    <link rel="stylesheet" href="/tailwind.css" />\n` + // [bd-line:tailwind]
+			`    ${publicConfigScript()}\n  </head>`,
 	);
 	return new Response(injected, { headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
@@ -1399,6 +1406,7 @@ const server = Bun.serve({
 
 		// SDK form stylesheet (served from the installed package).
 		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
+		if (method === "GET" && pathname === "/tailwind.css") return tailwindCss(); // [bd-line:tailwind]
 		if (method === "GET" && pathname === "/_sdk/sign-in.js") return serveSdkSignIn();
 		if (method === "GET" && pathname.startsWith("/shop/")) {
 			const elements = await serveElements(pathname);

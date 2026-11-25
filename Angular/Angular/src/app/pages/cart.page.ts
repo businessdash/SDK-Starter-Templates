@@ -1,8 +1,11 @@
 // [bd-file:store]
 import { ChangeDetectionStrategy, Component, OnInit, inject, signal } from "@angular/core";
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from "@angular/forms";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { bdApi, type CartSnapshot } from "../lib/bd-api.client";
+import { CartActionsComponent } from "../sections/shop/cart-actions.component";
+import { CartLineComponent } from "../sections/shop/cart-line.component";
+import { CartSummaryComponent } from "../sections/shop/cart-summary.component";
+import { CouponFormComponent } from "../sections/shop/coupon-form.component";
 import { StoreNavComponent } from "../sections/store-nav.component";
 
 /**
@@ -11,12 +14,21 @@ import { StoreNavComponent } from "../sections/store-nav.component";
  * the server `/api/bd/cart/*` endpoints which carry the httpOnly visitor
  * cookie. ?status=success|cancel (from the Stripe return) shows a banner.
  * Cart amounts are dollars. Each change sends the new item count
- * (`bd:cart-count`) to the store bar.
+ * (`bd:cart-count`) to the store bar. The page is laid out from the shop's
+ * parts (src/app/sections/shop/): a cart line per item, the coupon form, the
+ * summary and the actions.
  */
 @Component({
 	selector: "bd-cart-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [ReactiveFormsModule, RouterLink, StoreNavComponent],
+	imports: [
+		CartActionsComponent,
+		CartLineComponent,
+		CartSummaryComponent,
+		CouponFormComponent,
+		RouterLink,
+		StoreNavComponent,
+	],
 	template: `
 		<bd-store-nav />
 		<section class="section">
@@ -34,45 +46,19 @@ import { StoreNavComponent } from "../sections/store-nav.component";
 				} @else {
 					<ul class="cart-list">
 						@for (item of c.items; track item.id) {
-							<li class="cart-row">
-								<span class="cart-row__name">
-									{{ item.productName || "Item" }}
-									@if (item.variantTitle) {
-										<span class="cart-row__variant">{{ item.variantTitle }}</span>
-									}
-								</span>
-								<span class="cart-row__qty">
-									<button type="button" (click)="setQty(item.id, item.quantity - 1)" aria-label="Decrease">−</button>
-									{{ item.quantity }}
-									<button type="button" (click)="setQty(item.id, item.quantity + 1)" aria-label="Increase">+</button>
-								</span>
-								<span class="cart-row__price">{{ money(item.subtotal, c.currency) }}</span>
-								<button class="cart-row__remove" type="button" (click)="remove(item.id)">Remove</button>
-							</li>
+							<li
+								bd-cart-line
+								[currency]="c.currency"
+								[item]="item"
+								(quantity)="setQty(item.id, $event)"
+								(remove)="remove(item.id)"
+							></li>
 						}
 					</ul>
 
-					<form class="coupon" [formGroup]="couponForm" (ngSubmit)="applyCoupon()">
-						<label>
-							Coupon
-							<input formControlName="code" placeholder="Code" />
-						</label>
-						<button class="bd-btn bd-btn--ghost" type="submit" [disabled]="couponForm.invalid">Apply</button>
-						@if (c.couponCode) {
-							<button class="bd-btn bd-btn--ghost" type="button" (click)="removeCoupon()">
-								Remove “{{ c.couponCode }}”
-							</button>
-						}
-					</form>
-
-					<p class="cart-total">Subtotal: <strong>{{ money(c.subtotal, c.currency) }}</strong></p>
-
-					<div class="cart-actions">
-						<button class="bd-btn" type="button" (click)="checkout()" [disabled]="busy()">
-							{{ busy() ? "Starting…" : "Checkout" }}
-						</button>
-						<button class="bd-btn bd-btn--ghost" type="button" (click)="clear()">Clear cart</button>
-					</div>
+					<bd-coupon-form [code]="c.couponCode" (apply)="applyCoupon($event)" (remove)="removeCoupon()" />
+					<bd-cart-summary [currency]="c.currency" [subtotal]="c.subtotal" />
+					<bd-cart-actions [busy]="busy()" (checkout)="checkout()" (clear)="clear()" />
 				}
 			} @else {
 				<p class="muted">Your cart is empty. <a routerLink="/store">Browse the store</a>.</p>
@@ -86,23 +72,9 @@ export class CartPage implements OnInit {
 	readonly busy = signal(false);
 	readonly status = signal<string | null>(null);
 
-	readonly couponForm = new FormGroup({
-		code: new FormControl("", { nonNullable: true, validators: [Validators.required] }),
-	});
-
 	async ngOnInit() {
 		this.status.set(this.route.snapshot.queryParamMap.get("status"));
 		this.cart.set(await bdApi.cart());
-	}
-
-	/** Cart amounts are dollars. */
-	money(amount: number, currency: string): string {
-		const value = amount ?? 0;
-		try {
-			return new Intl.NumberFormat(undefined, { style: "currency", currency: currency || "USD" }).format(value);
-		} catch {
-			return `$${value.toFixed(2)}`;
-		}
 	}
 
 	/** The cart after a change, and its count for the store bar. */
@@ -121,9 +93,7 @@ export class CartPage implements OnInit {
 		if (next !== null) this.show(next);
 	}
 
-	async applyCoupon() {
-		const code = this.couponForm.controls.code.value.trim();
-		if (!code) return;
+	async applyCoupon(code: string) {
 		const next = await bdApi.applyCoupon(code);
 		if (next !== null) this.show(next);
 	}

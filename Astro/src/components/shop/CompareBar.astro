@@ -1,0 +1,10 @@
+---
+// [bd-file:store]
+/** The products picked to compare, from any page, with a link to the table. */
+interface Props {
+	storeHref?: string;
+}
+const { storeHref = "/store" } = Astro.props;
+---
+
+<bd-compare-bar data-store-href={storeHref}></bd-compare-bar>

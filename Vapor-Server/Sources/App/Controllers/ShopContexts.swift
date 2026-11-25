@@ -81,11 +81,8 @@ struct ProductPageContext: Content {
     let unavailable: Bool
     let found: Bool
     let notFound: Bool
-    let name: String
-    let description: String
-    let hasDescription: Bool
-    /// `{product, reviews, addons, related, moreReviewsHref}` for `<bd-product>`.
-    let dataJSON: String
+    /// The page's parts (ProductDetail.swift); nil when there's no product.
+    let detail: ProductDetail?
 }
 
 struct WishlistContext: Content {

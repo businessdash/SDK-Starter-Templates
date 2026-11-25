@@ -1,0 +1,45 @@
+---
+// [bd-file:store]
+/** All products, then each category with how many products it has. */
+import { hrefWith } from "./store-filters";
+
+interface Props {
+	categories: { id: string; name: string; count: number }[];
+	storeHref?: string;
+}
+const { categories, storeHref = "/store" } = Astro.props;
+const params = Astro.url.searchParams;
+const categoryId = params.get("category") || undefined;
+---
+
+{
+	categories.length > 0 ? (
+		<div class="store-facet">
+			<p class="store-facet__title">Category</p>
+			<ul class="store-facet__list">
+				<li>
+					<a
+						class={`store-facet__item${categoryId ? "" : " store-facet__item--active"}`}
+						href={hrefWith(params, { category: null }, storeHref)}
+					>
+						All products
+					</a>
+				</li>
+				{categories.map((c) => {
+					const active = categoryId === c.id;
+					return (
+						<li>
+							<a
+								class={`store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}`}
+								href={hrefWith(params, { category: active ? null : c.id }, storeHref)}
+							>
+								<span>{c.name}</span>
+								<span class="store-facet__count">{c.count}</span>
+							</a>
+						</li>
+					);
+				})}
+			</ul>
+		</div>
+	) : null
+}

@@ -1,0 +1,16 @@
+---
+// [bd-file:store]
+/**
+ * ♡ Save and ⇄ Compare. The lists live in this browser, so
+ * `<bd-save-buttons>` draws them; `compact` leaves just the symbols.
+ */
+import type { SavedProduct } from "../../lib/bd-shop/shop";
+
+interface Props {
+	product: SavedProduct;
+	compact?: boolean;
+}
+const { product, compact = false } = Astro.props;
+---
+
+<bd-save-buttons compact={compact ? "" : undefined} data-product={JSON.stringify(product)}></bd-save-buttons>

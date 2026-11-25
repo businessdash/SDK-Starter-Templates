@@ -2,7 +2,9 @@
   The business's reviews (ReviewsController). The rating and its bars come
   from the marketing bundle; the platform filter and "Show more" are plain
   links. Writing one is <bd-review-writer> (priv/static/shop/reviews-elements.js):
-  signed out, it's a link to sign in.
+  signed out, it's a link to sign in. It's laid out from the reviews' parts
+  (BdStarterWeb.ReviewComponents): the rating summary, the platform filter and
+  a card per review.
 --%>
 <div class="bd-section__lead">
   <span class="bd-section__eyebrow">Reviews</span>
@@ -14,76 +16,13 @@
 </div>
 
 <%= if @configured do %>
-  <section class="reviews-summary" aria-label={if @summary.average, do: "Rating", else: "Write a review"}>
-    <%= if @summary.average do %>
-      <div class="reviews-summary__score">
-        <span class="reviews-summary__average">{average(@summary)}</span>
-        <span class="review-stars" role="img" aria-label={"#{average(@summary)} out of 5"}>
-          {BdStarter.Reviews.stars(@summary.average)}
-        </span>
-        <span class="reviews-summary__count">
-          {@summary.total} {if @summary.total == 1, do: "review", else: "reviews"}
-        </span>
-      </div>
-      <ul class="reviews-bars">
-        <li :for={row <- @summary.histogram} aria-label={"#{row.stars} stars: #{row.count}"}>
-          <span>{row.stars} ★</span>
-          <span class="reviews-bars__track"><span class="reviews-bars__fill" style={width(row.share)}></span></span>
-          <span>{row.count}</span>
-        </li>
-      </ul>
-    <% end %>
-    <div class="reviews-summary__write">
-      <bd-review-writer data-write-url={~p"/reviews/write"} data-sign-in-href="/my-account?next=%2Freviews">
-        <.element_data value={%{signedIn: @signed_in}} />
-      </bd-review-writer>
-    </div>
-  </section>
-
-  <nav :if={length(@sources) > 1} aria-label="Platform">
-    <ul class="reviews-filter">
-      <li><a href={~p"/reviews"} aria-current={to_string(is_nil(@source))}>All</a></li>
-      <li :for={s <- @sources}>
-        <a href={~p"/reviews?#{[source: s]}"} aria-current={to_string(@source == s)}>
-          {BdStarter.Reviews.source_label(s)}
-        </a>
-      </li>
-    </ul>
-  </nav>
+  <.rating_summary signed_in={@signed_in} summary={@summary} />
+  <.review_filter source={@source} sources={@sources} />
 
   <p :if={@reviews == []} class="reviews-empty">{empty_message(@source)}</p>
 
   <ul :if={@reviews != []} class="review-wall">
-    <li :for={{review, i} <- Enum.with_index(@reviews)} class="review-card" id={"review-#{i}"}>
-      <% avatar = BdStarter.Reviews.web_url(review["reviewerImageUrl"]) %>
-      <% platform = BdStarter.Reviews.platform_name(review["source"]) %>
-      <% link = BdStarter.Reviews.link(review) %>
-      <% pictures = photos(review) %>
-      <div class="review-card__head">
-        <img :if={avatar} class="review-card__avatar" src={avatar} alt="" loading="lazy" />
-        <span :if={!avatar} class="review-card__avatar" aria-hidden="true">{BdStarter.Reviews.initial(review)}</span>
-        <div>
-          <p class="review-card__name">{BdStarter.Reviews.reviewer_name(review)}</p>
-          <p class="review-card__meta">
-            <span class="review-stars" role="img" aria-label={"#{review["rating"] || 0} out of 5"}>
-              {BdStarter.Reviews.stars(review["rating"])}
-            </span>
-            · {BdStarter.Reviews.date(review["timeCreated"])}
-          </p>
-        </div>
-      </div>
-      <p class="review-card__text">{review["text"]}</p>
-      <ul :if={pictures != []} class="review-card__photos" aria-label="Photos from the reviewer">
-        <li :for={photo <- pictures}><img src={photo} alt="" loading="lazy" /></li>
-      </ul>
-      <p :if={platform || review["verified"] == true} class="review-card__foot">
-        <span :if={platform} class="review-card__platform">{platform}</span>
-        <span :if={review["verified"] == true} class="review-card__verified">✓ Verified</span>
-        <a :if={link && platform} class="review-card__link" href={link} target="_blank" rel="noopener noreferrer">
-          Read on {platform}
-        </a>
-      </p>
-    </li>
+    <.review_card :for={{review, i} <- Enum.with_index(@reviews)} index={i} review={review} />
   </ul>
 
   <p :if={@more_href} class="reviews-more">

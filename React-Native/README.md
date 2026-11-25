@@ -95,6 +95,10 @@ src/shop/      the rules every BD starter shares
   saved.ts     wishlist, compare, recently viewed (AsyncStorage)
 src/components/
   shop.tsx     stars, product card, save buttons, compare bar, rails
+  product-parts.tsx  the product page's parts
+  store-parts.tsx    the store list's and the cart's parts
+  blog-parts.tsx     the blog's and a post's parts
+  review-parts.tsx   the reviews' parts
   PostBody.tsx a post drawn with Text and Image
   SignInScreen.tsx  the business's own sign-in screen
 ```
@@ -112,8 +116,40 @@ The same shop, blog and reviews as the web starters and the Swift app, as native
 
 Set `EXPO_PUBLIC_BD_SITE_URL` to your website's address and products and posts get a Share button that links to their web page.
 
+### Laying out the screens your way
+
+Every screen is laid out from exported components, each taking plain values and callbacks rather than the screen's state, so you can rearrange, restyle, drop or replace any of them, or lay out a screen of your own:
+
+- **Product page** (`src/components/product-parts.tsx`): `ProductGallery`, `ProductTitle`, `ProductPriceText`, `StockNote`, `VariantPicker`, `OptionPicker` / `OptionRow`, `QuantityStepper`, `AddToCartButton`, `ProductNotice`, `ShareButton`, `ProductDetails`, `ProductAddons` / `AddonRow`, `ProductReviews` / `ProductReviewRow`.
+- **Store and cart** (`store-parts.tsx`, `shop.tsx`): `StoreSearchField`, `WishlistLink`, `CategoryChips`, `StoreResultsBar`, `StoreFiltersSheet`, `StoreEmpty`, `ProductCard`, `ProductBadge`, `SaveButtons`, `CompareBar`, `ProductRail`, `ReviewStrip`, `CartLine`, `CouponField`, `CartSummary`; and the small pieces `Stars`, `Chip`, `ChipRow` and `EmptyNote`.
+- **Blog** (`blog-parts.tsx`): `BlogFilters`, `PostCard`, `PostMeta`, `PostCover`, `PostBody` (`PostBody.tsx`), `MembersOnly`, `PostCta`, `PostTags`, `LikeButton`, `PostComments` / `CommentRow`.
+- **Reviews** (`review-parts.tsx`): `ReviewSummaryCard`, `ReviewSourceFilter`, `ReviewCard`, `ReviewWriter`.
+
+The rules the parts follow are `src/shop/shop.ts`'s:
+
+```tsx
+const price = priceFor(view, variantId, chosen)
+
+<ProductGallery urls={galleryFor(view, variantId)} name={view.name} width={width} />
+<ProductPriceText price={price} />
+<VariantPicker variants={view.variants} selected={variantId} onSelect={setVariantId} />
+{optionGroupsFor(view, variantId).map((group) => (
+  <OptionPicker key={group.id} group={group} selected={chosen[group.id] ?? null}
+    onSelect={(id) => setChosen({ ...chosen, [group.id]: id })} />
+))}
+<AddToCartButton price={price} adding={false} hasOptions onPress={addToCart} />
+```
+
 `pnpm test:shop` runs the shared rules' tests, including the post-HTML cases every BD starter checks its port against (`src/shop/__tests__/post-html-parity.json`).
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS (NativeWind)
+
+Tailwind is set up for your own screens through [NativeWind](https://www.nativewind.dev): give any React Native component a `className`, such as `<View className="flex-1 items-center p-4">`. `src/tailwind.css` is imported by `app/_layout.tsx`; `metro.config.js` wraps the Metro config with NativeWind, and `postcss.config.mjs` runs Tailwind's PostCSS plugin. `nativewind-env.d.ts` types the `className` prop. The starter's screens use `StyleSheet` and no Tailwind classes, so they look the same with it or without it.
+
+NativeWind 5, the version that runs on Tailwind 4, is a release candidate (`5.0.0-rc.1`, with `react-native-css` `3.1.0-rc.1`). Update both together when it's released. Its CSS compiler only works with lightningcss 1.30.1, so `package.json` pins that version (`pnpm.overrides`); newer ones fail the build with "failed to deserialize; expected an object-like struct named Specifier". Try removing the pin when you update NativeWind.
+
+<!-- [/bd:tailwind] -->
 ## Five things that will bite you
 
 **1. Every list response is keyed `items`.** Not `products`, not `posts`, not `reviews`. Reading the wrong key yields `undefined`, not an error — so a screen renders "no products" against a full catalog and nothing looks broken. This one cost me every other starter in this repo before a typed harness caught it.
@@ -159,7 +195,7 @@ Full guide: [Native Forms (React Native)](https://businessdash.us/docs/developer
 
 **The Form tab has run on a device; the other screens haven't.** The form was walked end to end on an Android 16 emulator in Expo Go: every step, validation and scroll-to-error, a condition, the searchable sheets, calculations, color, date and time pickers, a picked PDF uploading on submit, the success screen and reset, light and dark. On iOS it has been rendered in the simulator, light and dark, but not tapped through.
 
-**The store, blog and reviews have run on the web, not yet on a device.** The Expo web build (react-native-web) was driven in a browser against a mock of BD's API at phone size: search, filters and sort, saving and comparing, a product with its options, add-ons, reviews and rails, adding to the cart, quantity and a coupon, the order screen, reviews with their filters, "Show more" and writing one signed in, the blog's topics and tags, a post, and liking and commenting signed in, with no console errors.
+**The store, blog and reviews have run on the web, not yet on a device.** The Expo web build (react-native-web) was driven in a browser against a mock of BD's API at phone size: search, filters and sort, saving and comparing, a product with its options, add-ons, reviews and rails, adding to the cart, quantity and a coupon, the order screen, reviews with their filters, "Show more" and writing one signed in, the blog's topics and tags, a post, and liking and commenting signed in, with no console errors. Splitting the screens into parts left every screenshot of that walk-through unchanged, apart from the counts that each run adds to (likes, comments).
 
 The rest is **bundled, not yet run on a device.** On Expo SDK 58 (React Native 0.88, React 19.3), `npx expo export --platform ios --platform android` bundles both platforms, `npx expo install --check` reports every dependency at the SDK's expected version, and `pnpm typecheck` passes. Every SDK call typechecks against the real published types (`createBdClient`, `createBdApiClient`, storefront, cart, checkout, chat, auth, blog, reviews, subscriptions, marketing) — that harness is what caught the `items` bug. Nobody has opened the other screens in a simulator yet.
 

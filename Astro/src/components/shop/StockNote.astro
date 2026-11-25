@@ -1,0 +1,11 @@
+---
+// [bd-file:store]
+/** "Only 3 left", at five or fewer. */
+interface Props {
+	stock: number | null;
+}
+const { stock } = Astro.props;
+const low = stock != null && stock > 0 && stock <= 5;
+---
+
+<p class="product-detail__stock" data-bd-stock hidden={!low}>{low ? `Only ${stock} left` : ""}</p>

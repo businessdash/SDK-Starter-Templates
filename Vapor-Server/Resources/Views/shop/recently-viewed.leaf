@@ -1,0 +1,2 @@
+<!-- What this browser opened before, as a rail; this product joins the list for next time. -->
+<bd-recently-viewed data-product="#(detail.summaryJSON)" data-store-href="#(detail.storeHref)"></bd-recently-viewed>

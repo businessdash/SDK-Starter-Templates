@@ -1,9 +1,9 @@
 // Generated from the BD shop elements' TypeScript (the same elements every
 // BD starter ships); plain JavaScript, so this starter needs no build step.
 /**
- * The few DOM helpers the shop and blog elements share. `h` builds nodes;
- * `patch` makes an element's children match new ones by updating what is
- * already there, so focus, scroll position and typed text survive a
+ * The few DOM helpers the shop, blog and review elements share. `h` builds
+ * nodes; `patch` makes an element's children match new ones by updating what
+ * is already there, so focus, scroll position and typed text survive a
  * re-render. No framework: the elements work on any server-rendered page.
  */
 /** An element. `true` sets an empty attribute; false and null leave it out. */

@@ -1,0 +1,20 @@
+---
+// [bd-file:blog]
+/** The author's photo and name, the date, and the reading time. */
+import { formatPostDate } from "../../lib/bd-shop/blog";
+
+interface Props {
+	authorName: string | null | undefined;
+	authorAvatarUrl: string | null | undefined;
+	publishedAt: string | null | undefined;
+	minutes: number;
+}
+const { authorName, authorAvatarUrl, publishedAt, minutes } = Astro.props;
+---
+
+<p class="post__meta">
+	{authorAvatarUrl ? <img alt="" referrerpolicy="no-referrer" src={authorAvatarUrl} /> : null}
+	{authorName ? <span>{authorName}</span> : null}
+	<span>{formatPostDate(publishedAt)}</span>
+	<span>· {minutes} min read</span>
+</p>

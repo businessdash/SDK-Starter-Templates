@@ -1,0 +1,29 @@
+<!-- One review, `card`: photo or initial, name, stars, date, text, photos, and where it came from. -->
+<li class="review-card" id="#(card.anchor)">
+  <div class="review-card__head">
+    #if(card.hasAvatar):
+      <img class="review-card__avatar" src="#(card.avatar)" alt="" loading="lazy">
+    #else:
+      <span class="review-card__avatar" aria-hidden="true">#(card.initial)</span>
+    #endif
+    <div>
+      <p class="review-card__name">#(card.name)</p>
+      <p class="review-card__meta"><span class="review-stars" role="img" aria-label="#(card.ratingLabel)">#(card.stars)</span> · #(card.date)</p>
+    </div>
+  </div>
+  <p class="review-card__text">#(card.text)</p>
+  #if(card.hasPhotos):
+    <ul class="review-card__photos" aria-label="Photos from the reviewer">
+      #for(photo in card.photos):
+        <li><img src="#(photo)" alt="" loading="lazy"></li>
+      #endfor
+    </ul>
+  #endif
+  #if(card.hasFoot):
+    <p class="review-card__foot">
+      #if(card.hasPlatform):<span class="review-card__platform">#(card.platform)</span>#endif
+      #if(card.verified):<span class="review-card__verified">✓ Verified</span>#endif
+      #if(card.hasLink):<a class="review-card__link" href="#(card.link)" target="_blank" rel="noopener noreferrer">Read on #(card.platform)</a>#endif
+    </p>
+  #endif
+</li>

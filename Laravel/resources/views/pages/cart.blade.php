@@ -1,3 +1,8 @@
+{{--
+    The cart: plain forms (CartController), laid out from the shop's parts
+    (components/shop/): a line per item, the subtotal, a coupon box and
+    Checkout.
+--}}
 @extends('layout')
 @section('title', 'Cart')
 @section('subnav')
@@ -13,35 +18,12 @@
     @else
         <ul class="cart-lines">
             @foreach ($items as $item)
-                <li>
-                    <span>
-                        {{ data_get($item, 'productName') }}@if (data_get($item, 'variantTitle')) · {{ data_get($item, 'variantTitle') }}@endif
-                        <span class="muted">{{ \App\Support\Money::amount(data_get($item, 'unitPrice')) }} each</span>
-                    </span>
-                    <form method="POST" action="{{ route('cart.update', data_get($item, 'id')) }}">
-                        @csrf @method('PATCH')
-                        <input type="number" name="quantity" value="{{ data_get($item, 'quantity', 1) }}" min="0">
-                        <button type="submit">Update</button>
-                    </form>
-                    <form method="POST" action="{{ route('cart.remove', data_get($item, 'id')) }}">
-                        @csrf @method('DELETE')
-                        <button type="submit">Remove</button>
-                    </form>
-                </li>
+                <x-shop.cart-line :item="$item" />
             @endforeach
         </ul>
 
-        <p class="total">Subtotal: {{ \App\Support\Money::amount(data_get($cart, 'subtotal')) }}</p>
-
-        <form method="POST" action="{{ route('cart.coupon') }}" class="coupon">
-            @csrf
-            <input type="text" name="code" placeholder="Coupon code">
-            <button type="submit">Apply</button>
-        </form>
-
-        <form method="POST" action="{{ route('cart.checkout') }}">
-            @csrf
-            <button type="submit" class="button">Checkout</button>
-        </form>
+        <x-shop.cart-summary :cart="$cart" />
+        <x-shop.coupon-form />
+        <x-shop.cart-actions />
     @endif
 @endsection

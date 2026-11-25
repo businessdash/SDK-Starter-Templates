@@ -1,0 +1,13 @@
+<!-- A button per variant (Cloud, Storm…), the chosen one pressed; sold-out
+     ones can't be pressed. Nothing shows for a product with one variant. A
+     variant's price shows on its button while it has no options of its own. -->
+#if(detail.hasVariants):
+  <fieldset class="choice">
+    <legend class="bd-label">Option</legend>
+    <div class="choice__values">
+      #for(v in detail.variants):
+        <button aria-pressed="#if(v.pressed):true#else:false#endif" class="choice__value#if(v.pressed): choice__value--on#endif" data-bd-variant="#(v.id)"#if(v.disabled): disabled#endif type="button">#(v.name)#if(v.hasPrice):<small data-bd-variant-price#if(!detail.showVariantPrices): hidden#endif> #(v.price)</small>#endif</button>
+      #endfor
+    </div>
+  </fieldset>
+#endif

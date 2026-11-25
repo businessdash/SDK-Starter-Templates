@@ -37,6 +37,12 @@ bun run start  # same, no watcher
 Open http://localhost:3000. With no BD env set, the API routes return 503 and
 every page renders its empty/fallback state — so the site is never blank.
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup. There's no bundler here, so the server builds `src/tailwind.css` with Tailwind's engine (`lib/tailwind.ts`) and serves it at `/tailwind.css`, which every page links. Use Tailwind's classes anywhere in `public/` or `src/`; in development a new class shows up on reload, and in production the CSS is built once. The starter's pages, shop, blog and reviews style themselves with `public/styles.css` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `src/tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## How it's wired
 
 ```
@@ -47,12 +53,15 @@ browser → /api/bd/<route> → Bun (server.ts) → BD Package API
 
 - `server.ts` — Bun HTTP server. Builds `createBdClient` once with the bearer key, mounts the WorkOS auth handler + revalidation webhook, proxies every SDK surface under `/api/bd/*`, proxies `/sitemap.xml` + `/robots.txt`, and server-renders the feature pages (with JSON-LD injected into `<head>`).
 - `lib/cache.ts` — tiny in-memory, tag-keyed TTL cache. The revalidation webhook busts it (a plain server has no `revalidateTag`).
-- `lib/shop/*.ts` — the shop's and blog's interactive parts as framework-free custom elements (`<bd-product>`, `<bd-save-buttons>`, `<bd-compare-bar>`, `<bd-wishlist>`, `<bd-compare>`, `<bd-post-like>`, `<bd-post-comments>`), plus `safePostHtml`, which the server runs on every post. The pages load plain ES modules, so the server bundles `shop-elements.ts` and `blog-elements.ts` with Bun.build and serves them at `/shop/*.js`. They draw the same markup as the React starters' components, styled by `public/bd-shop.css` and `public/bd-blog.css`. <!-- [bd-line:store,blog] -->
+- `lib/shop/*.ts` — the shop's rules (`shop.ts`: prices, options, photos), the small framework-free custom elements that bring the shop's and blog's parts to life (`<bd-product-form>`, `<bd-gallery>`, `<bd-share>`, `<bd-addon>`, `<bd-save-buttons>`, `<bd-recently-viewed>`, `<bd-compare-bar>`, `<bd-wishlist>`, `<bd-compare>`, `<bd-post-like>`, `<bd-post-comments>`), and `safePostHtml`, which the server runs on every post. The pages load plain ES modules, so the server bundles `shop.ts`, `shop-elements.ts` and `blog-elements.ts` with Bun.build and serves them at `/shop/*.js`. Styled by `public/bd-shop.css` and `public/bd-blog.css`. <!-- [bd-line:store,blog] -->
 - `lib/shop/reviews*.ts` — the business reviews: the rules every BD starter shares (`reviews.ts`), the page's data (`reviews-page.ts`, which `GET /api/bd/reviews/page` runs) and `<bd-review-writer>` (`reviews-elements.ts`, served at `/shop/reviews-elements.js`), which posts to `POST /api/bd/reviews/write`. Styled by `public/bd-reviews.css`.
 - `public/index.html` — the home shell with anchor divs (`#hero`, `#gallery`, …) + the news-banner mount.
 - `public/bd.js` — vanilla client mirroring the SDK's method names (JSDoc-typed, no build step). Exports `el` / `money` / `dollars` DOM helpers.
 - `public/banner.js` — the dismissible `bundle.banner`.
 - `public/sections/*.js` — the home-page sections (one `render(target)` each).
+- `public/sections/shop/*.js` — the shop's parts, one function per file, each returning its markup, so you can move, restyle or drop one, or build your own pages from them. Store: `storeSearch`, `categoryFilter`, `priceFilter`, `ratingFilter`, `clearFilters`, `sortSelect` (with `store-filters.js` for the URL), `productGrid`, `productCard`, `saveButtons`, `compareBar`. Product (`productDetail`): `productBreadcrumbs`, `productGallery`, `productTitle`, `productPrice`, `variantPicker`, `optionPicker`, `stockNote`, `quantityStepper`, `addToCartButton`, `cartNotice`, `saveButtons`, `shareButton`, `productPolicies`, `productSpecs`, `productAddons`, `productReviews`, `productRail`, `recentlyViewed`, `compareBar`. Cart: `cartLine`, `couponForm`, `cartSummary`, `cartActions`. `<bd-product-form>` and `<bd-gallery>` find the product parts by their `data-bd-*` attributes, so keep those when you change a part's markup. <!-- [bd-line:store] -->
+- `public/sections/blog/*.js` — the blog's parts: `blogFilters` and `postCard` for the list; `postMeta`, `postBody` (or `membersOnly`), `postCta`, `postTags`, `likeButton` and `comments` for a post. <!-- [bd-line:blog] -->
+- `public/sections/reviews/*.js` — the reviews page's parts: `ratingSummary` (the average, a bar per star and the writer), `reviewFilter` (the platform links) and `reviewCard` (one review).
 - `public/pages/*.js` — one module per feature page (store, cart, subscriptions, my-account, reviews, updates, services, …).
 - `public/main.js` — home entry point; mounts every section.
 
@@ -118,7 +127,7 @@ One entry in the server route table + one method on the browser client.
 ├── bd.config.ts                  # Marketing schema + brand tokens + parallel page
 ├── lib/
 │   ├── cache.ts                    # In-memory tag cache (webhook target)
-│   └── shop/                       # Shop, blog and review custom elements, served at /shop/*.js
+│   └── shop/                       # Shop rules, and shop, blog and review custom elements, served at /shop/*.js
 ├── public/
 │   ├── index.html                  # Home shell + banner mount
 │   ├── styles.css                  # BD CSS vars + section + feature-page styles
@@ -129,6 +138,13 @@ One entry in the server route table + one method on the browser client.
 │   ├── banner.js                   # Dismissible bundle.banner
 │   ├── main.js                     # Mounts home sections
 │   ├── sections/                   # Home sections (hero/about/services/gallery/blog/booking/contact-form)
+<!-- [bd:store] -->
+│   │   ├── shop/                   # The shop's parts: product page, store, cart
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   │   ├── blog/                   # The blog's parts: post card, meta, body, likes, comments
+<!-- [/bd:blog] -->
+│   │   └── reviews/                # The reviews page's parts: summary, filter, card
 │   └── pages/                      # Feature pages
 │       ├── _ui.js                  # Shared errBox / pageHead
 <!-- [bd:store] -->

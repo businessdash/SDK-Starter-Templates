@@ -1,6 +1,7 @@
 <%!--
   The post list: pinned first, category and tag filters, older posts.
-  BdStarterWeb.BlogController.index/2.
+  BdStarterWeb.BlogController.index/2. It's laid out from the blog's parts
+  (BdStarterWeb.BlogComponents): the filters and a post card per post.
 --%>
 <div :if={not @configured} class="bd-empty">
   The blog isn't connected yet. Add your BD env, then publish a post in Business Dash.
@@ -13,31 +14,7 @@
     <p :if={@active && @active["description"]} class="bd-section__sub">{@active["description"]}</p>
   </div>
 
-  <nav :if={@categories != [] or @tags != []} aria-label="Blog topics" class="blog-filters">
-    <ul :if={@categories != []}>
-      <li>
-        <a aria-current={if is_nil(@category), do: "true"} href={filter_href(@category, @tag, "category", nil)}>All</a>
-      </li>
-      <li :for={item <- @categories}>
-        <a
-          aria-current={if @category == item["id"], do: "true"}
-          href={filter_href(@category, @tag, "category", item["id"])}
-        >
-          {item["name"]}
-        </a>
-      </li>
-    </ul>
-    <ul :if={@tags != []} class="blog-filters__tags">
-      <li :for={item <- @tags}>
-        <a
-          aria-current={if @tag == item, do: "true"}
-          href={filter_href(@category, @tag, "tag", if(@tag == item, do: nil, else: item))}
-        >
-          #{item}
-        </a>
-      </li>
-    </ul>
-  </nav>
+  <.blog_filters categories={@categories} category={@category} tag={@tag} tags={@tags} />
 
   <div :if={@posts == []} class="bd-empty">
     <%= if @tag || @category do %>
@@ -48,31 +25,11 @@
   </div>
 
   <ul :if={@posts != []} class="posts">
-    <li
+    <.post_card
       :for={{post, index} <- Enum.with_index(@posts)}
-      class={["bd-card post-card", index == 0 and not @paged && "post-card--lead"]}
-    >
-      <a class="post-card__link" href={~p"/blog/#{post["slug"]}"}>
-        <img
-          :if={post["imageUrl"]}
-          alt=""
-          class="post-card__img"
-          loading="lazy"
-          referrerpolicy="no-referrer"
-          src={post["imageUrl"]}
-        />
-        <div class="post-card__body">
-          <p class="post-card__meta">
-            <span :if={post["isPinned"]} class="bd-badge">Pinned</span>
-            <span>{post_date(post["publishedAt"])}</span>
-            <span>· {minutes(post["content"] || post["excerpt"] || "")} min read</span>
-          </p>
-          <h2>{post["title"]}</h2>
-          <p :if={post["excerpt"]} class="post-card__excerpt">{post["excerpt"]}</p>
-          <p :if={post["authorName"]} class="post-card__author">{post["authorName"]}</p>
-        </div>
-      </a>
-    </li>
+      lead={index == 0 and not @paged}
+      post={post}
+    />
   </ul>
   <p :if={@posts != [] and @next_cursor} class="posts__more">
     <a class="bd-btn bd-btn--ghost" href={older_href(@category, @next_cursor)}>Older posts</a>

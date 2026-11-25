@@ -1,9 +1,15 @@
 <!-- [bd-file:blog] -->
 <script lang="ts">
+	/**
+	 * The blog, laid out from its parts in `#lib/components/bd/blog/`: the
+	 * category and tag filters, and a post card per post. The filters and
+	 * paging are in the URL, so they're plain links.
+	 */
 	import { page } from '$app/state';
 	import Header from '#lib/components/bd/Header.svelte';
 	import Footer from '#lib/components/bd/Footer.svelte';
-	import { formatPostDate, readingMinutes } from '#lib/bd/blog.ts';
+	import BlogFilters from '#lib/components/bd/blog/BlogFilters.svelte';
+	import PostCard from '#lib/components/bd/blog/PostCard.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -43,36 +49,13 @@
 		{/if}
 	</div>
 
-	{#if data.categories.length > 0 || data.tags.length > 0}
-		<nav class="blog-filters" aria-label="Blog topics">
-			{#if data.categories.length > 0}
-				<ul>
-					<li><a href={href('category', null)} aria-current={!data.categoryId}>All</a></li>
-					{#each data.categories as category (category.id)}
-						<li>
-							<a
-								href={href('category', category.id)}
-								aria-current={data.categoryId === category.id}
-							>
-								{category.name}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-			{#if data.tags.length > 0}
-				<ul class="blog-filters__tags">
-					{#each data.tags as tag (tag)}
-						<li>
-							<a href={href('tag', data.tag === tag ? null : tag)} aria-current={data.tag === tag}>
-								#{tag}
-							</a>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</nav>
-	{/if}
+	<BlogFilters
+		categories={data.categories}
+		tags={data.tags}
+		category={data.categoryId}
+		tag={data.tag}
+		{href}
+	/>
 
 	{#if !data.configured}
 		<div class="bd-empty">The blog isn't connected yet.</div>
@@ -85,32 +68,7 @@
 	{:else}
 		<ul class="posts">
 			{#each data.posts as post, i (post.id)}
-				<li
-					class="bd-card post-card"
-					class:post-card--lead={i === 0 && !page.url.searchParams.has('cursor')}
-				>
-					<a href={`/blog/${post.slug}`} class="post-card__link">
-						{#if post.imageUrl}
-							<img
-								class="post-card__img"
-								src={post.imageUrl}
-								alt=""
-								loading="lazy"
-								referrerpolicy="no-referrer"
-							/>
-						{/if}
-						<div class="post-card__body">
-							<p class="post-card__meta">
-								{#if post.isPinned}<span class="bd-badge">Pinned</span>{/if}
-								<span>{formatPostDate(post.publishedAt)}</span>
-								<span>· {readingMinutes(post.content || post.excerpt || '')} min read</span>
-							</p>
-							<h2>{post.title}</h2>
-							{#if post.excerpt}<p class="post-card__excerpt">{post.excerpt}</p>{/if}
-							{#if post.authorName}<p class="post-card__author">{post.authorName}</p>{/if}
-						</div>
-					</a>
-				</li>
+				<PostCard {post} lead={i === 0 && !page.url.searchParams.has('cursor')} />
 			{/each}
 		</ul>
 		{#if data.nextCursor !== null && !data.tag}
@@ -124,36 +82,6 @@
 <Footer />
 
 <style>
-	.blog-filters {
-		display: grid;
-		gap: 0.75rem;
-		margin-bottom: 2rem;
-	}
-	.blog-filters ul {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem;
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.blog-filters a {
-		display: inline-block;
-		padding: 0.35rem 0.85rem;
-		border: 1px solid var(--border-strong);
-		border-radius: 9999px;
-		color: var(--title);
-		font-size: 0.88rem;
-	}
-	.blog-filters__tags a {
-		border-style: dashed;
-		color: var(--text-muted);
-	}
-	.blog-filters a[aria-current='true'] {
-		border-color: var(--accent);
-		background: var(--accent-bg);
-		color: var(--accent);
-	}
 	.posts {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
@@ -161,70 +89,6 @@
 		margin: 0;
 		padding: 0;
 		list-style: none;
-	}
-	.post-card {
-		overflow: hidden;
-		padding: 0;
-	}
-	@media (min-width: 900px) {
-		.post-card--lead {
-			grid-column: 1 / -1;
-		}
-		.post-card--lead .post-card__link {
-			display: grid;
-			grid-template-columns: 1.2fr 1fr;
-		}
-		.post-card--lead .post-card__body {
-			align-content: center;
-		}
-		.post-card--lead .post-card__img {
-			height: 100%;
-			aspect-ratio: auto;
-		}
-		.post-card--lead h2 {
-			font-size: 1.8rem;
-		}
-	}
-	.post-card__link {
-		display: flex;
-		flex-direction: column;
-		height: 100%;
-		color: inherit;
-		border-bottom: none;
-	}
-	.post-card__img {
-		width: 100%;
-		aspect-ratio: 16 / 9;
-		object-fit: cover;
-		background: var(--bg-soft);
-	}
-	.post-card__body {
-		display: grid;
-		gap: 0.5rem;
-		padding: 1.25rem;
-	}
-	.post-card__meta {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 0.35rem;
-		margin: 0;
-		color: var(--text-muted);
-		font-size: 0.82rem;
-	}
-	.post-card h2 {
-		margin: 0;
-		font-size: 1.2rem;
-		color: var(--title);
-	}
-	.post-card__excerpt {
-		margin: 0;
-		color: var(--text);
-	}
-	.post-card__author {
-		margin: 0;
-		color: var(--text-muted);
-		font-size: 0.85rem;
 	}
 	.posts__more {
 		margin-top: 2rem;

@@ -1,0 +1,4 @@
+<!-- ♡ Like with the count. Signed out, it leads to sign-in and back. -->
+<bd-post-like data-like-url="#(likeURL)" data-sign-in-href="#(signInHref)">
+  <script type="application/json">#unsafeHTML(likesJSON)</script>
+</bd-post-like>

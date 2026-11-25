@@ -2,7 +2,6 @@
 import {
 	ChangeDetectionStrategy,
 	Component,
-	CUSTOM_ELEMENTS_SCHEMA,
 	PLATFORM_ID,
 	afterNextRender,
 	computed,
@@ -14,7 +13,13 @@ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Title } from "@angular/platform-browser";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { bdApi, type BlogPostPayload } from "../lib/bd-api.client";
-import { formatPostDate } from "../shop/blog";
+import { CommentsComponent } from "../sections/blog/comments.component";
+import { LikeButtonComponent } from "../sections/blog/like-button.component";
+import { MembersOnlyComponent } from "../sections/blog/members-only.component";
+import { PostBodyComponent } from "../sections/blog/post-body.component";
+import { PostCtaComponent } from "../sections/blog/post-cta.component";
+import { PostMetaComponent } from "../sections/blog/post-meta.component";
+import { PostTagsComponent } from "../sections/blog/post-tags.component";
 
 /**
  * One post. The server rebuilds its HTML from an allowlist
@@ -22,13 +27,23 @@ import { formatPostDate } from "../shop/blog";
  * Likes and comments are for signed-in customers: `<bd-post-like>` and
  * `<bd-post-comments>` (src/app/shop/blog-elements.ts) post JSON to
  * /api/bd/blog/post/:slug/like and /comment; signed out, they lead to
- * sign-in and back to the post.
+ * sign-in and back to the post. The page is laid out from the blog's parts
+ * (src/app/sections/blog/): meta, body (or members-only), call to action,
+ * tags, like button and comments.
  */
 @Component({
 	selector: "bd-blog-post-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [RouterLink],
-	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [
+		CommentsComponent,
+		LikeButtonComponent,
+		MembersOnlyComponent,
+		PostBodyComponent,
+		PostCtaComponent,
+		PostMetaComponent,
+		PostTagsComponent,
+		RouterLink,
+	],
 	template: `
 		<div class="bd-page">
 			@if (state() === "missing") {
@@ -38,55 +53,39 @@ import { formatPostDate } from "../shop/blog";
 					<a class="post__back" routerLink="/blog">← All posts</a>
 					<header class="post__head">
 						<h1>{{ v.post.title }}</h1>
-						<p class="post__meta">
-							@if (v.post.authorAvatarUrl) {
-								<img alt="" referrerpolicy="no-referrer" [src]="v.post.authorAvatarUrl" />
-							}
-							@if (v.post.authorName) {
-								<span>{{ v.post.authorName }}</span>
-							}
-							<span>{{ v.date }}</span>
-							<span>· {{ v.minutes }} min read</span>
-						</p>
+						<bd-post-meta
+							[authorAvatarUrl]="v.post.authorAvatarUrl"
+							[authorName]="v.post.authorName"
+							[minutes]="v.minutes"
+							[publishedAt]="v.post.publishedAt"
+						/>
 					</header>
 					@if (v.post.imageUrl) {
 						<img alt="" class="post__cover" referrerpolicy="no-referrer" [src]="v.post.imageUrl" />
 					}
 					@if (v.paywalled) {
-						<div class="bd-empty">
-							This post is for members.
-							<p><a class="bd-btn" [href]="v.signInHref">Sign in to read it</a></p>
-						</div>
+						<bd-members-only [signInHref]="v.signInHref" />
 					} @else {
-						<div class="post__body" [innerHTML]="v.html"></div>
+						<bd-post-body [html]="v.html" />
 					}
-					@if (v.post.ctaHref && v.post.ctaLabel) {
-						<aside class="bd-card post__cta">
-							@if (v.post.ctaDescription) {
-								<p>{{ v.post.ctaDescription }}</p>
-							}
-							<a class="bd-btn" [href]="v.post.ctaHref">{{ v.post.ctaLabel }}</a>
-						</aside>
-					}
-					@if (v.post.tags.length > 0) {
-						<ul class="post__tags">
-							@for (t of v.post.tags; track t) {
-								<li>
-									<a routerLink="/blog" [queryParams]="{ tag: t }">#{{ t }}</a>
-								</li>
-							}
-						</ul>
-					}
-					<bd-post-like
-						[attr.data-like-url]="v.api + '/like'"
-						[attr.data-sign-in-href]="v.signInHref"
-						[data]="v.like"
+					<bd-post-cta
+						[description]="v.post.ctaDescription"
+						[href]="v.post.ctaHref"
+						[label]="v.post.ctaLabel"
+					/>
+					<bd-post-tags [tags]="v.post.tags" />
+					<bd-like-button
+						[likeUrl]="v.api + '/like'"
+						[likes]="v.likes"
+						[signInHref]="v.signInHref"
+						[signedIn]="v.signedIn"
 					/>
 				</article>
-				<bd-post-comments
-					[attr.data-comment-url]="v.api + '/comment'"
-					[attr.data-sign-in-href]="v.signInHref"
-					[data]="v.comments"
+				<bd-comments
+					[commentUrl]="v.api + '/comment'"
+					[comments]="v.comments"
+					[signInHref]="v.signInHref"
+					[signedIn]="v.signedIn"
 				/>
 			} @else {
 				<p class="bd-loading">Loading…</p>
@@ -102,18 +101,15 @@ export class BlogPostPage {
 	readonly state = signal<"loading" | "ready" | "missing">("loading");
 	private loadSeq = 0;
 
-	/** What the page shows, with the like and comment elements' data. */
+	/** What the page shows, with where likes and comments go. */
 	readonly view = computed(() => {
 		const data = this.payload();
 		if (!data) return null;
 		const here = `/blog/${encodeURIComponent(data.post.slug)}`;
 		return {
 			...data,
-			date: formatPostDate(data.post.publishedAt),
 			api: `/api/bd/blog/post/${encodeURIComponent(data.post.slug)}`,
 			signInHref: `/my-account?next=${encodeURIComponent(here)}`,
-			like: { likes: data.likes, signedIn: data.signedIn },
-			comments: { comments: data.comments, signedIn: data.signedIn },
 		};
 	});
 

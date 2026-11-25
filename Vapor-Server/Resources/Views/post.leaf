@@ -1,7 +1,9 @@
 <!-- One post. Its HTML was rebuilt from an allowlist (PostHtml.safe), so the
      raw HTML never reaches the page. The like button and comments are
      <bd-post-like> and <bd-post-comments> (Public/shop/blog-elements.js);
-     signed out, they lead to sign-in and back to the post. -->
+     signed out, they lead to sign-in and back to the post. It's laid out from
+     the blog's parts (Resources/Views/blog/): meta, body (or members only),
+     call to action, tags, like button and comments. -->
 #extend("base"):
   #export("title"):#(title)#endexport
   #export("head"):
@@ -20,40 +22,21 @@
         <a class="post__back" href="/blog">← All posts</a>
         <header class="post__head">
           <h1>#(heading)</h1>
-          <p class="post__meta">
-            #if(hasAvatar):<img alt="" referrerpolicy="no-referrer" src="#(avatar)">#endif
-            #if(hasAuthor):<span>#(author)</span>#endif
-            <span>#(date)</span>
-            <span>· #(minutes) min read</span>
-          </p>
+          #extend("blog/post-meta")
         </header>
         #if(hasImage):
           <img alt="" class="post__cover" referrerpolicy="no-referrer" src="#(image)">
         #endif
         #if(paywalled):
-          <div class="bd-empty">This post is for members.<p><a class="bd-btn" href="#(signInHref)">Sign in to read it</a></p></div>
+          #extend("blog/members-only")
         #else:
-          <!-- Safe: PostHtml.safe rebuilt this from an allowlist. -->
-          <div class="post__body">#unsafeHTML(html)</div>
+          #extend("blog/post-body")
         #endif
-        #if(hasCTA):
-          <aside class="bd-card post__cta">
-            #if(hasCTADescription):<p>#(ctaDescription)</p>#endif
-            <a class="bd-btn" href="#(ctaHref)">#(ctaLabel)</a>
-          </aside>
-        #endif
-        #if(hasTags):
-          <ul class="post__tags">
-            #for(tag in tags):<li><a href="#(tag.href)">#(tag.label)</a></li>#endfor
-          </ul>
-        #endif
-        <bd-post-like data-like-url="#(likeURL)" data-sign-in-href="#(signInHref)">
-          <script type="application/json">#unsafeHTML(likesJSON)</script>
-        </bd-post-like>
+        #extend("blog/post-cta")
+        #extend("blog/post-tags")
+        #extend("blog/like-button")
       </article>
-      <bd-post-comments data-comment-url="#(commentURL)" data-sign-in-href="#(signInHref)">
-        <script type="application/json">#unsafeHTML(commentsJSON)</script>
-      </bd-post-comments>
+      #extend("blog/comments")
     #endif
   #endexport
 #endextend

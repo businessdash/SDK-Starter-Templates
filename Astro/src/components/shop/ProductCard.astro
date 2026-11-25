@@ -1,0 +1,83 @@
+---
+// [bd-file:store]
+/**
+ * A product in the store's grid: its photo and badges (Best seller, New,
+ * Sale), name, stars, price ("From" when options change it, the old price
+ * on sale), Low stock, and ♡ / ⇄ to save it or pick it to compare.
+ */
+import { formatCents } from "../../lib/bd-shop/shop";
+import SaveButtons from "./SaveButtons.astro";
+import StarRating from "./StarRating.astro";
+
+export type Card = {
+	id: string;
+	name: string;
+	coverImage: string | null;
+	cheapestPriceCents: number | null;
+	comparePriceCents: number | null;
+	hasMultipleVariants: boolean;
+	avgRating: number;
+	reviewCount: number;
+	isBestSeller: boolean;
+	isNew: boolean;
+	isOnSale: boolean;
+	isLowStock: boolean;
+};
+
+interface Props {
+	product: Card;
+	storeHref?: string;
+}
+const { product: p, storeHref = "/store" } = Astro.props;
+---
+
+<div class="bd-card product-card">
+	<a class="product-card__link" href={`${storeHref}/${encodeURIComponent(p.id)}`}>
+		<div class="product-card__media">
+			{
+				p.coverImage ? (
+					<img alt={p.name} class="product-card__img" loading="lazy" referrerpolicy="no-referrer" src={p.coverImage} />
+				) : (
+					<div class="product-card__noimg">No image</div>
+				)
+			}
+			<div class="product-card__badges">
+				{p.isBestSeller ? <span class="bd-badge">Best seller</span> : null}
+				{p.isNew ? <span class="bd-badge">New</span> : null}
+				{p.isOnSale ? <span class="bd-badge product-card__badge--sale">Sale</span> : null}
+			</div>
+		</div>
+		<div class="product-card__body">
+			<h3>{p.name || "Untitled"}</h3>
+			{
+				p.reviewCount > 0 ? (
+					<div class="product-card__rating">
+						<StarRating rating={p.avgRating} />
+						<span class="product-card__count">({p.reviewCount})</span>
+					</div>
+				) : null
+			}
+			<div class="product-card__price">
+				<span class="product-card__amount">
+					{
+						p.cheapestPriceCents != null
+							? `${p.hasMultipleVariants ? "From " : ""}${formatCents(p.cheapestPriceCents)}`
+							: "View details"
+					}
+				</span>
+				{
+					p.isOnSale && p.comparePriceCents != null ? (
+						<span class="product-card__compare">{formatCents(p.comparePriceCents)}</span>
+					) : null
+				}
+			</div>
+			{p.isLowStock ? <span class="product-card__lowstock">Low stock</span> : null}
+		</div>
+	</a>
+	<div class="product-card__save">
+		<SaveButtons
+			compact
+			product={{ id: p.id, name: p.name, image: p.coverImage, priceCents: p.cheapestPriceCents }}
+		/>
+	</div>
+</div>

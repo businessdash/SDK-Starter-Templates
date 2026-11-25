@@ -63,7 +63,7 @@
     },
     "parser": {
       "cssModules": true,
-      "tailwindDirectives": true,
+      "tailwindDirectives": true, // [bd-line:tailwind]
     },
   },
 }

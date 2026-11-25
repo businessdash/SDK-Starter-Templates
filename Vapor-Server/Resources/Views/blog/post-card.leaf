@@ -1,0 +1,19 @@
+<!-- A post in the list, `post`: cover, Pinned, date, reading time, title,
+     excerpt and author. The first on the first page is drawn larger. -->
+<li class="bd-card post-card#if(post.lead): post-card--lead#endif">
+  <a class="post-card__link" href="#(post.href)">
+    #if(post.hasImage):
+      <img alt="" class="post-card__img" loading="lazy" referrerpolicy="no-referrer" src="#(post.image)">
+    #endif
+    <div class="post-card__body">
+      <p class="post-card__meta">
+        #if(post.pinned):<span class="bd-badge">Pinned</span>#endif
+        <span>#(post.date)</span>
+        <span>· #(post.minutes) min read</span>
+      </p>
+      <h2>#(post.title)</h2>
+      #if(post.hasExcerpt):<p class="post-card__excerpt">#(post.excerpt)</p>#endif
+      #if(post.hasAuthor):<p class="post-card__author">#(post.author)</p>#endif
+    </div>
+  </a>
+</li>

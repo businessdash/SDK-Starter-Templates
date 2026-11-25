@@ -40,6 +40,16 @@ bun run dev
 
 Open http://localhost:5173. **Everything degrades gracefully when BD env is unset** — pages still render with placeholder/demo content and storefront/portal surfaces show a "not connected" state.
 
+## Styles
+
+The pages style themselves with plain CSS: `src/routes/layout.css` pulls in `reset.css` (the page reset), `bd-tokens.css` (the starter's colours, spacing and components) and the SDK's form styles. Components keep their own styles in their `<style>` blocks, and the reviews page adds `src/lib/bd/bd-reviews.css`.
+
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `src/routes/tailwind.css` is imported by `src/routes/+layout.svelte`, and `@tailwindcss/vite` builds it. Use its classes anywhere in `src/`. The typography plugin (`prose`) and the forms plugin (`form-input` and the rest) come with it. The starter's pages, shop, blog and reviews don't use Tailwind, so they look the same with it or without it. Preflight, Tailwind's reset, is left out because `reset.css` does the same job.
+
+<!-- [/bd:tailwind] -->
 ## Environment variables
 
 Declared in `src/env.ts` and read when the app starts. Secrets come from `$app/env/private`, a server-only module, so they never reach the client; `PUBLIC_` variables come from `$app/env/public`. Every variable is optional, which is what lets the starter run with no `.env`. See `.env.example`.
@@ -91,6 +101,18 @@ src/routes/api/bd/checkout/start/+server.ts             POST   → Stripe URL
 ```
 
 The browser-side helpers in `src/lib/bd/cart-client.ts` wrap those endpoints and return the new `CartSnapshot`. `src/lib/bd/shop.ts` holds the rest of the shop's logic, framework-free: shaping a product for its page (photos per option, option groups, "from" prices, specs) and the wishlist, compare and recently viewed lists, which live in the browser's localStorage. Money: cart `unitPrice`/`subtotal` and variant `price` are **dollars** (`formatDollars`); subscription `amountCents` and checkout totals are **cents** (`formatCents`).
+
+#### The shop's parts
+
+`<ProductDetail>` is the whole product page, and the store and cart pages are laid out from the same kind of parts. Each part is its own file in `src/lib/components/bd/shop/`, with its own styles, so you can move, restyle or drop one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`, `ProductGrid`, `ProductCard`, `StarRating`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `RecentlyViewed`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary`, `CartActions` |
+
+`ProductDetail` holds what's chosen (option, sizes, photo, quantity) and hands it to the parts as props; the gallery and quantity are `bind:`able. The parts tell the page what happened through callbacks (`onPick`, `onAdd`, `onSearch`…), so the store page keeps its filters in the URL and the cart page calls `cart-client.ts`. `SaveButtons`, `ProductRail` and `CompareBar` are in `src/lib/components/bd/`.
 <!-- [/bd:store] -->
 
 <!-- [bd:blog] -->
@@ -102,6 +124,17 @@ The browser-side helpers in `src/lib/bd/cart-client.ts` wrap those endpoints and
 | Post, likes, comments | `src/routes/blog/[slug]/+page.{server.ts,svelte}` | `blog.getPost(slug)`, `blog.listComments(slug)`, `blog.withSession(token).{likeStatus,toggleLike,postComment}` |
 
 Liking and commenting need a signed-in customer (the `bd_session` cookie from `/my-account`); they are form actions, so they work without JavaScript. A post's HTML is rebuilt from an allowlist by `safePostHtml` in `src/lib/bd/blog.ts` before it reaches the page, so a post can't carry a script.
+
+#### The blog's parts
+
+Both pages are laid out from parts in `src/lib/components/bd/blog/`, one file each, with their own styles:
+
+| Page | Parts |
+| --- | --- |
+| Blog | `BlogFilters` (categories and tags), `PostCard` |
+| Post | `PostMeta`, `PostBody` (or `MembersOnly` for a members-only post signed out), `PostCta`, `PostTags`, `LikeButton`, `Comments` (`CommentForm`, `CommentList`) |
+
+`LikeButton` and `CommentForm` post to the page's `?/like` and `?/comment` actions; pass `action` to point them somewhere else.
 <!-- [/bd:blog] -->
 
 <!-- [bd:subscriptions] -->
@@ -119,7 +152,7 @@ Liking and commenting need a signed-in customer (the `bd_session` cookie from `/
 
 ### Business reviews (`/reviews`)
 
-`src/routes/reviews/+page.server.ts` loads the rating with its count per star (off `bundle.reviews`) and the reviews from `reviews.list({ limit, offset, source })`. The page shows a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a link to it on Google or Yelp, and "Show more" (`?shown=`), all plain links. A signed-in customer writes a review with `ReviewWriter.svelte`, which posts to the page's `write` form action; it waits for the business to approve it. The rules (breakdown, platform names, safe links, what a review must be) are `src/lib/bd/reviews.ts`, the same in every BD starter, and the styles `src/lib/bd/bd-reviews.css`. `src/routes/api/bd/reviews/+server.ts` pages the reviews as JSON for your own components. Note the **two different shapes**: bundle reviews are `{ reviewee, description, date, rating }`; wall items are `{ reviewerName, text, timeCreated, rating }`.
+`src/routes/reviews/+page.server.ts` loads the rating with its count per star (off `bundle.reviews`) and the reviews from `reviews.list({ limit, offset, source })`. The page shows a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a link to it on Google or Yelp, and "Show more" (`?shown=`), all plain links. A signed-in customer writes a review with `ReviewWriter.svelte`, which posts to the page's `write` form action; it waits for the business to approve it. The page is laid out from `RatingSummary` (the average and a bar per star, with the writer beside it), `ReviewFilter` (the platform links) and `ReviewCard` (one review), each its own file in `src/lib/components/bd/reviews/`, so you can lay them out your own way. The rules (breakdown, platform names, safe links, what a review must be) are `src/lib/bd/reviews.ts`, the same in every BD starter, and the styles `src/lib/bd/bd-reviews.css`. `src/routes/api/bd/reviews/+server.ts` pages the reviews as JSON for your own components. Note the **two different shapes**: bundle reviews are `{ reviewee, description, date, rating }`; wall items are `{ reviewerName, text, timeCreated, rating }`.
 
 ### Updates feed (`/updates`)
 
@@ -190,8 +223,11 @@ src/
 │       ├── Services.svelte  Gallery.svelte  Blog.svelte
 │       ├── Booking.svelte  ContactForm.svelte    # Svelte 5 runes, client-driven
 │       ├── Banner.svelte                         # dismissible bundle.banner bar
+│       ├── blog/                                 # the blog pages' parts <!-- [bd-line:blog] -->
+│       ├── reviews/  ReviewWriter.svelte         # the reviews page's parts
 <!-- [bd:store,subscriptions] -->
 │       ├── SaveButtons.svelte  ProductRail.svelte  CompareBar.svelte <!-- [bd-line:store] -->
+│       ├── shop/                                 # the store, product and cart pages' parts <!-- [bd-line:store] -->
 │       └── StoreNav.svelte                       # storefront sub-nav + cart badge
 <!-- [/bd:store,subscriptions] -->
 └── routes/

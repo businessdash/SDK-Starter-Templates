@@ -1,0 +1,15 @@
+---
+// [bd-file:store]
+/** The store's products, a <ProductCard> each. */
+import ProductCard, { type Card } from "./ProductCard.astro";
+
+interface Props {
+	products: Card[];
+	storeHref?: string;
+}
+const { products, storeHref } = Astro.props;
+---
+
+<div class="bd-grid-3">
+	{products.map((p) => <ProductCard product={p} storeHref={storeHref} />)}
+</div>

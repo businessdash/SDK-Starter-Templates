@@ -1,0 +1,2 @@
+<!-- ♡ Save and ⇄ Compare for this product. -->
+<bd-save-buttons data-product="#(detail.summaryJSON)"></bd-save-buttons>

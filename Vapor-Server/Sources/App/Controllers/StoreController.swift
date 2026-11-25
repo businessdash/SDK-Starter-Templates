@@ -165,9 +165,7 @@ enum StoreController {
             }
         }
 
-        var data = "null"
-        var name = ""
-        var description = ""
+        var detail: ProductDetail?
         if let product, let bd = req.bd {
             async let reviews = try? bd.productReviewPage(id, limit: reviewLimit)
             async let addons = try? bd.productAddons(id)
@@ -178,16 +176,15 @@ enum StoreController {
             let shown = reviewPage?["items"]?.arrayValue?.count ?? 0
             let more = total > shown ? "/store/\(id.pathEscaped)?reviews=\(reviewLimit + reviewsPage)#reviews" : nil
 
-            data = ElementData.json(JSONValue.object([
-                "product": product,
-                "reviews": reviewPage ?? .null,
-                "addons": addonList?["items"] ?? .array([]),
-                "related": relatedList?["items"] ?? .array([]),
-                "moreReviewsHref": more.map(JSONValue.string) ?? .null,
-            ]))
-            name = product["name"]?.stringValue ?? ""
-            description = product["description"]?.stringValue ?? ""
+            detail = ProductDetail(
+                product: product,
+                reviews: reviewPage,
+                addons: addonList?["items"]?.arrayValue ?? [],
+                related: relatedList?["items"]?.arrayValue ?? [],
+                moreReviewsHref: more
+            )
         }
+        let name = product?["name"]?.stringValue ?? ""
 
         let view = try await req.view.render("product", ProductPageContext(
             configured: configured,
@@ -196,10 +193,7 @@ enum StoreController {
             unavailable: unavailable,
             found: product != nil,
             notFound: configured && product == nil && !unavailable,
-            name: name,
-            description: description,
-            hasDescription: !description.isEmpty,
-            dataJSON: data
+            detail: detail
         ))
         // Not found is a 404, so the page isn't indexed; the store bar and a
         // link back still show.

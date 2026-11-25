@@ -8,8 +8,9 @@
  * ?category, ?min, ?max, ?rating, ?sort): the facets are links and the
  * search, price and sort are plain GET forms, so the page works without JS,
  * a filtered list can be shared and the back button steps through filters.
- * Save and compare on each card are `<bd-save-buttons>` (see
- * `src/lib/bd-shop/shop-elements.ts`).
+ * The page is laid out from the shop's parts (`src/components/shop/`): the
+ * filters, the grid of product cards (each saves to the wishlist or the
+ * comparison) and the compare bar.
  *
  * Suspension-aware: if the org's billing has lapsed / service is suspended,
  * the SDK throws and we return a 503 "site unavailable" document. Unconfigured
@@ -17,11 +18,19 @@
  */
 import "../../styles/bd-shop.css";
 
-import StarRating from "../../components/shop/StarRating.astro";
+import CategoryFilter from "../../components/shop/CategoryFilter.astro";
+import ClearFilters from "../../components/shop/ClearFilters.astro";
+import CompareBar from "../../components/shop/CompareBar.astro";
+import type { Card } from "../../components/shop/ProductCard.astro";
+import ProductGrid from "../../components/shop/ProductGrid.astro";
+import PriceFilter from "../../components/shop/PriceFilter.astro";
+import RatingFilter from "../../components/shop/RatingFilter.astro";
+import SortSelect from "../../components/shop/SortSelect.astro";
+import StoreSearch from "../../components/shop/StoreSearch.astro";
+import { hasFilters as filtersSet, sortOf } from "../../components/shop/store-filters";
 import StoreNav from "../../components/StoreNav.astro";
 import Layout from "../../layouts/Layout.astro";
 import { bd } from "../../lib/bd";
-import { formatCents } from "../../lib/bd-shop/shop";
 import {
 	isStoreConfigured,
 	listStoreCategories,
@@ -30,30 +39,6 @@ import {
 import { isSuspensionError, suspendedResponse } from "../../lib/bd-suspension";
 
 export const prerender = false;
-
-const SORTS = [
-	{ value: "featured", label: "Featured" },
-	{ value: "newest", label: "Newest" },
-	{ value: "price-asc", label: "Price: low to high" },
-	{ value: "price-desc", label: "Price: high to low" },
-	{ value: "rating-desc", label: "Top rated" },
-] as const;
-type Sort = (typeof SORTS)[number]["value"];
-
-type Card = {
-	id: string;
-	name: string;
-	coverImage: string | null;
-	cheapestPriceCents: number | null;
-	comparePriceCents: number | null;
-	hasMultipleVariants: boolean;
-	avgRating: number;
-	reviewCount: number;
-	isBestSeller: boolean;
-	isNew: boolean;
-	isOnSale: boolean;
-	isLowStock: boolean;
-};
 
 function parseCents(raw: string | null): number | undefined {
 	if (!raw) return undefined;
@@ -65,13 +50,12 @@ function parseCents(raw: string | null): number | undefined {
 const params = Astro.url.searchParams;
 const search = params.get("q")?.trim() || undefined;
 const categoryId = params.get("category") || undefined;
-const sortRaw = params.get("sort");
-const sort: Sort = SORTS.some((s) => s.value === sortRaw) ? (sortRaw as Sort) : "featured";
+const sort = sortOf(params);
 const minPriceCents = parseCents(params.get("min"));
 const maxPriceCents = parseCents(params.get("max"));
 const ratingRaw = Number.parseInt(params.get("rating") ?? "", 10);
 const minRating = ratingRaw >= 1 && ratingRaw <= 5 ? ratingRaw : undefined;
-const hasFilters = ["q", "category", "min", "max", "rating"].some((key) => params.get(key));
+const hasFilters = filtersSet(params);
 
 let products: Card[] = [];
 let categories: { id: string; name: string; count: number }[] = [];
@@ -112,22 +96,6 @@ if (bd) {
 }
 
 if (suspended) return suspendedResponse();
-
-/** This list with some filters changed (null removes one). */
-function hrefWith(changes: Record<string, string | null>): string {
-	const next = new URLSearchParams(params);
-	for (const [key, value] of Object.entries(changes)) {
-		if (value === null || value === "") next.delete(key);
-		else next.set(key, value);
-	}
-	const qs = next.toString();
-	return qs ? `/store?${qs}` : "/store";
-}
-
-/** The filters a form leaves alone, carried along as hidden fields. */
-function keep(...replaced: string[]): [string, string][] {
-	return [...params].filter(([key]) => !replaced.includes(key));
-}
 ---
 
 <Layout
@@ -155,110 +123,11 @@ function keep(...replaced: string[]): [string, string][] {
 			) : (
 				<div class="store-layout">
 					<aside class="store-sidebar">
-						<form action="/store" method="get">
-							<label class="bd-label" for="store-search">
-								Search
-							</label>
-							<input
-								autocomplete="off"
-								class="bd-input"
-								id="store-search"
-								name="q"
-								placeholder="Search products…"
-								type="search"
-								value={params.get("q") ?? ""}
-							/>
-							{keep("q").map(([key, value]) => (
-								<input name={key} type="hidden" value={value} />
-							))}
-						</form>
-
-						{categories.length > 0 ? (
-							<div class="store-facet">
-								<p class="store-facet__title">Category</p>
-								<ul class="store-facet__list">
-									<li>
-										<a
-											class={`store-facet__item${categoryId ? "" : " store-facet__item--active"}`}
-											href={hrefWith({ category: null })}
-										>
-											All products
-										</a>
-									</li>
-									{categories.map((c) => {
-										const active = categoryId === c.id;
-										return (
-											<li>
-												<a
-													class={`store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}`}
-													href={hrefWith({ category: active ? null : c.id })}
-												>
-													<span>{c.name}</span>
-													<span class="store-facet__count">{c.count}</span>
-												</a>
-											</li>
-										);
-									})}
-								</ul>
-							</div>
-						) : null}
-
-						<form action="/store" class="store-facet" method="get">
-							<p class="store-facet__title">Price</p>
-							<div class="store-price">
-								<input
-									aria-label="Lowest price"
-									class="bd-input"
-									inputmode="decimal"
-									name="min"
-									placeholder={priceRange ? `$${priceRange.minDollars.toFixed(0)}` : "Min"}
-									value={params.get("min") ?? ""}
-								/>
-								<span aria-hidden="true" class="store-price__sep">
-									–
-								</span>
-								<input
-									aria-label="Highest price"
-									class="bd-input"
-									inputmode="decimal"
-									name="max"
-									placeholder={priceRange ? `$${priceRange.maxDollars.toFixed(0)}` : "Max"}
-									value={params.get("max") ?? ""}
-								/>
-							</div>
-							{keep("min", "max").map(([key, value]) => (
-								<input name={key} type="hidden" value={value} />
-							))}
-							<button class="bd-btn bd-btn--ghost store-price__apply" type="submit">
-								Apply
-							</button>
-						</form>
-
-						<div class="store-facet">
-							<p class="store-facet__title">Rating</p>
-							<ul class="store-facet__list">
-								{[4, 3, 2].map((r) => {
-									const active = minRating === r;
-									return (
-										<li>
-											<a
-												class={`store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}`}
-												href={hrefWith({ rating: active ? null : String(r) })}
-											>
-												<StarRating rating={r} />
-												<span class="store-facet__count">&amp; up</span>
-											</a>
-										</li>
-									);
-								})}
-							</ul>
-						</div>
-
-						{hasFilters ? (
-							<a class="store-clear" href="/store">
-								Clear all filters
-							</a>
-						) : null}
+						<StoreSearch />
+						<CategoryFilter categories={categories} />
+						<PriceFilter range={priceRange} />
+						<RatingFilter />
+						<ClearFilters />
 					</aside>
 
 					<div class="store-results">
@@ -266,24 +135,7 @@ function keep(...replaced: string[]): [string, string][] {
 							<p class="bd-loading">
 								{`${products.length} ${products.length === 1 ? "product" : "products"}`}
 							</p>
-							<form action="/store" class="store-sort" method="get">
-								<label for="store-sort">Sort</label>
-								<select class="bd-select" data-submit-on-change id="store-sort" name="sort">
-									{SORTS.map((s) => (
-										<option selected={s.value === sort} value={s.value}>
-											{s.label}
-										</option>
-									))}
-								</select>
-								{keep("sort").map(([key, value]) => (
-									<input name={key} type="hidden" value={value} />
-								))}
-								<noscript>
-									<button class="bd-btn bd-btn--ghost" type="submit">
-										Sort
-									</button>
-								</noscript>
-							</form>
+							<SortSelect />
 						</div>
 
 						{products.length === 0 ? (
@@ -293,65 +145,9 @@ function keep(...replaced: string[]): [string, string][] {
 									: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."}
 							</div>
 						) : (
-							<div class="bd-grid-3">
-								{products.map((p) => (
-									<div class="bd-card product-card">
-										<a class="product-card__link" href={`/store/${encodeURIComponent(p.id)}`}>
-											<div class="product-card__media">
-												{p.coverImage ? (
-													<img
-														alt={p.name}
-														class="product-card__img"
-														loading="lazy"
-														referrerpolicy="no-referrer"
-														src={p.coverImage}
-													/>
-												) : (
-													<div class="product-card__noimg">No image</div>
-												)}
-												<div class="product-card__badges">
-													{p.isBestSeller ? <span class="bd-badge">Best seller</span> : null}
-													{p.isNew ? <span class="bd-badge">New</span> : null}
-													{p.isOnSale ? <span class="bd-badge product-card__badge--sale">Sale</span> : null}
-												</div>
-											</div>
-											<div class="product-card__body">
-												<h3>{p.name || "Untitled"}</h3>
-												{p.reviewCount > 0 ? (
-													<div class="product-card__rating">
-														<StarRating rating={p.avgRating} />
-														<span class="product-card__count">({p.reviewCount})</span>
-													</div>
-												) : null}
-												<div class="product-card__price">
-													<span class="product-card__amount">
-														{p.cheapestPriceCents != null
-															? `${p.hasMultipleVariants ? "From " : ""}${formatCents(p.cheapestPriceCents)}`
-															: "View details"}
-													</span>
-													{p.isOnSale && p.comparePriceCents != null ? (
-														<span class="product-card__compare">{formatCents(p.comparePriceCents)}</span>
-													) : null}
-												</div>
-												{p.isLowStock ? <span class="product-card__lowstock">Low stock</span> : null}
-											</div>
-										</a>
-										<div class="product-card__save">
-											<bd-save-buttons
-												compact
-												data-product={JSON.stringify({
-													id: p.id,
-													name: p.name,
-													image: p.coverImage,
-													priceCents: p.cheapestPriceCents,
-												})}
-											/>
-										</div>
-									</div>
-								))}
-							</div>
+							<ProductGrid products={products} />
 						)}
-						<bd-compare-bar />
+						<CompareBar />
 					</div>
 				</div>
 			)
@@ -361,9 +157,4 @@ function keep(...replaced: string[]): [string, string][] {
 
 <script>
 	import "../../lib/bd-shop/shop-elements";
-
-	// The sort applies as soon as it changes (the form's button is for no-JS).
-	for (const select of document.querySelectorAll<HTMLSelectElement>("select[data-submit-on-change]")) {
-		select.addEventListener("change", () => select.form?.requestSubmit());
-	}
 </script>

@@ -3,12 +3,14 @@
  * /store/:id — one product: photos that follow the chosen option, option and
  * size buttons, the price for what's chosen, add to cart, save and compare,
  * share, details, add-ons, reviews, related products and what was viewed
- * before. This module loads the data; `<bd-product>` from
- * /shop/shop-elements.js draws the page and posts to /api/bd/cart/add.
- * More reviews: ?reviews=20.
+ * before. This module loads the data; `productDetail()`
+ * (/sections/shop/product-detail.js) lays the page out from the shop's
+ * parts, and the elements in /shop/shop-elements.js bring them to life (add
+ * to cart posts to /api/bd/cart/add). More reviews: ?reviews=20.
  */
 import "/shop/shop-elements.js";
 import { bd, el } from "/bd.js";
+import { productDetail } from "/sections/shop/product-detail.js";
 import { errBox } from "./_ui.js";
 import { mountStoreNav } from "./_store-nav.js";
 
@@ -52,12 +54,6 @@ export default async function render(root) {
 				? `/store/${encodeURIComponent(id)}?reviews=${reviewLimit + REVIEWS_PAGE}#reviews`
 				: null,
 	};
-	const page = el("bd-product", {
-		"data-add-url": "/api/bd/cart/add",
-		"data-cart-href": "/cart",
-		"data-contact-href": "/#contact",
-	});
-	page.append(el("script", { type: "application/json" }, [JSON.stringify(data)]));
-	root.replaceChildren(page);
+	root.replaceChildren(productDetail(data, { cartHref: "/cart", contactHref: "/#contact" }));
 	if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 }

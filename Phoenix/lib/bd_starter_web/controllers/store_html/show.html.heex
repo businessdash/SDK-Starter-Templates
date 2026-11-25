@@ -1,9 +1,10 @@
 <%!--
   One product. The controller reads the product, its reviews, add-ons and
-  related products, and <bd-product> (priv/static/shop/shop-elements.js)
-  draws the page from that data: option photos, option and size buttons, the
-  price for what's chosen, add to cart (POST /api/bd/cart/add), save,
-  compare, share, add-ons, reviews, related and recently viewed.
+  related products; product_detail/1 (BdStarterWeb.ProductComponents) lays
+  the page out from the shop's parts, one function component each: option
+  photos, option and size buttons, the price for what's chosen, add to cart
+  (POST /api/bd/cart/add), save, compare, share, add-ons, reviews, related
+  and recently viewed.
 --%>
 <div :if={not @configured} class="bd-empty">
   The store isn't connected yet. Set <code>BD_SITE_ID</code>
@@ -16,16 +17,10 @@
 <div :if={@configured and not @unavailable and is_nil(@data)} class="bd-empty">
   That product isn't available. <a href={~p"/store"}>Browse the store</a>
 </div>
-<bd-product
+<.product_detail
   :if={@data}
-  data-add-url={~p"/api/bd/cart/add"}
-  data-cart-href={~p"/cart"}
-  data-contact-href="/#contact"
->
-  <.element_data value={@data} />
-  <noscript>
-    <h1>{@data.product["name"]}</h1>
-    <p :if={is_binary(@data.product["description"])}>{@data.product["description"]}</p>
-    <p>Turn on JavaScript to choose options and add this to your cart.</p>
-  </noscript>
-</bd-product>
+  add_url={~p"/api/bd/cart/add"}
+  cart_href={~p"/cart"}
+  data={@data}
+  store_href={~p"/store"}
+/>

@@ -7,8 +7,8 @@ import { BdPaymentLapsedError, BdServiceSuspendedError } from "@businessdash/sdk
 import { Footer } from "../../../components/bd/Footer";
 import { SiteHeader } from "../../../components/bd/SiteHeader";
 import { StoreNav } from "../../../components/bd/StoreNav";
+import { ProductDetail } from "../../../components/bd/shop/ProductDetail";
 import { getBd } from "../../../lib/bd";
-import { elementHtml, escapeHtml } from "../../../lib/bd-elements";
 import { getCustomerSession } from "../../../lib/bd-portal";
 import {
 	getCartSnapshot,
@@ -16,17 +16,18 @@ import {
 	getStoreProductReviews,
 	getStoreRelatedProducts,
 } from "../../../lib/bd-store";
-import type { ProductPageData } from "../../../lib/shop/shop-elements";
+import type { ProductPageData } from "../../../lib/shop/shop";
 
 /** Reviews shown at first; each "Show more" adds this many (?reviews=20). */
 const REVIEWS_PAGE = 10;
 
 /**
  * One product. The loader reads the product, its reviews, add-ons and
- * related products on the server, and `<bd-product>` (src/lib/shop/) draws
- * the page from that data: option photos, option and size buttons, the price
- * for what's chosen, add to cart (POST /api/bd/cart/add), save, compare,
- * share, add-ons, reviews, related and recently viewed.
+ * related products on the server, and `<ProductDetail>` lays the page out
+ * from the shop's parts (src/components/bd/shop/): option photos, option and
+ * size buttons, the price for what's chosen, add to cart (POST
+ * /api/bd/cart/add), save, compare, share, add-ons, reviews, related and
+ * recently viewed.
  */
 export const useProduct = routeLoader$(async ({ params, cookie, query, status }) => {
 	const bd = getBd();
@@ -72,8 +73,6 @@ export const useProduct = routeLoader$(async ({ params, cookie, query, status })
 export default component$(() => {
 	const loaded = useProduct();
 	const { data, configured, suspended } = loaded.value;
-	const description =
-		typeof data?.product.description === "string" ? data.product.description : null;
 
 	return (
 		<>
@@ -91,21 +90,7 @@ export default component$(() => {
 						That product isn't available. <Link href="/store">Browse the store</Link>
 					</div>
 				) : (
-					<div
-						dangerouslySetInnerHTML={elementHtml(
-							"bd-product",
-							{
-								"data-add-url": "/api/bd/cart/add",
-								"data-cart-href": "/cart",
-								"data-contact-href": "/#contact",
-							},
-							data,
-							// Shown without JavaScript; the element replaces it when it draws.
-							`<noscript><h1>${escapeHtml(data.product.name)}</h1>${
-								description ? `<p>${escapeHtml(description)}</p>` : ""
-							}<p>Turn on JavaScript to choose options and add this to your cart.</p></noscript>`,
-						)}
-					/>
+					<ProductDetail cartHref="/cart" contactHref="/#contact" data={data} />
 				)}
 			</main>
 			<Footer />

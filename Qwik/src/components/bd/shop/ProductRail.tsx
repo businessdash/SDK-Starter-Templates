@@ -1,0 +1,35 @@
+// [bd-file:store]
+import { formatCents, type SavedProduct } from "../../../lib/shop/shop";
+
+/** A row of small product cards: related products. */
+export function ProductRail({
+	title,
+	products,
+	storeHref = "/store",
+}: {
+	title: string;
+	products: SavedProduct[];
+	storeHref?: string;
+}) {
+	if (products.length === 0) return null;
+	return (
+		<section class="product-rail">
+			<h2 class="product-rail__title">{title}</h2>
+			<ul class="product-rail__row">
+				{products.map((product) => (
+					<li key={product.id}>
+						<a class="bd-card product-rail__card" href={`${storeHref}/${encodeURIComponent(product.id)}`}>
+							{product.image ? (
+								<img alt="" loading="lazy" referrerPolicy="no-referrer" src={product.image} />
+							) : (
+								<span aria-hidden="true" class="product-rail__noimg" />
+							)}
+							<span class="product-rail__name">{product.name}</span>
+							{product.priceCents != null ? <span class="product-rail__price">{formatCents(product.priceCents)}</span> : null}
+						</a>
+					</li>
+				))}
+			</ul>
+		</section>
+	);
+}

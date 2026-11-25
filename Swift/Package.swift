@@ -50,6 +50,12 @@ let package = Package(
             swiftSettings: [.swiftLanguageMode(.v6)]
         ),
         .testTarget(
+            // Screens laid out from BdStarterApp's public parts, as an app would.
+            name: "BdStarterAppTests",
+            dependencies: ["BdStarterApp", "BusinessDashKit"],
+            swiftSettings: [.swiftLanguageMode(.v6)]
+        ),
+        .testTarget(
             name: "BdSignInTests",
             dependencies: ["BdSignIn"],
             swiftSettings: [.swiftLanguageMode(.v6)]

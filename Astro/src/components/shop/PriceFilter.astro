@@ -1,0 +1,37 @@
+---
+// [bd-file:store]
+/** Lowest and highest price, with Apply. `range` is what the store's products cost. */
+import { keep } from "./store-filters";
+
+interface Props {
+	range: { minDollars: number; maxDollars: number } | null;
+	storeHref?: string;
+}
+const { range, storeHref = "/store" } = Astro.props;
+const params = Astro.url.searchParams;
+---
+
+<form action={storeHref} class="store-facet" method="get">
+	<p class="store-facet__title">Price</p>
+	<div class="store-price">
+		<input
+			aria-label="Lowest price"
+			class="bd-input"
+			inputmode="decimal"
+			name="min"
+			placeholder={range ? `$${range.minDollars.toFixed(0)}` : "Min"}
+			value={params.get("min") ?? ""}
+		/>
+		<span aria-hidden="true" class="store-price__sep">–</span>
+		<input
+			aria-label="Highest price"
+			class="bd-input"
+			inputmode="decimal"
+			name="max"
+			placeholder={range ? `$${range.maxDollars.toFixed(0)}` : "Max"}
+			value={params.get("max") ?? ""}
+		/>
+	</div>
+	{keep(params, "min", "max").map(([key, value]) => <input name={key} type="hidden" value={value} />)}
+	<button class="bd-btn bd-btn--ghost store-price__apply" type="submit">Apply</button>
+</form>

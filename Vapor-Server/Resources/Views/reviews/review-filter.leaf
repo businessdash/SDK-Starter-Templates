@@ -1,0 +1,10 @@
+<!-- All, then a link per platform (Google, Yelp…), when reviews come from more than one. -->
+#if(showFilter):
+  <nav aria-label="Platform">
+    <ul class="reviews-filter">
+      #for(chip in chips):
+        <li><a href="#(chip.href)" aria-current="#(chip.current)">#(chip.label)</a></li>
+      #endfor
+    </ul>
+  </nav>
+#endif

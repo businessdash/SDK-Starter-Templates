@@ -1,24 +1,28 @@
 import { router, Stack, useFocusEffect, useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Image, Linking, Pressable, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native'
+import { Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native'
 
 import { getBd } from '@/bd/client'
 import { useCustomer } from '@/bd/customer'
 import { useLoad } from '@/bd/useBd'
 import { LoadState } from '@/components/LoadState'
+import {
+  type BlogComment,
+  LikeButton,
+  MembersOnly,
+  POST_COMMENT_MAX,
+  PostComments,
+  PostCover,
+  PostCta,
+  PostMeta,
+  PostTags,
+} from '@/components/blog-parts'
 import { PostBody } from '@/components/PostBody'
 import { shop, styles as ui } from '@/components/shop'
-import { formatPostDate, readingMinutes } from '@/shop/blog'
 import { postBlocks } from '@/shop/post-blocks'
-
-type Blog = NonNullable<ReturnType<typeof getBd>>['blog']
-type Comment = Awaited<ReturnType<Blog['listComments']>>['items'][number]
 
 /** The web store's address, for Share (e.g. https://example.com). */
 const SITE_URL = process.env.EXPO_PUBLIC_BD_SITE_URL?.replace(/\/+$/, '') ?? null
-
-/** The longest comment BD takes. */
-const COMMENT_MAX = 5000
 
 /**
  * One post: its body drawn natively (`PostBody`), its call to action and
@@ -30,7 +34,7 @@ export default function PostScreen() {
   const { customer, refresh } = useCustomer()
   const [likes, setLikes] = useState<{ liked: boolean; likesCount: number } | null>(null)
   const [liking, setLiking] = useState(false)
-  const [comments, setComments] = useState<Comment[]>([])
+  const [comments, setComments] = useState<BlogComment[]>([])
   const [draft, setDraft] = useState('')
   const [posting, setPosting] = useState(false)
   const [note, setNote] = useState<{ text: string; ok: boolean } | null>(null)
@@ -90,7 +94,7 @@ export default function PostScreen() {
     const bd = getBd()
     const content = draft.trim()
     if (!bd || !token || !slug || !content) return
-    if (content.length > COMMENT_MAX) {
+    if (content.length > POST_COMMENT_MAX) {
       setNote({ text: 'Comments are up to 5,000 characters.', ok: false })
       return
     }
@@ -119,7 +123,6 @@ export default function PostScreen() {
           return <Text style={styles.note}>The blog isn't connected yet.</Text>
         }
         const { post, paywalled } = loaded
-        const cta = safeCta(post.ctaHref)
         return (
           <ScrollView contentInsetAdjustmentBehavior="automatic" contentContainerStyle={styles.content}>
             <Stack.Screen
@@ -147,108 +150,38 @@ export default function PostScreen() {
               <Text style={styles.title} accessibilityRole="header">
                 {post.title}
               </Text>
-              <View style={[ui.row, { gap: 8 }]}>
-                {post.authorAvatarUrl ? <Image source={{ uri: post.authorAvatarUrl }} style={styles.avatar} /> : null}
-                {post.authorName ? <Text style={styles.author}>{post.authorName}</Text> : null}
-                <Text style={ui.muted}>
-                  {formatPostDate(post.publishedAt)} · {readingMinutes(post.content)} min read
-                </Text>
-              </View>
+              <PostMeta post={post} />
             </View>
 
-            {post.imageUrl ? (
-              <Image source={{ uri: post.imageUrl }} style={styles.cover} resizeMode="cover" accessibilityIgnoresInvertColors />
-            ) : null}
+            <PostCover url={post.imageUrl} />
 
-            {paywalled ? (
-              <View style={styles.box}>
-                <Text style={ui.sectionTitle}>This post is for members.</Text>
-                <Pressable accessibilityRole="button" style={ui.button} onPress={() => router.navigate('/account')}>
-                  <Text style={ui.buttonText}>Sign in to read it</Text>
-                </Pressable>
-              </View>
-            ) : (
-              <PostBody blocks={blocks} />
-            )}
+            {paywalled ? <MembersOnly onSignIn={() => router.navigate('/account')} /> : <PostBody blocks={blocks} />}
 
-            {post.ctaLabel && cta ? (
-              <View style={styles.box}>
-                {post.ctaDescription ? <Text style={styles.body}>{post.ctaDescription}</Text> : null}
-                <Pressable accessibilityRole="link" style={ui.button} onPress={() => void Linking.openURL(cta)}>
-                  <Text style={ui.buttonText}>{post.ctaLabel}</Text>
-                </Pressable>
-              </View>
-            ) : null}
+            <PostCta post={post} />
 
-            {post.tags.length > 0 ? (
-              <Text style={ui.muted}>{post.tags.map((value) => `#${value}`).join('  ')}</Text>
-            ) : null}
+            <PostTags tags={post.tags} />
 
             <View style={styles.divider} />
 
-            <View style={[ui.row, { gap: 12 }]}>
-              {token ? (
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: !!likes?.liked }}
-                  disabled={liking}
-                  onPress={toggleLike}
-                  style={[ui.ghostButton, likes?.liked && { borderColor: shop.accent }]}
-                >
-                  <Text style={[ui.ghostButtonText, likes?.liked && { color: shop.accent }]}>
-                    {likes?.liked ? '♥ Liked' : '♡ Like'}
-                  </Text>
-                </Pressable>
-              ) : (
-                <Pressable accessibilityRole="button" style={ui.ghostButton} onPress={() => router.navigate('/account')}>
-                  <Text style={ui.ghostButtonText}>♡ Sign in to like</Text>
-                </Pressable>
-              )}
-              <Text style={ui.muted}>
-                {likes?.likesCount ?? post.likes} {(likes?.likesCount ?? post.likes) === 1 ? 'like' : 'likes'}
-              </Text>
-            </View>
+            <LikeButton
+              signedIn={!!token}
+              liked={!!likes?.liked}
+              count={likes?.likesCount ?? post.likes}
+              liking={liking}
+              onToggle={toggleLike}
+              onSignIn={() => router.navigate('/account')}
+            />
 
-            <View style={{ gap: 12 }}>
-              <Text style={ui.sectionTitle}>
-                {comments.length > 0 ? `Comments (${comments.length})` : 'Comments'}
-              </Text>
-              {token ? (
-                <View style={{ gap: 8 }}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Add a comment"
-                    value={draft}
-                    onChangeText={setDraft}
-                    multiline
-                    maxLength={COMMENT_MAX}
-                    accessibilityLabel="Add a comment"
-                  />
-                  <Pressable
-                    accessibilityRole="button"
-                    disabled={posting || !draft.trim()}
-                    onPress={postComment}
-                    style={[ui.button, (posting || !draft.trim()) && { opacity: 0.5 }]}
-                  >
-                    <Text style={ui.buttonText}>{posting ? 'Posting…' : 'Post comment'}</Text>
-                  </Pressable>
-                </View>
-              ) : (
-                <Pressable accessibilityRole="button" style={ui.ghostButton} onPress={() => router.navigate('/account')}>
-                  <Text style={ui.ghostButtonText}>Sign in to comment</Text>
-                </Pressable>
-              )}
-              {note ? <Text style={{ color: note.ok ? shop.ok : shop.sale }}>{note.text}</Text> : null}
-              {comments.map((comment) => (
-                <View key={comment.id} style={styles.comment}>
-                  <Text style={styles.author}>
-                    {comment.authorName || 'Reader'}
-                    <Text style={ui.muted}> · {formatPostDate(comment.createdAt)}</Text>
-                  </Text>
-                  <Text style={styles.body}>{comment.content}</Text>
-                </View>
-              ))}
-            </View>
+            <PostComments
+              comments={comments}
+              signedIn={!!token}
+              draft={draft}
+              onDraftChange={setDraft}
+              posting={posting}
+              note={note}
+              onPost={postComment}
+              onSignIn={() => router.navigate('/account')}
+            />
           </ScrollView>
         )
       }}
@@ -256,22 +189,9 @@ export default function PostScreen() {
   )
 }
 
-/** The call to action opens only web and mail links. */
-function safeCta(href: string | null | undefined): string | null {
-  if (!href) return null
-  return /^(https?:|mailto:)/i.test(href.trim()) ? href.trim() : null
-}
-
 const styles = StyleSheet.create({
   content: { padding: 16, gap: 18, paddingBottom: 48 },
   title: { fontSize: 28, fontWeight: '800', color: shop.text },
-  avatar: { width: 24, height: 24, borderRadius: 12, backgroundColor: shop.soft },
-  author: { fontWeight: '600', color: shop.text },
-  cover: { width: '100%', aspectRatio: 16 / 9, borderRadius: 12, backgroundColor: shop.soft },
-  box: { gap: 10, padding: 16, borderRadius: 12, backgroundColor: shop.soft },
-  body: { fontSize: 16, lineHeight: 24, color: shop.text },
   divider: { height: 1, backgroundColor: shop.border },
-  input: { minHeight: 80, padding: 10, borderWidth: 1, borderColor: shop.border, borderRadius: 10, textAlignVertical: 'top' },
-  comment: { gap: 4, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: shop.border },
   note: { color: shop.muted, padding: 16 },
 })

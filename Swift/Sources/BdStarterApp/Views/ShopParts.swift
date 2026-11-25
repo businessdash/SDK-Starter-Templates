@@ -3,13 +3,20 @@ import SwiftUI
 
 // The small pieces the store screens share: stars, a wrapping row, the
 // product card, the save buttons, the compare bar and the product rails.
+// They're public, like the product page's parts (ProductParts.swift), so an
+// app can lay out screens of its own from them.
 
 /// Five stars for a rating, with halves.
-struct StarRating: View {
-    let rating: Double
-    var size: CGFloat = 12
+public struct StarRating: View {
+    public let rating: Double
+    public var size: CGFloat = 12
 
-    var body: some View {
+    public init(rating: Double, size: CGFloat = 12) {
+        self.rating = rating
+        self.size = size
+    }
+
+    public var body: some View {
         HStack(spacing: 1) {
             ForEach(1...5, id: \.self) { i in
                 let value = Double(i)
@@ -25,17 +32,21 @@ struct StarRating: View {
 
 /// Lays its children out in rows, wrapping when a row is full: option
 /// buttons, filter chips, tags.
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
+public struct FlowLayout: Layout {
+    public var spacing: CGFloat = 8
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+    public init(spacing: CGFloat = 8) {
+        self.spacing = spacing
+    }
+
+    public func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let rows = arrange(subviews, width: proposal.width ?? .infinity)
         let width = rows.map { $0.width }.max() ?? 0
         let height = rows.map(\.height).reduce(0, +) + spacing * CGFloat(max(0, rows.count - 1))
         return CGSize(width: proposal.width ?? width, height: height)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+    public func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         var y = bounds.minY
         for row in arrange(subviews, width: bounds.width) {
             var x = bounds.minX
@@ -72,11 +83,16 @@ struct FlowLayout: Layout {
 }
 
 /// A photo from a URL string, filling its frame, or a quiet placeholder.
-struct RemoteImage: View {
-    let url: String?
-    var contentMode: ContentMode = .fill
+public struct RemoteImage: View {
+    public let url: String?
+    public var contentMode: ContentMode = .fill
 
-    var body: some View {
+    public init(url: String?, contentMode: ContentMode = .fill) {
+        self.url = url
+        self.contentMode = contentMode
+    }
+
+    public var body: some View {
         if let url, let parsed = URL(string: url) {
             AsyncImage(url: parsed) { image in
                 image.resizable().aspectRatio(contentMode: contentMode)
@@ -95,11 +111,16 @@ struct RemoteImage: View {
 /// A photo filling a full-width frame of a set height. The frame takes its
 /// size from an empty view and the photo is laid over it, so a wide photo
 /// can't push the layout wider than its column.
-struct CoverImage: View {
-    let url: String?
-    let height: CGFloat
+public struct CoverImage: View {
+    public let url: String?
+    public let height: CGFloat
 
-    var body: some View {
+    public init(url: String?, height: CGFloat) {
+        self.url = url
+        self.height = height
+    }
+
+    public var body: some View {
         Color.clear
             .frame(maxWidth: .infinity)
             .frame(height: height)
@@ -109,13 +130,18 @@ struct CoverImage: View {
 }
 
 /// ♡ Save and ⇄ Compare for one product. Both lists live on this device.
-struct SaveButtons: View {
+public struct SaveButtons: View {
     @Environment(BdEnvironment.self) private var bd
-    let product: SavedProduct
+    public let product: SavedProduct
     /// Icons only, for a card's corner.
-    var compact = false
+    public var compact = false
 
-    var body: some View {
+    public init(product: SavedProduct, compact: Bool = false) {
+        self.product = product
+        self.compact = compact
+    }
+
+    public var body: some View {
         let saved = bd.saved.wishlist.contains(product.id)
         let comparing = bd.saved.compare.contains(product.id)
         HStack(spacing: 8) {
@@ -156,10 +182,14 @@ private struct SaveLabelStyle: LabelStyle {
 }
 
 /// A product in the store grid.
-struct ProductCardView: View {
-    let product: Product
+public struct ProductCardView: View {
+    public let product: Product
 
-    var body: some View {
+    public init(product: Product) {
+        self.product = product
+    }
+
+    public var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             CoverImage(url: product.coverImage, height: 150)
                 .overlay(alignment: .topLeading) { badges.padding(8) }
@@ -209,16 +239,16 @@ struct ProductCardView: View {
     }
 }
 
-struct Badge: View {
-    let text: String
-    var tint: Color = .accentColor
+public struct Badge: View {
+    public let text: String
+    public var tint: Color = .accentColor
 
-    init(_ text: String, tint: Color = .accentColor) {
+    public init(_ text: String, tint: Color = .accentColor) {
         self.text = text
         self.tint = tint
     }
 
-    var body: some View {
+    public var body: some View {
         Text(text.uppercased())
             .font(.system(size: 10, weight: .bold))
             .padding(.horizontal, 7)
@@ -230,10 +260,12 @@ struct Badge: View {
 }
 
 /// The compare picks along the bottom of the store, with the way to the table.
-struct CompareBar: View {
+public struct CompareBar: View {
     @Environment(BdEnvironment.self) private var bd
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         let items = bd.saved.compare.items
         if !items.isEmpty {
             VStack(alignment: .leading, spacing: 8) {
@@ -275,8 +307,10 @@ struct CompareBar: View {
     }
 }
 
-struct TrailingIconLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
+public struct TrailingIconLabelStyle: LabelStyle {
+    public init() {}
+
+    public func makeBody(configuration: Configuration) -> some View {
         HStack(spacing: 4) {
             configuration.title
             configuration.icon.imageScale(.small)
@@ -285,11 +319,16 @@ struct TrailingIconLabelStyle: LabelStyle {
 }
 
 /// A row of small product cards: related products, recently viewed.
-struct ProductRail: View {
-    let title: String
-    let products: [SavedProduct]
+public struct ProductRail: View {
+    public let title: String
+    public let products: [SavedProduct]
 
-    var body: some View {
+    public init(title: String, products: [SavedProduct]) {
+        self.title = title
+        self.products = products
+    }
+
+    public var body: some View {
         if !products.isEmpty {
             VStack(alignment: .leading, spacing: 10) {
                 Text(title).font(.title3.bold())

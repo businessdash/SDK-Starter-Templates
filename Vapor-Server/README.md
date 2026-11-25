@@ -66,17 +66,22 @@ Sources/App/
     PostHtml.swift       a post's HTML rebuilt from an allowlist; reading time, date
     Resources.swift      the call surface
     Reviews.swift        the reviews' rules: breakdown, platforms, safe links, checks
+    Shop.swift           the product page's rules: option photos, prices, "from"
     Donations.swift      giving page + checkout (see Donations below)
   Controllers/           one per surface + Contexts.swift
     ShopSupport.swift    cart cookie, element JSON, stars, the JSON-POST guard
     ShopContexts.swift   the store and blog pages' view contexts
+    ProductDetail.swift  the product page's parts, worked out for the templates
   Forms/                 forms + quizzes, drawn here (FormPage, QuizPage)
 Sources/BdForms/         BD's forms + quiz engine — a generated copy, see below
 Resources/Views/         Leaf templates (store-nav.leaf: the store bar)
+  shop/                  the shop's parts, one template each
+  blog/                  the blog's parts
+  reviews/               the reviews' parts
 Resources/Forms/         the sample form + quiz shown until BD is connected
 Public/shop/             the shop, blog and review elements, plain ES modules
 Public/bd-*.css          their styles (pages, shop, blog, reviews)
-Tests/AppTests/          `swift test`: the post sanitizer against the TypeScript's answers, the reviews' rules
+Tests/AppTests/          `swift test`: the post sanitizer and the product rules against the TypeScript's answers, the reviews' rules
 ```
 
 ## Feature parity
@@ -84,7 +89,7 @@ Tests/AppTests/          `swift test`: the post sanitizer against the TypeScript
 | Surface | Route(s) | Calls |
 | --- | --- | --- |
 | **Home sections** | `/` | `pageBundle`, `products` |
-| **Storefront** | `/store` (`?q`, `?category`, `?priceMin`, `?priceMax`, `?rating`, `?sort`), `/store/:id` (`<bd-product>`) | `productGrid`, `storeCategories`, `productData`, `productReviewPage`, `productAddons`, `relatedProducts` |
+| **Storefront** | `/store` (`?q`, `?category`, `?priceMin`, `?priceMax`, `?rating`, `?sort`), `/store/:id` (drawn from the shop's parts, `<bd-gallery>` and `<bd-product-form>`) | `productGrid`, `storeCategories`, `productData`, `productReviewPage`, `productAddons`, `relatedProducts` |
 | **Wishlist + compare** | `/store/wishlist`, `/store/compare?ids=a,b` | `productData`, `productReviewPage` — the lists live in the browser |
 | **Cart** | `/cart` + mutations, `POST /api/bd/cart/add` (JSON, from the product page) | `cart`, `cartAdd`, `cartClear` — `bd_cart_visitor` httpOnly cookie |
 | **Checkout** | `POST /cart/checkout`, back to `/store/order` | `startCheckout` → redirect to `stripeUrl`; `checkoutStatus` |
@@ -122,18 +127,47 @@ back so the page updates in place. Without JavaScript they're plain form posts.
   this site and BD's invite emails link to `/quiz-invite/<token>`. One that
   needs the invited account sends the visitor to `/my-account?next=…` and back.
 
-## The shop and blog elements
+## The shop's, blog's and reviews' parts
 
-The product page, the wishlist, the compare table, the save buttons, and a
-post's likes and comments are small custom elements, the same ones every BD
-starter ships, as plain ES modules in `Public/shop/`. There is no bundler and
-no npm at runtime: the browser loads them as they are.
+The pages are laid out from parts, one Leaf template each, so you can move,
+restyle, drop or replace any of them, or lay a page out your own way:
 
-The controller reads the data and the template writes it inside the element as
-JSON (`<script type="application/json">#unsafeHTML(dataJSON)</script>`, with
-`<`, `>` and `&` escaped by `ElementData.json`); the element draws the page
-from it. The store list, filters, cart, blog list and post body are plain Leaf
-and work without JavaScript.
+- **Shop** (`Resources/Views/shop/`): `product-detail` lays out the product
+  page from `product-breadcrumbs`, `product-gallery`, `product-title`,
+  `product-price`, `variant-picker`, `option-picker`, `stock-note`,
+  `quantity-stepper`, `add-to-cart-button`, `cart-notice`, `save-buttons`,
+  `share-button`, `product-policies`, `product-specs`, `product-addons`,
+  `product-reviews`, `product-rail`, `recently-viewed` and `compare-bar`. The
+  store list uses `store-search`, `category-filter`, `price-filter`,
+  `rating-filter`, `clear-filters`, `sort-select`, `product-grid` and
+  `product-card`; the cart, `cart-line`, `cart-summary` and `cart-actions`.
+- **Blog** (`Resources/Views/blog/`): `blog-filters` and `post-card` for the
+  list; `post-meta`, `post-body`, `members-only`, `post-cta`, `post-tags`,
+  `like-button` and `comments` for a post.
+- **Reviews** (`Resources/Views/reviews/`): `rating-summary`, `review-filter`
+  and `review-card`.
+
+A page includes a part with `#extend("shop/product-gallery")`. Leaf can't
+call methods, so the controllers work out what each part shows: the product
+page's parts read their piece of `detail` (`ProductDetail.swift`), drawn as
+the page opens (the first option that can be bought, nothing else chosen;
+the rules are `Shop`, the same as `shop.js`, and `ShopParityTests` replays
+the TypeScript's answers to keep them so).
+
+Then small custom elements, the same ones every BD starter ships, bring the
+parts to life: `<bd-gallery>` steps through the photos and follows the chosen
+option, and `<bd-product-form>` keeps the option buttons, price, stock,
+quantity and add to cart current. They find the parts by their `data-bd-*`
+attributes, so keep those on anything you restyle. The save buttons, compare
+bar, add-ons, share button, recently viewed, the wishlist and compare pages,
+and a post's likes and comments are elements too. They're plain ES modules in
+`Public/shop/`: there is no bundler and no npm at runtime, and the browser
+loads them as they are.
+
+Where an element needs server data, the template writes it inside the element
+as JSON (`<script type="application/json">#unsafeHTML(…)</script>`, with
+`<`, `>` and `&` escaped by `ElementData.json`). The store list, filters,
+cart, blog list and post body are plain Leaf and work without JavaScript.
 
 - **The POSTs are guarded without CSRF middleware**, which Vapor doesn't have.
   The add-to-cart, like and comment endpoints take JSON only (a form on another

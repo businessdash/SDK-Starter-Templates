@@ -43,6 +43,12 @@ Open <http://localhost:3000>. **Without env, every surface renders local fallbac
 
 For production: `pnpm build` then `pnpm start`.
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `app/tailwind.css` is linked from `app/root.tsx`, and `@tailwindcss/vite` builds it. Use its classes anywhere in `app/`. The starter's pages, shop, blog and reviews style themselves with `styles.css` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `app/tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## Environment variables
 
 | Var | Required | Purpose |
@@ -163,6 +169,19 @@ The store is the same shop as the Business Dash demo: a product list with search
 - The product page adds to the cart through `api.store.cart.ts` (JSON in, `{ ok, itemCount }` out, with the visitor cookie), and the store bar's cart count updates in place. "Show more reviews" is a link (`?reviews=N`).
 - The wishlist and compare picks live in this browser (`localStorage`). `store.compare.tsx` reads `?ids=`, so a comparison can be shared.
 - `store.cart.tsx` has one `action` dispatched by an `intent` field: `update` / `remove` / `apply-coupon` / `remove-coupon` / `clear` / `checkout`. Checkout calls `checkout.forVisitor(token).start({ successUrl, cancelUrl })` and `redirect`s to the returned **Stripe-hosted URL** (`res.stripeUrl`).
+
+### The shop's parts
+
+`<ProductDetail>` is the whole product page, and the store and cart pages are laid out from the same kind of parts. Each part is its own file, so you can move, restyle or drop one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | the filters (`StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`), `ProductGrid`, `ProductCard`, `StarRating`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary` |
+| Wishlist, compare | `WishlistView`, `CompareTable` |
+
+The product page's parts are in `app/components/shop/`; so are the store page's (`ProductCard`, `ProductGrid`, and `StoreFilters.tsx`: `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`) and the cart's, which post to the cart page's `action`.
 <!-- [/bd:store] -->
 
 <!-- [bd:subscriptions] -->
@@ -175,6 +194,15 @@ The store is the same shop as the Business Dash demo: a product list with search
 ## Blog
 
 `blog._index.tsx` lists posts newest first (pinned posts lead the first page) with category and tag filters and "Older posts" paging, all in the URL. `blog.$slug.tsx` shows one post: its HTML is rebuilt from an allowlist on the server (`safePostHtml` in `components/blog/blog.ts`) and only that reaches the page. Signed-in customers can like a post and comment through `api.blog.$slug.like.ts` and `api.blog.$slug.comment.ts`, which read the `bd_session` cookie; signed out, those buttons lead to sign-in and back. The home page shows the latest posts with a link to the blog.
+
+### The blog's parts
+
+`<BlogIndex>` and `<BlogPost>` are the whole pages, built from parts in `app/components/blog/`, one file each:
+
+| Page | Parts |
+| --- | --- |
+| Blog (`BlogIndex`) | `BlogFilters` (categories and tags), `PostCard` |
+| Post (`BlogPost`) | `PostMeta`, `PostBody` (or `MembersOnly` for a members-only post signed out), `PostCta`, `PostTags`, `LikeButton`, `Comments` (`CommentForm`, `CommentList`) |
 <!-- [/bd:blog] -->
 
 ## Auth + customer portal
@@ -197,6 +225,8 @@ The store is the same shop as the Business Dash demo: a product list with search
 - a platform filter (`?source=google`), and "Show more reviews", which is a link (`?shown=20`);
 - each review with the reviewer's photo or initial, the stars, the date, the text, any photos, the platform, Verified, and a "Read on Google/Yelp" link;
 - "Write a review" for a signed-in customer. It posts JSON to `api.reviews.write.ts`, which checks it again and sends it with `customerPortal(org).withSession(token).submitReview(...)`; it shows once the business approves it. Signed out, it's a link to sign in.
+
+`<ReviewsView>` is the whole page, built from `RatingSummary` (the average and a bar per star, with the writer beside it), `ReviewFilter` (the platform links) and `ReviewCard` (one review), each its own file in `app/components/reviews/`, so you can lay them out your own way.
 
 The page parts are `app/components/reviews/` (the same in every React starter): `reviews.ts` holds the rules every BD starter shares, `reviews-page.ts` gathers the page's data with `reviews.list({ limit, offset, source })`, and `ReviewsView.tsx` and `ReviewWriter.tsx` draw it. The styles are `app/bd-reviews.css`.
 

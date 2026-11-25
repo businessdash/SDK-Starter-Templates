@@ -6,6 +6,7 @@
 	import { locales, localizeHref } from '#lib/paraglide/runtime.js';
 	import SdkSetupBanner from '#lib/components/bd/SdkSetupBanner.svelte';
 	import './layout.css';
+	import './tailwind.css'; // [bd-line:tailwind]
 	import favicon from '#lib/assets/favicon.svg';
 
 	let { children } = $props();

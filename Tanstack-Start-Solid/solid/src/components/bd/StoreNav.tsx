@@ -10,10 +10,11 @@ import { elementHtml, loadShopElements } from "../../lib/bd-elements";
  * left; wishlist, compare and the cart with their counts on the right.
  *
  * It loads the shop's custom elements (src/lib/shop/) in the browser. They
- * count the wishlist and compare lists saved in this browser, and draw the
- * product page, wishlist and compare table. The cart count comes from the
- * page's loader, then follows each `bd:cart-count` event: the product page
- * sends one when it adds, the cart page after every change.
+ * count the wishlist and compare lists saved in this browser, draw the
+ * wishlist and compare table, and bring the product page's parts to life.
+ * The cart count comes from the page's loader, then follows each
+ * `bd:cart-count` event: the product page sends one when it adds, the cart
+ * page after every change.
  */
 export function StoreNav(
 	props: { cartCount?: number }, // [bd-line:store]

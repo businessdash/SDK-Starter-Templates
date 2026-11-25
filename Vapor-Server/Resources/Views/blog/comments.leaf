@@ -1,0 +1,4 @@
+<!-- The comments and, signed in, a box to add one; signed out, a link to sign in and back. -->
+<bd-post-comments data-comment-url="#(commentURL)" data-sign-in-href="#(signInHref)">
+  <script type="application/json">#unsafeHTML(commentsJSON)</script>
+</bd-post-comments>

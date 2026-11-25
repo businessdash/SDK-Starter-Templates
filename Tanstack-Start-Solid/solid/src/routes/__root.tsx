@@ -5,6 +5,7 @@ import {
 	Scripts,
 } from "@tanstack/solid-router";
 import { TanStackRouterDevtools } from "@tanstack/solid-router-devtools";
+import { type QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 
 import "@fontsource/inter/400.css";
 // Styles for <BdForm> (file upload, multi-step progress header, choice chips).
@@ -29,20 +30,28 @@ import blogCss from "../bd-blog.css?url";
 // [/bd:blog]
 // The reviews page's styles: the rating, the filter, the reviews, writing one.
 import reviewsCss from "../bd-reviews.css?url";
+import tailwindCss from "../tailwind.css?url"; // [bd-line:tailwind]
 
-export const Route = createRootRouteWithContext()({
+/** What src/router.tsx puts in every route's context. */
+interface RouterContext {
+	queryClient: QueryClient;
+}
+
+export const Route = createRootRouteWithContext<RouterContext>()({
 	head: () => ({
 		links: [
 			{ rel: "stylesheet", href: styleCss },
 			{ rel: "stylesheet", href: shopCss }, // [bd-line:store]
 			{ rel: "stylesheet", href: blogCss }, // [bd-line:blog]
 			{ rel: "stylesheet", href: reviewsCss },
+			{ rel: "stylesheet", href: tailwindCss }, // [bd-line:tailwind]
 		],
 	}),
 	shellComponent: RootComponent,
 });
 
 function RootComponent() {
+	const context = Route.useRouteContext();
 	// Solid 2: `onSettled` replaces `onMount` and takes its cleanup as the
 	// return value, so the tracker stops when the shell unmounts.
 	onSettled(() => {
@@ -66,12 +75,15 @@ function RootComponent() {
 				<HeadContent />
 			</head>
 			<body>
-				<Loading>
-					<Header />
-					<Outlet />
-					<SdkSetupBanner />
-					<TanStackRouterDevtools />
-				</Loading>
+				{/* The router's query client, for useQuery in any route. */}
+				<QueryClientProvider client={context().queryClient}>
+					<Loading>
+						<Header />
+						<Outlet />
+						<SdkSetupBanner />
+						<TanStackRouterDevtools />
+					</Loading>
+				</QueryClientProvider>
 				<Scripts />
 			</body>
 		</html>

@@ -52,6 +52,16 @@ npm run build
 npm run start   # node .output/server/index.mjs
 ```
 
+## Styles
+
+The pages style themselves with plain CSS: `src/styles.css` pulls in `reset.css` (the page reset) and holds the starter's colours, spacing and components, and `src/routes/__root.tsx` links it with the shop's, blog's and reviews' `bd-*.css` files.
+
+<!-- [bd:tailwind] -->
+### Tailwind CSS
+
+Tailwind is set up for your own markup: `src/tailwind.css` is linked from `src/routes/__root.tsx`, and `@tailwindcss/vite` builds it. Use its classes anywhere in `src/`. It also carries what Solid UI's components need (`ui.config.json`, `src/lib/utils.ts`): the animation classes, a `dark:` variant, and theme colours such as `bg-background`. The starter's pages, shop, blog and reviews don't use Tailwind, so they look the same with it or without it. Preflight, Tailwind's reset, is left out because `reset.css` does the same job.
+
+<!-- [/bd:tailwind] -->
 ## What's in each section
 
 Every surface below is server-driven by a `createServerFn` in `src/lib/bd-server-fns.ts` (the only place the secret key is reachable) and degrades gracefully when BD env is unset.
@@ -73,8 +83,8 @@ Every surface below is server-driven by a `createServerFn` in `src/lib/bd-server
 | Surface | File | SDK call |
 | --- | --- | --- |
 | **Product list** (search, category, price, rating, sort; save and compare on each card) | `src/routes/store.index.tsx` | `storefront.listProductsWithMeta(...)`, `storefront.listCategories()` | <!-- [bd-line:store] -->
-| **Product page** (option photos, options, add to cart, add-ons, reviews, related) | `src/routes/store.$id.tsx` → `<bd-product>` | `storefront.getProduct(id)`, reviews, add-ons, related (`getProductPage` in `src/lib/bd-shop-fns.ts`) | <!-- [bd-line:store] -->
-| **Add to cart** for `<bd-product>` | `src/routes/api/bd/cart/add.tsx` (`POST`, JSON) | `cart.forVisitor(token).addItem(...)` | <!-- [bd-line:store] -->
+| **Product page** (option photos, options, add to cart, add-ons, reviews, related) | `src/routes/store.$id.tsx` → `<ProductDetail>` | `storefront.getProduct(id)`, reviews, add-ons, related (`getProductPage` in `src/lib/bd-shop-fns.ts`) | <!-- [bd-line:store] -->
+| **Add to cart** for the product page | `src/routes/api/bd/cart/add.tsx` (`POST`, JSON) | `cart.forVisitor(token).addItem(...)` | <!-- [bd-line:store] -->
 | **Wishlist** · **Compare** | `src/routes/store.wishlist.tsx` · `src/routes/store.compare.tsx` | `storefront.getProduct(id)` per compared product | <!-- [bd-line:store] -->
 | **Cart** (update / remove / coupon / clear / checkout) | `src/routes/store.cart.tsx` | `cart.forVisitor(t)` get/update/remove/coupon/clear + `checkout.forVisitor(t).start(...)` | <!-- [bd-line:store] -->
 | **Order confirmation** | `src/routes/store.order.tsx` | `checkout.getStatus(sessionId)` | <!-- [bd-line:store] -->
@@ -85,15 +95,29 @@ The cart is keyed on a visitor UUID we own, stored in an httpOnly cookie `bd_car
 
 The store's filters live in the URL (`?q`, `?category`, `?min`, `?max`, `?rating`, `?sort`): `validateSearch` reads them and `loaderDeps` re-runs the route loader on the server for each change, so a filtered list can be shared.
 
-#### Shop elements
+#### The shop's parts
 
-The product page, wishlist, compare table, save buttons and the store bar's
-counts are custom elements in `src/lib/shop/` (`shop-elements.ts`), the same
-ones every BD starter ships. A loader reads the data on the server and the
-page writes it into the element as JSON (`elementHtml` in
-`src/lib/bd-elements.ts`, set as a wrapper's `innerHTML`); `<StoreNav />`
-loads the elements in the browser. The wishlist and the compare picks are
-saved in the browser. Styles: `src/bd-shop.css`.
+Every page is laid out from parts in `src/components/bd/shop/`, one file
+each, so you can move, restyle or drop one, or build your own pages from
+them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `StoreFilters.tsx` (`StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`), `ProductGrid`, `ProductCard`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `RecentlyViewed`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary`, `CartActions` |
+
+The parts are Solid components drawn on the server. What changes in the
+browser comes from small custom elements in `src/lib/shop/shop-elements.ts`,
+the same ones every BD starter ships: `<bd-product-form>` keeps the price,
+options, stock, quantity and add to cart in step with what's chosen,
+`<bd-gallery>` follows the chosen option's photos, and `<bd-share>`,
+`<bd-addon>`, `<bd-save-buttons>`, `<bd-recently-viewed>` and
+`<bd-compare-bar>` do one job each. They find the parts by their `data-bd-*`
+attributes, so keep those when you change a part's markup. The wishlist and
+compare table (`<bd-wishlist>`, `<bd-compare>`) draw themselves, since what
+they show is saved in the browser. `<StoreNav />` loads the elements in the
+browser. Styles: `src/bd-shop.css`.
 <!-- [/bd:store] -->
 
 <!-- [bd:blog] -->
@@ -111,6 +135,11 @@ raw HTML never reaches the page. The like button and comments are
 `<bd-post-like>` and `<bd-post-comments>` (`src/lib/shop/blog-elements.ts`);
 signed out, they lead to sign-in and back to the post. Styles:
 `src/bd-blog.css`.
+
+The pages are laid out from parts in `src/components/bd/blog/`, one file
+each: `BlogFilters` and `PostCard` for the list; `PostMeta`, `PostBody` (or
+`MembersOnly` for a members-only post when signed out), `PostCta`,
+`PostTags`, `LikeButton` and `Comments` for a post.
 <!-- [/bd:blog] -->
 
 ### Auth + customer portal
@@ -132,6 +161,10 @@ Sign-in / sign-up / sign-out are plain links to the catch-all handler (no client
 | **Robots** | `src/routes/robots[.]txt.tsx` | proxies `parallelPages.robotsUrl()` |
 | **Service areas (index)** | `src/routes/services.index.tsx` | `parallelPages.listVariants("service-area")` |
 | **Service × area page** | `src/routes/services.$service.$area.tsx` | `parallelPages.render("service-area", { service, area })`, meta lifted into the route `head` |
+
+The reviews page is laid out from parts in `src/components/bd/reviews/`:
+`RatingSummary` (the average, a bar per star and the writer), `ReviewFilter`
+(the platform links) and `ReviewCard` (one review).
 
 Bundle review items (`{ reviewee, description, date }`) and `reviews.list` wall items (`{ reviewerName, text, timeCreated }`) have different shapes — each is mapped at its own call site.
 
@@ -178,7 +211,7 @@ src/
 <!-- [/bd:blog] -->
 │   ├── bd-elements.ts                       # writes a custom element with its data
 <!-- [bd:store] -->
-│   ├── shop/shop.ts · shop-elements.ts      # product page, wishlist, compare, save buttons
+│   ├── shop/shop.ts · shop-elements.ts      # shop rules; the elements that bring its parts to life
 <!-- [/bd:store] -->
 <!-- [bd:blog] -->
 │   ├── shop/blog.ts · blog-elements.ts      # safePostHtml, like button, comments
@@ -196,14 +229,19 @@ src/
 <!-- [/bd:store,subscriptions] -->
 <!-- [bd:store] -->
 │   ├── ShopStars.tsx                           # star rating in the shop's markup
+│   ├── shop/                                   # the shop's parts: product page, store, cart
 <!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   ├── blog/                                   # the blog's parts: post card, meta, body, likes, comments
+<!-- [/bd:blog] -->
+│   ├── reviews/                                # the reviews page's parts: summary, filter, card
 │   ├── NewsBanner.tsx                          # dismissible bundle.banner bar
 │   └── money.ts                                # price/interval formatters
 ├── routes/
 │   ├── index.tsx                              # home: loader composes sections + injects JSON-LD
 <!-- [bd:store] -->
 │   ├── store.index.tsx                        # product list
-│   ├── store.$id.tsx                          # product page (<bd-product>)
+│   ├── store.$id.tsx                          # product page (<ProductDetail>)
 │   ├── store.wishlist.tsx · store.compare.tsx # saved products, products side by side
 │   ├── store.cart.tsx                         # cart mutations + checkout
 │   ├── store.order.tsx                        # Stripe checkout return
@@ -221,7 +259,7 @@ src/
 │   ├── sitemap[.]xml.tsx · robots[.]txt.tsx    # SEO proxies
 │   └── api/
 │       ├── bd/revalidate.tsx                # webhook receiver
-│       ├── bd/cart/add.tsx                  # add to cart for <bd-product> <!-- [bd-line:store] -->
+│       ├── bd/cart/add.tsx                  # add to cart, for the product page <!-- [bd-line:store] -->
 │       ├── bd/reviews/write.tsx             # write a review (signed in)
 <!-- [bd:blog] -->
 │       ├── bd/blog/post.$slug.like.tsx      # like (signed in)

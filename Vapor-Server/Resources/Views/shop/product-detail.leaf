@@ -1,0 +1,44 @@
+<!-- The whole product page: photos that follow the chosen option, option and
+     size buttons, the price for what's chosen, add to cart, save and compare,
+     share, details, add-ons, reviews, related products and what was viewed
+     before. It's laid out from the parts in this folder, one file each; each
+     reads its piece of `detail` (ProductDetail.swift). <bd-gallery> and
+     <bd-product-form> (Public/shop/shop-elements.js) find the parts by their
+     data-bd attributes, so move, restyle or drop any part. -->
+#extend("shop/product-breadcrumbs")
+
+<div class="product-detail">
+  #extend("shop/product-gallery")
+
+  <div class="product-detail__info bd-card">
+    #extend("shop/product-title")
+    <bd-product-form data-add-url="#(detail.addURL)" data-cart-href="#(detail.cartHref)">
+      <!-- Safe: ElementData.json escapes <, > and & inside the JSON. -->
+      <script type="application/json">#unsafeHTML(detail.formJSON)</script>
+      #extend("shop/product-price")
+      #if(detail.hasDescription):<p class="product-detail__desc">#(detail.description)</p>#endif
+      #extend("shop/variant-picker")
+      #for(group in detail.groups):#extend("shop/option-picker")#endfor
+      #extend("shop/stock-note")
+
+      <div class="buy">
+        #extend("shop/quantity-stepper")
+        #extend("shop/add-to-cart-button")
+      </div>
+      #extend("shop/cart-notice")
+
+      <div class="product-detail__tools">
+        #extend("shop/save-buttons")
+        #extend("shop/share-button")
+      </div>
+      #extend("shop/product-policies")
+    </bd-product-form>
+  </div>
+</div>
+
+#extend("shop/product-specs")
+#extend("shop/product-addons")
+#extend("shop/product-reviews")
+#extend("shop/product-rail")
+#extend("shop/recently-viewed")
+#extend("shop/compare-bar")

@@ -55,6 +55,10 @@ defmodule BdStarterWeb do
       import BdStarterWeb.Bundle
       import BdStarterWeb.Money
       import BdStarterWeb.ShopComponents
+      import BdStarterWeb.ProductComponents
+      import BdStarterWeb.StoreComponents
+      import BdStarterWeb.BlogComponents
+      import BdStarterWeb.ReviewComponents
 
       alias Phoenix.LiveView.JS
 

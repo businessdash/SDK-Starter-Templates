@@ -1,0 +1,3 @@
+{{-- In place of a members' post for visitors: Sign in to read it. --}}
+@props(['signInHref'])
+<div class="bd-empty">This post is for members.<p><a class="bd-btn" href="{{ $signInHref }}">Sign in to read it</a></p></div>

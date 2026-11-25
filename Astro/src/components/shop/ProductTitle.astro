@@ -1,0 +1,27 @@
+---
+// [bd-file:store]
+/** The category, the name, and the stars linking to the reviews. */
+import type { StorefrontProductReviewsResponse } from "@businessdash/sdk/contracts";
+
+import type { ProductView } from "../../lib/bd-shop/shop";
+import StarRating from "./StarRating.astro";
+
+interface Props {
+	product: ProductView;
+	reviews: StorefrontProductReviewsResponse | null;
+}
+const { product, reviews } = Astro.props;
+---
+
+<div>
+	{product.categoryName ? <p class="product-detail__eyebrow">{product.categoryName}</p> : null}
+	<h1>{product.name}</h1>
+	{
+		reviews && reviews.totalCount > 0 ? (
+			<a class="product-detail__rating" href="#reviews">
+				<StarRating rating={reviews.avgRating} />
+				<span>{`${reviews.avgRating.toFixed(1)} · ${reviews.totalCount} reviews`}</span>
+			</a>
+		) : null
+	}
+</div>

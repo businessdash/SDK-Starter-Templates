@@ -1,0 +1,6 @@
+<!-- The price for what's chosen times the quantity: "From" until every option
+     is picked, the price each when buying more than one, Sold out when there's
+     none. <bd-product-form> keeps it current. -->
+<p class="product-detail__price" data-bd-price>
+  <span class="product-detail__from" data-bd-from#if(detail.price.fromHidden): hidden#endif>From</span> <span data-bd-amount>#(detail.price.amount)</span><span class="product-detail__each" data-bd-each#if(detail.price.eachHidden): hidden#endif>#(detail.price.each)</span>
+</p>

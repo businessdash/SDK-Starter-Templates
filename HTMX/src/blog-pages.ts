@@ -11,28 +11,31 @@
  *   `<bd-post-comments>` (src/shop/blog-elements.ts) post JSON to
  *   /blog/:slug/like and /blog/:slug/comment; signed out, they lead to
  *   sign-in and back to the post.
+ *
+ * The pages are laid out from the blog's parts in src/sections/blog/, one
+ * file each: the filters and a post card for the list; meta, body (or
+ * members-only), call to action, tags, like button and comments for a post.
  */
 import { getBd, getSession } from "./bd";
 import { cached } from "./cache";
-import { html, raw, type Raw } from "./html";
+import { html, type Raw } from "./html";
 import { SESSION_COOKIE, errBlock, getCookie, page } from "./layout";
-import { formatPostDate, readingMinutes, safePostHtml } from "./shop/blog";
+import { blogFilters } from "./sections/blog/blog-filters";
+import { comments as commentList } from "./sections/blog/comments";
+import { likeButton } from "./sections/blog/like-button";
+import { membersOnly } from "./sections/blog/members-only";
+import { postBody } from "./sections/blog/post-body";
+import { postCard } from "./sections/blog/post-card";
+import { postCta } from "./sections/blog/post-cta";
+import { postMeta } from "./sections/blog/post-meta";
+import { postTags } from "./sections/blog/post-tags";
+import { readingMinutes } from "./shop/blog";
 
 const BLOG_CSS = ["/bd-blog.css"];
 const BLOG_MODULES = ["/shop/blog-elements.js"];
 
 /** Posts on a page. With a tag filter, more are read and filtered here. */
 const PAGE = 12;
-
-/** Server data for a custom element, as JSON in a script tag inside it. */
-function jsonScript(value: unknown): Raw {
-	return raw(`<script type="application/json">${JSON.stringify(value).replace(/</g, "\\u003c")}</script>`);
-}
-
-/** Only web, mail, same-site and in-page links; anything else goes nowhere. */
-function safeHref(href: string): string {
-	return /^(https?:|mailto:|\/|#)/i.test(href.trim()) ? href.trim() : "#";
-}
 
 // ── the post list ──────────────────────────────────────────────────
 
@@ -44,16 +47,6 @@ export async function blogIndexPage(url: URL): Promise<string> {
 	const cursor = Number.isFinite(rawCursor) ? rawCursor : null;
 	const paged = cursor !== null;
 
-	/** This list with one filter changed and the paging reset. */
-	const filterHref = (key: "category" | "tag", value: string | null): string => {
-		const next = new URLSearchParams();
-		if (categoryId) next.set("category", categoryId);
-		if (tag) next.set("tag", tag);
-		if (value) next.set(key, value);
-		else next.delete(key);
-		const query = next.toString();
-		return query ? `/blog?${query}` : "/blog";
-	};
 	const nextHref = (next: number): string => {
 		const query = new URLSearchParams();
 		if (categoryId) query.set("category", categoryId);
@@ -88,32 +81,7 @@ export async function blogIndexPage(url: URL): Promise<string> {
 				if (active.description) description = active.description;
 			}
 
-			const filters =
-				categories.length > 0 || tags.length > 0
-					? html`<nav aria-label="Blog topics" class="blog-filters">
-							${
-								categories.length > 0
-									? html`<ul>
-										<li><a${!categoryId ? html` aria-current="true"` : ""} href="${filterHref("category", null)}">All</a></li>
-										${categories.map(
-											(c) =>
-												html`<li><a${categoryId === c.id ? html` aria-current="true"` : ""} href="${filterHref("category", c.id)}">${c.name}</a></li>`,
-										)}
-									</ul>`
-									: ""
-							}
-							${
-								tags.length > 0
-									? html`<ul class="blog-filters__tags">
-										${tags.map(
-											(t) =>
-												html`<li><a${tag === t ? html` aria-current="true"` : ""} href="${filterHref("tag", tag === t ? null : t)}">#${t}</a></li>`,
-										)}
-									</ul>`
-									: ""
-							}
-						</nav>`
-					: "";
+			const filters = blogFilters({ categories, tags, category: categoryId, tag });
 
 			const items =
 				posts.length === 0
@@ -121,23 +89,7 @@ export async function blogIndexPage(url: URL): Promise<string> {
 							tag || categoryId ? "No posts here yet." : "No posts published yet. Write one in Business Dash and it'll appear here."
 						}</div>`
 					: html`<ul class="posts">
-							${posts.map(
-								(post, i) => html`<li class="bd-card post-card${i === 0 && !paged ? " post-card--lead" : ""}">
-									<a class="post-card__link" href="/blog/${encodeURIComponent(post.slug)}">
-										${post.imageUrl ? html`<img alt="" class="post-card__img" loading="lazy" referrerpolicy="no-referrer" src="${post.imageUrl}" />` : ""}
-										<div class="post-card__body">
-											<p class="post-card__meta">
-												${post.isPinned ? html`<span class="bd-badge">Pinned</span>` : ""}
-												<span>${formatPostDate(post.publishedAt)}</span>
-												<span>· ${String(readingMinutes(post.content || post.excerpt || ""))} min read</span>
-											</p>
-											<h2>${post.title}</h2>
-											${post.excerpt ? html`<p class="post-card__excerpt">${post.excerpt}</p>` : ""}
-											${post.authorName ? html`<p class="post-card__author">${post.authorName}</p>` : ""}
-										</div>
-									</a>
-								</li>`,
-							)}
+							${posts.map((post, i) => postCard(post, { lead: i === 0 && !paged }))}
 						</ul>
 						${
 							list.nextCursor != null && !tag
@@ -198,39 +150,15 @@ export async function blogPostPage(url: URL, slug: string, sessionCookie: string
 				<a class="post__back" href="/blog">← All posts</a>
 				<header class="post__head">
 					<h1>${post.title}</h1>
-					<p class="post__meta">
-						${post.authorAvatarUrl ? html`<img alt="" referrerpolicy="no-referrer" src="${post.authorAvatarUrl}" />` : ""}
-						${post.authorName ? html`<span>${post.authorName}</span>` : ""}
-						<span>${formatPostDate(post.publishedAt)}</span>
-						<span>· ${String(readingMinutes(post.content))} min read</span>
-					</p>
+					${postMeta(post, readingMinutes(post.content))}
 				</header>
 				${post.imageUrl ? html`<img alt="" class="post__cover" referrerpolicy="no-referrer" src="${post.imageUrl}" />` : ""}
-				${
-					paywalled
-						? html`<div class="bd-empty">This post is for members.<p><a class="bd-btn" href="${signInHref}">Sign in to read it</a></p></div>`
-						: html`<div class="post__body">${raw(safePostHtml(post.content))}</div>`
-				}
-				${
-					post.ctaHref && post.ctaLabel
-						? html`<aside class="bd-card post__cta">
-								${post.ctaDescription ? html`<p>${post.ctaDescription}</p>` : ""}
-								<a class="bd-btn" href="${safeHref(post.ctaHref)}">${post.ctaLabel}</a>
-							</aside>`
-						: ""
-				}
-				${
-					post.tags.length > 0
-						? html`<ul class="post__tags">${post.tags.map((t) => html`<li><a href="/blog?tag=${encodeURIComponent(t)}">#${t}</a></li>`)}</ul>`
-						: ""
-				}
-				<bd-post-like data-like-url="${here}/like" data-sign-in-href="${signInHref}">
-					${jsonScript({ likes: likes ?? { liked: false, likesCount: post.likes }, signedIn })}
-				</bd-post-like>
+				${paywalled ? membersOnly(signInHref) : postBody(post.content)}
+				${postCta(post)}
+				${postTags(post.tags)}
+				${likeButton({ likes: likes ?? { liked: false, likesCount: post.likes }, signedIn, likeUrl: `${here}/like`, signInHref })}
 			</article>
-			<bd-post-comments data-comment-url="${here}/comment" data-sign-in-href="${signInHref}">
-				${jsonScript({ comments: comments.items, signedIn })}
-			</bd-post-comments>`;
+			${commentList({ comments: comments.items, signedIn, commentUrl: `${here}/comment`, signInHref })}`;
 	}
 
 	return {

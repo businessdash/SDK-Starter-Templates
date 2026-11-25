@@ -9,23 +9,21 @@
  *   POST /reviews/write                JSON from <bd-review-writer>
  *
  * The rules (the breakdown, platform names, safe links, what a review must
- * be) are src/shop/reviews.ts, the same in every BD starter.
+ * be) are src/shop/reviews.ts, the same in every BD starter. The page is
+ * laid out from the reviews' parts in src/sections/reviews/: the rating
+ * summary, the platform filter and a card per review.
  */
 import { getBd, getSession, portalFor } from "./bd";
 import { cached } from "./cache";
-import { html, raw, render, type Raw } from "./html";
+import { html, render, type Raw } from "./html";
 import { SESSION_COOKIE, errBlock, getCookie, page } from "./layout";
+import { ratingSummary } from "./sections/reviews/rating-summary";
+import { reviewCard } from "./sections/reviews/review-card";
+import { reviewFilter } from "./sections/reviews/review-filter";
 import {
 	checkReview,
-	formatReviewDate,
-	platformName,
 	REVIEW_PAGE_SIZE,
-	reviewerInitial,
-	reviewerName,
-	reviewLink,
 	reviewSourceParam,
-	reviewStars,
-	safeImage,
 	sourceLabel,
 	sourcesIn,
 	summarizeReviews,
@@ -35,10 +33,6 @@ import {
 } from "./shop/reviews";
 
 const NOT_CONFIGURED = "BusinessDash isn't configured yet — set BD_API_KEY and BD_SITE_ID.";
-
-function jsonScript(value: unknown): Raw {
-	return raw(`<script type="application/json">${JSON.stringify(value).replace(/</g, "\\u003c")}</script>`);
-}
 
 function json(body: unknown, status = 200): Response {
 	return new Response(JSON.stringify(body), {
@@ -77,8 +71,8 @@ export async function reviewsPage(url: URL, sessionCookie: string | null): Promi
 			const totals = (bundle as { reviews?: BundleReviewTotals | null } | null)?.reviews ?? null;
 			const summary = summarizeReviews(totals, first.totalCount);
 			const sources = sourcesIn(newest?.items ?? first.items);
-			body = html`${summaryBlock(summary, Boolean(session))}
-				${sources.length > 1 ? filterBlock(sources, source) : ""}
+			body = html`${ratingSummary(summary, Boolean(session))}
+				${reviewFilter(sources, source)}
 				${
 					first.items.length
 						? html`<ul class="review-wall" id="review-list">${reviewItems(first, source)}</ul>`
@@ -113,80 +107,12 @@ export async function reviewsMore(url: URL): Promise<string> {
 	}
 }
 
-function summaryBlock(summary: ReturnType<typeof summarizeReviews>, signedIn: boolean): Raw {
-	const writer = html`<div class="reviews-summary__write">
-		<bd-review-writer data-write-url="/reviews/write" data-sign-in-href="/my-account?next=%2Freviews">
-			${jsonScript({ signedIn })}
-		</bd-review-writer>
-	</div>`;
-	if (summary.average === null) return html`<section class="reviews-summary" aria-label="Write a review">${writer}</section>`;
-	return html`<section class="reviews-summary" aria-label="Rating">
-		<div class="reviews-summary__score">
-			<span class="reviews-summary__average">${summary.average.toFixed(1)}</span>
-			<span class="review-stars" role="img" aria-label="${`${summary.average.toFixed(1)} out of 5`}">${reviewStars(summary.average)}</span>
-			<span class="reviews-summary__count">${summary.total} ${summary.total === 1 ? "review" : "reviews"}</span>
-		</div>
-		<ul class="reviews-bars">
-			${summary.histogram.map(
-				(row) => html`<li aria-label="${`${row.stars} stars: ${row.count}`}">
-					<span>${row.stars} ★</span>
-					<span class="reviews-bars__track"><span class="reviews-bars__fill" style="${`width:${Math.round(row.share * 100)}%`}"></span></span>
-					<span>${row.count}</span>
-				</li>`,
-			)}
-		</ul>
-		${writer}
-	</section>`;
-}
-
-function filterBlock(sources: ReviewSource[], active: ReviewSource | undefined): Raw {
-	return html`<nav aria-label="Platform">
-		<ul class="reviews-filter">
-			<li><a href="/reviews" aria-current="${active ? "false" : "true"}">All</a></li>
-			${sources.map(
-				(s) => html`<li><a href="${`/reviews?source=${s}`}" aria-current="${active === s ? "true" : "false"}">${sourceLabel(s)}</a></li>`,
-			)}
-		</ul>
-	</nav>`;
-}
-
 function reviewItems(res: ReviewPage, source: ReviewSource | undefined): Raw {
 	const more =
 		res.nextOffset != null
 			? html`<li class="reviews-more" id="review-more"><button class="btn btn--ghost" hx-get="${`/sections/reviews-more?offset=${res.nextOffset}${source ? `&source=${source}` : ""}`}" hx-target="#review-more" hx-swap="outerHTML">Show more reviews</button></li>`
 			: "";
 	return html`${res.items.map(reviewCard)}${more}`;
-}
-
-function reviewCard(r: WallReview): Raw {
-	const avatar = safeImage(r.reviewerImageUrl);
-	const platform = platformName(r.source);
-	const link = reviewLink(r);
-	const photos = (r.photos ?? []).map(safeImage).filter((p): p is string => p !== null);
-	return html`<li class="review-card">
-		<div class="review-card__head">
-			${avatar ? html`<img class="review-card__avatar" src="${avatar}" alt="" loading="lazy" />` : html`<span class="review-card__avatar" aria-hidden="true">${reviewerInitial(r)}</span>`}
-			<div>
-				<p class="review-card__name">${reviewerName(r)}</p>
-				<p class="review-card__meta"><span class="review-stars" role="img" aria-label="${`${r.rating} out of 5`}">${reviewStars(r.rating)}</span> · ${formatReviewDate(r.timeCreated)}</p>
-			</div>
-		</div>
-		<p class="review-card__text">${r.text}</p>
-		${
-			photos.length
-				? html`<ul class="review-card__photos" aria-label="Photos from the reviewer">${photos.map((p) => html`<li><img src="${p}" alt="" loading="lazy" /></li>`)}</ul>`
-				: ""
-		}
-		${
-			platform || r.verified
-				? html`<p class="review-card__foot">
-			${platform ? html`<span class="review-card__platform">${platform}</span>` : ""}
-			${r.verified ? html`<span class="review-card__verified">✓ Verified</span>` : ""}
-			${link && platform ? html`<a class="review-card__link" href="${link}" target="_blank" rel="noopener noreferrer">Read on ${platform}</a>` : ""}
-		</p>`
-				: ""
-		}
-	</li>`;
 }
 
 /** `{ rating, title?, body }` from <bd-review-writer>, for the signed-in customer. */

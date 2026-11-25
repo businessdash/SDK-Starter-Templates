@@ -223,6 +223,7 @@ export async function page(opts: {
 	<link rel="stylesheet" href="/bd-forms.css" />
 	<!-- Forms and quizzes rendered on this server (src/form.ts, src/quiz.ts). -->
 	<link rel="stylesheet" href="/forms.css" />
+	<link rel="stylesheet" href="/tailwind.css" /><!-- [bd-line:tailwind] -->
 	<!-- HTMX, as on the home page: the review form, cart and sign-in post with it. -->
 	<script
 		src="https://unpkg.com/htmx.org@2.0.4"

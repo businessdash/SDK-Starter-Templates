@@ -8,39 +8,42 @@
  *   GET forms, so they work without JavaScript; with it, htmx (`hx-boost`)
  *   fetches the new list and swaps just the layout, keeping the URL in step.
  * - /store/:id: the server loads the product, its reviews, add-ons and related
- *   products, and `<bd-product>` (src/shop/shop-elements.ts) draws the page
- *   from that data: option photos, option and size buttons, the price for
- *   what's chosen, add to cart (POST /api/bd/cart/add), save, compare, share.
- *   More reviews: ?reviews=20.
+ *   products, and draws the page from them (`productDetail`): option photos,
+ *   option and size buttons, the price for what's chosen, add to cart
+ *   (POST /api/bd/cart/add), save, compare, share. Small custom elements
+ *   (src/shop/shop-elements.ts) bring it to life in the browser. More
+ *   reviews: ?reviews=20.
  * - /store/wishlist and /store/compare: lists saved in this browser, drawn by
  *   `<bd-wishlist>` and `<bd-compare>`; the compare page loads ?ids=a,b here.
  * - /cart: htmx posts each change and swaps the cart back in.
  *
- * Cart amounts are dollars (`dollars`); product prices are cents (`money`).
+ * Every page is laid out from the shop's parts in src/sections/shop/, one
+ * file each, so you can move, restyle or drop one, or build your own pages
+ * from them. Cart amounts are dollars; product prices are cents.
  */
 import { getBd } from "./bd";
-import { html, raw, render, type Raw } from "./html";
-import { VISITOR_COOKIE, dollars, errBlock, getCookie, money, page, resolveVisitor } from "./layout";
-import type { CompareColumn, ProductPageData } from "./shop/shop-elements";
+import { html, jsonScript, render, type Raw } from "./html";
+import { VISITOR_COOKIE, errBlock, getCookie, page, resolveVisitor } from "./layout";
+import { cartActions } from "./sections/shop/cart-actions";
+import { type CartLineItem, cartLine } from "./sections/shop/cart-line";
+import { cartSummary } from "./sections/shop/cart-summary";
+import { categoryFilter } from "./sections/shop/category-filter";
+import { clearFilters } from "./sections/shop/clear-filters";
+import { compareBar } from "./sections/shop/compare-bar";
+import { couponForm } from "./sections/shop/coupon-form";
+import { priceFilter } from "./sections/shop/price-filter";
+import { productDetail } from "./sections/shop/product-detail";
+import { productGrid } from "./sections/shop/product-grid";
+import { ratingFilter } from "./sections/shop/rating-filter";
+import { sortSelect } from "./sections/shop/sort-select";
+import { SWAP, hasFilters as anyFilters, ratingOf, sortOf } from "./sections/shop/store-filters";
+import { storeSearch } from "./sections/shop/store-search";
+import type { ProductPageData } from "./shop/shop";
+import type { CompareColumn } from "./shop/shop-elements";
 import { STORE_NAV_MODULES, cartCountSwap, storeNav } from "./store-nav";
 
 const NOT_CONFIGURED = new Error("BD not configured");
 const SHOP_CSS = ["/bd-shop.css"];
-
-/** Server data for a custom element, as JSON in a script tag inside it. `<`
- *  is written as \u003c, so the JSON can't close the tag early. */
-function jsonScript(value: unknown): Raw {
-	return raw(`<script type="application/json">${JSON.stringify(value).replace(/</g, "\\u003c")}</script>`);
-}
-
-/** Stars for a rating, the same markup the shop elements draw. */
-function stars(rating: number): Raw {
-	return html`<span aria-label="${`${rating.toFixed(1)} out of 5`}" class="stars" role="img">${[1, 2, 3, 4, 5].map((i) => {
-		const on = rating >= i;
-		const half = !on && rating >= i - 0.5;
-		return html`<span class="stars__star${on ? " stars__star--on" : ""}${half ? " stars__star--half" : ""}">★</span>`;
-	})}</span>`;
-}
 
 function lead(eyebrow: string, title: string, sub: string): Raw {
 	return html`<div class="bd-section__lead">
@@ -52,20 +55,6 @@ function lead(eyebrow: string, title: string, sub: string): Raw {
 
 // ── product list ───────────────────────────────────────────────────
 
-const SORTS = [
-	{ value: "featured", label: "Featured" },
-	{ value: "newest", label: "Newest" },
-	{ value: "price-asc", label: "Price: low to high" },
-	{ value: "price-desc", label: "Price: high to low" },
-	{ value: "rating-desc", label: "Top rated" },
-] as const;
-type Sort = (typeof SORTS)[number]["value"];
-
-const FILTER_KEYS = ["q", "category", "priceMin", "priceMax", "rating"];
-
-/** On the filters: htmx fetches the new list and swaps only the layout. */
-const SWAP = html`hx-boost="true" hx-target="#store-layout" hx-select="#store-layout" hx-swap="outerHTML"`;
-
 function cents(value: string | null): number | undefined {
 	if (!value?.trim()) return undefined;
 	const amount = Number.parseFloat(value);
@@ -76,29 +65,11 @@ export async function storePage(url: URL, visitorToken: string | null): Promise<
 	const params = url.searchParams;
 	const search = params.get("q")?.trim() || undefined;
 	const categoryId = params.get("category") || undefined;
-	const sortRaw = params.get("sort");
-	const sort: Sort = SORTS.find((s) => s.value === sortRaw)?.value ?? "featured";
+	const sort = sortOf(params);
 	const minPriceCents = cents(params.get("priceMin"));
 	const maxPriceCents = cents(params.get("priceMax"));
-	const ratingRaw = Number.parseInt(params.get("rating") ?? "", 10);
-	const minRating = ratingRaw >= 1 && ratingRaw <= 5 ? ratingRaw : undefined;
-	const hasFilters = FILTER_KEYS.some((key) => params.get(key));
-
-	/** This list with some filters changed (null removes one). */
-	const hrefWith = (changes: Record<string, string | null>): string => {
-		const next = new URLSearchParams(params);
-		for (const [key, value] of Object.entries(changes)) {
-			if (value === null || value === "") next.delete(key);
-			else next.set(key, value);
-		}
-		const query = next.toString();
-		return query ? `/store?${query}` : "/store";
-	};
-	/** The filters a form leaves alone, carried along as hidden fields. */
-	const keep = (...replaced: string[]): Raw[] =>
-		[...params]
-			.filter(([key]) => !replaced.includes(key))
-			.map(([name, value]) => html`<input type="hidden" name="${name}" value="${value}" />`);
+	const minRating = ratingOf(params) || undefined;
+	const hasFilters = anyFilters(params);
 
 	const bd = getBd();
 	let layout: Raw;
@@ -120,61 +91,20 @@ export async function storePage(url: URL, visitorToken: string | null): Promise<
 			]);
 			const products = meta.items ?? [];
 			const counts = new Map((meta.categoryCounts ?? []).map((c) => [c.categoryId, c.count]));
-			const range = meta.priceRange;
+			const categories = cats.items.map((c) => ({ id: c.id, name: c.name, count: counts.get(c.id) ?? 0 }));
 
 			const sidebar = html`<aside class="store-sidebar" ${SWAP}>
-				<form action="/store" method="get">
-					<label class="bd-label" for="store-search">Search</label>
-					<input autocomplete="off" class="bd-input" id="store-search" name="q" placeholder="Search products…" type="search" value="${params.get("q") ?? ""}" />
-					${keep("q")}
-				</form>
-				${
-					cats.items.length > 0
-						? html`<div class="store-facet">
-							<p class="store-facet__title">Category</p>
-							<ul class="store-facet__list">
-								<li><a class="store-facet__item${categoryId ? "" : " store-facet__item--active"}" href="${hrefWith({ category: null })}">All products</a></li>
-								${cats.items.map((c) => {
-									const active = categoryId === c.id;
-									return html`<li><a class="store-facet__item store-facet__item--row${active ? " store-facet__item--active" : ""}" href="${hrefWith({ category: active ? null : c.id })}"><span>${c.name}</span><span class="store-facet__count">${String(counts.get(c.id) ?? 0)}</span></a></li>`;
-								})}
-							</ul>
-						</div>`
-						: ""
-				}
-				<form action="/store" class="store-facet" method="get">
-					<p class="store-facet__title">Price</p>
-					<div class="store-price">
-						<input aria-label="Lowest price" class="bd-input" inputmode="decimal" name="priceMin" placeholder="${range ? `$${Math.floor(range.minDollars)}` : "Min"}" value="${params.get("priceMin") ?? ""}" />
-						<span aria-hidden="true" class="store-price__sep">–</span>
-						<input aria-label="Highest price" class="bd-input" inputmode="decimal" name="priceMax" placeholder="${range ? `$${Math.ceil(range.maxDollars)}` : "Max"}" value="${params.get("priceMax") ?? ""}" />
-					</div>
-					${keep("priceMin", "priceMax")}
-					<button class="bd-btn bd-btn--ghost store-price__apply" type="submit">Apply</button>
-				</form>
-				<div class="store-facet">
-					<p class="store-facet__title">Rating</p>
-					<ul class="store-facet__list">
-						${[4, 3, 2].map((r) => {
-							const active = minRating === r;
-							return html`<li><a class="store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}" href="${hrefWith({ rating: active ? null : String(r) })}">${stars(r)}<span class="store-facet__count">&amp; up</span></a></li>`;
-						})}
-					</ul>
-				</div>
-				${hasFilters ? html`<a class="store-clear" href="/store">Clear all filters</a>` : ""}
+				${storeSearch(params)}
+				${categoryFilter(params, categories)}
+				${priceFilter(params, meta.priceRange)}
+				${ratingFilter(params)}
+				${hasFilters ? clearFilters() : ""}
 			</aside>`;
 
 			const results = html`<div class="store-results">
 				<div class="store-results__bar">
 					<p class="bd-loading">${String(products.length)} ${products.length === 1 ? "product" : "products"}</p>
-					<form action="/store" class="store-sort" method="get" ${SWAP}>
-						<label for="store-sort">Sort</label>
-						<select class="bd-select" id="store-sort" name="sort" onchange="this.form.requestSubmit()">
-							${SORTS.map((s) => html`<option value="${s.value}"${s.value === sort ? html` selected` : ""}>${s.label}</option>`)}
-						</select>
-						${keep("sort")}
-						<noscript><button class="bd-btn bd-btn--ghost" type="submit">Sort</button></noscript>
-					</form>
+					${sortSelect(params)}
 				</div>
 				${
 					products.length === 0
@@ -183,9 +113,9 @@ export async function storePage(url: URL, visitorToken: string | null): Promise<
 									? "No products match these filters. Try clearing a filter or broadening your search."
 									: "No live products yet. Add and publish products in the BD dashboard and they'll appear here."
 							}</div>`
-						: html`<div class="bd-grid-3">${products.map(productCard)}</div>`
+						: productGrid(products)
 				}
-				<bd-compare-bar></bd-compare-bar>
+				${compareBar()}
 			</div>`;
 
 			layout = html`<div class="store-layout" id="store-layout">${sidebar}${results}</div>`;
@@ -204,57 +134,6 @@ export async function storePage(url: URL, visitorToken: string | null): Promise<
 		mainClass: "bd-page",
 		body: html`${lead("Shop", "Products", "Filter, sort, and open a product to choose its options and add it to your cart.")}${layout}`,
 	});
-}
-
-type ListedProduct = {
-	id: string;
-	name: string;
-	coverImage?: string | null;
-	isBestSeller?: boolean;
-	isNew?: boolean;
-	isOnSale?: boolean;
-	isLowStock?: boolean;
-	reviewCount?: number | null;
-	avgRating?: number | null;
-	cheapestPriceCents?: number | null;
-	comparePriceCents?: number | null;
-	hasMultipleVariants?: boolean;
-};
-
-function productCard(p: ListedProduct): Raw {
-	const saved = JSON.stringify({ id: p.id, name: p.name, image: p.coverImage ?? null, priceCents: p.cheapestPriceCents ?? null });
-	return html`<div class="bd-card product-card">
-		<a class="product-card__link" href="/store/${encodeURIComponent(p.id)}">
-			<div class="product-card__media">
-				${
-					p.coverImage
-						? html`<img alt="${p.name}" class="product-card__img" loading="lazy" referrerpolicy="no-referrer" src="${p.coverImage}" />`
-						: html`<div class="product-card__noimg">No image</div>`
-				}
-				<div class="product-card__badges">
-					${p.isBestSeller ? html`<span class="bd-badge">Best seller</span>` : ""}
-					${p.isNew ? html`<span class="bd-badge">New</span>` : ""}
-					${p.isOnSale ? html`<span class="bd-badge product-card__badge--sale">Sale</span>` : ""}
-				</div>
-			</div>
-			<div class="product-card__body">
-				<h3>${p.name || "Untitled"}</h3>
-				${
-					(p.reviewCount ?? 0) > 0
-						? html`<div class="product-card__rating">${stars(p.avgRating ?? 0)}<span class="product-card__count">(${String(p.reviewCount)})</span></div>`
-						: ""
-				}
-				<div class="product-card__price">
-					<span class="product-card__amount">${
-						p.cheapestPriceCents != null ? `${p.hasMultipleVariants ? "From " : ""}${money(p.cheapestPriceCents)}` : "View details"
-					}</span>
-					${p.isOnSale && p.comparePriceCents != null ? html`<span class="product-card__compare">${money(p.comparePriceCents)}</span>` : ""}
-				</div>
-				${p.isLowStock ? html`<span class="product-card__lowstock">Low stock</span>` : ""}
-			</div>
-		</a>
-		<div class="product-card__save"><bd-save-buttons compact data-product="${saved}"></bd-save-buttons></div>
-	</div>`;
 }
 
 // ── one product ────────────────────────────────────────────────────
@@ -310,14 +189,7 @@ export async function productPage(
 			? /Suspended|Lapsed|unavailable|\b503\b/i.test(String(failure))
 				? errBlock(failure)
 				: html`<div class="bd-empty">That product isn't available. <a href="/store">Browse the store</a></div>`
-			: html`<bd-product data-add-url="/api/bd/cart/add" data-cart-href="/cart" data-contact-href="/#contact">
-					${jsonScript(data)}
-					<noscript>
-						<h1>${product.name}</h1>
-						${description ? html`<p>${description}</p>` : ""}
-						<p>Turn on JavaScript to choose options and add this to your cart.</p>
-					</noscript>
-				</bd-product>`;
+			: productDetail(data, { cartHref: "/cart", contactHref: "/#contact" });
 
 	return {
 		status: bd && !data ? 404 : 200,
@@ -401,16 +273,7 @@ export async function comparePage(url: URL, visitorToken: string | null): Promis
 
 /** The cart as the SDK returns it; amounts are dollars. */
 type CartSnap = {
-	items: Array<{
-		id: string;
-		productName?: string | null;
-		productImage?: string | null;
-		variantTitle?: string | null;
-		quantity: number;
-		unitPrice: number;
-		subtotal: number;
-		currency?: string | null;
-	}>;
+	items: CartLineItem[];
 	itemCount: number;
 	subtotal: number;
 	currency?: string | null;
@@ -447,53 +310,11 @@ function cartRegion(snap: CartSnap): Raw {
 		return html`<div id="cart-region"><p class="muted">Your cart is empty. <a href="/store">Browse the store →</a></p></div>`;
 	}
 	return html`<div id="cart-region">
-		<ul class="cart-list">${items.map((it) => cartItem(it, currency))}</ul>
-		${couponRow(snap)}
-		<div class="cart-summary">
-			<div class="cart-summary__row">
-				<span>Subtotal (${String(snap.itemCount)} item${snap.itemCount === 1 ? "" : "s"})</span>
-				<strong>${dollars(snap.subtotal, currency)}</strong>
-			</div>
-		</div>
-		<div class="cart-actions">
-			<button class="btn btn--ghost" type="button" hx-post="/cart/clear" hx-target="#cart-region" hx-swap="outerHTML">Clear cart</button>
-			<form method="post" action="/cart/checkout"><button class="btn btn--primary btn--lg" type="submit">Checkout</button></form>
-		</div>
+		<ul class="cart-list">${items.map((item) => cartLine(item, currency))}</ul>
+		${couponForm(snap.couponCode)}
+		${cartSummary(snap, currency)}
+		${cartActions()}
 	</div>`;
-}
-
-function cartItem(it: CartSnap["items"][number], currency: string): Raw {
-	const dec = JSON.stringify({ itemId: it.id, quantity: Math.max(0, it.quantity - 1) });
-	const inc = JSON.stringify({ itemId: it.id, quantity: it.quantity + 1 });
-	const rm = JSON.stringify({ itemId: it.id });
-	return html`<li class="cart-item">
-		${it.productImage ? html`<img class="cart-item__img" src="${it.productImage}" alt="${it.productName ?? ""}" />` : ""}
-		<div class="cart-item__main">
-			<div class="cart-item__name">${it.productName ?? "Item"}</div>
-			${it.variantTitle ? html`<div class="cart-item__variant">${it.variantTitle}</div>` : ""}
-			<div class="cart-item__price">${dollars(it.unitPrice, it.currency ?? currency)} each</div>
-		</div>
-		<div class="cart-qty">
-			<button class="cart-qty__btn" type="button" aria-label="Decrease" hx-post="/cart/update" hx-vals="${dec}" hx-target="#cart-region" hx-swap="outerHTML">−</button>
-			<span class="cart-qty__n">${String(it.quantity)}</span>
-			<button class="cart-qty__btn" type="button" aria-label="Increase" hx-post="/cart/update" hx-vals="${inc}" hx-target="#cart-region" hx-swap="outerHTML">+</button>
-		</div>
-		<div class="cart-item__subtotal">${dollars(it.subtotal, it.currency ?? currency)}</div>
-		<button class="cart-item__remove" type="button" hx-post="/cart/remove" hx-vals="${rm}" hx-target="#cart-region" hx-swap="outerHTML">Remove</button>
-	</li>`;
-}
-
-function couponRow(snap: CartSnap): Raw {
-	if (snap.couponCode) {
-		return html`<div class="coupon coupon--applied">
-			<span>Coupon ${snap.couponCode} applied</span>
-			<button class="btn btn--ghost btn--sm" type="button" hx-post="/cart/coupon/remove" hx-target="#cart-region" hx-swap="outerHTML">Remove</button>
-		</div>`;
-	}
-	return html`<form class="coupon" hx-post="/cart/coupon" hx-target="#cart-region" hx-swap="outerHTML">
-		<input class="coupon__input" type="text" name="code" placeholder="Coupon code" aria-label="Coupon code" />
-		<button class="btn btn--ghost btn--sm" type="submit">Apply</button>
-	</form>`;
 }
 
 /** A change on /cart: the SDK call for `op`, then the cart and the store

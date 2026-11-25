@@ -9,9 +9,12 @@ import 'app_state.dart';
 import 'bd_scope.dart';
 import 'order_page.dart';
 import 'shop_parts.dart';
+import 'store_parts.dart';
 
 /// The cart: each line's style and options, quantity, a coupon, the
-/// subtotal, and checkout on Stripe's own page.
+/// subtotal, and checkout on Stripe's own page. It's laid out from a
+/// [CartLine] per item, the [CouponField] and the [CartSummaryBar]
+/// (store_parts.dart).
 class CartPage extends StatefulWidget {
   const CartPage({super.key});
 
@@ -175,99 +178,31 @@ class _CartPageState extends State<CartPage> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             children: [
               for (final item in cart.items) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: 12,
-                    children: [
-                      GestureDetector(
-                        onTap: item.productId == null ? null : () => openProduct(context, item.productId!),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: SizedBox.square(dimension: 64, child: Photo(item.image)),
-                        ),
-                      ),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          spacing: 2,
-                          children: [
-                            Text(item.name ?? 'Item', style: theme.textTheme.titleSmall),
-                            // The style and options, as the store wrote them.
-                            if (item.variantTitle?.isNotEmpty ?? false)
-                              Text(item.variantTitle!, style: theme.textTheme.bodySmall),
-                            // Cart lines arrive DECIMAL, unlike product cards.
-                            Text(Money.amount(item.unitPrice, currency: currency), style: theme.textTheme.bodySmall),
-                            Row(
-                              children: [
-                                IconButton(
-                                  tooltip: item.quantity <= 1 ? 'Remove' : 'One fewer',
-                                  visualDensity: VisualDensity.compact,
-                                  icon: const Icon(Icons.remove),
-                                  onPressed: _busy
-                                      ? null
-                                      : () => _change((client, visitor) => item.quantity <= 1
-                                          ? client.cartRemove(visitor, item.id)
-                                          : client.cartSetQuantity(visitor, itemId: item.id, quantity: item.quantity - 1)),
-                                ),
-                                Text('${item.quantity}', semanticsLabel: 'Quantity ${item.quantity}'),
-                                IconButton(
-                                  tooltip: 'One more',
-                                  visualDensity: VisualDensity.compact,
-                                  icon: const Icon(Icons.add),
-                                  onPressed: _busy
-                                      ? null
-                                      : () => _change((client, visitor) =>
-                                          client.cartSetQuantity(visitor, itemId: item.id, quantity: item.quantity + 1)),
-                                ),
-                                const Spacer(),
-                                TextButton(
-                                  onPressed: _busy ? null : () => _change((client, visitor) => client.cartRemove(visitor, item.id)),
-                                  child: const Text('Remove'),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                      Text(Money.amount(item.subtotal ?? (item.unitPrice ?? 0) * item.quantity, currency: currency),
-                          style: theme.textTheme.titleSmall),
-                    ],
-                  ),
+                CartLine(
+                  item: item,
+                  currency: currency,
+                  onOpen: item.productId == null ? null : () => openProduct(context, item.productId!),
+                  onDecrease: _busy
+                      ? null
+                      : () => _change((client, visitor) => item.quantity <= 1
+                          ? client.cartRemove(visitor, item.id)
+                          : client.cartSetQuantity(visitor, itemId: item.id, quantity: item.quantity - 1)),
+                  onIncrease: _busy
+                      ? null
+                      : () => _change(
+                          (client, visitor) => client.cartSetQuantity(visitor, itemId: item.id, quantity: item.quantity + 1)),
+                  onRemove: _busy ? null : () => _change((client, visitor) => client.cartRemove(visitor, item.id)),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
               ],
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                child: coupon != null
-                    ? Row(
-                        children: [
-                          Expanded(child: Text('Coupon $coupon applied', style: theme.textTheme.bodyMedium)),
-                          TextButton(
-                            onPressed: _busy ? null : () => _change((client, visitor) => client.cartRemoveCoupon(visitor)),
-                            child: const Text('Remove'),
-                          ),
-                        ],
-                      )
-                    : Row(
-                        spacing: 8,
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _coupon,
-                              textCapitalization: TextCapitalization.characters,
-                              onSubmitted: (_) => _applyCoupon(),
-                              decoration: const InputDecoration(
-                                hintText: 'Coupon code',
-                                border: OutlineInputBorder(),
-                                isDense: true,
-                              ),
-                            ),
-                          ),
-                          OutlinedButton(onPressed: _busy ? null : _applyCoupon, child: const Text('Apply')),
-                        ],
-                      ),
+                child: CouponField(
+                  coupon: coupon,
+                  controller: _coupon,
+                  onApply: _busy ? null : _applyCoupon,
+                  onRemove: _busy ? null : () => _change((client, visitor) => client.cartRemoveCoupon(visitor)),
+                ),
               ),
               if (_note != null)
                 Padding(
@@ -282,24 +217,11 @@ class _CartPageState extends State<CartPage> {
           top: false,
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-            child: Row(
-              spacing: 8,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('Subtotal', style: theme.textTheme.bodySmall),
-                      Text(Money.amount(cart.subtotal, currency: currency), style: theme.textTheme.titleMedium),
-                    ],
-                  ),
-                ),
-                TextButton(
-                  onPressed: _busy ? null : () => _change((client, visitor) => client.cartClear(visitor)),
-                  child: const Text('Clear'),
-                ),
-                FilledButton(onPressed: _busy ? null : _checkout, child: const Text('Checkout')),
-              ],
+            child: CartSummaryBar(
+              subtotal: cart.subtotal,
+              currency: currency,
+              onClear: _busy ? null : () => _change((client, visitor) => client.cartClear(visitor)),
+              onCheckout: _busy ? null : _checkout,
             ),
           ),
         ),

@@ -1,0 +1,2 @@
+<!-- The products picked to compare, along the bottom, with Compare and Clear. -->
+<bd-compare-bar data-store-href="/store"></bd-compare-bar>

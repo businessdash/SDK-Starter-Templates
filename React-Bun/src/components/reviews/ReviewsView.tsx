@@ -1,17 +1,10 @@
 import type { ReactNode } from "react";
 
 import { BdLink } from "../bd-link";
-import {
-	formatReviewDate,
-	platformName,
-	reviewerInitial,
-	reviewerName,
-	reviewLink,
-	reviewStars,
-	safeImage,
-	sourceLabel,
-	type WallReview,
-} from "./reviews";
+import { RatingSummary } from "./RatingSummary";
+import { ReviewCard } from "./ReviewCard";
+import { ReviewFilter } from "./ReviewFilter";
+import { sourceLabel } from "./reviews";
 import type { ReviewsPageData } from "./reviews-page";
 
 /**
@@ -19,6 +12,9 @@ import type { ReviewsPageData } from "./reviews-page";
  * (`?source=`), each review with its photos, Verified and a link to it on
  * Google or Yelp, and "Show more" (`?shown=`). `writer` is the
  * <ReviewWriter> wired to this framework's way of sending.
+ *
+ * It's built from <RatingSummary>, <ReviewFilter> and <ReviewCard>. Use
+ * this whole, or lay them out your own way on your own reviews page.
  */
 export function ReviewsView({
 	data,
@@ -27,8 +23,6 @@ export function ReviewsView({
 	data: ReviewsPageData;
 	writer: ReactNode;
 }) {
-	const { summary } = data;
-	const average = summary.average?.toFixed(1) ?? null;
 	return (
 		<>
 			<div className="bd-section__lead">
@@ -43,71 +37,8 @@ export function ReviewsView({
 				</div>
 			) : (
 				<>
-					<section
-						aria-label={average ? "Rating" : "Write a review"}
-						className="reviews-summary"
-					>
-						{average ? (
-							<>
-								<div className="reviews-summary__score">
-									<span className="reviews-summary__average">{average}</span>
-									<span
-										aria-label={`${average} out of 5`}
-										className="review-stars"
-										role="img"
-									>
-										{reviewStars(summary.average ?? 0)}
-									</span>
-									<span className="reviews-summary__count">
-										{summary.total} {summary.total === 1 ? "review" : "reviews"}
-									</span>
-								</div>
-								<ul className="reviews-bars">
-									{summary.histogram.map((row) => (
-										<li
-											aria-label={`${row.stars} stars: ${row.count}`}
-											key={row.stars}
-										>
-											<span>{row.stars} ★</span>
-											<span className="reviews-bars__track">
-												<span
-													className="reviews-bars__fill"
-													style={{ width: `${Math.round(row.share * 100)}%` }}
-												/>
-											</span>
-											<span>{row.count}</span>
-										</li>
-									))}
-								</ul>
-							</>
-						) : null}
-						<div className="reviews-summary__write">{writer}</div>
-					</section>
-
-					{data.sources.length > 1 ? (
-						<nav aria-label="Platform">
-							<ul className="reviews-filter">
-								<li>
-									<BdLink
-										aria-current={data.source ? "false" : "true"}
-										href="/reviews"
-									>
-										All
-									</BdLink>
-								</li>
-								{data.sources.map((source) => (
-									<li key={source}>
-										<BdLink
-											aria-current={data.source === source ? "true" : "false"}
-											href={`/reviews?source=${source}`}
-										>
-											{sourceLabel(source)}
-										</BdLink>
-									</li>
-								))}
-							</ul>
-						</nav>
-					) : null}
+					<RatingSummary summary={data.summary} writer={writer} />
+					<ReviewFilter source={data.source} sources={data.sources} />
 
 					{data.reviews.length === 0 ? (
 						<p className="reviews-empty">
@@ -134,78 +65,5 @@ export function ReviewsView({
 				</>
 			)}
 		</>
-	);
-}
-
-function ReviewCard({ review, index }: { review: WallReview; index: number }) {
-	const avatar = safeImage(review.reviewerImageUrl);
-	const platform = platformName(review.source);
-	const link = reviewLink(review);
-	const photos = (review.photos ?? [])
-		.map(safeImage)
-		.filter((p): p is string => p !== null);
-	return (
-		<li className="review-card" id={`review-${index}`}>
-			<div className="review-card__head">
-				{avatar ? (
-					<img
-						alt=""
-						className="review-card__avatar"
-						loading="lazy"
-						src={avatar}
-					/>
-				) : (
-					<span aria-hidden="true" className="review-card__avatar">
-						{reviewerInitial(review)}
-					</span>
-				)}
-				<div>
-					<p className="review-card__name">{reviewerName(review)}</p>
-					<p className="review-card__meta">
-						<span
-							aria-label={`${review.rating} out of 5`}
-							className="review-stars"
-							role="img"
-						>
-							{reviewStars(review.rating)}
-						</span>{" "}
-						· {formatReviewDate(review.timeCreated)}
-					</p>
-				</div>
-			</div>
-			<p className="review-card__text">{review.text}</p>
-			{photos.length ? (
-				<ul
-					aria-label="Photos from the reviewer"
-					className="review-card__photos"
-				>
-					{photos.map((photo) => (
-						<li key={photo}>
-							<img alt="" loading="lazy" src={photo} />
-						</li>
-					))}
-				</ul>
-			) : null}
-			{platform || review.verified ? (
-				<p className="review-card__foot">
-					{platform ? (
-						<span className="review-card__platform">{platform}</span>
-					) : null}
-					{review.verified ? (
-						<span className="review-card__verified">✓ Verified</span>
-					) : null}
-					{link && platform ? (
-						<a
-							className="review-card__link"
-							href={link}
-							rel="noopener noreferrer"
-							target="_blank"
-						>
-							Read on {platform}
-						</a>
-					) : null}
-				</p>
-			) : null}
-		</li>
 	);
 }

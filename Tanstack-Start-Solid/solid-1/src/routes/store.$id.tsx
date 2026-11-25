@@ -1,18 +1,18 @@
 // [bd-file:store]
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { Match, Switch } from "solid-js";
+import { Match, Show, Switch } from "solid-js";
 
+import { ProductDetail } from "../components/bd/shop/ProductDetail";
 import { StoreNav } from "../components/bd/StoreNav";
-import { elementHtml, escapeHtml } from "../lib/bd-elements";
 import { getCartCount, getProductPage } from "../lib/bd-shop-fns";
 
 /**
  * One product. The loader reads the product, its reviews, add-ons and
- * related products on the server, and `<bd-product>` (src/lib/shop/) draws
- * the page from that data: option photos, option and size buttons, the price
- * for what's chosen, add to cart (POST /api/bd/cart/add), save, compare,
- * share, add-ons, reviews, related and recently viewed. ?reviews=20 shows
- * more reviews.
+ * related products on the server, and `<ProductDetail>`
+ * (src/components/bd/shop/) draws the page from its parts: option photos,
+ * option and size buttons, the price for what's chosen, add to cart (POST
+ * /api/bd/cart/add), save, compare, share, add-ons, reviews, related and
+ * recently viewed. ?reviews=20 shows more reviews.
  */
 export const Route = createFileRoute("/store/$id")({
 	component: StoreDetail,
@@ -53,33 +53,26 @@ function StoreDetail() {
 		return p.ok ? null : p.reason;
 	};
 
-	/** `<bd-product>` with its data, and what shows without JavaScript. */
-	const productHtml = () => {
-		const p = page();
-		if (!p.ok) return "";
-		const { product } = p.data;
-		const description =
-			typeof product.description === "string" ? product.description : "";
-		return elementHtml(
-			"bd-product",
-			{
-				"data-add-url": "/api/bd/cart/add",
-				"data-cart-href": "/store/cart",
-				"data-contact-href": "/#contact",
-			},
-			p.data,
-			// Shown without JavaScript; the element replaces it when it draws.
-			`<noscript><h1>${escapeHtml(product.name)}</h1>${
-				description ? `<p>${escapeHtml(description)}</p>` : ""
-			}<p>Turn on JavaScript to choose options and add this to your cart.</p></noscript>`,
-		);
-	};
-
 	return (
 		<>
 			<StoreNav cartCount={loaded().cartCount} />
 			<main class="bd-page">
-				<Switch fallback={<div innerHTML={productHtml()} />}>
+				<Switch
+					fallback={
+						// Keyed: another product draws a fresh page, so its elements start over.
+						<Show keyed when={page().ok && page()}>
+							{(p) =>
+								p.ok && (
+									<ProductDetail
+										cartHref="/store/cart"
+										contactHref="/#contact"
+										data={p.data}
+									/>
+								)
+							}
+						</Show>
+					}
+				>
 					<Match when={reason() === "suspended"}>
 						<div class="bd-empty">
 							The store is temporarily unavailable. Please check back soon.

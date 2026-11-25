@@ -1,3 +1,4 @@
+// [bd-file:tailwind]
 {
 	"files.associations": {
 		"*.css": "tailwindcss"

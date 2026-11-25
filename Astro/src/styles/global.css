@@ -82,61 +82,66 @@
 	}
 }
 
-* {
-	box-sizing: border-box;
-}
+/* Element defaults (and the ones scoped with :where(), which adds no
+   specificity) sit in the cascade's "base" layer, so any class you put on
+   the element, your own or a utility framework's, overrides them. */
+@layer base {
+	* {
+		box-sizing: border-box;
+	}
 
-body {
-	margin: 0;
-	font-family: var(--sans);
-	color: var(--text);
-}
+	body {
+		margin: 0;
+		font-family: var(--sans);
+		color: var(--text);
+	}
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-	font-family: var(--heading);
-	color: var(--title);
-	letter-spacing: -0.015em;
-	line-height: 1.15;
-	margin: 0;
-}
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		font-family: var(--heading);
+		color: var(--title);
+		letter-spacing: -0.015em;
+		line-height: 1.15;
+		margin: 0;
+	}
 
-p {
-	margin: 0;
-	color: var(--text);
-}
+	p {
+		margin: 0;
+		color: var(--text);
+	}
 
-a {
-	color: var(--link);
-	text-decoration: none;
-	border-bottom: 1px solid transparent;
-	transition: border-color 0.15s ease, color 0.15s ease;
-}
+	a {
+		color: var(--link);
+		text-decoration: none;
+		border-bottom: 1px solid transparent;
+		transition: border-color 0.15s ease, color 0.15s ease;
+	}
 
-a:hover {
-	border-bottom-color: currentColor;
-}
+	a:hover {
+		border-bottom-color: currentColor;
+	}
 
-button {
-	font: inherit;
-	cursor: pointer;
-}
+	button {
+		font: inherit;
+		cursor: pointer;
+	}
 
-input,
-textarea,
-select {
-	font: inherit;
-	color: inherit;
-}
+	input,
+	textarea,
+	select {
+		font: inherit;
+		color: inherit;
+	}
 
-img {
-	display: block;
-	max-width: 100%;
-	height: auto;
+	img {
+		display: block;
+		max-width: 100%;
+		height: auto;
+	}
 }
 
 /* Common card primitive — used by Services, Gallery tiles, Blog posts. */
@@ -299,14 +304,18 @@ img {
 	text-align: center;
 	border: 1px dashed var(--border-strong);
 	border-radius: 1rem;
+	/* An error can quote a long URL; it breaks rather than widen the page. */
+	overflow-wrap: anywhere;
 }
 /* App-level layout — section components style themselves inline
    against the shared tokens in `index.css`. Keep this file thin so
    the same component set drops cleanly into the other framework
    starters without bringing along app-specific CSS. */
 
-main {
-	display: block;
+@layer base {
+	main {
+		display: block;
+	}
 }
 
 .app-header {

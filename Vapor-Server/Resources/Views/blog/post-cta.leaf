@@ -1,0 +1,7 @@
+<!-- The post's call to action, when it has one. -->
+#if(hasCTA):
+  <aside class="bd-card post__cta">
+    #if(hasCTADescription):<p>#(ctaDescription)</p>#endif
+    <a class="bd-btn" href="#(ctaHref)">#(ctaLabel)</a>
+  </aside>
+#endif

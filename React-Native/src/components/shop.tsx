@@ -1,4 +1,5 @@
 import { Link } from 'expo-router'
+import type { ReactNode } from 'react'
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 import { cents } from '@/bd/money'
@@ -57,6 +58,26 @@ export function Chip({
   )
 }
 
+/** A row of chips that scrolls sideways when it's too wide. */
+export function ChipRow({ children }: { children: ReactNode }) {
+  return (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+      {children}
+    </ScrollView>
+  )
+}
+
+/** A title, what to do next, and room for a button: no products, no posts. */
+export function EmptyNote({ title, detail, children }: { title: string; detail?: string; children?: ReactNode }) {
+  return (
+    <View style={styles.empty}>
+      <Text style={styles.sectionTitle}>{title}</Text>
+      {detail ? <Text style={[styles.muted, { textAlign: 'center' }]}>{detail}</Text> : null}
+      {children}
+    </View>
+  )
+}
+
 /** A product in the store's listing (`storefront.listProductsWithMeta`). */
 export type ListedProduct = {
   id: string
@@ -96,9 +117,9 @@ export function ProductCard({ product, width }: { product: ListedProduct; width:
               <Text style={styles.noImage}>No image</Text>
             )}
             <View style={styles.badges}>
-              {product.isBestSeller ? <Badge label="Best seller" /> : null}
-              {product.isNew ? <Badge label="New" /> : null}
-              {product.isOnSale ? <Badge label="Sale" sale /> : null}
+              {product.isBestSeller ? <ProductBadge label="Best seller" /> : null}
+              {product.isNew ? <ProductBadge label="New" /> : null}
+              {product.isOnSale ? <ProductBadge label="Sale" sale /> : null}
             </View>
           </View>
           <View style={styles.cardBody}>
@@ -132,7 +153,8 @@ export function ProductCard({ product, width }: { product: ListedProduct; width:
   )
 }
 
-function Badge({ label, sale }: { label: string; sale?: boolean }) {
+/** A small label on a product card: Best seller, New, Sale. */
+export function ProductBadge({ label, sale }: { label: string; sale?: boolean }) {
   return (
     <Text style={[styles.badge, sale && { backgroundColor: shop.sale, color: '#fff' }]}>{label}</Text>
   )
@@ -280,4 +302,5 @@ export const styles = StyleSheet.create({
   railName: { fontSize: 13, fontWeight: '600', color: shop.text },
   strip: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: shop.soft },
   stripRating: { fontWeight: '700', color: shop.text },
+  empty: { padding: 32, gap: 8, alignItems: 'center' },
 })

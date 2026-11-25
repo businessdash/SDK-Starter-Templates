@@ -158,7 +158,7 @@
 	line-height: 1.25;
 }
 /* Sizes, spacing and bullets as a browser draws them by default, stated
-   here so a CSS reset (Tailwind's, for one) doesn't flatten the post. */
+   here so a CSS reset that zeroes them doesn't flatten the post. */
 .post__body h2 {
 	font-size: 1.5em;
 	font-weight: 700;

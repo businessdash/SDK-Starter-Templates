@@ -76,6 +76,7 @@ import { renderFooter, renderHeader } from "./src/sections/header";
 import { renderHero } from "./src/sections/hero";
 import { renderServices } from "./src/sections/services";
 import { handleSubscribe } from "./src/sections/subscribe";
+import { tailwindCss } from "./src/tailwind"; // [bd-line:tailwind]
 
 const PORT = Number(process.env["PORT"] ?? 3000);
 
@@ -245,6 +246,7 @@ const server = Bun.serve({
 
 		// SDK forms stylesheet (served from node_modules; <link>ed on form pages).
 		if (method === "GET" && pathname === "/bd-forms.css") return serveFormsCss();
+		if (method === "GET" && pathname === "/tailwind.css") return tailwindCss(); // [bd-line:tailwind]
 		// The sign-in screen on /my-account, rendered here (src/sign-in.ts).
 		if (method === "GET" && pathname === "/bd-sign-in.css") return signInCss();
 		if (method === "POST" && pathname === "/my-account/sign-in/check") return handleSignInCheck(req);

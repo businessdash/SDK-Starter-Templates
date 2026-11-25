@@ -3,7 +3,7 @@ import { mdsvex } from 'mdsvex';
 import adapter from '@sveltejs/adapter-auto';
 
 import { paraglideVitePlugin } from '@inlang/paraglide-js';
-import tailwindcss from '@tailwindcss/vite';
+import tailwindcss from '@tailwindcss/vite'; // [bd-line:tailwind]
 import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import { sveltekit } from '@sveltejs/kit/vite';
@@ -14,7 +14,7 @@ const dirname = import.meta.dirname;
 // More info at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon
 export default defineConfig({
 	plugins: [
-		tailwindcss(),
+		tailwindcss(), // [bd-line:tailwind]
 		sveltekit({
 			compilerOptions: {
 				// Force runes mode for the project, except for libraries. Can be removed in svelte 6.

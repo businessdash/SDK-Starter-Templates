@@ -1,0 +1,13 @@
+<!-- "You may also like": a row of small product cards. -->
+#if(detail.hasRelated):
+  <section class="product-rail">
+    <h2 class="product-rail__title">You may also like</h2>
+    <ul class="product-rail__row">
+      #for(card in detail.related):
+        <li>
+          <a class="bd-card product-rail__card" href="#(card.href)">#if(card.hasImage):<img alt="" loading="lazy" referrerpolicy="no-referrer" src="#(card.image)">#else:<span aria-hidden="true" class="product-rail__noimg"></span>#endif<span class="product-rail__name">#(card.name)</span>#if(card.hasPrice):<span class="product-rail__price">#(card.price)</span>#endif</a>
+        </li>
+      #endfor
+    </ul>
+  </section>
+#endif

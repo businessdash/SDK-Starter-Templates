@@ -5,22 +5,33 @@ import SwiftUI
 /// over all of them with a stars breakdown, a platform filter, each review
 /// with its photos and a link to it on its own site, more on demand, and
 /// writing one when signed in.
-struct ReviewsView: View {
+///
+/// It's laid out from parts: `ReviewSummaryCard`, `WriteReviewButton`,
+/// `ReviewSourceFilter`, a `ReviewRow` per review, and `ReviewWriter`.
+public struct ReviewsView: View {
     @Environment(BdEnvironment.self) private var bd
     @State private var model = ReviewsViewModel()
     @State private var writing = false
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         LoadableView(state: model.state) { page in
             List {
                 Section {
                     if let summary = model.summary, summary.rating != nil {
                         ReviewSummaryCard(summary: summary)
                     }
-                    writeButton
+                    WriteReviewButton(
+                        canWrite: bd.portal != nil,
+                        onWrite: { writing = true },
+                        onSignIn: { bd.tab = .account }
+                    )
                 }
                 if model.sources.count > 1 {
-                    Section { sourceFilter }
+                    Section {
+                        ReviewSourceFilter(sources: model.sources, selected: model.source) { model.source = $0 }
+                    }
                 }
                 Section {
                     if page.reviews.isEmpty {
@@ -55,35 +66,57 @@ struct ReviewsView: View {
         }
         .refreshable { await model.load() }
     }
+}
 
-    @ViewBuilder private var writeButton: some View {
-        if bd.portal != nil {
-            Button {
-                writing = true
-            } label: {
+/// Write a review; signed out, Sign in to write a review.
+public struct WriteReviewButton: View {
+    public let canWrite: Bool
+    public let onWrite: () -> Void
+    public let onSignIn: () -> Void
+
+    public init(canWrite: Bool, onWrite: @escaping () -> Void, onSignIn: @escaping () -> Void) {
+        self.canWrite = canWrite
+        self.onWrite = onWrite
+        self.onSignIn = onSignIn
+    }
+
+    public var body: some View {
+        if canWrite {
+            Button(action: onWrite) {
                 Label("Write a review", systemImage: "square.and.pencil")
             }
         } else {
-            Button {
-                bd.tab = .account
-            } label: {
+            Button(action: onSignIn) {
                 Label("Sign in to write a review", systemImage: "person.crop.circle")
             }
         }
     }
+}
 
-    private var sourceFilter: some View {
+/// All, then a chip per platform (Google, Yelp…).
+public struct ReviewSourceFilter: View {
+    public let sources: [String]
+    public let selected: String?
+    public let onSelect: (String?) -> Void
+
+    public init(sources: [String], selected: String?, onSelect: @escaping (String?) -> Void) {
+        self.sources = sources
+        self.selected = selected
+        self.onSelect = onSelect
+    }
+
+    public var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 6) {
-                filterChip("All", on: model.source == nil) { model.source = nil }
-                ForEach(model.sources, id: \.self) { source in
-                    filterChip(ReviewSource.label(source), on: model.source == source) { model.source = source }
+                chip("All", on: selected == nil) { onSelect(nil) }
+                ForEach(sources, id: \.self) { source in
+                    chip(ReviewSource.label(source), on: selected == source) { onSelect(source) }
                 }
             }
         }
     }
 
-    private func filterChip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
+    private func chip(_ title: String, on: Bool, action: @escaping () -> Void) -> some View {
         Button(title, action: action)
             .buttonStyle(.bordered)
             .buttonBorderShape(.capsule)
@@ -93,10 +126,14 @@ struct ReviewsView: View {
 }
 
 /// The average, the count, and a bar for each star.
-struct ReviewSummaryCard: View {
-    let summary: ReviewSummary
+public struct ReviewSummaryCard: View {
+    public let summary: ReviewSummary
 
-    var body: some View {
+    public init(summary: ReviewSummary) {
+        self.summary = summary
+    }
+
+    public var body: some View {
         HStack(alignment: .center, spacing: 20) {
             VStack(spacing: 4) {
                 Text(String(format: "%.1f", summary.rating ?? 0))
@@ -128,10 +165,14 @@ struct ReviewSummaryCard: View {
 
 /// One review: who, the stars, when, where it was posted, the words, the
 /// reviewer's photos, and a link to it on its own site.
-struct ReviewRow: View {
-    let review: Review
+public struct ReviewRow: View {
+    public let review: Review
 
-    var body: some View {
+    public init(review: Review) {
+        self.review = review
+    }
+
+    public var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 10) {
                 avatar
@@ -207,12 +248,14 @@ struct ReviewRow: View {
 }
 
 /// Stars, a title and the review, sent for the business to approve.
-struct ReviewWriter: View {
+public struct ReviewWriter: View {
     @Environment(BdEnvironment.self) private var bd
     @Environment(\.dismiss) private var dismiss
     @State private var model = ReviewWriterModel()
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         @Bindable var model = model
         NavigationStack {
             Form {
@@ -271,10 +314,14 @@ struct ReviewWriter: View {
 }
 
 /// "★ 4.6 · 128 reviews ›" at the top of the store, opening the reviews.
-struct ReviewStrip: View {
-    let summary: ReviewSummary
+public struct ReviewStrip: View {
+    public let summary: ReviewSummary
 
-    var body: some View {
+    public init(summary: ReviewSummary) {
+        self.summary = summary
+    }
+
+    public var body: some View {
         if let rating = summary.rating, let total = summary.totalCount, total > 0 {
             NavigationLink {
                 ReviewsView()

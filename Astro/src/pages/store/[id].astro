@@ -4,18 +4,19 @@
  * One product: photos that follow the chosen option, option and size
  * buttons, the price for what's chosen, add to cart, save and compare,
  * share, details, add-ons, reviews, related products and what was viewed
- * before. The server loads it all here and `<bd-product>` (see
- * `src/lib/bd-shop/shop-elements.ts`) draws the page from that data; adding
- * to the cart posts to `/api/bd/cart/add`. More reviews: ?reviews=20.
+ * before. The server loads it all here and `<ProductDetail>` lays the page
+ * out from the shop's parts (`src/components/shop/`); adding to the cart
+ * posts to `/api/bd/cart/add`. More reviews: ?reviews=20.
  *
  * Suspension-aware (503) and unconfigured-safe.
  */
 import "../../styles/bd-shop.css";
 
+import ProductDetail from "../../components/shop/ProductDetail.astro";
 import StoreNav from "../../components/StoreNav.astro";
 import Layout from "../../layouts/Layout.astro";
 import { bd } from "../../lib/bd";
-import type { ProductPageData } from "../../lib/bd-shop/shop-elements";
+import type { ProductPageData } from "../../lib/bd-shop/shop";
 import {
 	getStoreProductAddons,
 	getStoreProductReviews,
@@ -68,8 +69,6 @@ if (isStoreConfigured() && !data) Astro.response.status = 404;
 const product = data?.product;
 const description = typeof product?.description === "string" && product.description ? product.description : null;
 const heroImage = product?.images?.[0] ?? null;
-// `<` written as <, so the JSON can't close the script tag early.
-const json = data ? JSON.stringify(data).replace(/</g, "\\u003c") : "";
 ---
 
 <Layout
@@ -87,14 +86,7 @@ const json = data ? JSON.stringify(data).replace(/</g, "\\u003c") : "";
 					That product isn't available. <a href="/store">Browse the store</a>
 				</div>
 			) : (
-				<bd-product data-add-url="/api/bd/cart/add" data-contact-href="/#contact">
-					<script is:inline type="application/json" set:html={json} />
-					<noscript>
-						<h1>{product.name}</h1>
-						{description ? <p>{description}</p> : null}
-						<p>Turn on JavaScript to choose options and add this to your cart.</p>
-					</noscript>
-				</bd-product>
+				<ProductDetail cartHref="/store/cart" contactHref="/#contact" data={data} />
 			)
 		}
 	</div>

@@ -1,0 +1,25 @@
+---
+// [bd-file:store]
+/** Clear cart and Checkout; the cart page's script wires data-clear and data-checkout. */
+---
+
+<div class="cart-actions">
+	<button class="cart-item__remove" data-clear type="button">Clear cart</button>
+	<button class="bd-btn" data-checkout type="button">Checkout</button>
+</div>
+
+<style>
+	.cart-actions {
+		display: flex;
+		justify-content: space-between;
+		align-items: center;
+	}
+	.cart-item__remove {
+		background: none;
+		border: none;
+		color: var(--danger);
+		font-size: 0.8rem;
+		padding: 0;
+		text-decoration: underline;
+	}
+</style>

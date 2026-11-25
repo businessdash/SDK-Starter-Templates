@@ -1,13 +1,17 @@
 import BusinessDashKit
 import SwiftUI
 
-struct CartView: View {
+/// The cart: a `CartLine` per item, then the `CartSummary` with Checkout
+/// (StoreParts.swift).
+public struct CartView: View {
     @Environment(BdEnvironment.self) private var bd
     @Environment(\.openURL) private var openURL
 
     @State private var model = CartViewModel()
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         LoadableView(state: model.state) { snapshot in
             List {
                 if snapshot.isEmpty {
@@ -15,32 +19,18 @@ struct CartView: View {
                 } else {
                     Section {
                         ForEach(snapshot.items) { item in
-                            HStack {
-                                VStack(alignment: .leading) {
-                                    Text(item.title)
-                                    // Cart lines arrive DECIMAL, unlike
-                                    // product prices. Two helpers, on purpose.
-                                    Text("\(Money.amount(item.unitPrice, currency: snapshot.currency)) each")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                                Spacer()
-                                Stepper("\(item.quantity)", value: quantityBinding(for: item), in: 0...99)
-                                    .labelsHidden()
-                                Text("\(item.quantity)").monospacedDigit()
-                            }
+                            CartLine(item: item, currency: snapshot.currency, quantity: quantityBinding(for: item))
                         }
                     }
 
                     Section {
-                        LabeledContent("Subtotal", value: Money.amount(snapshot.subtotal, currency: snapshot.currency))
-
-                        Button {
+                        CartSummary(
+                            subtotal: snapshot.subtotal,
+                            currency: snapshot.currency,
+                            isCheckingOut: model.isCheckingOut
+                        ) {
                             Task { await checkout() }
-                        } label: {
-                            if model.isCheckingOut { ProgressView() } else { Text("Checkout") }
                         }
-                        .disabled(model.isCheckingOut)
                     }
                 }
             }

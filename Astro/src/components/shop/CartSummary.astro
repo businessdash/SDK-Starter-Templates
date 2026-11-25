@@ -1,0 +1,26 @@
+---
+// [bd-file:store]
+/** The subtotal (dollars); the cart page's script updates data-cart-subtotal. */
+import { cartMoney } from "./cart-money";
+
+interface Props {
+	subtotal: number;
+	currency: string;
+}
+const { subtotal, currency } = Astro.props;
+---
+
+<div class="cart-total">
+	<span>Subtotal</span>
+	<strong data-cart-subtotal>{cartMoney(subtotal, currency)}</strong>
+</div>
+
+<style>
+	.cart-total {
+		display: flex;
+		justify-content: space-between;
+		font-size: 1.1rem;
+		border-top: 1px solid var(--border);
+		padding-top: 1rem;
+	}
+</style>

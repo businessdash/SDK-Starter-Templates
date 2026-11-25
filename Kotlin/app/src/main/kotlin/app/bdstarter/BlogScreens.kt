@@ -3,7 +3,6 @@ package app.bdstarter
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,7 +11,6 @@ import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -24,20 +22,12 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.FavoriteBorder
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -53,10 +43,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
@@ -82,7 +69,6 @@ import app.bd.BlogPost
 import app.bd.BlogPostDetail
 import app.bd.PostBlock
 import app.bd.PostBlocks
-import app.bd.PostHtml
 import app.bd.PostLikes
 import app.bd.PostRun
 import app.bd.blogCategories
@@ -96,7 +82,6 @@ import app.bd.togglePostLike
 import kotlinx.coroutines.launch
 
 private const val PAGE_SIZE = 12
-private const val COMMENT_MAX = 5000
 
 /**
  * The blog: categories, tags, pinned posts first, and "Older posts". A tag
@@ -161,23 +146,9 @@ fun BlogScreen(modifier: Modifier = Modifier) {
         }
         val shown = posts
         LazyColumn(Modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 24.dp)) {
-            if (categories.isNotEmpty()) {
-                item(key = "categories") {
-                    Chips {
-                        FilterChip(selected = categoryId == null, onClick = { categoryId = null }, label = { Text("All") })
-                        for (category in categories) {
-                            FilterChip(selected = categoryId == category.id, onClick = { categoryId = category.id }, label = { Text(category.name) })
-                        }
-                    }
-                }
-            }
-            if (tags.isNotEmpty()) {
-                item(key = "tags") {
-                    Chips {
-                        for (name in tags) {
-                            FilterChip(selected = tag == name, onClick = { tag = if (tag == name) null else name }, label = { Text("#$name") })
-                        }
-                    }
+            if (categories.isNotEmpty() || tags.isNotEmpty()) {
+                item(key = "filters") {
+                    BlogFilters(categories, tags, categoryId, tag, onCategory = { categoryId = it }, onTag = { tag = it })
                 }
             }
             active?.description?.takeIf { it.isNotEmpty() }?.let { description ->
@@ -191,12 +162,12 @@ fun BlogScreen(modifier: Modifier = Modifier) {
                 }
             }
             when {
-                failed -> item(key = "failed") { Empty("The blog isn't available right now. Please check back soon.") }
+                failed -> item(key = "failed") { EmptyNote("The blog isn't available right now. Please check back soon.") }
                 shown == null -> item(key = "loading") {
                     Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
                 }
                 shown.isEmpty() -> item(key = "empty") {
-                    Empty("No posts here yet", if (categoryId != null || tag != null) "Try another topic." else null)
+                    EmptyNote("No posts here yet", if (categoryId != null || tag != null) "Try another topic." else null)
                 }
                 else -> {
                     items(shown, key = { it.id }) { PostCard(it) }
@@ -210,50 +181,6 @@ fun BlogScreen(modifier: Modifier = Modifier) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun Chips(content: @Composable () -> Unit) {
-    Row(
-        Modifier.horizontalScroll(rememberScrollState()).padding(bottom = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) { content() }
-}
-
-@Composable
-private fun Empty(title: String, detail: String? = null) {
-    Column(
-        Modifier.fillMaxWidth().padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
-        detail?.let { Text(it, textAlign = TextAlign.Center) }
-    }
-}
-
-@Composable
-private fun PostCard(post: BlogPost) {
-    val app = LocalApp.current
-    Column(
-        Modifier
-            .padding(bottom = 20.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable { app.open(Route.Post(post.slug)) },
-        verticalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (!post.imageUrl.isNullOrEmpty()) {
-            Photo(post.imageUrl, Modifier.fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)))
-        }
-        if (post.isPinned) Text("Pinned", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-        Text(post.title, style = MaterialTheme.typography.titleMedium)
-        post.excerpt?.takeIf { it.isNotEmpty() }?.let { Text(it, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-        Text(
-            "${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read",
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
@@ -308,7 +235,7 @@ fun PostScreen(slug: String) {
         client ?: return
         val content = draft.trim()
         if (content.isEmpty()) return
-        if (content.length > COMMENT_MAX) {
+        if (content.length > POST_COMMENT_MAX) {
             note = "Comments are up to 5,000 characters." to false
             return
         }
@@ -349,134 +276,48 @@ fun PostScreen(slug: String) {
                 item(key = "head") {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(post.title, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            if (!post.authorAvatarUrl.isNullOrEmpty()) Photo(post.authorAvatarUrl, Modifier.size(24.dp).clip(CircleShape))
-                            post.authorName?.takeIf { it.isNotEmpty() }?.let { Text(it, style = MaterialTheme.typography.labelLarge) }
-                            Text(
-                                "${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        if (!post.imageUrl.isNullOrEmpty()) {
-                            Photo(post.imageUrl, Modifier.padding(top = 8.dp).fillMaxWidth().aspectRatio(16f / 9f).clip(RoundedCornerShape(12.dp)))
-                        }
+                        PostMeta(post)
+                        PostCover(post.imageUrl, Modifier.padding(top = 8.dp))
                         Spacer(Modifier.height(8.dp))
                     }
                 }
                 item(key = "body") {
-                    if (shown.isPaywalled) {
-                        Panel {
-                            Text("This post is for members.", style = MaterialTheme.typography.titleMedium)
-                            Button(onClick = { app.showTab(Tab.Account) }) { Text("Sign in to read it") }
-                        }
-                    } else {
-                        PostBody(blocks)
-                    }
+                    if (shown.isPaywalled) MembersOnly { app.showTab(Tab.Account) } else PostBody(blocks)
                 }
-                val cta = safeCta(post.ctaHref)
-                if (!post.ctaLabel.isNullOrEmpty() && cta != null) {
-                    item(key = "cta") {
-                        val uri = LocalUriHandler.current
-                        Panel(Modifier.padding(top = 16.dp)) {
-                            post.ctaDescription?.takeIf { it.isNotEmpty() }?.let { Text(it) }
-                            Button(onClick = { runCatching { uri.openUri(cta) } }) { Text(post.ctaLabel.orEmpty()) }
-                        }
-                    }
+                if (postCtaLink(post) != null) {
+                    item(key = "cta") { PostCta(post, Modifier.padding(top = 16.dp)) }
                 }
                 if (post.tags.isNotEmpty()) {
-                    item(key = "tags") {
-                        Text(
-                            post.tags.joinToString("  ") { "#$it" },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 16.dp),
-                        )
-                    }
+                    item(key = "tags") { PostTags(post.tags, Modifier.padding(top = 16.dp)) }
                 }
                 item(key = "likes") {
-                    val count = likes?.count ?: post.likes
-                    val liked = likes?.liked == true
                     HorizontalDivider(Modifier.padding(vertical = 20.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (token != null) {
-                            OutlinedButton(onClick = { toggleLike(token) }, enabled = !liking) {
-                                Icon(if (liked) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder, null, Modifier.size(18.dp))
-                                Text(if (liked) "Liked" else "Like", Modifier.padding(start = 8.dp))
-                            }
-                        } else {
-                            OutlinedButton(onClick = { app.showTab(Tab.Account) }) {
-                                Icon(Icons.Filled.FavoriteBorder, null, Modifier.size(18.dp))
-                                Text("Sign in to like", Modifier.padding(start = 8.dp))
-                            }
-                        }
-                        Text(
-                            "$count ${if (count == 1) "like" else "likes"}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
+                    LikeButton(
+                        signedIn = token != null,
+                        liked = likes?.liked == true,
+                        count = likes?.count ?: post.likes,
+                        liking = liking,
+                        onToggle = { token?.let { toggleLike(it) } },
+                        onSignIn = { app.showTab(Tab.Account) },
+                    )
                 }
                 item(key = "comment") {
-                    Column(Modifier.padding(top = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(
-                            if (comments.isNotEmpty()) "Comments (${comments.size})" else "Comments",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        if (token != null) {
-                            OutlinedTextField(
-                                value = draft,
-                                onValueChange = { if (it.length <= COMMENT_MAX) draft = it },
-                                placeholder = { Text("Add a comment") },
-                                minLines = 2,
-                                maxLines = 6,
-                                supportingText = { Text("${draft.length} / $COMMENT_MAX") },
-                                modifier = Modifier.fillMaxWidth().semantics { contentDescription = "Add a comment" },
-                            )
-                            Button(onClick = { postComment(token) }, enabled = !posting && draft.isNotBlank()) {
-                                Text(if (posting) "Posting…" else "Post comment")
-                            }
-                        } else {
-                            OutlinedButton(onClick = { app.showTab(Tab.Account) }) { Text("Sign in to comment") }
-                        }
-                        note?.let { (text, ok) ->
-                            Text(text, color = if (ok) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error)
-                        }
-                    }
+                    CommentForm(
+                        count = comments.size,
+                        signedIn = token != null,
+                        draft = draft,
+                        onDraftChange = { draft = it },
+                        posting = posting,
+                        note = note?.first,
+                        noteOk = note?.second ?: true,
+                        onPost = { token?.let { postComment(it) } },
+                        onSignIn = { app.showTab(Tab.Account) },
+                    )
                 }
-                items(comments, key = { "comment-${it.id}" }) { comment ->
-                    Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            listOf(comment.authorName?.takeIf { it.isNotEmpty() } ?: "Reader", PostHtml.date(comment.createdAt))
-                                .filter { it.isNotEmpty() }
-                                .joinToString(" · "),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Text(comment.content)
-                    }
-                }
+                items(comments, key = { "comment-${it.id}" }) { CommentRow(it) }
             }
         }
     }
-}
-
-/** A post's call to action opens a web or mail address only. */
-private fun safeCta(href: String?): String? {
-    val value = href?.trim().orEmpty()
-    if (app.bd.Reviews.safeWebUrl(value) != null) return value
-    return value.takeIf { Regex("^mailto:[^\\s]+", RegexOption.IGNORE_CASE).containsMatchIn(it) }
-}
-
-@Composable
-private fun Panel(modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) { content() }
 }
 
 /** A post's blocks as native text, lists, photos and tables. Links open in the browser or the mail and phone apps. */

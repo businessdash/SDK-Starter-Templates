@@ -1,4 +1,4 @@
-import tailwindcss from "@tailwindcss/vite";
+import tailwindcss from "@tailwindcss/vite"; // [bd-line:tailwind]
 import { devtools } from "@tanstack/devtools-vite";
 import { tanstackStart } from "@tanstack/solid-start/plugin/vite";
 import { nitro } from "nitro/vite";
@@ -15,7 +15,7 @@ export default defineConfig({
 	plugins: [
 		devtools(),
 		nitro(),
-		tailwindcss(),
+		tailwindcss(), // [bd-line:tailwind]
 		tanstackStart(),
 		solidPlugin({ ssr: true }),
 	],

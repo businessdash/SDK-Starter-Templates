@@ -1,34 +1,28 @@
 // [bd-file:store]
-import {
-	ChangeDetectionStrategy,
-	Component,
-	CUSTOM_ELEMENTS_SCHEMA,
-	PLATFORM_ID,
-	inject,
-	signal,
-} from "@angular/core";
+import { ChangeDetectionStrategy, Component, PLATFORM_ID, inject, signal } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { Title } from "@angular/platform-browser";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { bdApi } from "../lib/bd-api.client";
+import { ProductDetailComponent } from "../sections/shop/product-detail.component";
 import { StoreNavComponent } from "../sections/store-nav.component";
-import type { ProductPageData } from "../shop/shop-elements";
+import type { ProductPageData } from "../shop/shop";
 
 /** Reviews shown at first; each "Show more" adds this many (?reviews=20). */
 const REVIEWS_PAGE = 10;
 
 /**
  * One product. The browser loads the product, its reviews, add-ons and
- * related products, and `<bd-product>` (src/app/shop/shop-elements.ts) draws
- * the page from them: option photos, option and size buttons, the price for
- * what's chosen, add to cart (POST /api/bd/cart/add), save, compare, share.
+ * related products, and `<bd-product-detail>` lays the page out from the
+ * shop's parts (src/app/sections/shop/): option photos, option and size
+ * buttons, the price for what's chosen, add to cart (POST /api/bd/cart/add),
+ * save, compare, share. It's drawn afresh for each product (tracked by id).
  */
 @Component({
 	selector: "bd-product-detail-page",
 	changeDetection: ChangeDetectionStrategy.OnPush,
-	imports: [RouterLink, StoreNavComponent],
-	schemas: [CUSTOM_ELEMENTS_SCHEMA],
+	imports: [ProductDetailComponent, RouterLink, StoreNavComponent],
 	template: `
 		<bd-store-nav />
 		<div class="bd-page">
@@ -36,15 +30,13 @@ const REVIEWS_PAGE = 10;
 				<div class="bd-empty">
 					That product isn't available. <a routerLink="/store">Browse the store</a>
 				</div>
-			} @else if (!data()) {
+			} @else if (data(); as d) {
+				@for (page of [d]; track page.product.id) {
+					<bd-product-detail cartHref="/cart" contactHref="/#contact" [data]="page" />
+				}
+			} @else {
 				<p class="bd-loading">Loading…</p>
 			}
-			<bd-product
-				data-add-url="/api/bd/cart/add"
-				data-cart-href="/cart"
-				data-contact-href="/#contact"
-				[data]="data()"
-			/>
 		</div>
 	`,
 })

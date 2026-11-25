@@ -11,8 +11,25 @@
  * options and cart lines carry DOLLARS. Each value below says which.
  */
 
+import type {
+	StorefrontAddonsResponse,
+	StorefrontProductDetail,
+	StorefrontProductReviewsResponse,
+	StorefrontRelatedProductsResponse,
+} from "@businessdash/sdk/contracts";
+
 /** JSON from outside, as the fields read from it; each is checked before use. */
 type Fields<K extends string> = { readonly [P in K]?: unknown };
+
+/** What a product page is drawn from: the server gathers it in one go. */
+export type ProductPageData = {
+	product: StorefrontProductDetail;
+	reviews: StorefrontProductReviewsResponse | null;
+	addons: StorefrontAddonsResponse["items"];
+	related: StorefrontRelatedProductsResponse["items"];
+	/** The link that shows more reviews, or null when all are shown. */
+	moreReviewsHref: string | null;
+};
 
 // ── Product page ────────────────────────────────────────────────────
 
@@ -157,22 +174,49 @@ export function galleryFor(view: ProductView, variantId: string): string[] {
 
 const SIZE_ORDER = ["XXS", "2XS", "XS", "S", "SM", "M", "MD", "L", "LG", "XL", "2XL", "XXL", "3XL", "4XL"];
 
+/** One option group's choices, sizes in size order. */
+function groupOf(view: ProductView, title: ProductView["optionTitles"][number]): OptionGroup {
+	const values = view.optionValues.filter((option) => option.titleId === title.id);
+	if (/^sizes?$/i.test(title.title)) {
+		const rank = (v: string) => {
+			const i = SIZE_ORDER.indexOf(v.toUpperCase());
+			return i === -1 ? SIZE_ORDER.length : i;
+		};
+		values.sort((a, b) => rank(a.value) - rank(b.value));
+	}
+	return { id: title.id, title: title.title, values };
+}
+
 /** The option groups (Size, Colour…) that apply to a variant. */
 export function optionGroupsFor(view: ProductView, variantId: string): OptionGroup[] {
 	return view.optionTitles
 		.filter((title) => title.variantId === null || title.variantId === variantId)
-		.map((title) => {
-			const values = view.optionValues.filter((option) => option.titleId === title.id);
-			if (/^sizes?$/i.test(title.title)) {
-				const rank = (v: string) => {
-					const i = SIZE_ORDER.indexOf(v.toUpperCase());
-					return i === -1 ? SIZE_ORDER.length : i;
-				};
-				values.sort((a, b) => rank(a.value) - rank(b.value));
-			}
-			return { id: title.id, title: title.title, values };
-		})
+		.map((title) => groupOf(view, title))
 		.filter((group) => group.values.length > 0);
+}
+
+/**
+ * Every option group, with the variant it belongs to (null: every variant).
+ * A page drawn on the server draws them all; <bd-product-form> shows the
+ * ones for the chosen variant.
+ */
+export function allOptionGroups(view: ProductView): (OptionGroup & { variantId: string | null })[] {
+	return view.optionTitles
+		.map((title) => ({ ...groupOf(view, title), variantId: title.variantId }))
+		.filter((group) => group.values.length > 0);
+}
+
+/**
+ * The sets of photos a page drawn on the server draws: the product's (key
+ * ""), then one per variant with photos of its own. <bd-gallery> shows the
+ * chosen variant's set, or the product's.
+ */
+export function photoSets(view: ProductView): { variantId: string; photos: string[] }[] {
+	const own = [...new Set(view.variantImages.map((image) => image.variantId))].filter(Boolean);
+	return [
+		{ variantId: "", photos: view.images },
+		...own.map((variantId) => ({ variantId, photos: galleryFor(view, variantId) })),
+	];
 }
 
 export type Price = {
@@ -238,6 +282,30 @@ export function chosenOptions(
 		if (value) out[group.title] = value.value;
 	}
 	return Object.keys(out).length ? out : undefined;
+}
+
+/** The product as the saved lists keep it, priced for what's chosen. */
+export function productSummary(
+	view: ProductView,
+	variantId: string,
+	chosen: Record<string, string>,
+): SavedProduct {
+	const price = priceFor(view, variantId, chosen);
+	const start = price.amount ?? view.variants[0]?.price ?? null;
+	return {
+		id: view.id,
+		name: view.name,
+		image: view.images[0] ?? null,
+		priceCents: start != null ? Math.round(start * 100) : null,
+	};
+}
+
+/** A review's date, as "Mar 4, 2026" in the reader's language. */
+export function reviewDate(iso: string | null | undefined): string {
+	const date = iso ? new Date(iso) : null;
+	return date && !Number.isNaN(date.getTime())
+		? date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+		: "";
 }
 
 // ── Money ───────────────────────────────────────────────────────────

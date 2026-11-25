@@ -1,0 +1,35 @@
+---
+// [bd-file:store]
+/** Featured, Newest, Price either way, Top rated: applied as soon as it changes (the button is for no-JS). */
+import { keep, SORTS, sortOf } from "./store-filters";
+
+interface Props {
+	storeHref?: string;
+}
+const { storeHref = "/store" } = Astro.props;
+const params = Astro.url.searchParams;
+const sort = sortOf(params);
+---
+
+<form action={storeHref} class="store-sort" method="get">
+	<label for="store-sort">Sort</label>
+	<select class="bd-select" data-submit-on-change id="store-sort" name="sort">
+		{
+			SORTS.map((s) => (
+				<option selected={s.value === sort} value={s.value}>
+					{s.label}
+				</option>
+			))
+		}
+	</select>
+	{keep(params, "sort").map(([key, value]) => <input name={key} type="hidden" value={value} />)}
+	<noscript>
+		<button class="bd-btn bd-btn--ghost" type="submit">Sort</button>
+	</noscript>
+</form>
+
+<script>
+	for (const select of document.querySelectorAll<HTMLSelectElement>("select[data-submit-on-change]")) {
+		select.addEventListener("change", () => select.form?.requestSubmit());
+	}
+</script>

@@ -1,0 +1,11 @@
+<!-- One option group (Size, Colour…), `group`: a button per value. Groups that
+     belong to another variant start hidden; <bd-product-form> shows the chosen
+     variant's and names the chosen value beside the title. -->
+<fieldset class="choice"#if(group.hasForVariant): data-bd-for-variant="#(group.forVariant)"#endif data-bd-group="#(group.id)"#if(group.hidden): hidden#endif>
+  <legend class="bd-label">#(group.title)<span class="choice__picked" data-bd-picked hidden></span></legend>
+  <div class="choice__values">
+    #for(value in group.values):
+      <button aria-pressed="false" class="choice__value" data-bd-value="#(value.id)"#if(value.disabled): disabled title="Sold out"#endif type="button">#(value.value)</button>
+    #endfor
+  </div>
+</fieldset>

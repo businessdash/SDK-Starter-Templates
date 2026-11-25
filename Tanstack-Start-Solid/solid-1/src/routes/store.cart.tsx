@@ -3,7 +3,10 @@ import type { CartSnapshot } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
 
-import { formatMoney } from "../components/bd/money";
+import { CartActions } from "../components/bd/shop/CartActions";
+import { CartLine } from "../components/bd/shop/CartLine";
+import { CartSummary } from "../components/bd/shop/CartSummary";
+import { CouponForm } from "../components/bd/shop/CouponForm";
 import { StoreNav } from "../components/bd/StoreNav";
 import {
 	applyCartCoupon,
@@ -23,6 +26,9 @@ import {
  * re-render. "Checkout" starts a Stripe session and redirects. Cart amounts
  * are dollars. After each change the new item count goes to the store bar
  * as a `bd:cart-count` event.
+ *
+ * The page is laid out from the shop's parts (src/components/bd/shop/): a
+ * <CartLine> per item, <CouponForm>, <CartSummary> and <CartActions>.
  */
 export const Route = createFileRoute("/store/cart")({
 	component: CartView,
@@ -33,7 +39,6 @@ function CartView() {
 	const initial = Route.useLoaderData();
 	const [cart, setCart] = createSignal<CartSnapshot | null>(initial());
 	const [busy, setBusy] = createSignal(false);
-	const [coupon, setCoupon] = createSignal("");
 	const [error, setError] = createSignal<string | null>(null);
 
 	function apply(res: CartResult) {
@@ -57,10 +62,9 @@ function CartView() {
 		setBusy(true);
 		apply(await removeCartItem({ data: { itemId } }));
 	}
-	async function addCoupon() {
-		if (!coupon().trim()) return;
+	async function addCoupon(code: string) {
 		setBusy(true);
-		apply(await applyCartCoupon({ data: { code: coupon().trim() } }));
+		apply(await applyCartCoupon({ data: { code } }));
 	}
 	async function dropCoupon() {
 		setBusy(true);
@@ -110,132 +114,26 @@ function CartView() {
 						>
 							<For each={cart()?.items ?? []}>
 								{(item) => (
-									<div style="display: flex; align-items: center; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border);">
-										<Show when={item.productImage}>
-											<img
-												src={item.productImage ?? ""}
-												alt={item.productName ?? "Item"}
-												style="width: 64px; height: 64px; object-fit: cover; border-radius: 0.5rem;"
-											/>
-										</Show>
-										<div style="flex: 1;">
-											<div style="font-weight: 600; color: var(--title);">
-												{item.productName ?? "Item"}
-											</div>
-											<Show when={item.variantTitle}>
-												<div style="font-size: 0.82rem; color: var(--text-muted);">
-													{item.variantTitle}
-												</div>
-											</Show>
-											<div style="font-size: 0.85rem; color: var(--text-muted);">
-												{formatMoney(
-													Math.round(item.unitPrice * 100),
-													item.currency,
-												)}{" "}
-												each
-											</div>
-										</div>
-										<div style="display: flex; align-items: center; gap: 0.5rem;">
-											<button
-												type="button"
-												class="slot-button"
-												disabled={busy()}
-												onClick={() =>
-													setQty(item.id, Math.max(0, item.quantity - 1))
-												}
-											>
-												−
-											</button>
-											<span style="min-width: 1.5rem; text-align: center;">
-												{item.quantity}
-											</span>
-											<button
-												type="button"
-												class="slot-button"
-												disabled={busy()}
-												onClick={() => setQty(item.id, item.quantity + 1)}
-											>
-												+
-											</button>
-										</div>
-										<button
-											type="button"
-											class="bd-btn bd-btn--ghost"
-											disabled={busy()}
-											onClick={() => remove(item.id)}
-										>
-											Remove
-										</button>
-									</div>
+									<CartLine
+										disabled={busy()}
+										item={item}
+										onQuantity={(quantity) => setQty(item.id, quantity)}
+										onRemove={() => remove(item.id)}
+									/>
 								)}
 							</For>
 
-							<div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-								<div style="flex: 1;">
-									<label class="bd-label" for="coupon">
-										Coupon code
-									</label>
-									<input
-										id="coupon"
-										class="bd-input"
-										placeholder="SAVE10"
-										value={coupon()}
-										onInput={(e) => setCoupon(e.currentTarget.value)}
-									/>
-								</div>
-								<Show
-									when={cart()?.couponCode}
-									fallback={
-										<button
-											type="button"
-											class="bd-btn bd-btn--ghost"
-											disabled={busy()}
-											onClick={addCoupon}
-										>
-											Apply
-										</button>
-									}
-								>
-									<button
-										type="button"
-										class="bd-btn bd-btn--ghost"
-										disabled={busy()}
-										onClick={dropCoupon}
-									>
-										Remove {cart()?.couponCode}
-									</button>
-								</Show>
-							</div>
-
-							<div style="display: flex; justify-content: space-between; font-weight: 700; color: var(--title); font-size: 1.1rem; padding-top: 0.5rem;">
-								<span>Subtotal</span>
-								<span>
-									{formatMoney(
-										Math.round((cart()?.subtotal ?? 0) * 100),
-										cart()?.currency,
-									)}
-								</span>
-							</div>
-
-							<div style="display: flex; gap: 0.75rem;">
-								<button
-									type="button"
-									class="bd-btn"
-									style="flex: 1;"
-									disabled={busy()}
-									onClick={checkout}
-								>
-									{busy() ? "Working…" : "Checkout with Stripe"}
-								</button>
-								<button
-									type="button"
-									class="bd-btn bd-btn--ghost"
-									disabled={busy()}
-									onClick={empty}
-								>
-									Clear
-								</button>
-							</div>
+							<CouponForm
+								code={cart()?.couponCode}
+								disabled={busy()}
+								onApply={addCoupon}
+								onRemove={dropCoupon}
+							/>
+							<CartSummary
+								currency={cart()?.currency}
+								subtotal={cart()?.subtotal ?? 0}
+							/>
+							<CartActions busy={busy()} onCheckout={checkout} onClear={empty} />
 
 							<Show when={error()}>
 								<div style="color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;">

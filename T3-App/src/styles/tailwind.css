@@ -1,0 +1,25 @@
+/* [bd-file:tailwind] */
+/*
+ * Tailwind CSS, for your own markup: use its classes anywhere in src/.
+ * src/app/layout.tsx imports this file, and @tailwindcss/postcss builds it
+ * (postcss.config.js).
+ *
+ * The starter's pages, shop, blog and reviews style themselves (globals.css
+ * and the bd-*.css files) and don't use Tailwind, so they look the same with
+ * it or without. Preflight, Tailwind's reset, is left out because reset.css
+ * already does that job (it's adapted from Preflight).
+ *
+ * Tailwind's classes sit in a layer, so the starter's own CSS wins where both
+ * style the same thing. To restyle one of the starter's parts with Tailwind,
+ * swap its class names for Tailwind's in the component.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* font-sans is Geist, the font src/app/layout.tsx loads. */
+@theme {
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}

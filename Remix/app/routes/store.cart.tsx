@@ -1,5 +1,5 @@
 // [bd-file:store]
-import { Form, Link, useActionData, useLoaderData } from "react-router";
+import { Link, useActionData, useLoaderData } from "react-router";
 import { redirect } from "react-router";
 import type {
 	ActionFunctionArgs,
@@ -9,8 +9,9 @@ import type {
 
 import { SiteHeader } from "~/components/SiteHeader";
 import { StoreNav } from "~/components/StoreNav";
-// Cart amounts are dollars (not cents), so they are formatted as they are.
-import { formatDollars } from "~/components/shop/shop";
+import { CartLine } from "~/components/shop/CartLine";
+import { CartSummary } from "~/components/shop/CartSummary";
+import { CouponForm } from "~/components/shop/CouponForm";
 import {
 	applyCartCoupon,
 	clearCart,
@@ -91,6 +92,10 @@ export async function action({ request }: ActionFunctionArgs) {
 	return { ok: true as const, error: null };
 }
 
+/**
+ * The cart, laid out from the shop's parts: a <CartLine> per item,
+ * <CouponForm> and <CartSummary>. Their buttons post to `action` above.
+ */
 export default function CartPage() {
 	const { cart } = useLoaderData<typeof loader>();
 	const actionData = useActionData<typeof action>();
@@ -113,82 +118,13 @@ export default function CartPage() {
 						<>
 							<ul className="cart-list">
 								{cart.items.map((it) => (
-									<li className="cart-row" key={it.id}>
-										{it.image ? (
-											<img className="cart-row__img" src={it.image} alt={it.name} />
-										) : null}
-										<div className="cart-row__body">
-											<strong>{it.name}</strong>
-											{it.variantTitle ? (
-												<span className="muted"> · {it.variantTitle}</span>
-											) : null}
-										</div>
-										<Form method="post" className="cart-row__qty">
-											<input type="hidden" name="intent" value="update" />
-											<input type="hidden" name="itemId" value={it.id} />
-											<input
-												type="number"
-												name="quantity"
-												min={0}
-												defaultValue={it.quantity}
-												aria-label="Quantity"
-											/>
-											<button className="link-btn" type="submit">
-												Update
-											</button>
-										</Form>
-										<span className="price">
-											{formatDollars(it.lineTotal, cart.currency)}
-										</span>
-										<Form method="post">
-											<input type="hidden" name="intent" value="remove" />
-											<input type="hidden" name="itemId" value={it.id} />
-											<button className="link-btn link-btn--danger" type="submit">
-												Remove
-											</button>
-										</Form>
-									</li>
+									<CartLine currency={cart.currency} item={it} key={it.id} />
 								))}
 							</ul>
 
 							<div className="cart-foot">
-								{cart.couponCode ? (
-									<Form method="post" className="coupon">
-										<span className="muted">Coupon: {cart.couponCode}</span>
-										<input type="hidden" name="intent" value="remove-coupon" />
-										<button className="link-btn" type="submit">
-											Remove
-										</button>
-									</Form>
-								) : (
-									<Form method="post" className="coupon">
-										<input type="hidden" name="intent" value="apply-coupon" />
-										<input name="code" placeholder="Coupon code" aria-label="Coupon code" />
-										<button className="link-btn" type="submit">
-											Apply
-										</button>
-									</Form>
-								)}
-
-								<div className="cart-total">
-									<span>Subtotal</span>
-									<strong>{formatDollars(cart.subtotal, cart.currency)}</strong>
-								</div>
-
-								<div className="cart-actions">
-									<Form method="post">
-										<input type="hidden" name="intent" value="clear" />
-										<button className="link-btn" type="submit">
-											Clear cart
-										</button>
-									</Form>
-									<Form method="post">
-										<input type="hidden" name="intent" value="checkout" />
-										<button className="bd-btn" type="submit">
-											Checkout
-										</button>
-									</Form>
-								</div>
+								<CouponForm code={cart.couponCode} />
+								<CartSummary currency={cart.currency} subtotal={cart.subtotal} />
 							</div>
 						</>
 					)}

@@ -100,9 +100,13 @@ app/Livewire/         SignIn, BdForm, BdQuiz
 app/Support/Money.php cents vs decimal — see the note below
 app/Support/PostHtml.php    a post's HTML rebuilt from an allowlist, reading time, dates
 app/Support/CartVisitor.php the cart cookie, and the item count for the store bar
+app/Support/Shop.php        the product page's rules (option photos, prices, "from")
 config/bd.php       every knob, all server-side
 routes/web.php        the pages + the JSON and machine endpoints
 resources/views/      layout.blade.php, pages/, components/, livewire/, forms/, quiz/
+  components/shop/    the shop's parts, one Blade component each
+  components/blog/    the blog's parts
+  components/reviews/ the reviews' parts
 public/shop/          the shop and blog elements (plain ES modules, no build)
 public/bd-*.css       their styles: bd-pages (shared), bd-shop, bd-blog
 ```
@@ -166,17 +170,42 @@ updates in place.
 
 **4. Tagged cache needs a tag-capable store.** `file` and `database` don't support tags, so the publish webhook falls back to flushing everything. Use `redis` or `memcached` in production.
 
-## The shop and blog elements
+## The shop's, blog's and reviews' parts
 
-The product page, the wishlist, the compare table, the save buttons, and a
-post's likes and comments are small custom elements, the same ones every BD
-starter ships, as plain ES modules in `public/shop/`. There is no bundler and
-no npm at runtime: the browser loads them as they are.
+The pages are laid out from parts, one Blade component each, so you can move,
+restyle, drop or replace any of them, or lay a page out your own way:
 
-The controller reads the data and the view writes it inside the element as JSON
-(`<x-element-data>`); the element draws the page from it. The store list,
-filters, cart, blog list and post body are plain Blade and work without
-JavaScript.
+- **Shop** (`resources/views/components/shop/`): `<x-shop.product-detail>`
+  lays out the product page from `product-breadcrumbs`, `product-gallery`,
+  `product-title`, `product-price`, `variant-picker`, `option-picker`,
+  `stock-note`, `quantity-stepper`, `add-to-cart-button`, `cart-notice`,
+  `save-buttons`, `share-button`, `product-policies`, `product-specs`,
+  `product-addons`, `product-reviews`, `product-rail`, `recently-viewed` and
+  `compare-bar`. The store list uses `store-search`, `category-filter`,
+  `price-filter`, `rating-filter`, `clear-filters`, `sort-select`,
+  `product-grid` and `product-card`; the cart, `cart-line`, `cart-summary`,
+  `coupon-form` and `cart-actions`.
+- **Blog** (`components/blog/`): `blog-filters` and `post-card` for the list;
+  `post-meta`, `post-body`, `members-only`, `post-cta`, `post-tags`,
+  `like-button` and `comments` for a post.
+- **Reviews** (`components/reviews/`): `rating-summary`, `review-filter` and
+  `review-card`.
+
+The product page is drawn on the server as it opens (the first option that
+can be bought, nothing else chosen; the rules are `App\Support\Shop`, the
+same as `shop.js`). Then small custom elements, the same ones every BD
+starter ships, bring the parts to life: `<bd-gallery>` steps through the
+photos and follows the chosen option, and `<bd-product-form>` keeps the
+option buttons, price, stock, quantity and add to cart current. They find the
+parts by their `data-bd-*` attributes, so keep those on anything you restyle.
+The save buttons, compare bar, add-ons, share button, recently viewed, the
+wishlist and compare pages, and a post's likes and comments are elements too.
+They're plain ES modules in `public/shop/`: there is no bundler and no npm at
+runtime, and the browser loads them as they are.
+
+Where an element needs server data, the view writes it inside the element as
+JSON (`<x-element-data>`). The store list, filters, cart, blog list and post
+body are plain Blade and work without JavaScript.
 
 - **CSRF.** The elements send the `<meta name="csrf-token">` from the layout as
   `X-CSRF-Token` on every POST, so the JSON endpoints stay behind Laravel's

@@ -1,0 +1,25 @@
+---
+// [bd-file:store]
+/** The search box: a GET form, keeping the other filters. */
+import { keep } from "./store-filters";
+
+interface Props {
+	storeHref?: string;
+}
+const { storeHref = "/store" } = Astro.props;
+const params = Astro.url.searchParams;
+---
+
+<form action={storeHref} method="get">
+	<label class="bd-label" for="store-search">Search</label>
+	<input
+		autocomplete="off"
+		class="bd-input"
+		id="store-search"
+		name="q"
+		placeholder="Search products…"
+		type="search"
+		value={params.get("q") ?? ""}
+	/>
+	{keep(params, "q").map(([key, value]) => <input name={key} type="hidden" value={value} />)}
+</form>

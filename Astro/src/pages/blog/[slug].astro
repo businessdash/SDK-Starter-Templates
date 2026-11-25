@@ -5,14 +5,22 @@
  * (`safePostHtml`) and only that reaches the page. Likes and comments are
  * for signed-in customers: `<bd-post-like>` and `<bd-post-comments>` (see
  * `src/lib/bd-shop/blog-elements.ts`) post to /api/bd/blog/:slug/{like,comment};
- * signed out, they lead to sign-in and back here.
+ * signed out, they lead to sign-in and back here. The page is laid out from
+ * the blog's parts (`src/components/blog/`).
  */
 import "../../styles/bd-blog.css";
 
+import Comments from "../../components/blog/Comments.astro";
+import LikeButton from "../../components/blog/LikeButton.astro";
+import MembersOnly from "../../components/blog/MembersOnly.astro";
+import PostBody from "../../components/blog/PostBody.astro";
+import PostCta from "../../components/blog/PostCta.astro";
+import PostMeta from "../../components/blog/PostMeta.astro";
+import PostTags from "../../components/blog/PostTags.astro";
 import Layout from "../../layouts/Layout.astro";
 import { getBlogLikes, getBlogPost, listBlogComments } from "../../lib/bd-blog";
 import { getCustomerSession } from "../../lib/bd-portal";
-import { formatPostDate, readingMinutes, safePostHtml } from "../../lib/bd-shop/blog";
+import { readingMinutes, safePostHtml } from "../../lib/bd-shop/blog";
 
 export const prerender = false;
 
@@ -31,10 +39,6 @@ const signedIn = session !== null;
 const here = `/blog/${encodeURIComponent(slug)}`;
 const signInHref = `/my-account?next=${encodeURIComponent(here)}`;
 const api = `/api/bd/blog/${encodeURIComponent(slug)}`;
-// `<` written as <, so the JSON can't close the script tag early.
-const toJson = (value: unknown) => JSON.stringify(value).replace(/</g, "\\u003c");
-const likeJson = post ? toJson({ likes: likes ?? { liked: false, likesCount: post.likes }, signedIn }) : "";
-const commentsJson = toJson({ comments: comments.items, signedIn });
 ---
 
 <Layout
@@ -56,50 +60,32 @@ const commentsJson = toJson({ comments: comments.items, signedIn });
 						</a>
 						<header class="post__head">
 							<h1>{post.title}</h1>
-							<p class="post__meta">
-								{post.authorAvatarUrl ? <img alt="" referrerpolicy="no-referrer" src={post.authorAvatarUrl} /> : null}
-								{post.authorName ? <span>{post.authorName}</span> : null}
-								<span>{formatPostDate(post.publishedAt)}</span>
-								<span>· {readingMinutes(post.content)} min read</span>
-							</p>
+							<PostMeta
+								authorAvatarUrl={post.authorAvatarUrl}
+								authorName={post.authorName}
+								minutes={readingMinutes(post.content)}
+								publishedAt={post.publishedAt}
+							/>
 						</header>
 						{post.imageUrl ? <img alt="" class="post__cover" referrerpolicy="no-referrer" src={post.imageUrl} /> : null}
-						{paywalled ? (
-							<div class="bd-empty">
-								This post is for members.
-								<p>
-									<a class="bd-btn" href={signInHref}>
-										Sign in to read it
-									</a>
-								</p>
-							</div>
-						) : (
-							<div class="post__body" set:html={safePostHtml(post.content)} />
-						)}
+						{paywalled ? <MembersOnly signInHref={signInHref} /> : <PostBody html={safePostHtml(post.content)} />}
 						{post.ctaHref && post.ctaLabel ? (
-							<aside class="bd-card post__cta">
-								{post.ctaDescription ? <p>{post.ctaDescription}</p> : null}
-								<a class="bd-btn" href={post.ctaHref}>
-									{post.ctaLabel}
-								</a>
-							</aside>
+							<PostCta description={post.ctaDescription} href={post.ctaHref} label={post.ctaLabel} />
 						) : null}
-						{post.tags.length > 0 ? (
-							<ul class="post__tags">
-								{post.tags.map((tag) => (
-									<li>
-										<a href={`/blog?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
-									</li>
-								))}
-							</ul>
-						) : null}
-						<bd-post-like data-like-url={`${api}/like`} data-sign-in-href={signInHref}>
-							<script is:inline type="application/json" set:html={likeJson} />
-						</bd-post-like>
+						<PostTags tags={post.tags} />
+						<LikeButton
+							likeUrl={`${api}/like`}
+							likes={likes ?? { liked: false, likesCount: post.likes }}
+							signInHref={signInHref}
+							signedIn={signedIn}
+						/>
 					</article>
-					<bd-post-comments data-comment-url={`${api}/comment`} data-sign-in-href={signInHref}>
-						<script is:inline type="application/json" set:html={commentsJson} />
-					</bd-post-comments>
+					<Comments
+						commentUrl={`${api}/comment`}
+						comments={comments.items}
+						signInHref={signInHref}
+						signedIn={signedIn}
+					/>
 				</>
 			)
 		}

@@ -3,11 +3,13 @@ import SwiftUI
 
 /// The compare picks side by side: price, rating, category, options, and
 /// every specification any of them has.
-struct CompareView: View {
+public struct CompareView: View {
     @Environment(BdEnvironment.self) private var bd
     @State private var model = CompareViewModel()
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         let ids = bd.saved.compare.items.map(\.id)
         LoadableView(state: model.state) { columns in
             if columns.isEmpty {

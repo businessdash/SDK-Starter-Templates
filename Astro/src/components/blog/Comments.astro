@@ -1,0 +1,22 @@
+---
+// [bd-file:blog]
+/**
+ * The comments and, signed in, a box to add one; signed out, a link to
+ * sign in and back. It's `<bd-post-comments>` (src/lib/bd-shop/blog-elements.ts).
+ */
+import type { BlogPublicComment } from "@businessdash/sdk/contracts";
+
+interface Props {
+	comments: BlogPublicComment[];
+	signedIn: boolean;
+	commentUrl: string;
+	signInHref: string;
+}
+const { comments, signedIn, commentUrl, signInHref } = Astro.props;
+// `<` written as <, so the JSON can't close the script tag early.
+const json = JSON.stringify({ comments, signedIn }).replace(/</g, "\\u003c");
+---
+
+<bd-post-comments data-comment-url={commentUrl} data-sign-in-href={signInHref}>
+	<script is:inline type="application/json" set:html={json} />
+</bd-post-comments>

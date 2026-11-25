@@ -1,0 +1,2 @@
+<!-- The post. Safe: PostHtml.safe rebuilt it from an allowlist. -->
+<div class="post__body">#unsafeHTML(html)</div>

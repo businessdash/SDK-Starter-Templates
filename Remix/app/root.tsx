@@ -15,10 +15,12 @@ import stylesUrl from "./styles.css?url";
 // availability chips. Required wherever `<BdForm>` renders (contact, book).
 // The container background is intentionally transparent — the template owns it.
 import bdFormsUrl from "@businessdash/sdk/bd-forms.css?url";
+import tailwindUrl from "./tailwind.css?url"; // [bd-line:tailwind]
 
 export const links: LinksFunction = () => [
 	{ rel: "stylesheet", href: stylesUrl },
 	{ rel: "stylesheet", href: bdFormsUrl },
+	{ rel: "stylesheet", href: tailwindUrl }, // [bd-line:tailwind]
 ];
 
 export async function loader(_: LoaderFunctionArgs) {

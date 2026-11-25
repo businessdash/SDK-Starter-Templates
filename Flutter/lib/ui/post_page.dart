@@ -5,15 +5,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 import 'app_state.dart';
 import 'bd_scope.dart';
+import 'blog_parts.dart';
 import 'post_body.dart';
-import 'shop_parts.dart';
-
-/// The longest comment BD takes.
-const _commentMax = 5000;
 
 /// One post: its body drawn natively ([PostBody]), its call to action and
 /// tags, likes, and comments. Liking and commenting are for the signed-in
 /// customer; a members-only post asks them to sign in.
+///
+/// It's laid out from the parts in blog_parts.dart: [PostMeta], [PostCover],
+/// [PostBody] or [MembersOnly], [PostCta], [PostTags], [LikeButton] and
+/// [PostComments].
 class PostPage extends StatefulWidget {
   const PostPage({super.key, required this.slug});
 
@@ -98,7 +99,7 @@ class _PostPageState extends State<PostPage> {
   Future<void> _postComment(BdClient client, String token) async {
     final content = _draft.text.trim();
     if (content.isEmpty) return;
-    if (content.length > _commentMax) {
+    if (content.length > postCommentMax) {
       setState(() => _note = (text: 'Comments are up to 5,000 characters.', ok: false));
       return;
     }
@@ -124,14 +125,6 @@ class _PostPageState extends State<PostPage> {
   }
 
   /// The call to action's link: web or mail only.
-  static Uri? _safeCta(String? href) {
-    final uri = href == null ? null : Uri.tryParse(href.trim());
-    if (uri == null) return null;
-    if ((uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty) return uri;
-    if (uri.scheme == 'mailto' && uri.path.isNotEmpty) return uri;
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
     final client = BdScope.of(context).client;
@@ -162,150 +155,52 @@ class _PostPageState extends State<PostPage> {
     final app = AppScope.of(context);
     final token = app.sessionToken;
     final post = detail.post;
-    final muted = theme.textTheme.bodySmall?.copyWith(color: theme.hintColor);
-    final cta = _safeCta(post.ctaHref);
-    final likeCount = _likes?.count ?? post.likes;
-    final liked = _likes?.liked ?? false;
     final note = _note;
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
         Semantics(header: true, child: Text(post.title, style: theme.textTheme.headlineSmall)),
         const SizedBox(height: 8),
-        Wrap(
-          spacing: 8,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            if (post.authorAvatarUrl?.isNotEmpty ?? false)
-              CircleAvatar(
-                radius: 12,
-                backgroundImage: NetworkImage(post.authorAvatarUrl!),
-                onBackgroundImageError: (_, _) {},
-              ),
-            if (post.authorName?.isNotEmpty ?? false) Text(post.authorName!, style: theme.textTheme.labelLarge),
-            Text('${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read', style: muted),
-          ],
-        ),
+        PostMeta(post: post),
         if (post.imageUrl?.isNotEmpty ?? false) ...[
           const SizedBox(height: 16),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(12),
-            child: AspectRatio(aspectRatio: 16 / 9, child: Photo(post.imageUrl)),
-          ),
+          PostCover(url: post.imageUrl!),
         ],
         const SizedBox(height: 16),
         if (detail.isPaywalled)
-          _Box(children: [
-            Text('This post is for members.', style: theme.textTheme.titleMedium),
-            FilledButton(
-              onPressed: () => app.showTab(context, AppTab.account),
-              child: const Text('Sign in to read it'),
-            ),
-          ])
+          MembersOnly(onSignIn: () => app.showTab(context, AppTab.account))
         else
           PostBody(blocks: _blocks),
-        if ((post.ctaLabel?.isNotEmpty ?? false) && cta != null) ...[
+        if (PostCta.linkFor(post) != null) ...[
           const SizedBox(height: 16),
-          _Box(children: [
-            if (post.ctaDescription?.isNotEmpty ?? false) Text(post.ctaDescription!),
-            FilledButton(
-              onPressed: () => launchUrl(cta, mode: LaunchMode.externalApplication),
-              child: Text(post.ctaLabel!),
-            ),
-          ]),
+          PostCta(post: post, onOpen: (link) => launchUrl(link, mode: LaunchMode.externalApplication)),
         ],
         if (post.tags.isNotEmpty) ...[
           const SizedBox(height: 16),
-          Text(post.tags.map((tag) => '#$tag').join('  '), style: muted),
+          PostTags(tags: post.tags),
         ],
         const Divider(height: 40),
-        Row(
-          spacing: 12,
-          children: [
-            if (token != null)
-              OutlinedButton.icon(
-                onPressed: _liking ? null : () => _toggleLike(client, token),
-                icon: Icon(liked ? Icons.favorite : Icons.favorite_border),
-                label: Text(liked ? 'Liked' : 'Like'),
-              )
-            else
-              OutlinedButton.icon(
-                onPressed: () => app.showTab(context, AppTab.account),
-                icon: const Icon(Icons.favorite_border),
-                label: const Text('Sign in to like'),
-              ),
-            Text('$likeCount ${likeCount == 1 ? 'like' : 'likes'}', style: muted),
-          ],
+        LikeButton(
+          signedIn: token != null,
+          liked: _likes?.liked ?? false,
+          count: _likes?.count ?? post.likes,
+          liking: _liking,
+          onToggle: () => _toggleLike(client, token!),
+          onSignIn: () => app.showTab(context, AppTab.account),
         ),
         const SizedBox(height: 24),
-        Text(_comments.isNotEmpty ? 'Comments (${_comments.length})' : 'Comments', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 12),
-        if (token != null) ...[
-          TextField(
-            controller: _draft,
-            minLines: 2,
-            maxLines: 6,
-            maxLength: _commentMax,
-            onChanged: (_) => setState(() {}),
-            decoration: const InputDecoration(hintText: 'Add a comment', border: OutlineInputBorder()),
-          ),
-          Align(
-            alignment: Alignment.centerLeft,
-            child: FilledButton(
-              onPressed: _posting || _draft.text.trim().isEmpty ? null : () => _postComment(client, token),
-              child: Text(_posting ? 'Posting…' : 'Post comment'),
-            ),
-          ),
-        ] else
-          Align(
-            alignment: Alignment.centerLeft,
-            child: OutlinedButton(
-              onPressed: () => app.showTab(context, AppTab.account),
-              child: const Text('Sign in to comment'),
-            ),
-          ),
-        if (note != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(note.text, style: TextStyle(color: note.ok ? Colors.green.shade700 : theme.colorScheme.error)),
-          ),
-        for (final comment in _comments)
-          Padding(
-            padding: const EdgeInsets.only(top: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: 4,
-              children: [
-                Text(
-                  [
-                    (comment.authorName?.isNotEmpty ?? false) ? comment.authorName! : 'Reader',
-                    PostHtml.date(comment.createdAt),
-                  ].where((part) => part.isNotEmpty).join(' · '),
-                  style: theme.textTheme.labelLarge,
-                ),
-                Text(comment.content),
-              ],
-            ),
-          ),
+        PostComments(
+          comments: _comments,
+          signedIn: token != null,
+          draft: _draft,
+          posting: _posting,
+          note: note?.text,
+          noteOk: note?.ok ?? true,
+          onDraftChanged: (_) => setState(() {}),
+          onPost: () => _postComment(client, token!),
+          onSignIn: () => app.showTab(context, AppTab.account),
+        ),
       ],
     );
   }
-}
-
-class _Box extends StatelessWidget {
-  const _Box({required this.children});
-
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) => DecoratedBox(
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 10, children: children),
-        ),
-      );
 }

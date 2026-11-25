@@ -1,0 +1,13 @@
+<!-- 4, 3 or 2 stars & up (?rating); choosing the chosen one again clears it. -->
+<div class="store-facet">
+  <p class="store-facet__title">Rating</p>
+  <ul class="store-facet__list">
+    #for(rating in ratings):
+      <li>
+        <a class="store-facet__item store-facet__rating#if(rating.active): store-facet__item--active#endif" href="#(rating.href)">
+          #unsafeHTML(rating.starsHTML)<span class="store-facet__count">&amp; up</span>
+        </a>
+      </li>
+    #endfor
+  </ul>
+</div>

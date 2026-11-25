@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client'
 // is intentionally omitted by the SDK — this template owns it via index.css.
 import '@businessdash/sdk/bd-forms.css'
 import './index.css'
+import './tailwind.css' // [bd-line:tailwind]
 import App from './App.tsx'
 
 createRoot(document.getElementById('root')!).render(

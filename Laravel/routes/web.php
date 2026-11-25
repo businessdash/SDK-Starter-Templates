@@ -47,7 +47,7 @@ Route::get('/store/wishlist', [StoreController::class, 'wishlist'])->name('store
 Route::get('/store/compare', [StoreController::class, 'compare'])->name('store.compare');
 Route::get('/store/order', [StoreController::class, 'order'])->name('store.order');
 Route::get('/store/{id}', [StoreController::class, 'show'])->name('store.product');
-// Add to cart for the product page's <bd-product> (JSON).
+// Add to cart for the product page's <bd-product-form> and <bd-addon> (JSON).
 Route::post('/api/bd/cart/add', [CartController::class, 'addJson'])->name('cart.add.json');
 
 Route::get('/cart', [CartController::class, 'show'])->name('cart');

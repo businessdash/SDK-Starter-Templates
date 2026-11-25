@@ -14,12 +14,12 @@ function FieldWrapper(props: {
 }) {
 	return (
 		<div>
-			<label for={props.label} class="block font-bold mb-1 text-xl">
+			<label for={props.label} class="demo-form-label">
 				{props.label}
 			</label>
 			{props.children}
 			{props.errors.length ? (
-				<div class="text-red-500 mt-1 font-bold">{props.errors.join(", ")}</div>
+				<div class="demo-form-error">{props.errors.join(", ")}</div>
 			) : null}
 		</div>
 	);
@@ -48,20 +48,20 @@ function FormExample() {
 
 	return (
 		<div
-			class="flex items-center justify-center min-h-screen bg-gradient-to-br from-purple-100 to-blue-100 p-4 text-white"
+			class="demo-form-page"
 			style={{
 				"background-image":
 					"radial-gradient(50% 50% at 5% 40%, #f4a460 0%, #8b4513 70%, #1a0f0a 100%)",
 			}}
 		>
-			<div class="w-full max-w-2xl p-8 rounded-xl backdrop-blur-md bg-black/50 shadow-xl border-8 border-black/10">
+			<div class="demo-form-card">
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
 						e.stopPropagation();
 						form.handleSubmit();
 					}}
-					class="space-y-6"
+					class="demo-form"
 				>
 					{/* Full Name Field */}
 					<div>
@@ -89,7 +89,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									/>
 								</FieldWrapper>
 							)}
@@ -123,7 +123,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									/>
 								</FieldWrapper>
 							)}
@@ -153,7 +153,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									/>
 								</FieldWrapper>
 							)}
@@ -161,7 +161,7 @@ function FormExample() {
 					</div>
 
 					{/* City, State, Zip in a row */}
-					<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+					<div class="demo-form-row">
 						{/* City */}
 						<form.Field
 							name="address.city"
@@ -181,7 +181,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									/>
 								</FieldWrapper>
 							)}
@@ -206,7 +206,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									/>
 								</FieldWrapper>
 							)}
@@ -237,7 +237,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									/>
 								</FieldWrapper>
 							)}
@@ -267,7 +267,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 									>
 										<option value="">Select a country</option>
 										<option value="US">United States</option>
@@ -314,7 +314,7 @@ function FormExample() {
 										value={field().state.value}
 										onBlur={field().handleBlur}
 										onChange={(e) => field().handleChange(e.target.value)}
-										class="w-full px-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+										class="demo-form-input"
 										placeholder="(123) 456-7890"
 									/>
 								</FieldWrapper>
@@ -323,11 +323,11 @@ function FormExample() {
 					</div>
 
 					{/* Submit Button */}
-					<div class="flex justify-end">
+					<div class="demo-form-actions">
 						<button
 							type="submit"
 							disabled={form.state.isSubmitting}
-							class="px-6 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition-colors disabled:opacity-50"
+							class="demo-form-submit"
 						>
 							{form.state.isSubmitting ? "Submitting..." : "Submit"}
 						</button>

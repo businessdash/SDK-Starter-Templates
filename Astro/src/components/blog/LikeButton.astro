@@ -1,0 +1,19 @@
+---
+// [bd-file:blog]
+/** ♡ Like with the count. Signed out, it leads to sign-in and back. It's `<bd-post-like>` (src/lib/bd-shop/blog-elements.ts). */
+import type { BlogLikeResponse } from "@businessdash/sdk/contracts";
+
+interface Props {
+	likes: BlogLikeResponse;
+	signedIn: boolean;
+	likeUrl: string;
+	signInHref: string;
+}
+const { likes, signedIn, likeUrl, signInHref } = Astro.props;
+// `<` written as <, so the JSON can't close the script tag early.
+const json = JSON.stringify({ likes, signedIn }).replace(/</g, "\\u003c");
+---
+
+<bd-post-like data-like-url={likeUrl} data-sign-in-href={signInHref}>
+	<script is:inline type="application/json" set:html={json} />
+</bd-post-like>

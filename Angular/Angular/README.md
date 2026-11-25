@@ -56,6 +56,12 @@ node dist/Angular/server/server.mjs   # honours PORT (default 4000)
 
 > **SSR host allow-list.** `angular.json → security.allowedHosts` ships empty, which makes Angular fall back to client-side rendering for unknown hosts (the JSON-LD head injection runs only on true server render). Add your dev/prod hostnames there to enable full SSR, e.g. `"allowedHosts": ["localhost", "www.your-site.com"]`.
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `src/tailwind.css` is listed in `angular.json`'s `styles`, and `.postcssrc.json` runs it through `@tailwindcss/postcss`. Use its classes in any component's template. The starter's pages, shop, blog and reviews style themselves with `styles.scss` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `src/tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## CLI scripts (schema sync)
 
 ```sh
@@ -83,7 +89,7 @@ These run the SDK CLI via `tsx` against `bd.config.ts` (the marketing schema + b
 | --- | --- | --- |
 | `/` | `pages/home.page.ts` | Hero, About, Services, reviews teaser, updates, blog, contact. |
 | `/store` | `pages/store.page.ts` | Products with search, category, price, rating and sort, all in the URL; each card saves to the wishlist or the comparison. | <!-- [bd-line:store] -->
-| `/store/:id` | `pages/product-detail.page.ts` | One product, drawn by `<bd-product>`: option photos, option and size buttons, add to cart with the chosen options, save, compare, share, add-ons, reviews, related and recently viewed. | <!-- [bd-line:store] -->
+| `/store/:id` | `pages/product-detail.page.ts` | One product, laid out by `<bd-product-detail>`: option photos, option and size buttons, add to cart with the chosen options, save, compare, share, add-ons, reviews, related and recently viewed. | <!-- [bd-line:store] -->
 | `/store/wishlist` | `pages/wishlist.page.ts` | Products saved in this browser (`<bd-wishlist>`). | <!-- [bd-line:store] -->
 | `/store/compare?ids=a,b` | `pages/compare.page.ts` | Up to four products side by side (`<bd-compare>`). | <!-- [bd-line:store] -->
 | `/cart` | `pages/cart.page.ts` | Cart: qty update/remove, coupon apply/remove (reactive form), clear, Stripe checkout. | <!-- [bd-line:store] -->
@@ -130,23 +136,55 @@ Mounted by `mountBdApi(app)` in `src/server.ts`, all in `src/server/bd-api.ts`:
 | `POST /api/bd/revalidate` | `createGenericRevalidateHandler` (HMAC-verified) |
 | `GET /sitemap.xml`, `/robots.txt` | proxied from `parallelPages.sitemapUrl()` / `robotsUrl()` |
 
-<!-- [bd:store,blog] -->
-### Shop and blog elements
+<!-- [bd:store] -->
+### Shop parts
 
-The product page, wishlist, compare table and the store bar's counts, and a
-post's likes and comments, are small custom elements in `src/app/shop/`,
-shared with the other starters. Angular renders them as ordinary tags
-(`schemas: [CUSTOM_ELEMENTS_SCHEMA]`) and hands them their data as a property
-(`<bd-product [data]="data()">`). The browser loads them after the first
-render (`afterNextRender` → `import()`), so server rendering never touches
-them. Their styles are `src/bd-shop.css` and `src/bd-blog.css`, pulled into
-`styles.scss`. Product prices are cents; cart amounts are dollars.
-<!-- [/bd:store,blog] -->
+Every store page is laid out from Angular components in
+`src/app/sections/shop/`, one file each, so you can move, restyle or drop
+one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `<bd-store-search>`, `<bd-category-filter>`, `<bd-price-filter>`, `<bd-rating-filter>`, `<bd-clear-filters>`, `<bd-sort-select>` (one file each; each takes what's chosen and tells the page when it changes), `<bd-product-grid>`, `<bd-product-card>`, `<bd-save-buttons [product]>` |
+| Product (`<bd-product-detail [data]>`) | `<bd-product-breadcrumbs>`, `<bd-product-gallery>`, `<bd-product-title>`, `<bd-product-price>`, `<bd-variant-picker>`, `<bd-option-picker>`, `<bd-stock-note>`, `<bd-quantity-stepper>`, `<bd-add-to-cart-button>`, `<bd-cart-notice>`, `<bd-save-buttons [product]>`, `<bd-share-button>`, `<bd-product-policies>`, `<bd-product-specs>`, `<bd-product-addons>`, `<bd-product-reviews>`, `<bd-product-rail>`, `<bd-recently-viewed [product]>` |
+| Cart | `<li bd-cart-line>`, `<bd-coupon-form>`, `<bd-cart-summary>`, `<bd-cart-actions>` (each emits what the shopper did; the cart page calls the server) |
+
+The parts are ordinary standalone components (`:host { display: contents }`,
+so their tags add no box). What changes in the browser on the product page
+comes from small framework-free custom elements in `src/app/shop/`, shared
+with the other starters: `<bd-product-form>` keeps the price, options, stock,
+quantity and add to cart in step with what's chosen, `<bd-gallery>` follows
+the chosen option's photos, and `<bd-share>`, `<bd-addon>`,
+`<bd-save-buttons>`, `<bd-recently-viewed>` and `<bd-compare-bar>` do one job
+each. They find the parts by their `data-bd-*` attributes, so keep those when
+you change a part's markup. The wishlist and compare table (`<bd-wishlist>`,
+`<bd-compare>`) and the store bar's counts draw themselves, since those lists
+live in the shopper's browser. Angular renders the elements as ordinary tags
+(`schemas: [CUSTOM_ELEMENTS_SCHEMA]`), and the browser loads them after the
+first render (`afterNextRender` → `import()`), so server rendering never
+touches them. Their styles are `src/bd-shop.css`, pulled into `styles.scss`.
+Product prices are cents; cart amounts are dollars.
+<!-- [/bd:store] -->
+
+<!-- [bd:blog] -->
+### Blog parts
+
+The blog's pages are laid out from components in `src/app/sections/blog/`:
+`<bd-blog-filters>` and `<li bd-post-card>` for the list; `<bd-post-meta>`,
+`<bd-post-body>` (or `<bd-members-only>`), `<bd-post-cta>`, `<bd-post-tags>`,
+`<bd-like-button>` and `<bd-comments>` for a post. Likes and comments are the
+shared custom elements `<bd-post-like>` and `<bd-post-comments>`
+(`src/app/shop/blog-elements.ts`), loaded after the first render. Styles:
+`src/bd-blog.css`.
+<!-- [/bd:blog] -->
 
 ### Reviews
 
 `/reviews` draws the business's reviews with the rules every BD starter
-shares (`src/app/shop/reviews.ts`). Writing one is `<bd-review-writer>`
+shares (`src/app/shop/reviews.ts`), laid out from components in
+`src/app/sections/reviews/`: `<bd-rating-summary>` (the average, a bar per
+star and the writer), `<bd-review-filter>` (the platform links) and
+`<li bd-review-card>` (one review). Writing one is `<bd-review-writer>`
 (`src/app/shop/reviews-elements.ts`), loaded the same way as the shop's and
 blog's elements: it posts JSON to `/api/bd/reviews/write`, which checks the
 review again and sends it with the customer's session; signed out, it's a
@@ -194,9 +232,12 @@ src/
     │   ├── bd-api.client.ts      # browser → /api/bd* fetch client (no key)
     │   └── bd.service.ts         # signals facade (hero/about/services/blog/banner/updates/reviews)
     ├── pages/                       # one component per route (the table above)
-    ├── shop/                        # the store's, blog's and reviews' custom elements + safePostHtml
+    ├── shop/                        # the store's rules, and the store's, blog's and reviews' custom elements + safePostHtml
     └── sections/                    # hero, about, services, reviews-summary, updates,
-        └── …                        # blog, contact-form, news-banner, header, footer, store-nav
+        ├── …                        # blog, contact-form, news-banner, header, footer, store-nav
+        ├── shop/                    # the store's parts: product page, store, cart <!-- [bd-line:store] -->
+        ├── blog/                    # the blog's parts: post card, meta, body, likes, comments <!-- [bd-line:blog] -->
+        └── reviews/                 # the reviews page's parts: summary, filter, card
 ```
 
 ## Angular conventions

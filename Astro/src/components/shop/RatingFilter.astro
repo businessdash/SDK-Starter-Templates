@@ -1,0 +1,36 @@
+---
+// [bd-file:store]
+/** 4, 3 or 2 stars & up. */
+import StarRating from "./StarRating.astro";
+import { hrefWith } from "./store-filters";
+
+interface Props {
+	storeHref?: string;
+}
+const { storeHref = "/store" } = Astro.props;
+const params = Astro.url.searchParams;
+const ratingRaw = Number.parseInt(params.get("rating") ?? "", 10);
+const minRating = ratingRaw >= 1 && ratingRaw <= 5 ? ratingRaw : undefined;
+---
+
+<div class="store-facet">
+	<p class="store-facet__title">Rating</p>
+	<ul class="store-facet__list">
+		{
+			[4, 3, 2].map((r) => {
+				const active = minRating === r;
+				return (
+					<li>
+						<a
+							class={`store-facet__item store-facet__rating${active ? " store-facet__item--active" : ""}`}
+							href={hrefWith(params, { rating: active ? null : String(r) }, storeHref)}
+						>
+							<StarRating rating={r} />
+							<span class="store-facet__count">&amp; up</span>
+						</a>
+					</li>
+				);
+			})
+		}
+	</ul>
+</div>

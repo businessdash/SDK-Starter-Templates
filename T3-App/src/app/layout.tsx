@@ -8,6 +8,7 @@ import "@businessdash/sdk/bd-forms.css";
 import "@/styles/bd-shop.css"; // [bd-line:store]
 import "@/styles/bd-blog.css"; // [bd-line:blog]
 import "@/styles/bd-reviews.css";
+import "@/styles/tailwind.css"; // [bd-line:tailwind]
 
 import { BDAnalytics } from "@businessdash/sdk/react-analytics";
 import { type Metadata } from "next";

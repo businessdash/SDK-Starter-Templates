@@ -1,0 +1,8 @@
+<!-- The category, the name, and the stars linking to the reviews. -->
+<div>
+  #if(detail.title.hasCategory):<p class="product-detail__eyebrow">#(detail.title.categoryName)</p>#endif
+  <h1>#(detail.title.name)</h1>
+  #if(detail.title.hasRating):
+    <a class="product-detail__rating" href="\#reviews">#unsafeHTML(detail.title.starsHTML)<span>#(detail.title.ratingLabel)</span></a>
+  #endif
+</div>

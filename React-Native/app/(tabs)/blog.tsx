@@ -1,12 +1,11 @@
-import { Link, useNavigation } from 'expo-router'
+import { useNavigation } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, FlatList, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native'
 
 import { getBd } from '@/bd/client'
-import { Chip, shop, styles as ui } from '@/components/shop'
-import { formatPostDate, readingMinutes } from '@/shop/blog'
+import { BlogFilters, type BlogListPost, PostCard } from '@/components/blog-parts'
+import { EmptyNote, styles as ui } from '@/components/shop'
 
-type Post = Awaited<ReturnType<NonNullable<ReturnType<typeof getBd>>['blog']['listPosts']>>['items'][number]
 type Category = { id: string; name: string; description?: string | null }
 
 const PAGE_SIZE = 12
@@ -22,7 +21,7 @@ export default function BlogScreen() {
   const [tags, setTags] = useState<string[]>([])
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [tag, setTag] = useState<string | null>(null)
-  const [posts, setPosts] = useState<Post[] | null>(null)
+  const [posts, setPosts] = useState<BlogListPost[] | null>(null)
   const [failed, setFailed] = useState(false)
   const [cursor, setCursor] = useState<number | null>(null)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -96,31 +95,14 @@ export default function BlogScreen() {
       ListHeaderComponent={
         categories.length > 0 || tags.length > 0 ? (
           <View style={{ gap: 10 }}>
-            {categories.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                <Chip label="All" active={categoryId === null} onPress={() => setCategoryId(null)} />
-                {categories.map((category) => (
-                  <Chip
-                    key={category.id}
-                    label={category.name}
-                    active={categoryId === category.id}
-                    onPress={() => setCategoryId(category.id)}
-                  />
-                ))}
-              </ScrollView>
-            ) : null}
-            {tags.length > 0 ? (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                {tags.map((value) => (
-                  <Chip
-                    key={value}
-                    label={`#${value}`}
-                    active={tag === value}
-                    onPress={() => setTag(tag === value ? null : value)}
-                  />
-                ))}
-              </ScrollView>
-            ) : null}
+            <BlogFilters
+              categories={categories}
+              tags={tags}
+              categoryId={categoryId}
+              tag={tag}
+              onCategory={setCategoryId}
+              onTag={setTag}
+            />
             {active?.description ? <Text style={ui.muted}>{active.description}</Text> : null}
           </View>
         ) : undefined
@@ -129,17 +111,15 @@ export default function BlogScreen() {
         failed ? (
           <Text style={ui.muted}>The blog isn't available right now. Please check back soon.</Text>
         ) : posts ? (
-          <View style={styles.empty}>
-            <Text style={ui.sectionTitle}>No posts here yet</Text>
-            <Text style={[ui.muted, { textAlign: 'center' }]}>
-              {unfiltered ? "Write one in Business Dash and it'll appear here." : 'Try another topic.'}
-            </Text>
-          </View>
+          <EmptyNote
+            title="No posts here yet"
+            detail={unfiltered ? "Write one in Business Dash and it'll appear here." : 'Try another topic.'}
+          />
         ) : (
           <ActivityIndicator style={{ padding: 24 }} />
         )
       }
-      renderItem={({ item, index }) => <PostRow post={item} lead={index === 0 && unfiltered} />}
+      renderItem={({ item, index }) => <PostCard post={item} lead={index === 0 && unfiltered} />}
       ListFooterComponent={
         cursor !== null && posts && posts.length > 0 ? (
           <Pressable accessibilityRole="button" disabled={loadingMore} onPress={loadOlder} style={ui.ghostButton}>
@@ -150,54 +130,3 @@ export default function BlogScreen() {
     />
   )
 }
-
-/** A post in the list; the newest on the first page is drawn larger. */
-function PostRow({ post, lead }: { post: Post; lead: boolean }) {
-  return (
-    <Link href={{ pathname: '/blog/[slug]', params: { slug: post.slug } }} asChild>
-      <Pressable accessibilityRole="link" style={{ gap: 6 }}>
-        {post.imageUrl ? (
-          <Image
-            source={{ uri: post.imageUrl }}
-            style={[styles.cover, { height: lead ? 190 : 130 }]}
-            resizeMode="cover"
-            accessibilityIgnoresInvertColors
-          />
-        ) : null}
-        <View style={ui.row}>
-          {post.isPinned ? <Text style={styles.pinned}>Pinned</Text> : null}
-          <Text style={styles.meta}>
-            {formatPostDate(post.publishedAt)} · {readingMinutes(post.content || post.excerpt || '')} min read
-          </Text>
-        </View>
-        <Text style={lead ? styles.leadTitle : styles.title}>{post.title}</Text>
-        {post.excerpt ? (
-          <Text style={ui.muted} numberOfLines={3}>
-            {post.excerpt}
-          </Text>
-        ) : null}
-        {post.authorName ? <Text style={styles.author}>{post.authorName}</Text> : null}
-      </Pressable>
-    </Link>
-  )
-}
-
-const styles = StyleSheet.create({
-  empty: { padding: 32, gap: 8, alignItems: 'center' },
-  cover: { width: '100%', borderRadius: 12, backgroundColor: shop.soft },
-  pinned: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: shop.accent,
-    backgroundColor: shop.accentSoft,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginRight: 6,
-  },
-  meta: { fontSize: 12, color: shop.muted },
-  title: { fontSize: 17, fontWeight: '700', color: shop.text },
-  leadTitle: { fontSize: 21, fontWeight: '800', color: shop.text },
-  author: { fontSize: 12, fontWeight: '600', color: shop.text },
-})

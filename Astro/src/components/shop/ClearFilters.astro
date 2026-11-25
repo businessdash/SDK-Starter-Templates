@@ -1,0 +1,18 @@
+---
+// [bd-file:store]
+/** Clear all filters, while any is set. */
+import { hasFilters } from "./store-filters";
+
+interface Props {
+	storeHref?: string;
+}
+const { storeHref = "/store" } = Astro.props;
+---
+
+{
+	hasFilters(Astro.url.searchParams) ? (
+		<a class="store-clear" href={storeHref}>
+			Clear all filters
+		</a>
+	) : null
+}

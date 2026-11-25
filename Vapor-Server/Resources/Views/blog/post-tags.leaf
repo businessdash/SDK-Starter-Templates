@@ -1,0 +1,6 @@
+<!-- The post's tags, each a link to the posts with it. -->
+#if(hasTags):
+  <ul class="post__tags">
+    #for(tag in tags):<li><a href="#(tag.href)">#(tag.label)</a></li>#endfor
+  </ul>
+#endif

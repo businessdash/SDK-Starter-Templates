@@ -3,12 +3,15 @@
 /**
  * The blog: posts newest first (pinned ones lead), filtered by category or
  * tag, with "Older posts" paging. Filters live in the URL (?category,
- * ?tag, ?cursor), and the list is fetched on the server.
+ * ?tag, ?cursor), and the list is fetched on the server. The page is laid
+ * out from the blog's parts in `components/bd/blog/`: the filters and a post
+ * card per post.
  */
 import { computed } from "vue";
 import BdFooter from "~/components/bd/BdFooter.vue";
 import BdHeader from "~/components/bd/BdHeader.vue";
-import { formatPostDate, readingMinutes } from "#shared/bd/blog";
+import BlogFilters from "~/components/bd/blog/BlogFilters.vue";
+import PostCard from "~/components/bd/blog/PostCard.vue";
 import type { BlogIndexResult } from "../../../server/api/bd/blog/posts.get";
 
 const route = useRoute();
@@ -58,32 +61,14 @@ useHead(() => ({
 				</p>
 			</div>
 
-			<nav
-				v-if="data && (data.categories.length > 0 || data.tags.length > 0)"
-				class="blog-filters"
-				aria-label="Blog topics"
-			>
-				<ul v-if="data.categories.length > 0">
-					<li>
-						<NuxtLink :to="filterLink('category', null)" :aria-current="!categoryId">All</NuxtLink>
-					</li>
-					<li v-for="category in data.categories" :key="category.id">
-						<NuxtLink
-							:to="filterLink('category', category.id)"
-							:aria-current="categoryId === category.id"
-						>
-							{{ category.name }}
-						</NuxtLink>
-					</li>
-				</ul>
-				<ul v-if="data.tags.length > 0" class="blog-filters__tags">
-					<li v-for="t in data.tags" :key="t">
-						<NuxtLink :to="filterLink('tag', tag === t ? null : t)" :aria-current="tag === t">
-							#{{ t }}
-						</NuxtLink>
-					</li>
-				</ul>
-			</nav>
+			<BlogFilters
+				v-if="data"
+				:categories="data.categories"
+				:tags="data.tags"
+				:category="categoryId"
+				:tag="tag"
+				:link="filterLink"
+			/>
 
 			<div v-if="!data?.posts.length" class="bd-empty">
 				{{
@@ -94,33 +79,12 @@ useHead(() => ({
 			</div>
 			<template v-else>
 				<ul class="posts">
-					<li
+					<PostCard
 						v-for="(post, i) in data.posts"
 						:key="post.id"
-						class="bd-card post-card"
-						:class="{ 'post-card--lead': i === 0 && !paged }"
-					>
-						<NuxtLink :to="`/blog/${post.slug}`" class="post-card__link">
-							<img
-								v-if="post.imageUrl"
-								class="post-card__img"
-								:src="post.imageUrl"
-								alt=""
-								loading="lazy"
-								referrerpolicy="no-referrer"
-							/>
-							<div class="post-card__body">
-								<p class="post-card__meta">
-									<span v-if="post.isPinned" class="bd-badge">Pinned</span>
-									<span>{{ formatPostDate(post.publishedAt) }}</span>
-									<span>· {{ readingMinutes(post.content || post.excerpt || "") }} min read</span>
-								</p>
-								<h2>{{ post.title }}</h2>
-								<p v-if="post.excerpt" class="post-card__excerpt">{{ post.excerpt }}</p>
-								<p v-if="post.authorName" class="post-card__author">{{ post.authorName }}</p>
-							</div>
-						</NuxtLink>
-					</li>
+						:post="post"
+						:lead="i === 0 && !paged"
+					/>
 				</ul>
 				<p v-if="data.nextCursor !== null" class="posts__more">
 					<NuxtLink

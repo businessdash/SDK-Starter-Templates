@@ -1,0 +1,58 @@
+---
+// [bd-file:blog]
+/** All and a link per category, then the tags; the chosen ones marked. Each link resets the paging. */
+interface Props {
+	categories: Array<{ id: string; name: string }>;
+	tags: string[];
+	/** The chosen category's id. */
+	category: string | null;
+	/** The chosen tag. */
+	tag: string | null;
+}
+const { categories, tags, category, tag } = Astro.props;
+
+/** The list with one filter changed (the other kept). */
+function filterHref(key: "category" | "tag", value: string | null): string {
+	const next = new URLSearchParams();
+	if (category) next.set("category", category);
+	if (tag) next.set("tag", tag);
+	if (value) next.set(key, value);
+	else next.delete(key);
+	const query = next.toString();
+	return query ? `/blog?${query}` : "/blog";
+}
+---
+
+{
+	categories.length > 0 || tags.length > 0 ? (
+		<nav aria-label="Blog topics" class="blog-filters">
+			{categories.length > 0 ? (
+				<ul>
+					<li>
+						<a aria-current={!category ? "true" : undefined} href={filterHref("category", null)}>
+							All
+						</a>
+					</li>
+					{categories.map((c) => (
+						<li>
+							<a aria-current={category === c.id ? "true" : undefined} href={filterHref("category", c.id)}>
+								{c.name}
+							</a>
+						</li>
+					))}
+				</ul>
+			) : null}
+			{tags.length > 0 ? (
+				<ul class="blog-filters__tags">
+					{tags.map((t) => (
+						<li>
+							<a aria-current={tag === t ? "true" : undefined} href={filterHref("tag", tag === t ? null : t)}>
+								#{t}
+							</a>
+						</li>
+					))}
+				</ul>
+			) : null}
+		</nav>
+	) : null
+}

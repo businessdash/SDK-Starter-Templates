@@ -2,10 +2,12 @@ import BusinessDashKit
 import SwiftUI
 
 /// Products saved on this device with ♡ Save.
-struct WishlistView: View {
+public struct WishlistView: View {
     @Environment(BdEnvironment.self) private var bd
 
-    var body: some View {
+    public init() {}
+
+    public var body: some View {
         let items = bd.saved.wishlist.items
         List {
             ForEach(items) { item in

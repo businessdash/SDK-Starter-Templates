@@ -1,5 +1,6 @@
 // @ts-check
 import node from "@astrojs/node";
+import tailwindcss from "@tailwindcss/vite"; // [bd-line:tailwind]
 import { defineConfig } from "astro/config";
 
 // https://astro.build/config
@@ -10,4 +11,5 @@ export default defineConfig({
 	// or `@astrojs/netlify` to deploy elsewhere.
 	output: "server",
 	adapter: node({ mode: "standalone" }),
+	vite: { plugins: [tailwindcss()] }, // [bd-line:tailwind]
 });

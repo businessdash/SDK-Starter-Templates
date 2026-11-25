@@ -99,6 +99,27 @@ The same shop, blog and reviews as the web starters and the Swift and React Nati
 
 Signing in on the Account tab is what the blog and reviews use: `AppState` keeps the session, and liking, commenting and writing a review send its token as `X-BD-Session-Token`.
 
+### Laying out the screens your way
+
+Every screen is laid out from public widgets, each taking plain values and callbacks rather than the screen's state, so you can rearrange, restyle, drop or replace any of them, or lay out a screen of your own (`test/parts_test.dart` builds a product page that way):
+
+- **Product page** (`lib/ui/product_parts.dart`): `ProductGallery`, `ProductTitle`, `ProductPriceText`, `StockNote`, `VariantPicker`, `OptionPicker` / `OptionRow`, `QuantityStepper`, `AddToCartButton`, `ProductNotice`, `ProductAddons` / `AddonTile`, `ProductDetails`, `ProductReviews` / `ProductReviewTile`.
+- **Store and cart** (`lib/ui/store_parts.dart`, `lib/ui/shop_parts.dart`): `StoreSearchField`, `CategoryChips`, `StoreResultsBar`, `SliverProductGrid`, `StoreFilterSheet`, `StoreNotice`, `ProductCard`, `SaveButtons`, `CompareBar`, `ProductRail`, `ReviewStrip`, `CartLine`, `CouponField`, `CartSummaryBar`; and the small pieces `StarRating`, `Photo` and `EmptyNote`.
+- **Blog** (`lib/ui/blog_parts.dart`): `BlogFilters` / `ChipRow`, `PostCard`, `PostMeta`, `PostCover`, `PostBody` (`post_body.dart`), `MembersOnly`, `PostCta`, `PostTags`, `LikeButton`, `PostComments` / `CommentTile`, `InfoBox`.
+- **Reviews** (`lib/ui/review_parts.dart`): `ReviewSummaryCard`, `ReviewSourceFilter`, `ReviewCard`, `ReviewWriter`.
+
+The rules the parts follow are `ProductView`'s, in the pure-Dart package:
+
+```dart
+final price = view.price(variantId, chosen);
+ProductGallery(urls: view.gallery(variantId), name: view.name);
+ProductPriceText(price: price);
+VariantPicker(variants: view.variants, selected: variantId, onSelect: (id) => setState(() => variantId = id));
+for (final group in view.optionGroups(variantId))
+  OptionPicker(group: group, selected: chosen[group.id], onSelect: (id) => setState(() => chosen[group.id] = id));
+AddToCartButton(price: price, adding: false, hasOptions: true, onPressed: () { /* client.cartAdd(…) */ });
+```
+
 ## Five things that will bite you
 
 **1. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — a client that only checks `statusCode` parses an empty screen and never notices. `_decode` inspects the body **before** the status, and a test pins that order.
@@ -197,9 +218,9 @@ The **Account tab** (`lib/ui/account_page.dart`) is the business's own sign-in s
 
 `flutter test` passes in `packages/businessdash_forms`: rendering, validation, submit, conditions, steps, Cupertino and Material controls, sheets, repeaters, collections, retry, the leave guard, custom renderers, and hosting in a `CupertinoApp`. The quiz widget tests take a quiz through choices, typed answers, verdicts, a countdown that runs out, results and a retake, and load practice quizzes and invitations from a mocked BD.
 
-`flutter test` passes in the root package: against a fake BD (`MockClient`), the store's categories and filters, a product's options going into the cart and the Cart tab's badge, a coupon BD refuses and one it takes, the blog's pinned posts, a tag and a post liked and commented on as a signed-in customer, the reviews' summary, "Show more", a platform filter and a written review, and the saved lists outlasting a relaunch. The package's `test/shop_blog_reviews_test.dart` replays the post-HTML cases every BD starter checks its port against (`test/fixtures/post-html-parity.json`) and pins the product, review and request rules.
+`flutter test` passes in the root package: against a fake BD (`MockClient`), the store's categories and filters, a product's options going into the cart and the Cart tab's badge, a coupon BD refuses and one it takes, the blog's pinned posts, a tag and a post liked and commented on as a signed-in customer, the reviews' summary, "Show more", a platform filter and a written review, and the saved lists outlasting a relaunch. `test/parts_test.dart` lays out a product page from the public parts and drives its style, size, quantity and add to cart, and checks the blog, reviews and store parts on their own. The package's `test/shop_blog_reviews_test.dart` replays the post-HTML cases every BD starter checks its port against (`test/fixtures/post-html-parity.json`) and pins the product, review and request rules.
 
-The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`). The store, product, compare, cart, blog, post and reviews screens were also checked at phone size in a web build (`flutter create --platforms=web .`) against a mock BD.
+The app builds and runs on the iOS simulator with Flutter 3.50 (from `flutter create --platforms=ios .`). The store, product, compare, cart, blog, post and reviews screens were also checked at phone size in a web build (`flutter create --platforms=web .`) against a mock BD. Splitting the screens into parts left every one of those screenshots unchanged.
 
 <!-- [bd:donations] -->
 ## Donations

@@ -6,24 +6,19 @@
  * are plain links. Writing one is <bd-review-writer>
  * (lib/bd-shop/reviews-elements.ts), which posts to /api/bd/reviews/write;
  * signed out, it's a link to sign in. The rules are lib/bd-shop/reviews.ts,
- * the same in every BD starter.
+ * the same in every BD starter. The page is laid out from parts in
+ * components/reviews/: RatingSummary, ReviewFilter and a ReviewCard each.
  */
 import "../styles/bd-reviews.css";
 
+import RatingSummary from "../components/reviews/RatingSummary.astro";
+import ReviewCard from "../components/reviews/ReviewCard.astro";
+import ReviewFilter from "../components/reviews/ReviewFilter.astro";
 import Layout from "../layouts/Layout.astro";
 import { bd } from "../lib/bd";
 import { getBundle, getReviewsFromBundle } from "../lib/bd-bundle";
 import { getCustomerSession } from "../lib/bd-portal";
-import {
-	formatReviewDate,
-	platformName,
-	reviewerInitial,
-	reviewerName,
-	reviewLink,
-	reviewStars,
-	safeImage,
-	sourceLabel,
-} from "../lib/bd-shop/reviews";
+import { sourceLabel } from "../lib/bd-shop/reviews";
 import { loadReviewsPage } from "../lib/bd-shop/reviews-page";
 
 export const prerender = false;
@@ -35,17 +30,6 @@ const data = await loadReviewsPage({
 	totals: getBundle().then(getReviewsFromBundle),
 	signedIn: getCustomerSession(Astro.cookies).then((s) => s !== null),
 });
-const { summary } = data;
-const average = summary.average?.toFixed(1) ?? null;
-const writerJson = JSON.stringify({ signedIn: data.signedIn }).replace(/</g, "\\u003c");
-const cards = data.reviews.map((review, i) => ({
-	review,
-	anchor: `review-${i}`,
-	avatar: safeImage(review.reviewerImageUrl),
-	platform: platformName(review.source),
-	link: reviewLink(review),
-	photos: (review.photos ?? []).map(safeImage).filter((p): p is string => p !== null),
-}));
 ---
 
 <Layout title="Reviews — Your Business" description="What customers say: the rating and every review, from Google, Yelp and the business.">
@@ -61,56 +45,11 @@ const cards = data.reviews.map((review, i) => ({
 				</div>
 			) : (
 				<>
-					<section class="reviews-summary" aria-label={average ? "Rating" : "Write a review"}>
-						{average && (
-							<>
-								<div class="reviews-summary__score">
-									<span class="reviews-summary__average">{average}</span>
-									<span class="review-stars" role="img" aria-label={`${average} out of 5`}>
-										{reviewStars(summary.average ?? 0)}
-									</span>
-									<span class="reviews-summary__count">
-										{summary.total} {summary.total === 1 ? "review" : "reviews"}
-									</span>
-								</div>
-								<ul class="reviews-bars">
-									{summary.histogram.map((row) => (
-										<li aria-label={`${row.stars} stars: ${row.count}`}>
-											<span>{row.stars} ★</span>
-											<span class="reviews-bars__track">
-												<span class="reviews-bars__fill" style={`width: ${Math.round(row.share * 100)}%`} />
-											</span>
-											<span>{row.count}</span>
-										</li>
-									))}
-								</ul>
-							</>
-						)}
-						<div class="reviews-summary__write">
-							<bd-review-writer data-write-url="/api/bd/reviews/write" data-sign-in-href="/my-account?next=%2Freviews">
-								<script is:inline type="application/json" set:html={writerJson} />
-							</bd-review-writer>
-						</div>
-					</section>
+					<RatingSummary signedIn={data.signedIn} summary={data.summary} />
 
-					{data.sources.length > 1 && (
-						<nav aria-label="Platform">
-							<ul class="reviews-filter">
-								<li>
-									<a href="/reviews" aria-current={data.source ? "false" : "true"}>All</a>
-								</li>
-								{data.sources.map((source) => (
-									<li>
-										<a href={`/reviews?source=${source}`} aria-current={data.source === source ? "true" : "false"}>
-											{sourceLabel(source)}
-										</a>
-									</li>
-								))}
-							</ul>
-						</nav>
-					)}
+					<ReviewFilter source={data.source} sources={data.sources} />
 
-					{cards.length === 0 ? (
+					{data.reviews.length === 0 ? (
 						<p class="reviews-empty">
 							{data.source
 								? `No ${sourceLabel(data.source)} reviews yet.`
@@ -119,48 +58,8 @@ const cards = data.reviews.map((review, i) => ({
 					) : (
 						<>
 							<ul class="review-wall">
-								{cards.map(({ review, anchor, avatar, platform, link, photos }) => (
-									<li class="review-card" id={anchor}>
-										<div class="review-card__head">
-											{avatar ? (
-												<img class="review-card__avatar" src={avatar} alt="" loading="lazy" />
-											) : (
-												<span class="review-card__avatar" aria-hidden="true">
-													{reviewerInitial(review)}
-												</span>
-											)}
-											<div>
-												<p class="review-card__name">{reviewerName(review)}</p>
-												<p class="review-card__meta">
-													<span class="review-stars" role="img" aria-label={`${review.rating} out of 5`}>
-														{reviewStars(review.rating)}
-													</span>{" "}
-													· {formatReviewDate(review.timeCreated)}
-												</p>
-											</div>
-										</div>
-										<p class="review-card__text">{review.text}</p>
-										{photos.length > 0 && (
-											<ul class="review-card__photos" aria-label="Photos from the reviewer">
-												{photos.map((photo) => (
-													<li>
-														<img src={photo} alt="" loading="lazy" />
-													</li>
-												))}
-											</ul>
-										)}
-										{(platform || review.verified) && (
-											<p class="review-card__foot">
-												{platform && <span class="review-card__platform">{platform}</span>}
-												{review.verified && <span class="review-card__verified">✓ Verified</span>}
-												{link && platform && (
-													<a class="review-card__link" href={link} target="_blank" rel="noopener noreferrer">
-														Read on {platform}
-													</a>
-												)}
-											</p>
-										)}
-									</li>
+								{data.reviews.map((review, i) => (
+									<ReviewCard index={i} review={review} />
 								))}
 							</ul>
 							{data.moreHref && (

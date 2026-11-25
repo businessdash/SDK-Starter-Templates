@@ -1,0 +1,7 @@
+<!-- The author with their photo, the date and the reading time. -->
+<p class="post__meta">
+  #if(hasAvatar):<img alt="" referrerpolicy="no-referrer" src="#(avatar)">#endif
+  #if(hasAuthor):<span>#(author)</span>#endif
+  <span>#(date)</span>
+  <span>· #(minutes) min read</span>
+</p>

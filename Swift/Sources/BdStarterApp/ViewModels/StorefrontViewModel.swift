@@ -13,14 +13,6 @@ import Observation
 final class StorefrontViewModel: ScreenViewModel {
     var bd: BdEnvironment?
 
-    static let sorts: [(value: String, label: String)] = [
-        ("featured", "Featured"),
-        ("newest", "Newest"),
-        ("price-asc", "Price: low to high"),
-        ("price-desc", "Price: high to low"),
-        ("rating-desc", "Top rated"),
-    ]
-
     struct Filters: Hashable, Sendable {
         var search = ""
         var categoryID: String?
@@ -77,6 +69,12 @@ final class StorefrontViewModel: ScreenViewModel {
             )
             return Listing(products: grid.products, counts: counts, priceRange: grid.priceRange)
         }
+    }
+
+    /// The catalogue's prices, in dollars, once the list has loaded.
+    var priceRange: PriceRange? {
+        if case .loaded(let listing) = state { return listing.priceRange }
+        return nil
     }
 
     func clearFilters() {

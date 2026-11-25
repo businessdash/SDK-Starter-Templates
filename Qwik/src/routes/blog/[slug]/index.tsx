@@ -2,12 +2,18 @@
 import { component$, useVisibleTask$ } from "@builder.io/qwik";
 import { type DocumentHead, Link, routeLoader$ } from "@builder.io/qwik-city";
 
+import { Comments } from "../../../components/bd/blog/Comments";
+import { LikeButton } from "../../../components/bd/blog/LikeButton";
+import { MembersOnly } from "../../../components/bd/blog/MembersOnly";
+import { PostBody } from "../../../components/bd/blog/PostBody";
+import { PostCta } from "../../../components/bd/blog/PostCta";
+import { PostMeta } from "../../../components/bd/blog/PostMeta";
+import { PostTags } from "../../../components/bd/blog/PostTags";
 import { Footer } from "../../../components/bd/Footer";
 import { SiteHeader } from "../../../components/bd/SiteHeader";
 import { getBd } from "../../../lib/bd";
-import { elementHtml } from "../../../lib/bd-elements";
 import { getCustomerSession } from "../../../lib/bd-portal";
-import { formatPostDate, readingMinutes, safePostHtml } from "../../../lib/shop/blog";
+import { readingMinutes, safePostHtml } from "../../../lib/shop/blog";
 
 /**
  * One post. The loader rebuilds its HTML from an allowlist (`safePostHtml`,
@@ -96,59 +102,27 @@ export default component$(() => {
 					</Link>
 					<header class="post__head">
 						<h1>{v.post.title}</h1>
-						<p class="post__meta">
-							{v.post.authorAvatarUrl ? <img alt="" referrerPolicy="no-referrer" src={v.post.authorAvatarUrl} /> : null}
-							{v.post.authorName ? <span>{v.post.authorName}</span> : null}
-							<span>{formatPostDate(v.post.publishedAt)}</span>
-							<span>· {v.minutes} min read</span>
-						</p>
+						<PostMeta
+							authorAvatarUrl={v.post.authorAvatarUrl}
+							authorName={v.post.authorName}
+							minutes={v.minutes}
+							publishedAt={v.post.publishedAt}
+						/>
 					</header>
 					{v.post.imageUrl ? <img alt="" class="post__cover" referrerPolicy="no-referrer" src={v.post.imageUrl} /> : null}
 					{v.paywalled ? (
-						<div class="bd-empty">
-							This post is for members.
-							<p>
-								<a class="bd-btn" href={signInHref}>
-									Sign in to read it
-								</a>
-							</p>
-						</div>
+						<MembersOnly signInHref={signInHref} />
 					) : (
 						// Rebuilt from an allowlist in the loader: see src/lib/shop/blog.ts.
-						<div class="post__body" dangerouslySetInnerHTML={v.html} />
+						<PostBody html={v.html} />
 					)}
 					{v.post.ctaHref && v.post.ctaLabel ? (
-						<aside class="bd-card post__cta">
-							{v.post.ctaDescription ? <p>{v.post.ctaDescription}</p> : null}
-							<a class="bd-btn" href={v.post.ctaHref}>
-								{v.post.ctaLabel}
-							</a>
-						</aside>
+						<PostCta description={v.post.ctaDescription} href={v.post.ctaHref} label={v.post.ctaLabel} />
 					) : null}
-					{v.post.tags.length > 0 ? (
-						<ul class="post__tags">
-							{v.post.tags.map((t) => (
-								<li key={t}>
-									<Link href={`/blog?tag=${encodeURIComponent(t)}`}>#{t}</Link>
-								</li>
-							))}
-						</ul>
-					) : null}
-					<div
-						dangerouslySetInnerHTML={elementHtml(
-							"bd-post-like",
-							{ "data-like-url": `${api}/like`, "data-sign-in-href": signInHref },
-							{ likes: v.likes, signedIn: v.signedIn },
-						)}
-					/>
+					<PostTags tags={v.post.tags} />
+					<LikeButton likeUrl={`${api}/like`} likes={v.likes} signInHref={signInHref} signedIn={v.signedIn} />
 				</article>
-				<div
-					dangerouslySetInnerHTML={elementHtml(
-						"bd-post-comments",
-						{ "data-comment-url": `${api}/comment`, "data-sign-in-href": signInHref },
-						{ comments: v.comments, signedIn: v.signedIn },
-					)}
-				/>
+				<Comments commentUrl={`${api}/comment`} comments={v.comments} signInHref={signInHref} signedIn={v.signedIn} />
 			</main>
 			<Footer />
 		</>

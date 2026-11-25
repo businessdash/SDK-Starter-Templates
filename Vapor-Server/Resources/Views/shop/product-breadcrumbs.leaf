@@ -1,0 +1,10 @@
+<!-- Store / Category / This product. -->
+<nav aria-label="Breadcrumb" class="crumbs">
+  <a href="#(detail.storeHref)">Store</a>
+  #if(detail.breadcrumbs.hasCategory):
+    <span aria-hidden="true">/</span>
+    <a href="#(detail.breadcrumbs.categoryHref)">#(detail.breadcrumbs.categoryName)</a>
+  #endif
+  <span aria-hidden="true">/</span>
+  <span aria-current="page">#(detail.breadcrumbs.name)</span>
+</nav>

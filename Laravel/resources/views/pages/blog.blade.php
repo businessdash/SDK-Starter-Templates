@@ -1,6 +1,7 @@
 {{--
     The post list: pinned first, category and tag filters, older posts.
-    App\Http\Controllers\BlogController@index.
+    App\Http\Controllers\BlogController@index. It's laid out from the blog's
+    parts (components/blog/): the filters and a post card per post.
 --}}
 @extends('layout')
 @section('title', $active ? data_get($active, 'name').' — Blog' : 'Blog')
@@ -10,15 +11,6 @@
 @endpush
 @section('main_class', 'bd-page')
 @section('content')
-    @php
-        /** This list with one filter changed and the paging reset. */
-        $filterHref = function (string $key, ?string $value) use ($category, $tag): string {
-            $next = array_filter(['category' => $category, 'tag' => $tag, $key => $value]);
-
-            return route('blog').($next ? '?'.http_build_query($next) : '');
-        };
-    @endphp
-
     @if (! $configured)
         <div class="bd-empty">The blog isn't connected yet. Add your BD env, then publish a post in Business Dash.</div>
     @else
@@ -30,25 +22,7 @@
             @endif
         </div>
 
-        @if ($categories || $tags)
-            <nav aria-label="Blog topics" class="blog-filters">
-                @if ($categories)
-                    <ul>
-                        <li><a @if (! $category) aria-current="true" @endif href="{{ $filterHref('category', null) }}">All</a></li>
-                        @foreach ($categories as $item)
-                            <li><a @if ($category === data_get($item, 'id')) aria-current="true" @endif href="{{ $filterHref('category', data_get($item, 'id')) }}">{{ data_get($item, 'name') }}</a></li>
-                        @endforeach
-                    </ul>
-                @endif
-                @if ($tags)
-                    <ul class="blog-filters__tags">
-                        @foreach ($tags as $item)
-                            <li><a @if ($tag === $item) aria-current="true" @endif href="{{ $filterHref('tag', $tag === $item ? null : $item) }}">#{{ $item }}</a></li>
-                        @endforeach
-                    </ul>
-                @endif
-            </nav>
-        @endif
+        <x-blog.blog-filters :categories="$categories" :category="$category" :tag="$tag" :tags="$tags" />
 
         @if (! $posts)
             <div class="bd-empty">
@@ -61,27 +35,7 @@
         @else
             <ul class="posts">
                 @foreach ($posts as $post)
-                    <li @class(['bd-card', 'post-card', 'post-card--lead' => $loop->first && ! $paged])>
-                        <a class="post-card__link" href="{{ route('blog.show', data_get($post, 'slug')) }}">
-                            @if (data_get($post, 'imageUrl'))
-                                <img alt="" class="post-card__img" loading="lazy" referrerpolicy="no-referrer" src="{{ data_get($post, 'imageUrl') }}">
-                            @endif
-                            <div class="post-card__body">
-                                <p class="post-card__meta">
-                                    @if (data_get($post, 'isPinned'))<span class="bd-badge">Pinned</span>@endif
-                                    <span>{{ \App\Support\PostHtml::date(data_get($post, 'publishedAt')) }}</span>
-                                    <span>· {{ \App\Support\PostHtml::readingMinutes((string) (data_get($post, 'content') ?: data_get($post, 'excerpt', ''))) }} min read</span>
-                                </p>
-                                <h2>{{ data_get($post, 'title') }}</h2>
-                                @if (data_get($post, 'excerpt'))
-                                    <p class="post-card__excerpt">{{ data_get($post, 'excerpt') }}</p>
-                                @endif
-                                @if (data_get($post, 'authorName'))
-                                    <p class="post-card__author">{{ data_get($post, 'authorName') }}</p>
-                                @endif
-                            </div>
-                        </a>
-                    </li>
+                    <x-blog.post-card :lead="$loop->first && ! $paged" :post="$post" />
                 @endforeach
             </ul>
             @if ($nextCursor !== null)

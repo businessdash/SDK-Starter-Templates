@@ -53,3 +53,9 @@ export function html(
 export function render(node: Raw): string {
 	return node[RAW];
 }
+
+/** Server data for a custom element, as JSON in a script tag inside it. `<`
+ *  is written as \u003c, so the JSON can't close the tag early. */
+export function jsonScript(value: unknown): Raw {
+	return raw(`<script type="application/json">${JSON.stringify(value).replace(/</g, "\\u003c")}</script>`);
+}

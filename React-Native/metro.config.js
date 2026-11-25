@@ -14,3 +14,11 @@ const config = getDefaultConfig(__dirname)
 config.resolver.unstable_enablePackageExports = true
 
 module.exports = config
+// [bd:tailwind]
+
+// NativeWind compiles src/tailwind.css and lets every React Native component
+// take a className.
+const { withNativewind } = require('nativewind/metro')
+
+module.exports = withNativewind(config)
+// [/bd:tailwind]

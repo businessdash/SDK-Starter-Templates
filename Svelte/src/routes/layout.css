@@ -1,7 +1,4 @@
-@import 'tailwindcss';
-@plugin '@tailwindcss/forms';
-@plugin '@tailwindcss/typography';
-
+@import './reset.css';
 @import './bd-tokens.css';
 
 /* SDK form styles (file-upload box, multi-step progress header, choice chips).

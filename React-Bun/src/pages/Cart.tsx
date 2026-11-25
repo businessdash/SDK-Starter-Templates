@@ -5,8 +5,15 @@ import type { Loose } from "../lib/bd";
 import { Link } from "../lib/router";
 import { ErrorBox, PageHead, useApi } from "./ui";
 import { StoreNav } from "../components/StoreNav";
+import { CartActions } from "../components/shop/CartActions";
+import { CartLine } from "../components/shop/CartLine";
+import { CartSummary } from "../components/shop/CartSummary";
+import { CouponForm } from "../components/shop/CouponForm";
 
-/** The cart, under the store bar. */
+/**
+ * The cart, under the store bar, laid out from the shop's parts: a
+ * <CartLine> per item, <CouponForm>, <CartSummary> and <CartActions>.
+ */
 export function Cart() {
 	return (
 		<>
@@ -73,81 +80,28 @@ function CartBody() {
 				<>
 					<ul className="cart-list">
 						{items.map((it) => (
-							<li key={it.id} className="cart-item">
-								{it.productImage ? <img className="cart-item__img" src={it.productImage} alt={it.productName ?? ""} /> : null}
-								<div className="cart-item__main">
-									<div className="cart-item__name">{it.productName ?? "Item"}</div>
-									{it.variantTitle ? <div className="cart-item__variant">{it.variantTitle}</div> : null}
-									<div className="cart-item__price">{dollars(it.unitPrice, it.currency ?? currency)} each</div>
-								</div>
-								<div className="cart-qty">
-									<button
-										className="cart-qty__btn"
-										type="button"
-										aria-label="Decrease"
-										onClick={async () => setCart(await bd.cart.update(it.id, Math.max(0, it.quantity - 1)))}
-									>
-										−
-									</button>
-									<span className="cart-qty__n">{it.quantity}</span>
-									<button
-										className="cart-qty__btn"
-										type="button"
-										aria-label="Increase"
-										onClick={async () => setCart(await bd.cart.update(it.id, it.quantity + 1))}
-									>
-										+
-									</button>
-								</div>
-								<div className="cart-item__subtotal">{dollars(it.subtotal, it.currency ?? currency)}</div>
-								<button className="cart-item__remove" type="button" onClick={async () => setCart(await bd.cart.remove(it.id))}>
-									Remove
-								</button>
-							</li>
+							<CartLine
+								key={it.id}
+								item={it}
+								currency={currency}
+								onQuantity={async (quantity) => setCart(await bd.cart.update(it.id, quantity))}
+								onRemove={async () => setCart(await bd.cart.remove(it.id))}
+							/>
 						))}
 					</ul>
 
-					{view?.couponCode ? (
-						<div className="coupon coupon--applied">
-							<span>Coupon {view.couponCode} applied</span>
-							<button className="btn btn--ghost btn--sm" type="button" onClick={async () => setCart(await bd.cart.removeCoupon())}>
-								Remove
-							</button>
-						</div>
-					) : (
-						<form
-							className="coupon"
-							onSubmit={(e) => {
-								e.preventDefault();
-								applyCoupon((new FormData(e.currentTarget).get("code") as string)?.trim() ?? "");
-							}}
-						>
-							<input className="coupon__input" type="text" name="code" placeholder="Coupon code" aria-label="Coupon code" />
-							<button className="btn btn--ghost btn--sm" type="submit">
-								Apply
-							</button>
-							<span className="coupon__msg">{couponMsg}</span>
-						</form>
-					)}
-
-					<div className="cart-summary">
-						<div className="cart-summary__row">
-							<span>
-								Subtotal ({view?.itemCount} item{view?.itemCount === 1 ? "" : "s"})
-							</span>
-							<strong>{dollars(view?.subtotal, currency)}</strong>
-						</div>
-					</div>
-
-					<div className="cart-actions">
-						<button className="btn btn--ghost" type="button" onClick={async () => setCart(await bd.cart.clear())}>
-							Clear cart
-						</button>
-						<button className="btn btn--primary btn--lg" type="button" onClick={checkout}>
-							Checkout
-						</button>
-					</div>
-					<p className="cart-checkout__status">{checkoutMsg}</p>
+					<CouponForm
+						code={view?.couponCode}
+						message={couponMsg}
+						onApply={applyCoupon}
+						onRemove={async () => setCart(await bd.cart.removeCoupon())}
+					/>
+					<CartSummary itemCount={view?.itemCount} subtotal={view?.subtotal} currency={currency} />
+					<CartActions
+						status={checkoutMsg}
+						onClear={async () => setCart(await bd.cart.clear())}
+						onCheckout={checkout}
+					/>
 				</>
 			)}
 		</main>

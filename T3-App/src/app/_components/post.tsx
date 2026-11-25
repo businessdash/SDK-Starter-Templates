@@ -4,6 +4,8 @@ import { useState } from "react";
 
 import { api } from "@/trpc/react";
 
+import styles from "./post.module.css";
+
 export function LatestPost() {
   const [latestPost] = api.post.getLatest.useSuspenseQuery();
 
@@ -17,9 +19,9 @@ export function LatestPost() {
   });
 
   return (
-    <div className="w-full max-w-xs">
+    <div className={styles.latestPost}>
       {latestPost ? (
-        <p className="truncate">Your most recent post: {latestPost.name}</p>
+        <p className={styles.truncate}>Your most recent post: {latestPost.name}</p>
       ) : (
         <p>You have no posts yet.</p>
       )}
@@ -28,18 +30,18 @@ export function LatestPost() {
           e.preventDefault();
           createPost.mutate({ name });
         }}
-        className="flex flex-col gap-2"
+        className={styles.form}
       >
         <input
           type="text"
           placeholder="Title"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-full bg-white/10 px-4 py-2 text-white"
+          className={styles.input}
         />
         <button
           type="submit"
-          className="rounded-full bg-white/10 px-10 py-3 font-semibold transition hover:bg-white/20"
+          className={styles.button}
           disabled={createPost.isPending}
         >
           {createPost.isPending ? "Submitting..." : "Submit"}

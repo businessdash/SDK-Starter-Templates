@@ -1,3 +1,6 @@
+<!-- The cart (CartController), laid out from the shop's parts
+     (Resources/Views/shop/): a line per item, the subtotal, and Clear and
+     Checkout. -->
 #extend("base"):
   #export("title"):Cart#endexport
   #export("head"):
@@ -13,24 +16,11 @@
       <p class="muted">Your cart is empty. <a href="/store">Browse the store</a>.</p>
     #else:
       <ul class="cart-lines">
-        #for(line in lines):
-          <li>
-            <span>#(line.name)</span>
-            <span class="muted">#(line.unitPrice) each × #(line.quantity)</span>
-          </li>
-        #endfor
+        #for(line in lines):#extend("shop/cart-line")#endfor
       </ul>
 
-      <!-- Totals arrive DECIMAL; product prices arrive in integer cents. -->
-      <p class="total">Subtotal: #(subtotal)</p>
-
-      <form method="post" action="/cart/clear">
-        <button type="submit">Clear</button>
-      </form>
-
-      <form method="post" action="/cart/checkout">
-        <button type="submit" class="button">Checkout</button>
-      </form>
+      #extend("shop/cart-summary")
+      #extend("shop/cart-actions")
     #endif
   #endexport
 #endextend

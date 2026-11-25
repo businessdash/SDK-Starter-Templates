@@ -45,6 +45,12 @@ bun run preview    # node ./dist/server/entry.mjs
 bun run check      # astro check (typecheck)
 ```
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `src/styles/tailwind.css` is imported in `src/layouts/Layout.astro`, and `@tailwindcss/vite` builds it (see `astro.config.mjs`). Use its classes anywhere in `src/`. The starter's pages, shop, blog and reviews style themselves with `global.css` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## Schema sync (CLI)
 
 `bd.config.ts` is the single source of truth for the dashboard-editable content model + brand tokens + the `service-area` parallel page. Three scripts run the SDK CLI via `tsx`:
@@ -81,7 +87,15 @@ The same shop as the Business Dash demo store, server-rendered:
 - `src/pages/store/cart.astro` — full cart: quantity / remove / coupon / clear / checkout, all driven by islands that POST to the cart endpoints and re-render from the returned `CartSnapshot`
 - `src/components/StoreNav.astro` — the bar on every store page: products and plans, then wishlist, compare and the cart with their counts.
 
-The interactive parts are framework-free custom elements in `src/lib/bd-shop/shop-elements.ts` (`<bd-product>`, `<bd-save-buttons>`, `<bd-compare-bar>`, `<bd-wishlist>`, `<bd-compare>`), styled by `src/styles/bd-shop.css`. The server renders the data into each one as JSON, and a page's `<script>` imports the module, so no UI framework is needed. The wishlist, compare picks and recently viewed live in the shopper's browser (`localStorage`).
+Every page is laid out from Astro components in `src/components/shop/`, one file each, so you can move, restyle or drop one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect` (with `store-filters.ts` for the URL), `ProductGrid`, `ProductCard`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `RecentlyViewed`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary`, `CartActions` (the cart page's script finds them by their `data-*` attributes; each carries its own styles) |
+
+They're drawn on the server. What changes in the browser comes from small framework-free custom elements in `src/lib/bd-shop/shop-elements.ts`, the same ones every BD starter ships, imported by a page's `<script>`, so no UI framework is needed: `<bd-product-form>` keeps the price, options, stock, quantity and add to cart in step with what's chosen, `<bd-gallery>` follows the chosen option's photos, and `<bd-share>`, `<bd-addon>`, `<bd-save-buttons>`, `<bd-recently-viewed>` and `<bd-compare-bar>` do one job each. They find the parts by their `data-bd-*` attributes, so keep those when you change a part's markup. The wishlist and compare table (`<bd-wishlist>`, `<bd-compare>`) draw themselves, since the wishlist, compare picks and recently viewed live in the shopper's browser (`localStorage`). Styles: `src/styles/bd-shop.css`.
 
 Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `checkout/start`. The shopper is identified by a **visitor token** — an httpOnly `bd_cart_visitor` cookie minted on the first mutation (`src/lib/bd-store.ts`):
 
@@ -108,6 +122,7 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 - `src/pages/blog/index.astro` — posts newest first (pinned ones lead), category and tag filters and "Older posts" paging, all links in the URL (`?category`, `?tag`, `?cursor`).
 - `src/pages/blog/[slug].astro` — one post. Its HTML is rebuilt from an allowlist on the server (`safePostHtml` in `src/lib/bd-shop/blog.ts`) and only that reaches the page. Members-only posts ask the reader to sign in.
 - Likes and comments are for signed-in customers: `<bd-post-like>` and `<bd-post-comments>` (`src/lib/bd-shop/blog-elements.ts`) post to `/api/bd/blog/[slug]/like` and `/comment`, which call the SDK with the customer's session (`src/lib/bd-blog.ts`). Signed out, they lead to sign-in and back.
+- The pages are laid out from parts in `src/components/blog/`, one file each: `BlogFilters` and `PostCard` for the list; `PostMeta`, `PostBody` (or `MembersOnly` for a members-only post when signed out), `PostCta`, `PostTags`, `LikeButton` and `Comments` for a post.
 <!-- [/bd:blog] -->
 
 ### Auth + customer portal
@@ -125,7 +140,7 @@ Cart mutations live in Astro API endpoints under `src/pages/api/bd/cart/*` and `
 - each review with the reviewer's photo or initial, the stars, the date, the text, any photos, the platform, Verified, and a "Read on Google/Yelp" link;
 - "Write a review" for a signed-in customer: `<bd-review-writer>` (`src/lib/bd-shop/reviews-elements.ts`) posts JSON to `/api/bd/reviews/write`, which checks it again and sends it with `submitReview`. It shows once the business approves it. Signed out, it's a link to sign in.
 
-The page's data comes from `loadReviewsPage` (`src/lib/bd-shop/reviews-page.ts`, which reads `reviews.list({ limit, offset, source })`); `src/lib/bd-shop/reviews.ts` holds the rules every BD starter shares, and `src/styles/bd-reviews.css` the styles. The home page's `Reviews` section shows the average and the first few, with a link here.
+The page is laid out from parts in `src/components/reviews/`: `RatingSummary` (the average, a bar per star and the writer), `ReviewFilter` (the platform links) and `ReviewCard` (one review). The page's data comes from `loadReviewsPage` (`src/lib/bd-shop/reviews-page.ts`, which reads `reviews.list({ limit, offset, source })`); `src/lib/bd-shop/reviews.ts` holds the rules every BD starter shares, and `src/styles/bd-reviews.css` the styles. The home page's `Reviews` section shows the average and the first few, with a link here.
 
 ### News banner + updates feed
 
@@ -184,6 +199,13 @@ The page's data comes from `loadReviewsPage` (`src/lib/bd-shop/reviews-page.ts`,
 │   ├── components/
 │   │   ├── Header.astro               # nav + auth links (server session)
 │   │   ├── StoreNav.astro             # the store bar: products, plans, wishlist, compare, cart <!-- [bd-line:store,subscriptions] -->
+<!-- [bd:store] -->
+│   │   ├── shop/                      # the shop's parts: product page, store, cart, stars
+<!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   │   ├── blog/                      # the blog's parts: post card, meta, body, likes, comments
+<!-- [/bd:blog] -->
+│   │   ├── reviews/                   # the reviews page's parts: summary, filter, card
 │   │   ├── Banner.astro               # bundle.banner dismissible strip
 │   │   ├── Hero / About / Services / Gallery / Blog / Booking / ContactForm / Reviews
 │   │   └── Footer.astro
@@ -198,7 +220,7 @@ The page's data comes from `loadReviewsPage` (`src/lib/bd-shop/reviews-page.ts`,
 │       ├── store/
 <!-- [bd:store] -->
 │       │   ├── index.astro            # product list
-│       │   ├── [id].astro             # product page (<bd-product>)
+│       │   ├── [id].astro             # product page (<ProductDetail>)
 │       │   ├── wishlist.astro         # saved products
 │       │   ├── compare.astro          # products side by side
 │       │   ├── cart.astro             # cart (update/remove/coupon/clear/checkout)

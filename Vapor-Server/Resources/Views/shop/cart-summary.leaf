@@ -1,0 +1,2 @@
+<!-- The subtotal. Totals arrive DECIMAL; product prices arrive in integer cents. -->
+<p class="total">Subtotal: #(subtotal)</p>

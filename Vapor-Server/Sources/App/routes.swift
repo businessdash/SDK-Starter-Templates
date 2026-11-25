@@ -24,7 +24,7 @@ func routes(_ app: Application) throws {
     app.get("store", "compare", use: StoreController.compare)
     app.get("store", "order", use: StoreController.order)
     app.get("store", ":id", use: StoreController.show)
-    // Add to cart for the product page's <bd-product> (JSON).
+    // Add to cart for the product page's <bd-product-form> and <bd-addon> (JSON).
     app.on(.POST, "api", "bd", "cart", "add", body: .collect(maxSize: "16kb"), use: CartController.addJSON)
 
     app.get("cart", use: CartController.show)

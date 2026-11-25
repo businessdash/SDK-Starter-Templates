@@ -1,0 +1,5 @@
+<!-- Secure checkout, and a link to ask before buying. -->
+<ul class="policies">
+  <li>Secure checkout with Stripe</li>
+  <li>Questions? <a href="#(detail.contactHref)">Ask us</a> before you buy</li>
+</ul>

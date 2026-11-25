@@ -1,4 +1,5 @@
 import { reactRouter } from "@react-router/dev/vite";
+import tailwindcss from "@tailwindcss/vite"; // [bd-line:tailwind]
 import { defineConfig } from "vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
@@ -12,5 +13,6 @@ export default defineConfig({
 		// template lives inside a larger monorepo with sibling projects) instead
 		// of aborting the build. Only this template's own paths are resolved.
 		tsconfigPaths({ ignoreConfigErrors: true }),
+		tailwindcss(), // [bd-line:tailwind]
 	],
 });

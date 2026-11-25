@@ -1,12 +1,18 @@
 // [bd-file:store]
 /**
- * The shop's interactive parts as custom elements, for pages a server
- * renders without a UI framework. Each draws the same markup (and so takes
- * the same bd-shop.css) as the React components in the other starters:
+ * The shop's interactive parts as custom elements, shared by the starters
+ * whose pages aren't React. The pages draw the shop's markup in their own
+ * components; these bring the parts that change to life, and draw what only
+ * the browser knows (the wishlist, compare picks, recently viewed). The
+ * markup they draw takes the same bd-shop.css as the pages':
  *
+ *   <bd-gallery>                         the product's photos, following the chosen variant
+ *   <bd-product-form data-add-url="/api/…">  options, price, quantity, add to cart
+ *   <bd-share data-title="…">            share the page, or copy its link
+ *   <bd-addon data-product-id="…">       add an add-on to the cart
+ *   <bd-recently-viewed data-product='…'>  what this browser opened before
  *   <bd-save-buttons data-product='{"id":…,"name":…,"image":…,"priceCents":…}' compact>
  *   <bd-compare-bar>                     products picked for the compare table
- *   <bd-product data-add-url="/api/…">   the product page; its data is a JSON script inside
  *   <bd-wishlist>                        the saved products
  *   <bd-compare>                         the compare table; JSON inside: { ids, columns }
  *   <bd-saved-count data-list="wishlist|compare">, <bd-cart-count data-count="2">
@@ -16,12 +22,7 @@
  * Server data goes in `<script type="application/json">`, with `<` written
  * as < so the JSON can't end the script early.
  */
-import type {
-	StorefrontAddonsResponse,
-	StorefrontProductDetail,
-	StorefrontProductReviewsResponse,
-	StorefrontRelatedProductsResponse,
-} from "@businessdash/sdk/contracts";
+import type { StorefrontProductDetail } from "@businessdash/sdk/contracts";
 
 import { define, h, patch, postJson, readJson, upgradeProperty } from "./bd-dom";
 import {
@@ -30,10 +31,10 @@ import {
 	defaultVariant,
 	formatCents,
 	formatDollars,
-	galleryFor,
 	optionGroupsFor,
 	type ProductView,
 	priceFor,
+	productSummary,
 	recentlyViewed,
 	type SavedProduct,
 	shareLink,
@@ -261,525 +262,406 @@ function productRail(title: string, products: SavedProduct[], store: string): HT
 }
 
 // ── Product page ────────────────────────────────────────────────────
+//
+// The page draws the product page's markup itself (in the starter's own
+// components), and these elements bring the parts that change to life.
+// They find their pieces by data-bd attributes, so the markup can be laid
+// out and styled any way as long as those stay.
 
-type Addon = StorefrontAddonsResponse["items"][number];
+/** What <bd-product-form> announces when the chosen variant changes. */
+export const VARIANT_EVENT = "bd:variant";
 
-/** What the server puts inside `<bd-product>`. */
-export type ProductPageData = {
-	product: StorefrontProductDetail;
-	reviews: StorefrontProductReviewsResponse | null;
-	addons: Addon[];
-	related: StorefrontRelatedProductsResponse["items"];
-	/** The link that shows more reviews, or null when all are shown. */
-	moreReviewsHref: string | null;
-};
+export type VariantChange = { productId: string; variantId: string };
 
 type AddResult = { ok: true; itemCount: number } | { ok: false; error: string };
 
-function reviewDate(iso: string | null | undefined): string {
-	const date = iso ? new Date(iso) : null;
-	return date && !Number.isNaN(date.getTime())
-		? date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
-		: "";
+/** POSTs a cart line as JSON; the answer carries `itemCount` (or `ok: false` and `error`). */
+async function addToCart(
+	url: string,
+	input: { productId: string; variantId?: string; quantity: number; options?: Record<string, string> },
+): Promise<AddResult> {
+	const { status, data } = await postJson<"ok" | "itemCount" | "error">(url, input);
+	if (status >= 200 && status < 300 && data.ok !== false && typeof data.itemCount === "number") {
+		return { ok: true, itemCount: data.itemCount };
+	}
+	return { ok: false, error: typeof data.error === "string" ? data.error : "Couldn't add that to your cart. Try again." };
+}
+
+function addUrl(el: Element): string {
+	return el.getAttribute("data-add-url") ?? "/api/bd/cart/add";
+}
+
+// These change the page's markup only where it differs, so markup the server
+// drew as it should be is left exactly as it is (a framework hydrating it
+// finds what it rendered).
+
+function show(el: HTMLElement | null, on: boolean): void {
+	if (el && el.hidden === on) el.hidden = !on;
+}
+
+function setText(el: HTMLElement | null, text: string): void {
+	if (el && el.textContent !== text) el.textContent = text;
+}
+
+function enable(el: Element | null, on: boolean): void {
+	if (el instanceof HTMLButtonElement && el.disabled === on) el.disabled = !on;
+}
+
+/** Marks a choice button chosen or not: aria-pressed, and choice__value--on for bd-shop.css. */
+function press(button: Element, on: boolean): void {
+	if (button.getAttribute("aria-pressed") !== String(on)) button.setAttribute("aria-pressed", String(on));
+	if (button.classList.contains("choice__value--on") !== on) button.classList.toggle("choice__value--on", on);
 }
 
 /**
- * The product page: photos that follow the chosen option, option and size
- * buttons, the price for what's chosen, add to cart, save and compare, share,
- * details, add-ons, reviews, related products and what was viewed before.
- * Adding POSTs `{ productId, variantId, quantity, options }` as JSON to
- * data-add-url; the answer carries `itemCount` (or `ok: false` and `error`).
+ * `<bd-gallery data-product-id="…">`: the product's photos. It holds one
+ * photo set per `[data-bd-photos-for]`: "" for the product's photos, or a
+ * variant id for a variant with photos of its own. The chosen variant's set
+ * shows (else the product's), starting at its first photo. In a set, the
+ * thumbnails (`[data-bd-photo]`) and ‹ › (`[data-bd-step="-1"]`, `"1"`)
+ * change the main photo (`img[data-bd-main]`).
  */
-class ProductPage extends HTMLElement {
-	#data: ProductPageData | null = null;
+class Gallery extends HTMLElement {
+	#off: (() => void)[] = [];
+
+	connectedCallback() {
+		const onClick = (event: Event) => {
+			const target = (event.target as Element | null)?.closest<HTMLElement>("[data-bd-photo],[data-bd-step]");
+			const set = target?.closest<HTMLElement>("[data-bd-photos-for]");
+			if (!target || !set || !this.contains(set)) return;
+			const thumbs = set.querySelectorAll("[data-bd-photo]");
+			const count = Math.max(thumbs.length, 1);
+			const index = target.hasAttribute("data-bd-photo")
+				? Number(target.getAttribute("data-bd-photo")) || 0
+				: (this.#current(set) + Number(target.getAttribute("data-bd-step")) + count) % count;
+			this.#showPhoto(set, index);
+		};
+		const onVariant = (event: Event) => {
+			const { productId, variantId } = (event as CustomEvent<VariantChange>).detail;
+			const mine = this.getAttribute("data-product-id");
+			if (mine && mine !== productId) return;
+			const sets = [...this.querySelectorAll<HTMLElement>("[data-bd-photos-for]")];
+			const chosen =
+				sets.find((set) => set.getAttribute("data-bd-photos-for") === variantId) ??
+				sets.find((set) => set.getAttribute("data-bd-photos-for") === "");
+			for (const set of sets) set.hidden = set !== chosen;
+			if (chosen) this.#showPhoto(chosen, 0);
+		};
+		this.addEventListener("click", onClick);
+		document.addEventListener(VARIANT_EVENT, onVariant);
+		this.#off = [
+			() => this.removeEventListener("click", onClick),
+			() => document.removeEventListener(VARIANT_EVENT, onVariant),
+		];
+	}
+
+	disconnectedCallback() {
+		for (const off of this.#off) off();
+	}
+
+	#current(set: HTMLElement): number {
+		const i = [...set.querySelectorAll("[data-bd-photo]")].findIndex((t) => t.getAttribute("aria-current") === "true");
+		return Math.max(i, 0);
+	}
+
+	#showPhoto(set: HTMLElement, index: number) {
+		const thumbs = [...set.querySelectorAll<HTMLElement>("[data-bd-photo]")];
+		const main = set.querySelector<HTMLImageElement>("img[data-bd-main]");
+		const src = thumbs[index]?.querySelector("img")?.getAttribute("src");
+		if (main && src && main.getAttribute("src") !== src) main.src = src;
+		thumbs.forEach((thumb, i) => {
+			thumb.setAttribute("aria-current", String(i === index));
+			thumb.classList.toggle("gallery__thumb--on", i === index);
+		});
+	}
+}
+
+/**
+ * `<bd-product-form data-add-url="/api/…" data-cart-href="/cart">`: choosing
+ * and buying. The product comes as a JSON script inside (`{ "product": … }`,
+ * the storefront's product) or as the `product` property. Inside it, the
+ * page's markup marks:
+ *
+ *   [data-bd-variant="<id>"]          a variant button
+ *     [data-bd-variant-price]         its price, shown while the chosen variant has no options
+ *   [data-bd-group="<id>"]            an option group (Size…); with
+ *     data-bd-for-variant="<id>"      when it belongs to one variant (hidden for the others)
+ *     [data-bd-value="<id>"]          a choice in it
+ *     [data-bd-picked]                where the chosen value's name goes
+ *   [data-bd-price]                   [data-bd-from], [data-bd-amount], [data-bd-each] inside
+ *   [data-bd-stock]                   "Only 3 left", shown at 5 or fewer
+ *   [data-bd-qty="-1"], [data-bd-qty="1"], [data-bd-qty-value]
+ *   [data-bd-add]                     the add to cart button
+ *   [data-bd-notice]                  after adding: [data-bd-notice-text], [data-bd-notice-link]
+ *   bd-save-buttons                   given the price of what's chosen
+ *
+ * The page draws them as they are before any choice (the first variant that
+ * can be bought, quantity 1); this keeps them in step after. Adding POSTs
+ * `{ productId, variantId, quantity, options }` as JSON to data-add-url.
+ * Picking a variant sends `bd:variant` ({ productId, variantId }) on the
+ * document, which <bd-gallery> follows.
+ */
+class ProductForm extends HTMLElement {
 	#view: ProductView | null = null;
 	#variantId = "";
 	#chosen: Record<string, string> = {};
-	#photo = 0;
 	#quantity = 1;
 	#busy = false;
 	#message: { kind: "ok" | "error"; text: string } | null = null;
-	#shareNote = "";
-	#addingAddon: string | null = null;
-	#addedAddons: Record<string, boolean> = {};
-	#recent: SavedProduct[] = [];
 	#off: (() => void) | null = null;
 
-	/**
-	 * The page's data as a property, for frameworks that bind properties
-	 * (Angular: `[data]="…"`) in place of the JSON script. A new product
-	 * starts the choices over.
-	 */
-	get data(): ProductPageData | null {
-		return this.#data;
-	}
-
-	set data(value: ProductPageData | null) {
-		if (!value || value === this.#data) return;
+	/** The storefront's product, for frameworks that bind properties (Angular: `[product]="…"`). */
+	set product(value: StorefrontProductDetail | null) {
+		if (!value) return;
 		this.#load(value);
-		if (this.isConnected) this.render();
+		if (this.isConnected) this.#update();
 	}
 
-	#load(data: ProductPageData) {
-		this.#data = data;
-		this.#view = toProductView(data.product);
+	#load(product: StorefrontProductDetail) {
+		this.#view = toProductView(product);
 		this.#variantId = defaultVariant(this.#view)?.id ?? "";
 		this.#chosen = {};
-		this.#photo = 0;
 		this.#quantity = 1;
 		this.#message = null;
-		this.#shareNote = "";
-		this.#addedAddons = {};
-		// Recently viewed: read before this one is added, so it isn't in its own list.
-		this.#recent = recentlyViewed.read().filter((item) => item.id !== this.#view?.id);
-		recentlyViewed.add(this.#summary());
 	}
 
 	connectedCallback() {
-		upgradeProperty(this, "data");
-		if (!this.#data) {
-			const data = readJson<ProductPageData>(this);
-			if (data) this.#load(data);
+		upgradeProperty(this, "product");
+		if (!this.#view) {
+			const data = readJson<{ product: StorefrontProductDetail }>(this);
+			if (data?.product) this.#load(data.product);
 		}
-		this.#off = onAct(this, (act, target) => this.#act(act, target));
-		// Without data yet, the property brings it.
-		this.render();
+		const onClick = (event: Event) => {
+			const target = (event.target as Element | null)?.closest<HTMLElement>(
+				"[data-bd-variant],[data-bd-value],[data-bd-qty],[data-bd-add]",
+			);
+			if (target && this.contains(target) && !target.closest("bd-save-buttons")) void this.#act(target);
+		};
+		this.addEventListener("click", onClick);
+		this.#off = () => this.removeEventListener("click", onClick);
+		this.#update();
 	}
 
 	disconnectedCallback() {
 		this.#off?.();
 	}
 
-	#summary(): SavedProduct {
-		const view = this.#view as ProductView;
-		const price = priceFor(view, this.#variantId, this.#chosen);
-		const start = price.amount ?? view.variants[0]?.price ?? null;
-		return {
-			id: view.id,
-			name: view.name,
-			image: view.images[0] ?? null,
-			priceCents: start != null ? Math.round(start * 100) : null,
-		};
-	}
-
-	async #add(input: { productId: string; variantId?: string; quantity: number; options?: Record<string, string> }): Promise<AddResult> {
-		const { status, data } = await postJson<"ok" | "itemCount" | "error">(this.getAttribute("data-add-url") ?? "/api/bd/cart/add", input);
-		if (status >= 200 && status < 300 && data.ok !== false && typeof data.itemCount === "number") {
-			return { ok: true, itemCount: data.itemCount };
-		}
-		return { ok: false, error: typeof data.error === "string" ? data.error : "Couldn't add that to your cart. Try again." };
-	}
-
-	async #act(act: string, target: HTMLElement) {
-		const view = this.#view as ProductView;
-		const gallery = galleryFor(view, this.#variantId);
-		switch (act) {
-			case "variant":
-				this.#variantId = target.getAttribute("data-id") ?? "";
-				this.#chosen = {};
-				this.#photo = 0;
-				break;
-			case "option":
-				this.#chosen = { ...this.#chosen, [target.getAttribute("data-group") ?? ""]: target.getAttribute("data-id") ?? "" };
-				break;
-			case "photo":
-				this.#photo = Number(target.getAttribute("data-index")) || 0;
-				break;
-			case "step":
-				this.#photo = (this.#photo + Number(target.getAttribute("data-by")) + gallery.length) % gallery.length;
-				break;
-			case "fewer":
-				this.#quantity = Math.max(1, this.#quantity - 1);
-				break;
-			case "more":
-				this.#quantity = Math.min(999, this.#quantity + 1);
-				break;
-			case "add": {
-				if (!priceFor(view, this.#variantId, this.#chosen).ready) return;
-				this.#busy = true;
-				this.#message = null;
-				this.render();
-				const quantity = this.#quantity;
-				const options = chosenOptions(view, this.#variantId, this.#chosen);
-				const res = await this.#add({
-					productId: view.id,
-					...(this.#variantId ? { variantId: this.#variantId } : {}),
-					quantity,
-					...(options ? { options } : {}),
-				});
-				this.#busy = false;
-				if (res.ok) {
-					announceCartCount(res.itemCount);
-					this.#message = { kind: "ok", text: `Added ${quantity} to your cart.` };
-				} else {
-					this.#message = { kind: "error", text: res.error };
-				}
-				break;
-			}
-			case "addon": {
-				const addon = this.#data?.addons.find((a) => a.id === target.getAttribute("data-id"));
-				if (!addon) return;
-				this.#addingAddon = addon.id;
-				this.render();
-				const first = (Array.isArray(addon.variants) ? addon.variants[0] : undefined) as
-					| { variantId?: unknown; id?: unknown }
-					| undefined;
-				const variant = first?.variantId ?? first?.id;
-				const res = await this.#add({
-					productId: addon.addonProductId,
-					...(typeof variant === "string" ? { variantId: variant } : {}),
-					quantity: 1,
-				});
-				this.#addingAddon = null;
-				if (res.ok) {
-					announceCartCount(res.itemCount);
-					this.#addedAddons = { ...this.#addedAddons, [addon.id]: true };
-				}
-				break;
-			}
-			case "share": {
-				const result = await shareLink(`${window.location.origin}${window.location.pathname}`, view.name);
-				this.#shareNote = result === "copied" ? "Link copied" : result === "failed" ? "Couldn't share" : "";
-				if (this.#shareNote) {
-					setTimeout(() => {
-						this.#shareNote = "";
-						this.render();
-					}, 2500);
-				}
-				break;
-			}
-			default:
-				return;
-		}
-		this.render();
-	}
-
-	render() {
-		const data = this.#data;
+	async #act(target: HTMLElement) {
 		const view = this.#view;
-		if (!data || !view) return;
-		const store = storeHref(this);
-		const cartHref = this.getAttribute("data-cart-href") ?? `${store}/cart`;
-		const contactHref = this.getAttribute("data-contact-href") ?? "/#contact";
-		const { reviews, addons, related, moreReviewsHref } = data;
-		const gallery = galleryFor(view, this.#variantId);
-		const groups = optionGroupsFor(view, this.#variantId);
+		if (!view) return;
+		const variant = target.getAttribute("data-bd-variant");
+		const value = target.getAttribute("data-bd-value");
+		const step = target.getAttribute("data-bd-qty");
+		if (variant !== null) {
+			this.#variantId = variant;
+			this.#chosen = {};
+			document.dispatchEvent(
+				new CustomEvent<VariantChange>(VARIANT_EVENT, { detail: { productId: view.id, variantId: variant } }),
+			);
+		} else if (value !== null) {
+			const group = target.closest("[data-bd-group]")?.getAttribute("data-bd-group") ?? "";
+			this.#chosen = { ...this.#chosen, [group]: value };
+		} else if (step !== null) {
+			this.#quantity = Math.min(999, Math.max(1, this.#quantity + (Number(step) || 0)));
+		} else {
+			if (this.#busy || !priceFor(view, this.#variantId, this.#chosen).ready) return;
+			this.#busy = true;
+			this.#message = null;
+			this.#update();
+			const quantity = this.#quantity;
+			const options = chosenOptions(view, this.#variantId, this.#chosen);
+			const res = await addToCart(addUrl(this), {
+				productId: view.id,
+				...(this.#variantId ? { variantId: this.#variantId } : {}),
+				quantity,
+				...(options ? { options } : {}),
+			});
+			this.#busy = false;
+			if (res.ok) announceCartCount(res.itemCount);
+			this.#message = res.ok
+				? { kind: "ok", text: `Added ${quantity} to your cart.` }
+				: { kind: "error", text: res.error };
+		}
+		this.#update();
+	}
+
+	#update() {
+		const view = this.#view;
+		if (!view) return;
+		const all = (selector: string) => this.querySelectorAll<HTMLElement>(selector);
+		const one = (selector: string) => this.querySelector<HTMLElement>(selector);
 		const price = priceFor(view, this.#variantId, this.#chosen);
-		const photo = Math.min(this.#photo, Math.max(gallery.length - 1, 0));
 		const quantity = this.#quantity;
-		const cta = price.amount === null ? "Sold out" : !price.ready ? "Choose options" : this.#busy ? "Adding…" : "Add to cart";
-		const relatedCards: SavedProduct[] = related.map((rp) => ({
-			id: rp.id,
-			name: rp.name,
-			image: rp.coverImageUrl,
-			priceCents: rp.minPriceDollars != null ? Math.round(rp.minPriceDollars * 100) : null,
-		}));
 
-		patch(this, [
-			h(
-				"nav",
-				{ "aria-label": "Breadcrumb", class: "crumbs" },
-				h("a", { href: store }, "Store"),
-				view.categoryId && [
-					h("span", { "aria-hidden": "true" }, "/"),
-					h("a", { href: `${store}?category=${encodeURIComponent(view.categoryId)}` }, view.categoryName ?? "Category"),
-				],
-				h("span", { "aria-hidden": "true" }, "/"),
-				h("span", { "aria-current": "page" }, view.name),
-			),
+		for (const button of all("[data-bd-variant]")) press(button, button.getAttribute("data-bd-variant") === this.#variantId);
+		// A variant's price shows on its button while the chosen one has no options.
+		const plain = optionGroupsFor(view, this.#variantId).length === 0;
+		for (const small of all("[data-bd-variant-price]")) show(small, plain);
+		for (const group of all("[data-bd-group]")) {
+			const only = group.getAttribute("data-bd-for-variant");
+			show(group, only === null || only === this.#variantId);
+			const chosen = this.#chosen[group.getAttribute("data-bd-group") ?? ""];
+			for (const button of group.querySelectorAll("[data-bd-value]")) press(button, button.getAttribute("data-bd-value") === chosen);
+			const picked = group.querySelector<HTMLElement>("[data-bd-picked]");
+			const name = chosen ? (view.optionValues.find((v) => v.id === chosen)?.value ?? "") : "";
+			setText(picked, name ? ` ${name}` : "");
+			show(picked, Boolean(name));
+		}
 
-			h(
-				"div",
-				{ class: "product-detail" },
-				h(
-					"div",
-					{ class: "gallery" },
-					h(
-						"div",
-						{ class: "gallery__main" },
-						gallery[photo]
-							? h("img", { alt: view.name, referrerpolicy: "no-referrer", src: gallery[photo] })
-							: h("div", { class: "gallery__placeholder" }, "No photo yet"),
-						gallery.length > 1 && [
-							h(
-								"button",
-								{ "aria-label": "Previous photo", class: "gallery__step gallery__step--prev", "data-act": "step", "data-by": -1, type: "button" },
-								"‹",
-							),
-							h(
-								"button",
-								{ "aria-label": "Next photo", class: "gallery__step gallery__step--next", "data-act": "step", "data-by": 1, type: "button" },
-								"›",
-							),
-						],
-					),
-					gallery.length > 1 &&
-						h(
-							"div",
-							{ class: "gallery__thumbs" },
-							gallery.map((src, i) =>
-								h(
-									"button",
-									{
-										"aria-current": String(i === photo),
-										"aria-label": `Photo ${i + 1} of ${gallery.length}`,
-										class: `gallery__thumb${i === photo ? " gallery__thumb--on" : ""}`,
-										"data-act": "photo",
-										"data-index": i,
-										type: "button",
-									},
-									h("img", { alt: "", loading: "lazy", referrerpolicy: "no-referrer", src }),
-								),
-							),
-						),
-				),
+		const priceBox = one("[data-bd-price]");
+		if (priceBox) {
+			const amount = priceBox.querySelector<HTMLElement>("[data-bd-amount]");
+			const each = priceBox.querySelector<HTMLElement>("[data-bd-each]");
+			setText(amount, price.amount != null ? formatDollars(price.amount * quantity) : "Sold out");
+			show(priceBox.querySelector("[data-bd-from]"), price.amount != null && price.from);
+			setText(each, price.amount != null && quantity > 1 ? ` (${formatDollars(price.amount)} each)` : "");
+			show(each, price.amount != null && quantity > 1);
+		}
 
-				h(
-					"div",
-					{ class: "product-detail__info bd-card" },
-					h(
-						"div",
-						null,
-						view.categoryName && h("p", { class: "product-detail__eyebrow" }, view.categoryName),
-						h("h1", null, view.name),
-						reviews &&
-							reviews.totalCount > 0 &&
-							h(
-								"a",
-								{ class: "product-detail__rating", href: "#reviews" },
-								starRating(reviews.avgRating),
-								h("span", null, `${reviews.avgRating.toFixed(1)} · ${reviews.totalCount} reviews`),
-							),
-					),
+		const stock = one("[data-bd-stock]");
+		const low = price.stock != null && price.stock > 0 && price.stock <= 5;
+		setText(stock, low ? `Only ${price.stock} left` : "");
+		show(stock, low);
 
-					h(
-						"p",
-						{ class: "product-detail__price" },
-						price.amount != null
-							? [
-									price.from && h("span", { class: "product-detail__from" }, "From"),
-									" ",
-									formatDollars(price.amount * quantity),
-									quantity > 1 && h("span", { class: "product-detail__each" }, ` (${formatDollars(price.amount)} each)`),
-								]
-							: "Sold out",
-					),
+		setText(one("[data-bd-qty-value]"), String(quantity));
+		for (const button of all("[data-bd-qty]")) {
+			const down = Number(button.getAttribute("data-bd-qty")) < 0;
+			enable(button, down ? quantity > 1 : price.stock == null || quantity < price.stock);
+		}
 
-					view.description && h("p", { class: "product-detail__desc" }, view.description),
+		const add = one("[data-bd-add]");
+		enable(add, !this.#busy && price.ready);
+		setText(add, price.amount === null ? "Sold out" : !price.ready ? "Choose options" : this.#busy ? "Adding…" : "Add to cart");
 
-					view.variants.length > 1 &&
-						h(
-							"fieldset",
-							{ class: "choice" },
-							h("legend", { class: "bd-label" }, "Option"),
-							h(
-								"div",
-								{ class: "choice__values" },
-								view.variants.map((v) =>
-									h(
-										"button",
-										{
-											"aria-pressed": String(v.id === this.#variantId),
-											class: `choice__value${v.id === this.#variantId ? " choice__value--on" : ""}`,
-											"data-act": "variant",
-											"data-id": v.id,
-											disabled: !v.available,
-											type: "button",
-										},
-										v.name,
-										v.price != null && groups.length === 0 && h("small", null, ` ${formatDollars(v.price)}`),
-									),
-								),
-							),
-						),
+		const notice = one("[data-bd-notice]");
+		if (notice) {
+			const message = this.#message;
+			show(notice, Boolean(message));
+			const error = message?.kind === "error";
+			if (notice.classList.contains("product-detail__msg--err") !== error) notice.classList.toggle("product-detail__msg--err", error);
+			setText(notice.querySelector("[data-bd-notice-text]"), message?.text ?? "");
+			show(notice.querySelector("[data-bd-notice-link]"), message?.kind === "ok");
+		}
 
-					groups.map((group) =>
-						h(
-							"fieldset",
-							{ class: "choice" },
-							h(
-								"legend",
-								{ class: "bd-label" },
-								group.title,
-								this.#chosen[group.id] &&
-									h("span", { class: "choice__picked" }, ` ${group.values.find((v) => v.id === this.#chosen[group.id])?.value ?? ""}`),
-							),
-							h(
-								"div",
-								{ class: "choice__values" },
-								group.values.map((value) =>
-									h(
-										"button",
-										{
-											"aria-pressed": String(this.#chosen[group.id] === value.id),
-											class: `choice__value${this.#chosen[group.id] === value.id ? " choice__value--on" : ""}`,
-											"data-act": "option",
-											"data-group": group.id,
-											"data-id": value.id,
-											disabled: !value.available,
-											title: value.available ? null : "Sold out",
-											type: "button",
-										},
-										value.value,
-									),
-								),
-							),
-						),
-					),
+		const summary = JSON.stringify(productSummary(view, this.#variantId, this.#chosen));
+		for (const save of all("bd-save-buttons")) {
+			if (save.getAttribute("data-product") !== summary) save.setAttribute("data-product", summary);
+		}
+	}
+}
 
-					price.stock != null &&
-						price.stock > 0 &&
-						price.stock <= 5 &&
-						h("p", { class: "product-detail__stock" }, `Only ${price.stock} left`),
+/**
+ * `<bd-share data-title="…">`: its `[data-bd-share]` button opens the share
+ * sheet, or copies the page's link and says so in `[data-bd-share-note]`.
+ */
+class ShareButton extends HTMLElement {
+	#off: (() => void) | null = null;
+	#timer: ReturnType<typeof setTimeout> | undefined;
 
-					h(
-						"div",
-						{ class: "buy" },
-						h(
-							"div",
-							{ "aria-label": "Quantity", class: "qty", role: "group" },
-							h("button", { "aria-label": "One fewer", "data-act": "fewer", disabled: quantity <= 1, type: "button" }, "−"),
-							h("span", { "aria-live": "polite" }, quantity),
-							h(
-								"button",
-								{ "aria-label": "One more", "data-act": "more", disabled: price.stock != null && quantity >= price.stock, type: "button" },
-								"+",
-							),
-						),
-						h("button", { class: "bd-btn buy__add", "data-act": "add", disabled: this.#busy || !price.ready, type: "button" }, cta),
-					),
+	connectedCallback() {
+		const onClick = async (event: Event) => {
+			if (!(event.target as Element | null)?.closest("[data-bd-share]")) return;
+			const result = await shareLink(
+				`${window.location.origin}${window.location.pathname}`,
+				this.getAttribute("data-title") ?? document.title,
+			);
+			const note = this.querySelector<HTMLElement>("[data-bd-share-note]");
+			const text = result === "copied" ? "Link copied" : result === "failed" ? "Couldn't share" : "";
+			if (!note || !text) return;
+			note.textContent = text;
+			note.hidden = false;
+			clearTimeout(this.#timer);
+			this.#timer = setTimeout(() => {
+				note.textContent = "";
+				note.hidden = true;
+			}, 2500);
+		};
+		this.addEventListener("click", onClick);
+		this.#off = () => this.removeEventListener("click", onClick);
+	}
 
-					this.#message &&
-						h(
-							"div",
-							{
-								class: `product-detail__msg${this.#message.kind === "error" ? " product-detail__msg--err" : ""}`,
-								role: "status",
-							},
-							this.#message.text,
-							this.#message.kind === "ok" && h("a", { class: "bd-btn bd-btn--ghost", href: cartHref }, "View cart"),
-						),
+	disconnectedCallback() {
+		this.#off?.();
+		clearTimeout(this.#timer);
+	}
+}
 
-					h(
-						"div",
-						{ class: "product-detail__tools" },
-						h("bd-save-buttons", { "data-product": JSON.stringify(this.#summary()) }),
-						h("button", { class: "share", "data-act": "share", type: "button" }, h("span", { "aria-hidden": "true" }, "↗"), " Share"),
-						this.#shareNote && h("span", { class: "share__note", role: "status" }, this.#shareNote),
-					),
+/**
+ * `<bd-addon data-product-id="…" data-variant-id="…" data-add-url="/api/…">`:
+ * its `[data-bd-add]` button adds one of the add-on to the cart, reading
+ * "…" on the way and "Added" after.
+ */
+class AddonButton extends HTMLElement {
+	#off: (() => void) | null = null;
 
-					h(
-						"ul",
-						{ class: "policies" },
-						h("li", null, "Secure checkout with Stripe"),
-						h("li", null, "Questions? ", h("a", { href: contactHref }, "Ask us"), " before you buy"),
-					),
-				),
-			),
+	connectedCallback() {
+		const onClick = async (event: Event) => {
+			const button = (event.target as Element | null)?.closest<HTMLButtonElement>("[data-bd-add]");
+			if (!button || !this.contains(button) || button.disabled) return;
+			const label = button.textContent;
+			button.disabled = true;
+			button.textContent = "…";
+			const variantId = this.getAttribute("data-variant-id");
+			const res = await addToCart(addUrl(this), {
+				productId: this.getAttribute("data-product-id") ?? "",
+				...(variantId ? { variantId } : {}),
+				quantity: 1,
+			});
+			if (res.ok) {
+				announceCartCount(res.itemCount);
+				button.textContent = "Added";
+			} else {
+				button.disabled = false;
+				button.textContent = label;
+			}
+		};
+		this.addEventListener("click", onClick);
+		this.#off = () => this.removeEventListener("click", onClick);
+	}
 
-			(view.features.length > 0 || view.specs.length > 0) &&
-				h(
-					"section",
-					{ class: "product-section", id: "specs" },
-					h("h2", { class: "product-section__title" }, "Details"),
-					view.features.length > 0 && h("ul", { class: "features" }, view.features.map((feature) => h("li", null, feature))),
-					view.specs.map((group) =>
-						h(
-							"table",
-							{ class: "specs" },
-							h("caption", null, group.name),
-							h(
-								"tbody",
-								null,
-								group.rows.map((row) => h("tr", null, h("th", { scope: "row" }, row.label), h("td", null, row.value))),
-							),
-						),
-					),
-				),
+	disconnectedCallback() {
+		this.#off?.();
+	}
+}
 
-			addons.length > 0 &&
-				h(
-					"section",
-					{ class: "product-section" },
-					h("h2", { class: "product-section__title" }, "Complete your purchase"),
-					h(
-						"div",
-						{ class: "addon-grid" },
-						addons.map((addon) =>
-							h(
-								"div",
-								{ class: "addon-card bd-card" },
-								h(
-									"div",
-									{ class: "addon-card__media" },
-									addon.imageUrl
-										? h("img", { alt: addon.addonName, loading: "lazy", referrerpolicy: "no-referrer", src: addon.imageUrl })
-										: h("div", { class: "addon-card__noimg" }, "—"),
-								),
-								h(
-									"div",
-									{ class: "addon-card__body" },
-									addon.groupLabel && h("span", { class: "addon-card__group" }, addon.groupLabel),
-									h("p", { class: "addon-card__name" }, addon.addonName),
-									addon.priceCents != null && h("span", { class: "addon-card__price" }, formatCents(addon.priceCents)),
-								),
-								h(
-									"button",
-									{
-										class: "bd-btn bd-btn--ghost addon-card__add",
-										"data-act": "addon",
-										"data-id": addon.id,
-										disabled: this.#addingAddon === addon.id || this.#addedAddons[addon.id] === true,
-										type: "button",
-									},
-									this.#addedAddons[addon.id] ? "Added" : this.#addingAddon === addon.id ? "…" : "Add",
-								),
-							),
-						),
-					),
-				),
+/**
+ * `<bd-recently-viewed data-product='{"id":…,"name":…,"image":…,"priceCents":…}'>`:
+ * the products this browser opened before this one, as a rail, and this
+ * one added to the list for next time. The list lives in localStorage, so
+ * this draws its own cards (the same markup as a product rail). It follows
+ * data-product, for frameworks that set it after adding the element.
+ */
+class RecentlyViewed extends HTMLElement {
+	static observedAttributes = ["data-product"];
+	#connected = false;
+	#added = "";
 
-			h(
-				"section",
-				{ class: "product-section", id: "reviews" },
-				h("h2", { class: "product-section__title" }, "Reviews"),
-				reviews && reviews.items.length > 0
-					? [
-							h(
-								"p",
-								{ class: "reviews__summary" },
-								starRating(reviews.avgRating),
-								h("strong", null, `${reviews.avgRating.toFixed(1)} out of 5`),
-								h("span", null, `from ${reviews.totalCount} reviews`),
-							),
-							h(
-								"div",
-								{ class: "review-list" },
-								reviews.items.map((review) =>
-									h(
-										"article",
-										{ class: "review" },
-										h(
-											"div",
-											{ class: "review__head" },
-											starRating(review.rating),
-											h("span", { class: "review__name" }, review.reviewerName || "Verified buyer"),
-											h("span", { class: "review__date" }, reviewDate(review.createdAt)),
-										),
-										review.title && h("p", { class: "review__title" }, review.title),
-										(review.content || review.body) && h("p", { class: "review__body" }, review.content || review.body),
-									),
-								),
-							),
-							moreReviewsHref && h("a", { class: "bd-btn bd-btn--ghost reviews__more", href: moreReviewsHref }, "Show more reviews"),
-						]
-					: h("p", { class: "reviews__none" }, "No reviews yet."),
-			),
+	connectedCallback() {
+		this.#connected = true;
+		this.#draw();
+	}
 
-			productRail("You may also like", relatedCards, store),
-			productRail("Recently viewed", this.#recent, store),
-			h("bd-compare-bar", { "data-store-href": store }),
-		]);
+	disconnectedCallback() {
+		this.#connected = false;
+	}
+
+	attributeChangedCallback() {
+		if (this.#connected) this.#draw();
+	}
+
+	#draw() {
+		let product: SavedProduct | null = null;
+		try {
+			product = JSON.parse(this.getAttribute("data-product") ?? "") as SavedProduct;
+		} catch {
+			product = null;
+		}
+		const recent = recentlyViewed.read().filter((item) => item.id !== product?.id);
+		if (product?.id && product.id !== this.#added) {
+			recentlyViewed.add(product);
+			this.#added = product.id;
+		}
+		patch(this, [productRail(this.getAttribute("data-title") ?? "Recently viewed", recent, storeHref(this))]);
 	}
 }
 
@@ -1071,7 +953,11 @@ class CartCount extends HTMLElement {
 
 define("bd-save-buttons", SaveButtons);
 define("bd-compare-bar", CompareBar);
-define("bd-product", ProductPage);
+define("bd-gallery", Gallery);
+define("bd-product-form", ProductForm);
+define("bd-share", ShareButton);
+define("bd-addon", AddonButton);
+define("bd-recently-viewed", RecentlyViewed);
 define("bd-wishlist", Wishlist);
 define("bd-compare", CompareTable);
 define("bd-saved-count", SavedCount);

@@ -1,8 +1,9 @@
 <!-- One product. StoreController.show reads the product, its reviews, add-ons
-     and related products, and <bd-product> (Public/shop/shop-elements.js)
-     draws the page from that data: option photos, option and size buttons,
-     the price for what's chosen, add to cart (POST /api/bd/cart/add), save,
-     compare, share, add-ons, reviews, related and recently viewed. -->
+     and related products; shop/product-detail lays the page out from the
+     shop's parts (Resources/Views/shop/, one file each): option photos,
+     option and size buttons, the price for what's chosen, add to cart (POST
+     /api/bd/cart/add), save, compare, share, add-ons, reviews, related and
+     recently viewed. -->
 #extend("base"):
   #export("title"):#(title)#endexport
   #export("head"):
@@ -22,15 +23,7 @@
     #elseif(!found):
       <div class="bd-empty">That product isn't available. <a href="/store">Browse the store</a></div>
     #else:
-      <bd-product data-add-url="/api/bd/cart/add" data-cart-href="/cart" data-contact-href="/\#contact">
-        <!-- Safe: ElementData.json escapes <, > and & inside the JSON. -->
-        <script type="application/json">#unsafeHTML(dataJSON)</script>
-        <noscript>
-          <h1>#(name)</h1>
-          #if(hasDescription):<p>#(description)</p>#endif
-          <p>Turn on JavaScript to choose options and add this to your cart.</p>
-        </noscript>
-      </bd-product>
+      #extend("shop/product-detail")
     #endif
   #endexport
 #endextend

@@ -1,0 +1,5 @@
+<!-- A line in the cart, `line`: the product and option, the price each and how many. -->
+<li>
+  <span>#(line.name)</span>
+  <span class="muted">#(line.unitPrice) each × #(line.quantity)</span>
+</li>

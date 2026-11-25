@@ -1,0 +1,27 @@
+<!-- "Complete your purchase": add-ons, each with Add (<bd-addon> posts it to the cart). -->
+#if(detail.hasAddons):
+  <section class="product-section">
+    <h2 class="product-section__title">Complete your purchase</h2>
+    <div class="addon-grid">
+      #for(addon in detail.addons):
+        <div class="addon-card bd-card">
+          <div class="addon-card__media">
+            #if(addon.hasImage):
+              <img alt="#(addon.name)" loading="lazy" referrerpolicy="no-referrer" src="#(addon.image)">
+            #else:
+              <div class="addon-card__noimg">—</div>
+            #endif
+          </div>
+          <div class="addon-card__body">
+            #if(addon.hasGroup):<span class="addon-card__group">#(addon.group)</span>#endif
+            <p class="addon-card__name">#(addon.name)</p>
+            #if(addon.hasPrice):<span class="addon-card__price">#(addon.price)</span>#endif
+          </div>
+          <bd-addon data-add-url="#(detail.addURL)" data-product-id="#(addon.productId)"#if(addon.hasVariant): data-variant-id="#(addon.variantId)"#endif>
+            <button class="bd-btn bd-btn--ghost addon-card__add" data-bd-add type="button">Add</button>
+          </bd-addon>
+        </div>
+      #endfor
+    </div>
+  </section>
+#endif

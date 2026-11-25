@@ -1,5 +1,7 @@
 <!-- The post list: pinned first, category and tag filters, older posts.
-     BlogController.index works out every link and label. -->
+     BlogController.index works out every link and label. It's laid out from
+     the blog's parts (Resources/Views/blog/): the filters and a post card per
+     post. -->
 #extend("base"):
   #export("title"):#(title)#endexport
   #export("head"):
@@ -17,24 +19,7 @@
         #if(hasDescription):<p class="bd-section__sub">#(description)</p>#endif
       </div>
 
-      #if(hasFilterNav):
-        <nav aria-label="Blog topics" class="blog-filters">
-          #if(hasCategories):
-            <ul>
-              #for(link in categories):
-                <li><a#if(link.current): aria-current="true"#endif href="#(link.href)">#(link.label)</a></li>
-              #endfor
-            </ul>
-          #endif
-          #if(hasTags):
-            <ul class="blog-filters__tags">
-              #for(link in tags):
-                <li><a#if(link.current): aria-current="true"#endif href="#(link.href)">#(link.label)</a></li>
-              #endfor
-            </ul>
-          #endif
-        </nav>
-      #endif
+      #extend("blog/blog-filters")
 
       #if(isEmpty):
         <div class="bd-empty">
@@ -46,25 +31,7 @@
         </div>
       #else:
         <ul class="posts">
-          #for(post in posts):
-            <li class="bd-card post-card#if(post.lead): post-card--lead#endif">
-              <a class="post-card__link" href="#(post.href)">
-                #if(post.hasImage):
-                  <img alt="" class="post-card__img" loading="lazy" referrerpolicy="no-referrer" src="#(post.image)">
-                #endif
-                <div class="post-card__body">
-                  <p class="post-card__meta">
-                    #if(post.pinned):<span class="bd-badge">Pinned</span>#endif
-                    <span>#(post.date)</span>
-                    <span>· #(post.minutes) min read</span>
-                  </p>
-                  <h2>#(post.title)</h2>
-                  #if(post.hasExcerpt):<p class="post-card__excerpt">#(post.excerpt)</p>#endif
-                  #if(post.hasAuthor):<p class="post-card__author">#(post.author)</p>#endif
-                </div>
-              </a>
-            </li>
-          #endfor
+          #for(post in posts):#extend("blog/post-card")#endfor
         </ul>
         #if(hasOlder):
           <p class="posts__more"><a class="bd-btn bd-btn--ghost" href="#(olderHref)">Older posts</a></p>

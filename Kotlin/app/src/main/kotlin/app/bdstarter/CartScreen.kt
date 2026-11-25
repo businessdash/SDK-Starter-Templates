@@ -6,29 +6,15 @@ import android.net.Uri
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -43,18 +29,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.bd.BdClient
 import app.bd.CartSnapshot
 import app.bd.CheckoutStatus
-import app.bd.Money
 import app.bd.cart
 import app.bd.cartApplyCoupon
 import app.bd.cartClear
@@ -146,97 +125,41 @@ fun CartScreen(modifier: Modifier = Modifier) {
                 val currency = shown.currency ?: "USD"
                 LazyColumn(Modifier.weight(1f), contentPadding = PaddingValues(vertical = 8.dp)) {
                     items(shown.items, key = { it.id }) { item ->
-                        Row(
-                            Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 10.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Photo(item.productImage, Modifier.size(64.dp).clip(RoundedCornerShape(8.dp)))
-                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                                Text(item.name ?: "Item", style = MaterialTheme.typography.titleSmall)
-                                item.variantTitle?.takeIf { it.isNotEmpty() }?.let {
-                                    Text(it, style = MaterialTheme.typography.bodySmall)
-                                }
-                                Text(Money.amount(item.unitPrice, currency), style = MaterialTheme.typography.bodySmall)
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    IconButton(
-                                        enabled = !busy,
-                                        onClick = {
-                                            change {
-                                                if (item.quantity <= 1) cartRemove(it, item.id) else cartSetQuantity(it, item.id, item.quantity - 1)
-                                            }
-                                        },
-                                    ) {
-                                        Text(
-                                            "−",
-                                            fontSize = 22.sp,
-                                            modifier = Modifier.semantics {
-                                                contentDescription = if (item.quantity <= 1) "Remove" else "One fewer"
-                                            },
-                                        )
-                                    }
-                                    Text(
-                                        "${item.quantity}",
-                                        modifier = Modifier.semantics { contentDescription = "Quantity ${item.quantity}" },
-                                    )
-                                    IconButton(enabled = !busy, onClick = { change { cartSetQuantity(it, item.id, item.quantity + 1) } }) {
-                                        Icon(Icons.Filled.Add, contentDescription = "One more")
-                                    }
-                                    TextButton(enabled = !busy, onClick = { change { cartRemove(it, item.id) } }) { Text("Remove") }
-                                }
-                            }
-                            Text(
-                                Money.amount(item.subtotal ?: (item.unitPrice ?: 0.0) * item.quantity, currency),
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                        }
+                        CartLine(
+                            item,
+                            currency,
+                            enabled = !busy,
+                            onQuantity = { quantity ->
+                                change { if (quantity < 1) cartRemove(it, item.id) else cartSetQuantity(it, item.id, quantity) }
+                            },
+                            onRemove = { change { cartRemove(it, item.id) } },
+                        )
                         HorizontalDivider()
                     }
                     item(key = "coupon") {
-                        val coupon = shown.couponCode
-                        Column(Modifier.padding(16.dp)) {
-                            if (coupon != null) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Coupon $coupon applied", Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                                    TextButton(enabled = !busy, onClick = { change { cartRemoveCoupon(it) } }) { Text("Remove") }
+                        CouponField(
+                            coupon = shown.couponCode,
+                            code = code,
+                            onCodeChange = { code = it },
+                            enabled = !busy,
+                            onApply = {
+                                val typed = code.trim()
+                                if (typed.isNotEmpty()) {
+                                    change("That code didn't work.") { visitor -> cartApplyCoupon(visitor, typed).also { code = "" } }
                                 }
-                            } else {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                    fun apply() {
-                                        val typed = code.trim()
-                                        if (typed.isEmpty()) return
-                                        change("That code didn't work.") { visitor -> cartApplyCoupon(visitor, typed).also { code = "" } }
-                                    }
-                                    OutlinedTextField(
-                                        value = code,
-                                        onValueChange = { code = it },
-                                        placeholder = { Text("Coupon code") },
-                                        singleLine = true,
-                                        keyboardOptions = KeyboardOptions(
-                                            capitalization = KeyboardCapitalization.Characters,
-                                            imeAction = ImeAction.Done,
-                                        ),
-                                        keyboardActions = KeyboardActions(onDone = { apply() }),
-                                        modifier = Modifier.weight(1f).semantics { contentDescription = "Coupon code" },
-                                    )
-                                    OutlinedButton(enabled = !busy, onClick = { apply() }) { Text("Apply") }
-                                }
-                            }
-                        }
+                            },
+                            onRemove = { change { cartRemoveCoupon(it) } },
+                        )
                     }
                 }
-                Surface(tonalElevation = 3.dp) {
-                    Column(Modifier.fillMaxWidth().navigationBarsPadding().padding(16.dp)) {
-                        note?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(bottom = 8.dp)) }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            Column(Modifier.weight(1f)) {
-                                Text("Subtotal", style = MaterialTheme.typography.bodySmall)
-                                Text(Money.amount(shown.subtotal, currency), style = MaterialTheme.typography.titleMedium)
-                            }
-                            TextButton(enabled = !busy, onClick = { change { cartClear(it) } }) { Text("Clear") }
-                            Button(enabled = !busy, onClick = ::checkout) { Text("Checkout") }
-                        }
-                    }
-                }
+                CartSummaryBar(
+                    subtotal = shown.subtotal,
+                    currency = currency,
+                    note = note,
+                    enabled = !busy,
+                    onClear = { change { cartClear(it) } },
+                    onCheckout = ::checkout,
+                )
             }
         }
     }

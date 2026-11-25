@@ -1,0 +1,1518 @@
+{
+  "about": "Products in, and what the product page rules every BD starter shares (shop.ts) give back. Each server starter's port must give the same.",
+  "cases": [
+    {
+      "input": {
+        "id": "p-trainer",
+        "name": "  Everyday Trainer 3 ",
+        "description": "Light and quick.",
+        "categoryId": "c-shoes",
+        "category": {
+          "name": "Shoes"
+        },
+        "images": [
+          "https://img.example/a.webp",
+          " ",
+          "https://img.example/b.webp"
+        ],
+        "variants": [
+          {
+            "id": "v-onyx",
+            "name": "Onyx",
+            "price": 120,
+            "stock": 0,
+            "isLive": true
+          },
+          {
+            "id": "v-cloud",
+            "name": "Cloud",
+            "price": 120,
+            "stock": 8
+          },
+          {
+            "id": "v-storm",
+            "name": "Storm",
+            "price": 125.5,
+            "stock": null,
+            "isLive": false
+          }
+        ],
+        "variantImages": [
+          {
+            "variantId": "v-cloud",
+            "url": "https://img.example/cloud-2.webp",
+            "order": 2
+          },
+          {
+            "variantId": "v-cloud",
+            "url": "https://img.example/cloud-1.webp",
+            "order": 1
+          },
+          {
+            "variantId": "v-onyx",
+            "url": "https://img.example/onyx-1.webp",
+            "order": 0
+          },
+          {
+            "variantId": "",
+            "url": "https://img.example/stray.webp",
+            "order": 0
+          },
+          {
+            "variantId": "v-onyx",
+            "url": "",
+            "order": 1
+          }
+        ],
+        "crossVariantTitles": [
+          {
+            "id": "t-size",
+            "title": "Size",
+            "variantId": null
+          },
+          {
+            "id": "t-width",
+            "title": "Width",
+            "variantId": "v-cloud"
+          },
+          {
+            "id": "t-empty",
+            "title": "Lacing",
+            "variantId": null
+          }
+        ],
+        "crossVariants": [
+          {
+            "id": "o-43",
+            "crossVariantTitleId": "t-size",
+            "value": "43",
+            "price": 120,
+            "stock": 0
+          },
+          {
+            "id": "o-39",
+            "crossVariantTitleId": "t-size",
+            "value": "39",
+            "price": 120,
+            "stock": 2
+          },
+          {
+            "id": "o-42",
+            "crossVariantTitleId": "t-size",
+            "value": "42",
+            "price": 118,
+            "stock": 9
+          },
+          {
+            "id": "o-wide",
+            "crossVariantTitleId": "t-width",
+            "value": "Wide",
+            "price": 5,
+            "stock": null
+          },
+          {
+            "id": "o-reg",
+            "crossVariantTitleId": "t-width",
+            "value": "Regular",
+            "price": 0,
+            "stock": 4,
+            "isLive": true
+          },
+          {
+            "id": "o-x",
+            "crossVariantTitleId": "t-width",
+            "value": "Extra",
+            "price": 2,
+            "isLive": false
+          }
+        ],
+        "specifications": {
+          "features": [
+            "Breathable",
+            " ",
+            7,
+            "Recycled laces"
+          ],
+          "groups": [
+            {
+              "name": "Fit",
+              "rows": [
+                {
+                  "label": "Drop",
+                  "value": "8 mm"
+                },
+                {
+                  "label": "",
+                  "value": "x"
+                },
+                {
+                  "label": "Weight",
+                  "value": " "
+                }
+              ]
+            },
+            {
+              "name": " ",
+              "rows": [
+                {
+                  "label": "A",
+                  "value": "B"
+                }
+              ]
+            },
+            {
+              "name": "Empty",
+              "rows": []
+            }
+          ]
+        }
+      },
+      "view": {
+        "id": "p-trainer",
+        "name": "Everyday Trainer 3",
+        "description": "Light and quick.",
+        "categoryId": "c-shoes",
+        "categoryName": "Shoes",
+        "images": [
+          "https://img.example/a.webp",
+          "https://img.example/b.webp"
+        ],
+        "variants": [
+          {
+            "id": "v-onyx",
+            "name": "Onyx",
+            "price": 120,
+            "stock": 0,
+            "available": false
+          },
+          {
+            "id": "v-cloud",
+            "name": "Cloud",
+            "price": 120,
+            "stock": 8,
+            "available": true
+          },
+          {
+            "id": "v-storm",
+            "name": "Storm",
+            "price": 125.5,
+            "stock": null,
+            "available": false
+          }
+        ],
+        "variantImages": [
+          {
+            "variantId": "v-cloud",
+            "url": "https://img.example/cloud-2.webp",
+            "order": 2
+          },
+          {
+            "variantId": "v-cloud",
+            "url": "https://img.example/cloud-1.webp",
+            "order": 1
+          },
+          {
+            "variantId": "v-onyx",
+            "url": "https://img.example/onyx-1.webp",
+            "order": 0
+          },
+          {
+            "variantId": "",
+            "url": "https://img.example/stray.webp",
+            "order": 0
+          }
+        ],
+        "optionTitles": [
+          {
+            "id": "t-size",
+            "title": "Size",
+            "variantId": null
+          },
+          {
+            "id": "t-width",
+            "title": "Width",
+            "variantId": "v-cloud"
+          },
+          {
+            "id": "t-empty",
+            "title": "Lacing",
+            "variantId": null
+          }
+        ],
+        "optionValues": [
+          {
+            "id": "o-43",
+            "titleId": "t-size",
+            "value": "43",
+            "price": 120,
+            "stock": 0,
+            "available": false
+          },
+          {
+            "id": "o-39",
+            "titleId": "t-size",
+            "value": "39",
+            "price": 120,
+            "stock": 2,
+            "available": true
+          },
+          {
+            "id": "o-42",
+            "titleId": "t-size",
+            "value": "42",
+            "price": 118,
+            "stock": 9,
+            "available": true
+          },
+          {
+            "id": "o-wide",
+            "titleId": "t-width",
+            "value": "Wide",
+            "price": 5,
+            "stock": null,
+            "available": true
+          },
+          {
+            "id": "o-reg",
+            "titleId": "t-width",
+            "value": "Regular",
+            "price": 0,
+            "stock": 4,
+            "available": true
+          },
+          {
+            "id": "o-x",
+            "titleId": "t-width",
+            "value": "Extra",
+            "price": 2,
+            "stock": null,
+            "available": false
+          }
+        ],
+        "features": [
+          "Breathable",
+          "Recycled laces"
+        ],
+        "specs": [
+          {
+            "name": "Fit",
+            "rows": [
+              {
+                "label": "Drop",
+                "value": "8 mm"
+              }
+            ]
+          }
+        ]
+      },
+      "defaultVariant": "v-cloud",
+      "allOptionGroups": [
+        {
+          "id": "t-size",
+          "title": "Size",
+          "values": [
+            {
+              "id": "o-43",
+              "titleId": "t-size",
+              "value": "43",
+              "price": 120,
+              "stock": 0,
+              "available": false
+            },
+            {
+              "id": "o-39",
+              "titleId": "t-size",
+              "value": "39",
+              "price": 120,
+              "stock": 2,
+              "available": true
+            },
+            {
+              "id": "o-42",
+              "titleId": "t-size",
+              "value": "42",
+              "price": 118,
+              "stock": 9,
+              "available": true
+            }
+          ],
+          "variantId": null
+        },
+        {
+          "id": "t-width",
+          "title": "Width",
+          "values": [
+            {
+              "id": "o-wide",
+              "titleId": "t-width",
+              "value": "Wide",
+              "price": 5,
+              "stock": null,
+              "available": true
+            },
+            {
+              "id": "o-reg",
+              "titleId": "t-width",
+              "value": "Regular",
+              "price": 0,
+              "stock": 4,
+              "available": true
+            },
+            {
+              "id": "o-x",
+              "titleId": "t-width",
+              "value": "Extra",
+              "price": 2,
+              "stock": null,
+              "available": false
+            }
+          ],
+          "variantId": "v-cloud"
+        }
+      ],
+      "photoSets": [
+        {
+          "variantId": "",
+          "photos": [
+            "https://img.example/a.webp",
+            "https://img.example/b.webp"
+          ]
+        },
+        {
+          "variantId": "v-cloud",
+          "photos": [
+            "https://img.example/cloud-1.webp",
+            "https://img.example/cloud-2.webp"
+          ]
+        },
+        {
+          "variantId": "v-onyx",
+          "photos": [
+            "https://img.example/onyx-1.webp"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "v-onyx",
+          "gallery": [
+            "https://img.example/onyx-1.webp"
+          ],
+          "groups": [
+            {
+              "id": "t-size",
+              "title": "Size",
+              "values": [
+                {
+                  "id": "o-43",
+                  "titleId": "t-size",
+                  "value": "43",
+                  "price": 120,
+                  "stock": 0,
+                  "available": false
+                },
+                {
+                  "id": "o-39",
+                  "titleId": "t-size",
+                  "value": "39",
+                  "price": 120,
+                  "stock": 2,
+                  "available": true
+                },
+                {
+                  "id": "o-42",
+                  "titleId": "t-size",
+                  "value": "42",
+                  "price": 118,
+                  "stock": 9,
+                  "available": true
+                }
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-43"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-39"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-42"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-43"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "missing"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            }
+          ]
+        },
+        {
+          "id": "v-cloud",
+          "gallery": [
+            "https://img.example/cloud-1.webp",
+            "https://img.example/cloud-2.webp"
+          ],
+          "groups": [
+            {
+              "id": "t-size",
+              "title": "Size",
+              "values": [
+                {
+                  "id": "o-43",
+                  "titleId": "t-size",
+                  "value": "43",
+                  "price": 120,
+                  "stock": 0,
+                  "available": false
+                },
+                {
+                  "id": "o-39",
+                  "titleId": "t-size",
+                  "value": "39",
+                  "price": 120,
+                  "stock": 2,
+                  "available": true
+                },
+                {
+                  "id": "o-42",
+                  "titleId": "t-size",
+                  "value": "42",
+                  "price": 118,
+                  "stock": 9,
+                  "available": true
+                }
+              ]
+            },
+            {
+              "id": "t-width",
+              "title": "Width",
+              "values": [
+                {
+                  "id": "o-wide",
+                  "titleId": "t-width",
+                  "value": "Wide",
+                  "price": 5,
+                  "stock": null,
+                  "available": true
+                },
+                {
+                  "id": "o-reg",
+                  "titleId": "t-width",
+                  "value": "Regular",
+                  "price": 0,
+                  "stock": 4,
+                  "available": true
+                },
+                {
+                  "id": "o-x",
+                  "titleId": "t-width",
+                  "value": "Extra",
+                  "price": 2,
+                  "stock": null,
+                  "available": false
+                }
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": 118,
+                "from": true,
+                "stock": null,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 11800
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-43",
+                "t-width": "o-wide"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-39",
+                "t-width": "o-wide"
+              },
+              "price": {
+                "amount": 125,
+                "from": false,
+                "stock": 2,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12500
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-42",
+                "t-width": "o-x"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-43"
+              },
+              "price": {
+                "amount": 118,
+                "from": true,
+                "stock": null,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 11800
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "missing"
+              },
+              "price": {
+                "amount": 118,
+                "from": true,
+                "stock": null,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 11800
+              }
+            }
+          ]
+        },
+        {
+          "id": "v-storm",
+          "gallery": [
+            "https://img.example/a.webp",
+            "https://img.example/b.webp"
+          ],
+          "groups": [
+            {
+              "id": "t-size",
+              "title": "Size",
+              "values": [
+                {
+                  "id": "o-43",
+                  "titleId": "t-size",
+                  "value": "43",
+                  "price": 120,
+                  "stock": 0,
+                  "available": false
+                },
+                {
+                  "id": "o-39",
+                  "titleId": "t-size",
+                  "value": "39",
+                  "price": 120,
+                  "stock": 2,
+                  "available": true
+                },
+                {
+                  "id": "o-42",
+                  "titleId": "t-size",
+                  "value": "42",
+                  "price": 118,
+                  "stock": 9,
+                  "available": true
+                }
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-43"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-39"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-42"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "o-43"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            },
+            {
+              "chosen": {
+                "t-size": "missing"
+              },
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-trainer",
+                "name": "Everyday Trainer 3",
+                "image": "https://img.example/a.webp",
+                "priceCents": 12000
+              }
+            }
+          ]
+        }
+      ],
+      "unknownVariant": {
+        "gallery": [
+          "https://img.example/a.webp",
+          "https://img.example/b.webp"
+        ],
+        "price": {
+          "amount": null,
+          "from": false,
+          "stock": 0,
+          "ready": false
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "p-tee",
+        "name": "Run Tee",
+        "categoryId": null,
+        "productImages": [
+          {
+            "url": "https://img.example/tee-2.webp",
+            "order": 2
+          },
+          {
+            "url": "https://img.example/tee-1.webp",
+            "order": 1
+          },
+          {
+            "url": "",
+            "order": 0
+          }
+        ],
+        "variants": [
+          {
+            "id": "v-tee",
+            "name": "",
+            "price": 30,
+            "stock": 12
+          }
+        ],
+        "crossVariantTitles": [
+          {
+            "id": "t-tsize",
+            "title": "sizes",
+            "variantId": null
+          }
+        ],
+        "crossVariants": [
+          {
+            "id": "o-xl",
+            "crossVariantTitleId": "t-tsize",
+            "value": "xl",
+            "price": 32,
+            "stock": 0
+          },
+          {
+            "id": "o-m",
+            "crossVariantTitleId": "t-tsize",
+            "value": "M",
+            "price": 30,
+            "stock": 3
+          },
+          {
+            "id": "o-odd",
+            "crossVariantTitleId": "t-tsize",
+            "value": "One size",
+            "price": 31
+          },
+          {
+            "id": "o-s",
+            "crossVariantTitleId": "t-tsize",
+            "value": "S",
+            "price": 29.99,
+            "stock": 1
+          },
+          {
+            "id": "o-2xl",
+            "crossVariantTitleId": "t-tsize",
+            "value": "2XL",
+            "price": 33,
+            "stock": 5
+          }
+        ]
+      },
+      "view": {
+        "id": "p-tee",
+        "name": "Run Tee",
+        "description": "",
+        "categoryId": null,
+        "categoryName": null,
+        "images": [
+          "https://img.example/tee-1.webp",
+          "https://img.example/tee-2.webp"
+        ],
+        "variants": [
+          {
+            "id": "v-tee",
+            "name": "Default",
+            "price": 30,
+            "stock": 12,
+            "available": true
+          }
+        ],
+        "variantImages": [],
+        "optionTitles": [
+          {
+            "id": "t-tsize",
+            "title": "sizes",
+            "variantId": null
+          }
+        ],
+        "optionValues": [
+          {
+            "id": "o-xl",
+            "titleId": "t-tsize",
+            "value": "xl",
+            "price": 32,
+            "stock": 0,
+            "available": false
+          },
+          {
+            "id": "o-m",
+            "titleId": "t-tsize",
+            "value": "M",
+            "price": 30,
+            "stock": 3,
+            "available": true
+          },
+          {
+            "id": "o-odd",
+            "titleId": "t-tsize",
+            "value": "One size",
+            "price": 31,
+            "stock": null,
+            "available": true
+          },
+          {
+            "id": "o-s",
+            "titleId": "t-tsize",
+            "value": "S",
+            "price": 29.99,
+            "stock": 1,
+            "available": true
+          },
+          {
+            "id": "o-2xl",
+            "titleId": "t-tsize",
+            "value": "2XL",
+            "price": 33,
+            "stock": 5,
+            "available": true
+          }
+        ],
+        "features": [],
+        "specs": []
+      },
+      "defaultVariant": "v-tee",
+      "allOptionGroups": [
+        {
+          "id": "t-tsize",
+          "title": "sizes",
+          "values": [
+            {
+              "id": "o-s",
+              "titleId": "t-tsize",
+              "value": "S",
+              "price": 29.99,
+              "stock": 1,
+              "available": true
+            },
+            {
+              "id": "o-m",
+              "titleId": "t-tsize",
+              "value": "M",
+              "price": 30,
+              "stock": 3,
+              "available": true
+            },
+            {
+              "id": "o-xl",
+              "titleId": "t-tsize",
+              "value": "xl",
+              "price": 32,
+              "stock": 0,
+              "available": false
+            },
+            {
+              "id": "o-2xl",
+              "titleId": "t-tsize",
+              "value": "2XL",
+              "price": 33,
+              "stock": 5,
+              "available": true
+            },
+            {
+              "id": "o-odd",
+              "titleId": "t-tsize",
+              "value": "One size",
+              "price": 31,
+              "stock": null,
+              "available": true
+            }
+          ],
+          "variantId": null
+        }
+      ],
+      "photoSets": [
+        {
+          "variantId": "",
+          "photos": [
+            "https://img.example/tee-1.webp",
+            "https://img.example/tee-2.webp"
+          ]
+        }
+      ],
+      "variants": [
+        {
+          "id": "v-tee",
+          "gallery": [
+            "https://img.example/tee-1.webp",
+            "https://img.example/tee-2.webp"
+          ],
+          "groups": [
+            {
+              "id": "t-tsize",
+              "title": "sizes",
+              "values": [
+                {
+                  "id": "o-s",
+                  "titleId": "t-tsize",
+                  "value": "S",
+                  "price": 29.99,
+                  "stock": 1,
+                  "available": true
+                },
+                {
+                  "id": "o-m",
+                  "titleId": "t-tsize",
+                  "value": "M",
+                  "price": 30,
+                  "stock": 3,
+                  "available": true
+                },
+                {
+                  "id": "o-xl",
+                  "titleId": "t-tsize",
+                  "value": "xl",
+                  "price": 32,
+                  "stock": 0,
+                  "available": false
+                },
+                {
+                  "id": "o-2xl",
+                  "titleId": "t-tsize",
+                  "value": "2XL",
+                  "price": 33,
+                  "stock": 5,
+                  "available": true
+                },
+                {
+                  "id": "o-odd",
+                  "titleId": "t-tsize",
+                  "value": "One size",
+                  "price": 31,
+                  "stock": null,
+                  "available": true
+                }
+              ]
+            }
+          ],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": 29.99,
+                "from": true,
+                "stock": null,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-tee",
+                "name": "Run Tee",
+                "image": "https://img.example/tee-1.webp",
+                "priceCents": 2999
+              }
+            },
+            {
+              "chosen": {
+                "t-tsize": "o-s"
+              },
+              "price": {
+                "amount": 29.99,
+                "from": false,
+                "stock": 1,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-tee",
+                "name": "Run Tee",
+                "image": "https://img.example/tee-1.webp",
+                "priceCents": 2999
+              }
+            },
+            {
+              "chosen": {
+                "t-tsize": "o-s"
+              },
+              "price": {
+                "amount": 29.99,
+                "from": false,
+                "stock": 1,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-tee",
+                "name": "Run Tee",
+                "image": "https://img.example/tee-1.webp",
+                "priceCents": 2999
+              }
+            },
+            {
+              "chosen": {
+                "t-tsize": "o-odd"
+              },
+              "price": {
+                "amount": 31,
+                "from": false,
+                "stock": null,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-tee",
+                "name": "Run Tee",
+                "image": "https://img.example/tee-1.webp",
+                "priceCents": 3100
+              }
+            },
+            {
+              "chosen": {
+                "t-tsize": "o-s"
+              },
+              "price": {
+                "amount": 29.99,
+                "from": false,
+                "stock": 1,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-tee",
+                "name": "Run Tee",
+                "image": "https://img.example/tee-1.webp",
+                "priceCents": 2999
+              }
+            },
+            {
+              "chosen": {
+                "t-tsize": "missing"
+              },
+              "price": {
+                "amount": 29.99,
+                "from": true,
+                "stock": null,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-tee",
+                "name": "Run Tee",
+                "image": "https://img.example/tee-1.webp",
+                "priceCents": 2999
+              }
+            }
+          ]
+        }
+      ],
+      "unknownVariant": {
+        "gallery": [
+          "https://img.example/tee-1.webp",
+          "https://img.example/tee-2.webp"
+        ],
+        "price": {
+          "amount": null,
+          "from": false,
+          "stock": 0,
+          "ready": false
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "p-socks",
+        "name": "Running Socks, 3 pack",
+        "category": {
+          "name": ""
+        },
+        "categoryId": "c-gear",
+        "images": [],
+        "variants": [
+          {
+            "id": "v-a",
+            "name": "White",
+            "price": 18,
+            "stock": 3
+          },
+          {
+            "id": "v-b",
+            "name": "Black",
+            "price": 19.995,
+            "stock": 40
+          }
+        ]
+      },
+      "view": {
+        "id": "p-socks",
+        "name": "Running Socks, 3 pack",
+        "description": "",
+        "categoryId": "c-gear",
+        "categoryName": null,
+        "images": [],
+        "variants": [
+          {
+            "id": "v-a",
+            "name": "White",
+            "price": 18,
+            "stock": 3,
+            "available": true
+          },
+          {
+            "id": "v-b",
+            "name": "Black",
+            "price": 19.995,
+            "stock": 40,
+            "available": true
+          }
+        ],
+        "variantImages": [],
+        "optionTitles": [],
+        "optionValues": [],
+        "features": [],
+        "specs": []
+      },
+      "defaultVariant": "v-a",
+      "allOptionGroups": [],
+      "photoSets": [
+        {
+          "variantId": "",
+          "photos": []
+        }
+      ],
+      "variants": [
+        {
+          "id": "v-a",
+          "gallery": [],
+          "groups": [],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": 18,
+                "from": false,
+                "stock": 3,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-socks",
+                "name": "Running Socks, 3 pack",
+                "image": null,
+                "priceCents": 1800
+              }
+            }
+          ]
+        },
+        {
+          "id": "v-b",
+          "gallery": [],
+          "groups": [],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": 19.995,
+                "from": false,
+                "stock": 40,
+                "ready": true
+              },
+              "summary": {
+                "id": "p-socks",
+                "name": "Running Socks, 3 pack",
+                "image": null,
+                "priceCents": 2000
+              }
+            }
+          ]
+        }
+      ],
+      "unknownVariant": {
+        "gallery": [],
+        "price": {
+          "amount": null,
+          "from": false,
+          "stock": 0,
+          "ready": false
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "p-soldout",
+        "name": "",
+        "variants": [
+          {
+            "id": "v-gone",
+            "name": "Only",
+            "price": 50,
+            "stock": 0
+          }
+        ]
+      },
+      "view": {
+        "id": "p-soldout",
+        "name": "Untitled",
+        "description": "",
+        "categoryId": null,
+        "categoryName": null,
+        "images": [],
+        "variants": [
+          {
+            "id": "v-gone",
+            "name": "Only",
+            "price": 50,
+            "stock": 0,
+            "available": false
+          }
+        ],
+        "variantImages": [],
+        "optionTitles": [],
+        "optionValues": [],
+        "features": [],
+        "specs": []
+      },
+      "defaultVariant": "v-gone",
+      "allOptionGroups": [],
+      "photoSets": [
+        {
+          "variantId": "",
+          "photos": []
+        }
+      ],
+      "variants": [
+        {
+          "id": "v-gone",
+          "gallery": [],
+          "groups": [],
+          "prices": [
+            {
+              "chosen": {},
+              "price": {
+                "amount": null,
+                "from": false,
+                "stock": 0,
+                "ready": false
+              },
+              "summary": {
+                "id": "p-soldout",
+                "name": "Untitled",
+                "image": null,
+                "priceCents": 5000
+              }
+            }
+          ]
+        }
+      ],
+      "unknownVariant": {
+        "gallery": [],
+        "price": {
+          "amount": null,
+          "from": false,
+          "stock": 0,
+          "ready": false
+        }
+      }
+    },
+    {
+      "input": {
+        "id": "p-bare",
+        "name": "Gift card"
+      },
+      "view": {
+        "id": "p-bare",
+        "name": "Gift card",
+        "description": "",
+        "categoryId": null,
+        "categoryName": null,
+        "images": [],
+        "variants": [],
+        "variantImages": [],
+        "optionTitles": [],
+        "optionValues": [],
+        "features": [],
+        "specs": []
+      },
+      "defaultVariant": null,
+      "allOptionGroups": [],
+      "photoSets": [
+        {
+          "variantId": "",
+          "photos": []
+        }
+      ],
+      "variants": [],
+      "unknownVariant": {
+        "gallery": [],
+        "price": {
+          "amount": null,
+          "from": false,
+          "stock": 0,
+          "ready": false
+        }
+      }
+    },
+    {
+      "input": {
+        "id": 7,
+        "name": [
+          "x"
+        ],
+        "variants": "nope",
+        "crossVariantTitles": [
+          null,
+          "x"
+        ],
+        "specifications": "none"
+      },
+      "view": {
+        "id": "",
+        "name": "Untitled",
+        "description": "",
+        "categoryId": null,
+        "categoryName": null,
+        "images": [],
+        "variants": [],
+        "variantImages": [],
+        "optionTitles": [],
+        "optionValues": [],
+        "features": [],
+        "specs": []
+      },
+      "defaultVariant": null,
+      "allOptionGroups": [],
+      "photoSets": [
+        {
+          "variantId": "",
+          "photos": []
+        }
+      ],
+      "variants": [],
+      "unknownVariant": {
+        "gallery": [],
+        "price": {
+          "amount": null,
+          "from": false,
+          "stock": 0,
+          "ready": false
+        }
+      }
+    }
+  ]
+}

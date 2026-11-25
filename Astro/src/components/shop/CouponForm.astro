@@ -1,0 +1,42 @@
+---
+// [bd-file:store]
+/**
+ * The cart's coupon: a code box with Apply (Update once one is applied) and
+ * Remove coupon. The cart page's script wires data-coupon-input,
+ * data-coupon-apply and data-coupon-remove.
+ */
+interface Props {
+	/** The applied code, if there is one. */
+	code: string | null | undefined;
+}
+const { code } = Astro.props;
+---
+
+<div class="cart-coupon">
+	<input class="bd-input" data-coupon-input placeholder="Coupon code" value={code ?? ""} />
+	<button class="bd-btn bd-btn--ghost" data-coupon-apply type="button">{code ? "Update" : "Apply"}</button>
+	{
+		code ? (
+			<button class="cart-item__remove" data-coupon-remove type="button">
+				Remove coupon
+			</button>
+		) : null
+	}
+</div>
+
+<style>
+	.cart-coupon {
+		display: flex;
+		gap: 0.6rem;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+	.cart-item__remove {
+		background: none;
+		border: none;
+		color: var(--danger);
+		font-size: 0.8rem;
+		padding: 0;
+		text-decoration: underline;
+	}
+</style>

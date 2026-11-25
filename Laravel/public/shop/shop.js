@@ -92,22 +92,46 @@ export function galleryFor(view, variantId) {
     return own.length > 0 ? own : view.images;
 }
 const SIZE_ORDER = ["XXS", "2XS", "XS", "S", "SM", "M", "MD", "L", "LG", "XL", "2XL", "XXL", "3XL", "4XL"];
+/** One option group's choices, sizes in size order. */
+function groupOf(view, title) {
+    const values = view.optionValues.filter((option) => option.titleId === title.id);
+    if (/^sizes?$/i.test(title.title)) {
+        const rank = (v) => {
+            const i = SIZE_ORDER.indexOf(v.toUpperCase());
+            return i === -1 ? SIZE_ORDER.length : i;
+        };
+        values.sort((a, b) => rank(a.value) - rank(b.value));
+    }
+    return { id: title.id, title: title.title, values };
+}
 /** The option groups (Size, Colour…) that apply to a variant. */
 export function optionGroupsFor(view, variantId) {
     return view.optionTitles
         .filter((title) => title.variantId === null || title.variantId === variantId)
-        .map((title) => {
-        const values = view.optionValues.filter((option) => option.titleId === title.id);
-        if (/^sizes?$/i.test(title.title)) {
-            const rank = (v) => {
-                const i = SIZE_ORDER.indexOf(v.toUpperCase());
-                return i === -1 ? SIZE_ORDER.length : i;
-            };
-            values.sort((a, b) => rank(a.value) - rank(b.value));
-        }
-        return { id: title.id, title: title.title, values };
-    })
+        .map((title) => groupOf(view, title))
         .filter((group) => group.values.length > 0);
+}
+/**
+ * Every option group, with the variant it belongs to (null: every variant).
+ * A page drawn on the server draws them all; <bd-product-form> shows the
+ * ones for the chosen variant.
+ */
+export function allOptionGroups(view) {
+    return view.optionTitles
+        .map((title) => ({ ...groupOf(view, title), variantId: title.variantId }))
+        .filter((group) => group.values.length > 0);
+}
+/**
+ * The sets of photos a page drawn on the server draws: the product's (key
+ * ""), then one per variant with photos of its own. <bd-gallery> shows the
+ * chosen variant's set, or the product's.
+ */
+export function photoSets(view) {
+    const own = [...new Set(view.variantImages.map((image) => image.variantId))].filter(Boolean);
+    return [
+        { variantId: "", photos: view.images },
+        ...own.map((variantId) => ({ variantId, photos: galleryFor(view, variantId) })),
+    ];
 }
 /**
  * The price shown for a variant and the options chosen so far (`chosen` maps
@@ -152,6 +176,24 @@ export function chosenOptions(view, variantId, chosen) {
             out[group.title] = value.value;
     }
     return Object.keys(out).length ? out : undefined;
+}
+/** The product as the saved lists keep it, priced for what's chosen. */
+export function productSummary(view, variantId, chosen) {
+    const price = priceFor(view, variantId, chosen);
+    const start = price.amount ?? view.variants[0]?.price ?? null;
+    return {
+        id: view.id,
+        name: view.name,
+        image: view.images[0] ?? null,
+        priceCents: start != null ? Math.round(start * 100) : null,
+    };
+}
+/** A review's date, as "Mar 4, 2026" in the reader's language. */
+export function reviewDate(iso) {
+    const date = iso ? new Date(iso) : null;
+    return date && !Number.isNaN(date.getTime())
+        ? date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+        : "";
 }
 // ── Money ───────────────────────────────────────────────────────────
 export function formatDollars(amount, currency = "USD") {

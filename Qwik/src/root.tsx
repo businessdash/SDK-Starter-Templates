@@ -18,6 +18,7 @@ import "./bd-reviews.css";
 // and the availability/choice chips. Unstyled without this. The container
 // background is intentionally transparent; the template owns it (`.bd-card`).
 import "@businessdash/sdk/bd-forms.css";
+import "./tailwind.css"; // [bd-line:tailwind]
 
 export default component$(() => {
   /**

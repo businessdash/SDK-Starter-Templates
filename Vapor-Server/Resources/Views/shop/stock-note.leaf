@@ -1,0 +1,2 @@
+<!-- "Only 3 left", at five or fewer. -->
+<p class="product-detail__stock" data-bd-stock#if(detail.stock.hidden): hidden#endif>#(detail.stock.text)</p>

@@ -5,15 +5,18 @@ import SwiftUI
 /// only the allowlisted tags), so nothing of the raw HTML runs. Liking and
 /// commenting need a signed-in customer; signed out, they lead to the
 /// Account tab.
-struct PostView: View {
+///
+/// It's laid out from parts (BlogParts.swift): `PostMeta`, `PostBodyView`
+/// or `MembersOnly`, `PostCTA`, `PostTags`, `LikeButton` and `PostComments`.
+public struct PostView: View {
     @Environment(BdEnvironment.self) private var bd
     @State private var model: PostViewModel
 
-    init(slug: String) {
+    public init(slug: String) {
         _model = State(initialValue: PostViewModel(slug: slug))
     }
 
-    var body: some View {
+    public var body: some View {
         LoadableView(state: model.state) { loaded in
             ScrollView {
                 VStack(alignment: .leading, spacing: 18) {
@@ -23,21 +26,21 @@ struct PostView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                     }
                     if loaded.paywalled {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("This post is for members.").font(.headline)
-                            Button("Sign in to read it") { bd.tab = .account }.buttonStyle(.borderedProminent)
-                        }
-                        .padding()
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(.quaternary.opacity(0.5), in: RoundedRectangle(cornerRadius: 12))
+                        MembersOnly { bd.tab = .account }
                     } else {
                         PostBodyView(blocks: loaded.blocks)
                     }
-                    cta(loaded.post)
-                    tags(loaded.post)
+                    PostCTA(post: loaded.post)
+                    PostTags(tags: loaded.post.tags)
                     Divider()
-                    likeRow
-                    commentsSection
+                    LikeButton(
+                        signedIn: model.signedIn,
+                        likes: model.likes,
+                        liking: model.liking,
+                        onToggle: { Task { await model.toggleLike() } },
+                        onSignIn: { bd.tab = .account }
+                    )
+                    comments
                 }
                 .padding()
             }
@@ -63,108 +66,34 @@ struct PostView: View {
     private func header(_ loaded: PostViewModel.Loaded) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(loaded.post.title).font(.largeTitle.bold())
-            HStack(spacing: 8) {
-                if let avatar = loaded.post.authorAvatarUrl, !avatar.isEmpty {
-                    RemoteImage(url: avatar).frame(width: 24, height: 24).clipShape(Circle())
-                }
-                if let author = loaded.post.authorName, !author.isEmpty {
-                    Text(author).fontWeight(.semibold)
-                }
-                Text(PostHtml.date(loaded.post.publishedAt))
-                Text("· \(loaded.minutes) min read")
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            PostMeta(post: loaded.post, minutes: loaded.minutes)
         }
     }
 
-    /// The post's call to action. Only web and mail links open.
-    @ViewBuilder private func cta(_ post: BlogPost) -> some View {
-        if let label = post.ctaLabel, !label.isEmpty, let href = post.ctaHref,
-           let url = URL(string: href), ["http", "https", "mailto"].contains(url.scheme?.lowercased() ?? "") {
-            VStack(alignment: .leading, spacing: 10) {
-                if let description = post.ctaDescription, !description.isEmpty { Text(description) }
-                Link(label, destination: url).buttonStyle(.borderedProminent)
-            }
-            .padding()
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 12))
-        }
-    }
-
-    @ViewBuilder private func tags(_ post: BlogPost) -> some View {
-        if let tags = post.tags, !tags.isEmpty {
-            FlowLayout(spacing: 10) {
-                ForEach(tags, id: \.self) { Text("#\($0)").font(.caption).foregroundStyle(.secondary) }
-            }
-        }
-    }
-
-    @ViewBuilder private var likeRow: some View {
-        HStack(spacing: 10) {
-            if model.signedIn {
-                Button {
-                    Task { await model.toggleLike() }
-                } label: {
-                    Label(model.likes?.liked == true ? "Liked" : "Like", systemImage: model.likes?.liked == true ? "heart.fill" : "heart")
-                }
-                .buttonStyle(.bordered)
-                .tint(model.likes?.liked == true ? .pink : .primary)
-                .disabled(model.liking)
-            } else {
-                Button {
-                    bd.tab = .account
-                } label: {
-                    Label("Sign in to like", systemImage: "heart")
-                }
-                .buttonStyle(.bordered)
-            }
-            if let count = model.likes?.likesCount {
-                Text("\(count) \(count == 1 ? "like" : "likes")").font(.subheadline).foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    @ViewBuilder private var commentsSection: some View {
+    private var comments: some View {
         @Bindable var model = model
-        VStack(alignment: .leading, spacing: 12) {
-            Text(model.comments.count == 1 ? "1 comment" : "\(model.comments.count) comments").font(.title3.bold())
-            if model.signedIn {
-                TextField("Add a comment", text: $model.draft, axis: .vertical)
-                    .lineLimit(3...8)
-                    .textFieldStyle(.roundedBorder)
-                Button(model.posting ? "Posting…" : "Post comment") {
-                    Task { await model.postComment() }
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(model.posting || model.draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            } else {
-                Button("Sign in to comment") { bd.tab = .account }.buttonStyle(.bordered)
-            }
-            if let note = model.note {
-                Text(note.text).font(.footnote).foregroundStyle(note.ok ? Color.secondary : Color.red)
-            }
-            ForEach(model.comments) { comment in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 6) {
-                        Text(comment.authorName ?? "Reader").font(.subheadline.weight(.semibold))
-                        Text(PostHtml.date(comment.createdAt)).font(.caption).foregroundStyle(.secondary)
-                    }
-                    Text(comment.content).font(.subheadline)
-                }
-                .padding(12)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .background(.quaternary.opacity(0.35), in: RoundedRectangle(cornerRadius: 10))
-            }
-        }
+        return PostComments(
+            comments: model.comments,
+            signedIn: model.signedIn,
+            draft: $model.draft,
+            posting: model.posting,
+            note: model.note?.text,
+            noteOK: model.note?.ok ?? true,
+            onPost: { Task { await model.postComment() } },
+            onSignIn: { bd.tab = .account }
+        )
     }
 }
 
 /// A post's blocks as SwiftUI views.
-struct PostBodyView: View {
-    let blocks: [PostBlock]
+public struct PostBodyView: View {
+    public let blocks: [PostBlock]
 
-    var body: some View {
+    public init(blocks: [PostBlock]) {
+        self.blocks = blocks
+    }
+
+    public var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             ForEach(Array(blocks.enumerated()), id: \.offset) { _, block in
                 view(for: block)

@@ -1,0 +1,16 @@
+/* [bd-file:tailwind] */
+/*
+ * Tailwind CSS for your own screens, through NativeWind: give any React
+ * Native component a className, e.g. <View className="flex-1 p-4">.
+ * app/_layout.tsx imports this file, and NativeWind (metro.config.js)
+ * compiles it with Tailwind's PostCSS plugin (postcss.config.mjs).
+ *
+ * The starter's screens style themselves with StyleSheet and don't use
+ * Tailwind, so they look the same with it or without. Preflight, Tailwind's
+ * reset, is left out for that reason.
+ *
+ * NativeWind 5, the version that runs on Tailwind 4, is a release candidate.
+ */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css";
+@import "nativewind/theme";

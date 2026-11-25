@@ -1,0 +1,27 @@
+<!-- The photos: a set for the product, then one per option with photos of its
+     own. <bd-gallery> shows the chosen option's set, and steps through it
+     with ‹ › and the thumbnails. -->
+<bd-gallery data-product-id="#(detail.gallery.productId)">
+  #for(set in detail.gallery.sets):
+    <div class="gallery" data-bd-photos-for="#(set.variantId)"#if(set.hidden): hidden#endif>
+      <div class="gallery__main">
+        #if(set.hasPhotos):
+          <img alt="#(detail.gallery.name)" data-bd-main#if(set.hidden): loading="lazy"#endif referrerpolicy="no-referrer" src="#(set.main)">
+        #else:
+          <div class="gallery__placeholder">No photo yet</div>
+        #endif
+        #if(set.many):
+          <button aria-label="Previous photo" class="gallery__step gallery__step--prev" data-bd-step="-1" type="button">‹</button>
+          <button aria-label="Next photo" class="gallery__step gallery__step--next" data-bd-step="1" type="button">›</button>
+        #endif
+      </div>
+      #if(set.many):
+        <div class="gallery__thumbs">
+          #for(photo in set.photos):
+            <button aria-current="#if(photo.current):true#else:false#endif" aria-label="#(photo.label)" class="gallery__thumb#if(photo.current): gallery__thumb--on#endif" data-bd-photo="#(photo.index)" type="button"><img alt="" loading="lazy" referrerpolicy="no-referrer" src="#(photo.src)"></button>
+          #endfor
+        </div>
+      #endif
+    </div>
+  #endfor
+</bd-gallery>

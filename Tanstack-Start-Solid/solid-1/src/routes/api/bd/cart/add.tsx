@@ -12,9 +12,10 @@ function json(status: number, body: unknown): Response {
 }
 
 /**
- * Add to the cart for `<bd-product>`: JSON `{ productId, variantId?,
- * quantity?, options? }` in; `{ ok, itemCount }` or `{ ok: false, error }`
- * out. The first add mints the visitor's cart cookie.
+ * Add to the cart for the product page (`<bd-product-form>`, `<bd-addon>`):
+ * JSON `{ productId, variantId?, quantity?, options? }` in; `{ ok,
+ * itemCount }` or `{ ok: false, error }` out. The first add mints the
+ * visitor's cart cookie.
  */
 export const Route = createFileRoute("/api/bd/cart/add")({
 	server: {

@@ -132,9 +132,9 @@ fun ProductCard(product: Product, modifier: Modifier = Modifier) {
         Box(Modifier.fillMaxWidth().aspectRatio(1f)) {
             Photo(product.coverImage, Modifier.fillMaxSize())
             Column(Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                if (product.isBestSeller == true) Badge("Best seller")
-                if (product.isNew == true) Badge("New")
-                if (product.isOnSale == true) Badge("Sale", sale = true)
+                if (product.isBestSeller == true) ProductBadge("Best seller")
+                if (product.isNew == true) ProductBadge("New")
+                if (product.isOnSale == true) ProductBadge("Sale", sale = true)
             }
             SaveButtons(SavedProduct.of(product), compact = true, modifier = Modifier.align(Alignment.TopEnd).padding(4.dp))
         }
@@ -172,8 +172,9 @@ fun ProductCard(product: Product, modifier: Modifier = Modifier) {
     }
 }
 
+/** A small label on a product card: New, Sale, Sold out. */
 @Composable
-private fun Badge(label: String, sale: Boolean = false) {
+fun ProductBadge(label: String, sale: Boolean = false) {
     val scheme = MaterialTheme.colorScheme
     Text(
         label,
@@ -320,5 +321,18 @@ fun ReviewStrip(totals: ReviewTotals?, modifier: Modifier = Modifier) {
             )
             Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, modifier = Modifier.size(18.dp))
         }
+    }
+}
+
+/** A title and, under it, what to do next, in the middle of a list: no posts, no reviews. */
+@Composable
+fun EmptyNote(title: String, detail: String? = null, modifier: Modifier = Modifier) {
+    Column(
+        modifier.fillMaxWidth().padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(title, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+        detail?.let { Text(it, textAlign = TextAlign.Center) }
     }
 }

@@ -13,23 +13,23 @@
  * Each mutation returns the fresh snapshot; the island re-renders the totals
  * + line items from it without a full reload. `?status=success|cancelled`
  * (set by the Stripe return URLs) shows a small banner.
+ *
+ * The page is laid out from the shop's parts (`src/components/shop/`): a
+ * CartLine per item, the CouponForm, the CartSummary and the CartActions.
+ * The script below finds them by their data-* attributes.
  */
-import { getCartSnapshot, isStoreConfigured } from "../../lib/bd-store";
-import Layout from "../../layouts/Layout.astro";
+import CartActions from "../../components/shop/CartActions.astro";
+import CartLine from "../../components/shop/CartLine.astro";
+import CartSummary from "../../components/shop/CartSummary.astro";
+import CouponForm from "../../components/shop/CouponForm.astro";
 import StoreNav from "../../components/StoreNav.astro";
+import Layout from "../../layouts/Layout.astro";
+import { getCartSnapshot, isStoreConfigured } from "../../lib/bd-store";
 
 export const prerender = false;
 
 const cart = await getCartSnapshot(Astro.cookies);
 const status = Astro.url.searchParams.get("status");
-
-/** Cart amounts (unit prices, line and cart subtotals) are dollars, not cents. */
-function money(dollars: number, currency = "USD"): string {
-	return new Intl.NumberFormat(undefined, {
-		style: "currency",
-		currency: currency.toUpperCase(),
-	}).format(dollars);
-}
 
 const items = cart?.items ?? [];
 const currency = cart?.currency ?? "USD";
@@ -73,98 +73,15 @@ const currency = cart?.currency ?? "USD";
 
 					<div data-cart-body hidden={items.length === 0}>
 						<ul class="cart-items" data-cart-items>
-							{items.map((it) => (
-								<li class="bd-card cart-item" data-item-id={it.id}>
-									{it.productImage ? (
-										<img
-											class="cart-item__img"
-											src={it.productImage}
-											alt={it.productName ?? "Item"}
-										/>
-									) : (
-										<div class="cart-item__img cart-item__img--empty" />
-									)}
-									<div class="cart-item__info">
-										<div class="cart-item__name">
-											{it.productName ?? "Item"}
-										</div>
-										{it.variantTitle ? (
-											<div class="cart-item__variant">{it.variantTitle}</div>
-										) : null}
-										<div class="cart-item__unit">
-											{money(it.unitPrice, it.currency)} each
-										</div>
-									</div>
-									<div class="cart-item__controls">
-										<input
-											class="bd-input cart-item__qty"
-											type="number"
-											min="0"
-											value={String(it.quantity)}
-											data-qty
-											aria-label="Quantity"
-										/>
-										<button
-											class="cart-item__remove"
-											data-remove
-											type="button"
-											aria-label="Remove"
-										>
-											Remove
-										</button>
-									</div>
-									<div class="cart-item__subtotal" data-line-subtotal>
-										{money(it.subtotal, it.currency)}
-									</div>
-								</li>
+							{items.map((item) => (
+								<CartLine item={item} />
 							))}
 						</ul>
 
 						<div class="cart-summary bd-card">
-							<div class="cart-coupon">
-								<input
-									class="bd-input"
-									data-coupon-input
-									placeholder="Coupon code"
-									value={cart?.couponCode ?? ""}
-								/>
-								<button
-									class="bd-btn bd-btn--ghost"
-									data-coupon-apply
-									type="button"
-								>
-									{cart?.couponCode ? "Update" : "Apply"}
-								</button>
-								{cart?.couponCode ? (
-									<button
-										class="cart-item__remove"
-										data-coupon-remove
-										type="button"
-									>
-										Remove coupon
-									</button>
-								) : null}
-							</div>
-
-							<div class="cart-total">
-								<span>Subtotal</span>
-								<strong data-cart-subtotal>
-									{money(cart?.subtotal ?? 0, currency)}
-								</strong>
-							</div>
-
-							<div class="cart-actions">
-								<button
-									class="cart-item__remove"
-									data-clear
-									type="button"
-								>
-									Clear cart
-								</button>
-								<button class="bd-btn" data-checkout type="button">
-									Checkout
-								</button>
-							</div>
+							<CouponForm code={cart?.couponCode} />
+							<CartSummary currency={currency} subtotal={cart?.subtotal ?? 0} />
+							<CartActions />
 							<div data-cart-error hidden></div>
 						</div>
 					</div>
@@ -197,89 +114,11 @@ const currency = cart?.currency ?? "USD";
 		flex-direction: column;
 		gap: 0.85rem;
 	}
-	.cart-item {
-		display: grid;
-		grid-template-columns: 4rem 1fr auto auto;
-		gap: 1rem;
-		align-items: center;
-		padding: 0.85rem 1.25rem;
-	}
-	.cart-item__img {
-		width: 4rem;
-		height: 4rem;
-		object-fit: cover;
-		border-radius: 0.6rem;
-	}
-	.cart-item__img--empty {
-		background: var(--bg-soft);
-	}
-	.cart-item__name {
-		font-weight: 600;
-		color: var(--title);
-	}
-	.cart-item__variant,
-	.cart-item__unit {
-		font-size: 0.82rem;
-		color: var(--text-muted);
-	}
-	.cart-item__controls {
-		display: flex;
-		flex-direction: column;
-		gap: 0.4rem;
-		align-items: flex-end;
-	}
-	.cart-item__qty {
-		width: 4.5rem;
-		text-align: center;
-	}
-	.cart-item__remove {
-		background: none;
-		border: none;
-		color: var(--danger);
-		font-size: 0.8rem;
-		padding: 0;
-		text-decoration: underline;
-	}
-	.cart-item__subtotal {
-		font-weight: 700;
-		color: var(--title);
-		min-width: 5rem;
-		text-align: right;
-	}
 	.cart-summary {
 		padding: 1.5rem;
 		display: flex;
 		flex-direction: column;
 		gap: 1rem;
-	}
-	.cart-coupon {
-		display: flex;
-		gap: 0.6rem;
-		align-items: center;
-		flex-wrap: wrap;
-	}
-	.cart-total {
-		display: flex;
-		justify-content: space-between;
-		font-size: 1.1rem;
-		border-top: 1px solid var(--border);
-		padding-top: 1rem;
-	}
-	.cart-actions {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-	}
-	@media (max-width: 560px) {
-		.cart-item {
-			grid-template-columns: 3rem 1fr;
-		}
-		.cart-item__controls,
-		.cart-item__subtotal {
-			grid-column: 1 / -1;
-			align-items: flex-start;
-			text-align: left;
-		}
 	}
 </style>
 

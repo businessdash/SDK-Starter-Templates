@@ -1,8 +1,9 @@
 {
+  "//": "[bd-file:tailwind] Solid UI's settings; its components are built with Tailwind.",
   "$schema": "https://solid-ui.com/schema.json",
   "tsx": true,
   "tailwind": {
-    "css": "src/styles.css",
+    "css": "src/tailwind.css",
     "config": "tailwind.config.cjs",
     "prefix": ""
   },

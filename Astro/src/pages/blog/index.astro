@@ -3,10 +3,14 @@
 /**
  * The blog: posts newest first (pinned ones lead the first page), with
  * category and tag filters and "Older posts" paging, all in the URL
- * (?category, ?tag, ?cursor), so it is plain server-rendered links.
+ * (?category, ?tag, ?cursor), so it is plain server-rendered links. The
+ * page is laid out from the blog's parts (`src/components/blog/`):
+ * BlogFilters and a PostCard per post.
  */
 import "../../styles/bd-blog.css";
 
+import BlogFilters from "../../components/blog/BlogFilters.astro";
+import PostCard from "../../components/blog/PostCard.astro";
 import Layout from "../../layouts/Layout.astro";
 import {
 	isBlogConfigured,
@@ -14,7 +18,6 @@ import {
 	listBlogPosts,
 	listBlogTags,
 } from "../../lib/bd-blog";
-import { formatPostDate, readingMinutes } from "../../lib/bd-shop/blog";
 
 export const prerender = false;
 
@@ -41,17 +44,6 @@ const posts = paged ? filtered : [...filtered].sort((a, b) => Number(b.isPinned)
 const nextCursor = page?.nextCursor ?? null;
 const active = categories.find((c) => c.id === categoryId);
 
-/** This page with one filter changed and the paging reset. */
-function filterHref(key: "category" | "tag", value: string | null): string {
-	const next = new URLSearchParams();
-	if (categoryId) next.set("category", categoryId);
-	if (tag) next.set("tag", tag);
-	if (value) next.set(key, value);
-	else next.delete(key);
-	const query = next.toString();
-	return query ? `/blog?${query}` : "/blog";
-}
-
 function nextHref(next: number): string {
 	const query = new URLSearchParams();
 	if (categoryId) query.set("category", categoryId);
@@ -75,40 +67,7 @@ function nextHref(next: number): string {
 						{active?.description ? <p class="bd-section__sub">{active.description}</p> : null}
 					</div>
 
-					{categories.length > 0 || tags.length > 0 ? (
-						<nav aria-label="Blog topics" class="blog-filters">
-							{categories.length > 0 ? (
-								<ul>
-									<li>
-										<a aria-current={!categoryId ? "true" : undefined} href={filterHref("category", null)}>
-											All
-										</a>
-									</li>
-									{categories.map((category) => (
-										<li>
-											<a
-												aria-current={categoryId === category.id ? "true" : undefined}
-												href={filterHref("category", category.id)}
-											>
-												{category.name}
-											</a>
-										</li>
-									))}
-								</ul>
-							) : null}
-							{tags.length > 0 ? (
-								<ul class="blog-filters__tags">
-									{tags.map((t) => (
-										<li>
-											<a aria-current={tag === t ? "true" : undefined} href={filterHref("tag", tag === t ? null : t)}>
-												#{t}
-											</a>
-										</li>
-									))}
-								</ul>
-							) : null}
-						</nav>
-					) : null}
+					<BlogFilters categories={categories} category={categoryId} tag={tag} tags={tags} />
 
 					{posts.length === 0 ? (
 						<div class="bd-empty">
@@ -120,29 +79,7 @@ function nextHref(next: number): string {
 						<>
 							<ul class="posts">
 								{posts.map((post, i) => (
-									<li class={`bd-card post-card${i === 0 && !paged ? " post-card--lead" : ""}`}>
-										<a class="post-card__link" href={`/blog/${encodeURIComponent(post.slug)}`}>
-											{post.imageUrl ? (
-												<img
-													alt=""
-													class="post-card__img"
-													loading="lazy"
-													referrerpolicy="no-referrer"
-													src={post.imageUrl}
-												/>
-											) : null}
-											<div class="post-card__body">
-												<p class="post-card__meta">
-													{post.isPinned ? <span class="bd-badge">Pinned</span> : null}
-													<span>{formatPostDate(post.publishedAt)}</span>
-													<span>· {readingMinutes(post.content || post.excerpt || "")} min read</span>
-												</p>
-												<h2>{post.title}</h2>
-												{post.excerpt ? <p class="post-card__excerpt">{post.excerpt}</p> : null}
-												{post.authorName ? <p class="post-card__author">{post.authorName}</p> : null}
-											</div>
-										</a>
-									</li>
+									<PostCard lead={i === 0 && !paged} post={post} />
 								))}
 							</ul>
 							{nextCursor !== null && !tag ? (

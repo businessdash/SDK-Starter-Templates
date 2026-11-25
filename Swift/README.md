@@ -122,6 +122,47 @@ The same experience as the web starters, drawn natively.
 - **Blog** — category chips, tags, pinned posts first, older posts on demand. A post's HTML goes through the allowlist and is drawn as native text, lists, quotes, code, images and tables (`PostBlocks`), so nothing in it runs. Liking and commenting need a signed-in customer; signed out, the buttons lead to the Account tab. Comments are up to 5,000 characters, and a held one says it shows once approved.
 - **Business reviews** — the business's own reviews from Google, Yelp, Housecall Pro and the dashboard. The store opens with the rating ("★ 4.6 · 128 reviews"), which leads to the reviews screen: the average with a bar per star, a platform filter, each review with its photos, a Verified mark and a link to it on Google or Yelp, and more on demand. A signed-in customer can write one; it waits for the business to approve it. The average and the stars breakdown ride the marketing bundle (`client.reviews.summary()`); the reviews page in with `client.reviews.list(limit:offset:source:)`.
 
+### Laying out the screens your way
+
+Every screen is laid out from parts, and the parts are public, so your app
+can rearrange, restyle, drop or replace any of them, or lay out a screen of
+its own (`Tests/BdStarterAppTests/PartsTests.swift` builds a product page, a
+store, a post and a reviews screen that way). Each part takes plain values
+and callbacks, not the screen's model:
+
+- **Product page** (`ProductParts.swift`): `ProductGallery`, `ProductTitle`,
+  `ProductPriceLabel`, `VariantPicker`, `OptionPicker`, `ChoiceButton`,
+  `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`,
+  `ProductPolicies`, `ProductDetails`, `ProductAddons` / `AddonRow`,
+  `ProductReviews` / `ProductReviewRow`.
+- **Store and cart** (`StoreParts.swift`, `ShopParts.swift`):
+  `CategoryChips`, `StoreResultsBar`, `SortMenu`, `StoreFiltersSheet`,
+  `ProductCardView`, `SaveButtons`, `CompareBar`, `ProductRail`, `CartLine`,
+  `CartSummary`; and the small pieces `StarRating`, `Badge`, `RemoteImage`,
+  `CoverImage`, `FlowLayout`.
+- **Blog** (`BlogParts.swift`): `BlogFilters`, `PostCard`, `PostMeta`,
+  `PostBodyView`, `MembersOnly`, `PostCTA`, `PostTags`, `LikeButton`,
+  `PostComments` / `CommentRow`.
+- **Reviews** (`ReviewsView.swift`): `ReviewSummaryCard`, `ReviewStrip`,
+  `WriteReviewButton`, `ReviewSourceFilter`, `ReviewRow`, `ReviewWriter`.
+
+The screens themselves are public too (`StorefrontView`,
+`ProductDetailView(productID:)`, `CartView`, `WishlistView`, `CompareView`,
+`BlogView`, `PostView(slug:)`, `ReviewsView`), for an app with tabs of its
+own. The rules the parts follow (which photos show for an option, what "from"
+means, what can be bought) are `ProductView`'s, in BusinessDashKit:
+
+```swift
+let price = view.price(variantID: variantID, chosen: chosen)
+ProductGallery(urls: view.gallery(for: variantID))
+ProductPriceLabel(price: price, quantity: quantity)
+VariantPicker(variants: view.variants, selected: variantID, showPrices: true) { variantID = $0 }
+ForEach(view.optionGroups(for: variantID)) { group in
+    OptionPicker(group: group, chosen: chosen[group.id]) { chosen[group.id] = $0.id }
+}
+AddToCartButton(price: price, isAdding: false) { /* cart.add(…) */ }
+```
+
 ## Five things that will bite you
 
 **1. The access gate answers reads with HTTP 200.** A lapsed plan returns `{"available": false, …}` in the *body*, not a 4xx — a client that only checks `statusCode` decodes an empty screen and never notices. `BdClient` inspects the body *before* the status, deliberately, and there's a test pinning that order.
@@ -208,7 +249,7 @@ Leaving the loop — or SwiftUI cancelling the `.task` on disappear — tears th
 
 ## Verification
 
-`swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal. The shop, blog and reviews tests pin the post HTML allowlist to the web starters' fixture case for case, the product page's option and price rules, the wire shapes (category counts, cents filters, cart line names, the reviews page and summary), and what a written review sends. `BdForms` adds the forms-core parity fixtures and the controller's behavior: conditions, repeaters, calculations, uploads, server issue mapping and every submit outcome.
+`swift build` and `swift test` both pass under **Swift 6 language mode with strict concurrency**, and the suite covers the parts most likely to break silently: the 200-with-`available:false` gate, `stripeUrl`, the two session headers, nil-query dropping, relation shapes, and cents-vs-decimal. The shop, blog and reviews tests pin the post HTML allowlist to the web starters' fixture case for case, the product page's option and price rules, the wire shapes (category counts, cents filters, cart line names, the reviews page and summary), and what a written review sends. `BdStarterAppTests` lays out screens from the public parts without `@testable`, so a part that stops being public fails the build. `BdForms` adds the forms-core parity fixtures and the controller's behavior: conditions, repeaters, calculations, uploads, server issue mapping and every submit outcome.
 
 <!-- [bd:donations] -->
 ## Donations

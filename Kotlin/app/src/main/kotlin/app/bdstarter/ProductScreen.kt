@@ -1,42 +1,26 @@
 package app.bdstarter
 
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.SnackbarResult
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -50,23 +34,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import app.bd.BdHttpException
-import app.bd.Money
 import app.bd.ProductAddon
 import app.bd.ProductPrice
 import app.bd.ProductReviewPage
 import app.bd.ProductView
 import app.bd.RelatedProduct
-import app.bd.Reviews
 import app.bd.cartAdd
 import app.bd.productAddons
 import app.bd.productDetail
@@ -189,127 +166,51 @@ fun ProductScreen(productId: String) {
                 val groups = style?.let { loaded.optionGroups(it) }.orEmpty()
                 val price = style?.let { loaded.price(it, chosen) } ?: ProductPrice(amount = null, from = false, ready = false)
                 val gallery = style?.let { loaded.gallery(it) } ?: loaded.images
-                val stock = price.stock
-                val maxQuantity = stock?.coerceIn(1, 99) ?: 99
+                val maxQuantity = price.stock?.coerceIn(1, 99) ?: 99
                 val recent = app.recentlyViewed.items.filter { it.id != loaded.id }
                 LazyColumn(Modifier.padding(padding).fillMaxSize(), contentPadding = PaddingValues(top = 8.dp, bottom = 32.dp)) {
                     item {
                         Column(Modifier.padding(horizontal = 16.dp)) {
-                            if (gallery.isNotEmpty()) Gallery(gallery, loaded.name)
+                            ProductGallery(gallery, loaded.name)
                             Spacer(Modifier.height(16.dp))
-                            loaded.categoryName?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-                            Text(loaded.name, style = MaterialTheme.typography.headlineSmall)
+                            ProductTitle(loaded.categoryName, loaded.name)
                             Spacer(Modifier.height(4.dp))
-                            val amount = price.amount
-                            Text(
-                                if (amount == null) "Unavailable" else (if (price.from) "From " else "") + Money.amount(amount),
-                                style = MaterialTheme.typography.titleLarge,
-                            )
-                            if (stock != null && stock in 1..5) {
-                                Text(
-                                    "Only $stock left",
-                                    color = MaterialTheme.colorScheme.error,
-                                    fontWeight = FontWeight.SemiBold,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                            }
+                            ProductPriceText(price)
+                            StockNote(price.stock)
                             Spacer(Modifier.height(12.dp))
                             SaveButtons(loaded.saved())
-                            if (loaded.variants.size > 1) {
-                                OptionRow(
-                                    title = "Style",
-                                    options = loaded.variants.map { Option(it.id, it.name, it.available) },
-                                    selected = style,
-                                    onSelect = {
-                                        variantId = it
-                                        chosen = emptyMap()
-                                        quantity = 1
-                                        message = null
-                                    },
-                                )
+                            VariantPicker(loaded.variants, style) {
+                                variantId = it
+                                chosen = emptyMap()
+                                quantity = 1
+                                message = null
                             }
                             for (group in groups) {
-                                OptionRow(
-                                    title = group.title,
-                                    options = group.values.map { Option(it.id, it.value, it.available) },
-                                    selected = chosen[group.id],
-                                    onSelect = {
-                                        chosen = chosen + (group.id to it)
-                                        quantity = 1
-                                    },
-                                )
+                                OptionPicker(group, chosen[group.id]) {
+                                    chosen = chosen + (group.id to it)
+                                    quantity = 1
+                                }
                             }
                             Spacer(Modifier.height(16.dp))
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                Stepper(quantity, maxQuantity) { quantity = it }
-                                Button(
-                                    onClick = { if (style != null) addToCart(loaded, style) },
-                                    enabled = !adding && price.ready && style != null,
+                                QuantityStepper(quantity, maxQuantity) { quantity = it }
+                                AddToCartButton(
+                                    price,
+                                    adding = adding,
+                                    hasOptions = groups.isNotEmpty(),
                                     modifier = Modifier.weight(1f),
-                                ) {
-                                    Text(
-                                        when {
-                                            adding -> "Adding…"
-                                            price.ready -> "Add to cart"
-                                            groups.isNotEmpty() -> "Choose options"
-                                            else -> "Unavailable"
-                                        },
-                                    )
-                                }
+                                    enabled = style != null,
+                                ) { if (style != null) addToCart(loaded, style) }
                             }
-                            message?.let {
-                                Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
-                            }
+                            message?.let { ProductNotice(it) }
                         }
                     }
                     if (addons.isNotEmpty()) {
-                        item {
-                            Text(
-                                addons.first().groupLabel ?: "Goes well with",
-                                style = MaterialTheme.typography.titleMedium,
-                                modifier = Modifier.padding(start = 16.dp, end = 16.dp, top = 24.dp),
-                            )
-                        }
-                        for (addon in addons) {
-                            item(key = "addon-${addon.id}") {
-                                val added = addon.id in addedAddons
-                                ListItem(
-                                    leadingContent = { Photo(addon.imageUrl, Modifier.size(48.dp).clip(RoundedCornerShape(8.dp))) },
-                                    headlineContent = { Text(addon.name) },
-                                    supportingContent = if (addon.priceCents == null) null else ({ Text(Money.cents(addon.priceCents)) }),
-                                    trailingContent = {
-                                        OutlinedButton(onClick = { addAddon(addon) }, enabled = !added) { Text(if (added) "Added" else "Add") }
-                                    },
-                                )
-                            }
-                        }
+                        item(key = "addons") { ProductAddons(addons, addedAddons.toSet()) { addAddon(it) } }
                     }
                     item {
                         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (loaded.description.isNotEmpty()) {
-                                Spacer(Modifier.height(18.dp))
-                                Text(loaded.description, style = MaterialTheme.typography.bodyLarge)
-                            }
-                            if (loaded.features.isNotEmpty()) {
-                                Spacer(Modifier.height(18.dp))
-                                Text("Features", style = MaterialTheme.typography.titleMedium)
-                                for (feature in loaded.features) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                        Text("•")
-                                        Text(feature, Modifier.weight(1f))
-                                    }
-                                }
-                            }
-                            for (group in loaded.specs) {
-                                Spacer(Modifier.height(18.dp))
-                                Text(group.name, style = MaterialTheme.typography.titleMedium)
-                                for (row in group.rows) {
-                                    Row(Modifier.padding(vertical = 4.dp)) {
-                                        Text(row.label, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f))
-                                        Text(row.value, Modifier.weight(1f))
-                                    }
-                                }
-                            }
+                            ProductDetails(loaded)
                             Spacer(Modifier.height(18.dp))
                             ProductReviews(
                                 page = reviews,
@@ -348,97 +249,6 @@ private fun ProductView.saved(): SavedProduct {
 
 private fun RelatedProduct.saved() =
     SavedProduct(id, name, coverImageUrl, minPriceDollars?.let { (it * 100).roundToInt() })
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun Gallery(urls: List<String>, name: String) {
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val side = maxWidth.coerceAtMost(520.dp)
-        // A new style's photos start again at the first.
-        val pager = androidx.compose.runtime.key(urls) { rememberPagerState { urls.size } }
-        HorizontalPager(pager, Modifier.fillMaxWidth().height(side), pageSpacing = 4.dp) { index ->
-            Photo(
-                urls[index],
-                Modifier.fillMaxSize().clip(RoundedCornerShape(14.dp)),
-                label = if (urls.size > 1) "$name, photo ${index + 1} of ${urls.size}" else name,
-            )
-        }
-    }
-}
-
-private data class Option(val id: String, val label: String, val available: Boolean)
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun OptionRow(title: String, options: List<Option>, selected: String?, onSelect: (String) -> Unit) {
-    val current = options.firstOrNull { it.id == selected }
-    Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(if (current == null) title else "$title: ${current.label}", style = MaterialTheme.typography.labelLarge)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (option in options) {
-                FilterChip(
-                    selected = option.id == selected,
-                    onClick = { onSelect(option.id) },
-                    enabled = option.available,
-                    label = { Text(option.label) },
-                    modifier = if (option.available) Modifier else Modifier.semantics { contentDescription = "${option.label}, sold out" },
-                )
-            }
-        }
-    }
-}
-
-/** − 1 +, between 1 and [max]. */
-@Composable
-fun Stepper(value: Int, max: Int, modifier: Modifier = Modifier, onChange: (Int) -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        modifier = modifier.semantics(mergeDescendants = false) { contentDescription = "Quantity $value" },
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { onChange(value - 1) }, enabled = value > 1) {
-                Text("−", fontSize = 22.sp, modifier = Modifier.semantics { contentDescription = "One fewer" })
-            }
-            Text("$value", style = MaterialTheme.typography.titleMedium)
-            IconButton(onClick = { onChange(value + 1) }, enabled = value < max) {
-                Icon(Icons.Filled.Add, contentDescription = "One more")
-            }
-        }
-    }
-}
-
-@Composable
-private fun ProductReviews(page: ProductReviewPage?, loading: Boolean, onMore: (() -> Unit)?) {
-    if (page == null || page.items.isEmpty()) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text("Reviews", style = MaterialTheme.typography.titleMedium)
-            Text(if (page == null && loading) "Loading…" else "No reviews yet.", style = MaterialTheme.typography.bodyMedium)
-        }
-        return
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Reviews", style = MaterialTheme.typography.titleMedium)
-            StarRating(page.avgRating ?: 0.0)
-            Text("${oneDecimal(page.avgRating ?: 0.0)} · ${page.totalCount}", style = MaterialTheme.typography.bodySmall)
-        }
-        for (review in page.items) {
-            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                StarRating(review.rating.toDouble(), size = 13.sp)
-                review.title?.takeIf { it.isNotEmpty() }?.let { Text(it, style = MaterialTheme.typography.titleSmall) }
-                review.body?.takeIf { it.isNotEmpty() }?.let { Text(it) }
-                Text(
-                    listOf(review.reviewerName ?: "Customer", Reviews.date(review.createdAt)).filter { it.isNotEmpty() }.joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-        }
-        if (page.items.size < page.totalCount && onMore != null) {
-            OutlinedButton(onClick = onMore, enabled = !loading) { Text(if (loading) "Loading…" else "Show more reviews") }
-        }
-    }
-}
 
 /** The back arrow on a screen opened over the tabs. */
 @Composable

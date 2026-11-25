@@ -1,0 +1,19 @@
+<!-- All products, then a link per category with its count; the chosen one is marked. -->
+#if(hasCategories):
+  <div class="store-facet">
+    <p class="store-facet__title">Category</p>
+    <ul class="store-facet__list">
+      <li>
+        <a class="store-facet__item#if(allActive): store-facet__item--active#endif" href="#(allHref)">All products</a>
+      </li>
+      #for(category in categories):
+        <li>
+          <a class="store-facet__item store-facet__item--row#if(category.active): store-facet__item--active#endif" href="#(category.href)">
+            <span>#(category.label)</span>
+            <span class="store-facet__count">#(category.productCount)</span>
+          </a>
+        </li>
+      #endfor
+    </ul>
+  </div>
+#endif

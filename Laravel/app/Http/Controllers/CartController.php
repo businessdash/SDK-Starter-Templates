@@ -35,11 +35,12 @@ class CartController extends Controller
     }
 
     /**
-     * Add to the cart, for `<bd-product>` on the product page: JSON
-     * `{ productId, variantId?, quantity?, options? }` in; `{ ok, itemCount }`
-     * or `{ ok: false, error }` out. The first add mints the visitor's cart
-     * cookie. The element sends the page's CSRF token (the `csrf-token` meta
-     * in the layout) as `X-CSRF-Token`, which Laravel checks as for a form.
+     * Add to the cart, for `<bd-product-form>` and `<bd-addon>` on the
+     * product page: JSON `{ productId, variantId?, quantity?, options? }` in;
+     * `{ ok, itemCount }` or `{ ok: false, error }` out. The first add mints
+     * the visitor's cart cookie. The elements send the page's CSRF token (the
+     * `csrf-token` meta in the layout) as `X-CSRF-Token`, which Laravel checks
+     * as for a form.
      */
     public function addJson(Request $request): JsonResponse
     {

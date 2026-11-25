@@ -45,6 +45,12 @@ bun run qwik add <adapter>    # node-server | vercel-edge | cloudflare-pages | �
 bun run build
 ```
 
+<!-- [bd:tailwind] -->
+## Tailwind CSS
+
+Tailwind is set up for your own markup: `src/tailwind.css` is imported in `src/root.tsx`, and `@tailwindcss/vite` builds it. Use its classes anywhere in `src/`. The starter's pages, shop, blog and reviews style themselves with `global.css` and the `bd-*.css` files, so they look the same with Tailwind or without it. Preflight, Tailwind's reset, is off for that reason; `src/tailwind.css` says how to turn it on.
+
+<!-- [/bd:tailwind] -->
 ## What's in each section
 
 | Section | Where it lives | SDK call |
@@ -87,8 +93,8 @@ bundle.
 | Surface | File | SDK call |
 | --- | --- | --- |
 | **Product list** (search, category, price, rating, sort; save and compare on each card) | `src/routes/store/index.tsx` | `storefront.listProductsWithMeta(...)`, `storefront.listCategories()` |
-| **Product page** (option photos, options, add to cart, add-ons, reviews, related) | `src/routes/store/[id]/index.tsx` → `<bd-product>` | `storefront.getProduct(id)`, reviews, add-ons, related |
-| **Add to cart** for `<bd-product>` | `src/routes/api/bd/cart/add/index.ts` (`POST`, JSON) | `cart.forVisitor(token).addItem(...)` |
+| **Product page** (option photos, options, add to cart, add-ons, reviews, related) | `src/routes/store/[id]/index.tsx` → `<ProductDetail>` | `storefront.getProduct(id)`, reviews, add-ons, related |
+| **Add to cart** for the product page | `src/routes/api/bd/cart/add/index.ts` (`POST`, JSON) | `cart.forVisitor(token).addItem(...)` |
 | **Wishlist** · **Compare** | `src/routes/store/wishlist/index.tsx` · `src/routes/store/compare/index.tsx` | `storefront.getProduct(id)` per compared product |
 | **Cart** (update / remove / coupon / clear / checkout) | `src/routes/cart/index.tsx` | `cart.forVisitor(token).*`, `checkout.forVisitor(token).start(...)` via `server$` |
 | **Order confirmation** | `src/routes/store/order/index.tsx` | `checkout.getStatus(sessionId)` |
@@ -99,15 +105,32 @@ The cart page's mutations are `server$` RPCs that read/write the cookie via
 `this.cookie` and return a fresh `CartSnapshot`. Cart amounts are dollars
 (`formatDollars`); product prices are cents (`formatMoney`).
 
-#### Shop elements
+#### The shop's parts
 
-The product page, wishlist, compare table, save buttons and the store bar's
-counts are custom elements in `src/lib/shop/` (`shop-elements.ts`), the same
-ones every BD starter ships. A loader reads the data on the server and the
-page writes it into the element as JSON (`elementHtml` in
-`src/lib/bd-elements.ts`); `<StoreNav />` loads the elements in the browser.
-The wishlist and the compare picks are saved in the browser. Styles:
-`src/bd-shop.css`.
+Every page is laid out from parts in `src/components/bd/shop/`, one file
+each, so you can move, restyle or drop one, or build your own pages from
+them:
+
+| Page | Parts |
+| --- | --- |
+| Store | `StoreFilters.tsx` (`StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`, and `useStoreFilters` / `useSetFilter` for your own), `ProductGrid`, `ProductCard`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `RecentlyViewed`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary`, `CheckoutButton` |
+
+The product page's parts are plain functions drawn on the server; the
+filters and the cart's parts are `component$`s, since they handle clicks.
+What changes in the browser on the product page comes from small custom
+elements in `src/lib/shop/shop-elements.ts`, the same ones every BD starter
+ships: `<bd-product-form>` keeps the price, options, stock, quantity and add
+to cart in step with what's chosen, `<bd-gallery>` follows the chosen
+option's photos, and `<bd-share>`, `<bd-addon>`, `<bd-save-buttons>`,
+`<bd-recently-viewed>` and `<bd-compare-bar>` do one job each. They find the
+parts by their `data-bd-*` attributes, so keep those when you change a
+part's markup. The elements that draw what's inside them (save buttons,
+recently viewed, compare bar, and the wishlist and compare table) carry
+`dangerouslySetInnerHTML=""` or are written as HTML (`elementHtml` in
+`src/lib/bd-elements.ts`), so Qwik leaves what they draw alone.
+`<StoreNav />` loads the elements in the browser. Styles: `src/bd-shop.css`.
 <!-- [/bd:store] -->
 
 <!-- [bd:subscriptions] -->
@@ -133,6 +156,11 @@ The loader rebuilds the post's HTML from an allowlist (`safePostHtml` in
 button and comments are `<bd-post-like>` and `<bd-post-comments>`
 (`src/lib/shop/blog-elements.ts`); signed out, they lead to sign-in and back
 to the post. Styles: `src/bd-blog.css`.
+
+The pages are laid out from parts in `src/components/bd/blog/`, one file
+each: `BlogFilters` and `PostCard` for the list; `PostMeta`, `PostBody` (or
+`MembersOnly` for a members-only post when signed out), `PostCta`,
+`PostTags`, `LikeButton` and `Comments` for a post.
 <!-- [/bd:blog] -->
 
 ### Auth + customer portal
@@ -155,6 +183,10 @@ sign-in vs. account state is resolved server-side per route from the validated
 | **Reviews**: the average and a bar per star, a platform filter (`?source=`), each review with its photos, Verified and a "Read on Google/Yelp" link, "Show more" (`?shown=`), and "Write a review" for signed-in customers | `src/routes/reviews/index.tsx` (data from `loadReviewsPage`, `src/lib/shop/reviews-page.ts`); `<bd-review-writer>` (`src/lib/shop/reviews-elements.ts`) posts to `src/routes/api/bd/reviews/write/` | `bundle.reviews` (`rating`, `counts`), `reviews.list({ limit, offset, source })`, `customerPortal(org).withSession(token).submitReview(...)` |
 | **News banner** (dismissible) | `src/components/bd/Banner.tsx` (fed by the home loader) | `bundle.banner` |
 | **Updates feed** | `src/routes/updates/index.tsx` | `bundle.updates` |
+
+The reviews page is laid out from parts in `src/components/bd/reviews/`:
+`RatingSummary` (the average, a bar per star and the writer), `ReviewFilter`
+(the platform links) and `ReviewCard` (one review).
 
 ### SEO
 
@@ -211,7 +243,7 @@ src/
 │   ├── bd-content.ts                        # banner / updates / reviews / JSON-LD
 │   ├── bd-elements.ts                       # writes a custom element with its data
 <!-- [bd:store] -->
-│   ├── shop/shop.ts · shop-elements.ts      # product page, wishlist, compare, save buttons
+│   ├── shop/shop.ts · shop-elements.ts      # shop rules; the elements that bring its parts to life
 <!-- [/bd:store] -->
 <!-- [bd:blog] -->
 │   ├── shop/blog.ts · blog-elements.ts      # safePostHtml, like button, comments
@@ -230,7 +262,12 @@ src/
 <!-- [/bd:store,subscriptions] -->
 <!-- [bd:store] -->
 │   ├── ShopStars.tsx                          # star rating in the shop's markup
+│   ├── shop/                                  # the shop's parts: product page, store, cart
 <!-- [/bd:store] -->
+<!-- [bd:blog] -->
+│   ├── blog/                                  # the blog's parts: post card, meta, body, likes, comments
+<!-- [/bd:blog] -->
+│   ├── reviews/                               # the reviews page's parts: summary, filter, card
 │   ├── Banner.tsx                             # dismissible bundle.banner bar
 │   ├── Footer.tsx
 │   ├── Hero.tsx · About.tsx · Services.tsx · Gallery.tsx
@@ -241,10 +278,10 @@ src/
     ├── index.tsx                              # routeLoader$ + banner + JSON-LD
 <!-- [bd:store] -->
     ├── store/index.tsx                        # product list
-    ├── store/[id]/index.tsx                   # product page (<bd-product>)
+    ├── store/[id]/index.tsx                   # product page (<ProductDetail>)
     ├── store/wishlist/index.tsx               # saved products
     ├── store/compare/index.tsx                # products side by side
-    ├── api/bd/cart/add/index.ts               # add to cart for <bd-product>
+    ├── api/bd/cart/add/index.ts               # add to cart, for the product page
 <!-- [/bd:store] -->
 <!-- [bd:store,subscriptions] -->
     ├── store/order/index.tsx                  # Stripe checkout return

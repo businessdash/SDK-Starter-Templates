@@ -1,0 +1,20 @@
+/* [bd-file:tailwind] */
+/*
+ * Tailwind CSS, for your own markup: use its classes anywhere in src/ and public/.
+ * The server builds this file (src/tailwind.ts) and serves it at
+ * /tailwind.css, which every page links.
+ *
+ * The starter's pages, shop, blog and reviews style themselves (public/styles.css and the bd-*.css files)
+ * and don't use Tailwind, so they look the same with it or without. That's
+ * also why Preflight, Tailwind's reset, is left out. To use it, add the line
+ * below, then check the pages still look right:
+ *
+ *   @import "tailwindcss/preflight.css" layer(base);
+ *
+ * Tailwind's classes sit in a layer, so the starter's own CSS wins where both
+ * style the same thing. To restyle one of the starter's parts with Tailwind,
+ * swap its class names for Tailwind's in its markup.
+ */
+@layer theme, base, components, utilities;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);

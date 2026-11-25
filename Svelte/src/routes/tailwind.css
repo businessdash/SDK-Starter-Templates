@@ -1,0 +1,24 @@
+/* [bd-file:tailwind] */
+/*
+ * Tailwind CSS, for your own markup: use its classes anywhere in src/.
+ *
+ * The starter's pages, shop, blog and reviews style themselves (layout.css,
+ * bd-tokens.css, bd-reviews.css and the components' <style> blocks) and don't
+ * use Tailwind, so they look the same with it or without. Preflight, Tailwind's reset, is left out
+ * because reset.css already does that job (it's adapted from Preflight).
+ *
+ * Tailwind's classes sit in a layer, so the starter's own CSS wins where both
+ * style the same thing. To restyle one of the starter's parts with Tailwind,
+ * swap its class names for Tailwind's in the component.
+ *
+ * The plugins: typography gives you the `prose` classes for long-form text;
+ * forms gives you `form-input`, `form-select` and friends (reset.css already
+ * styles bare form fields the way the plugin would).
+ */
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'tailwindcss/utilities.css' layer(utilities);
+@plugin '@tailwindcss/typography';
+@plugin '@tailwindcss/forms' {
+	strategy: 'class';
+}

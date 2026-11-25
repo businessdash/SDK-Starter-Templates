@@ -1,6 +1,6 @@
 # BD SDK — T3 App starter
 
-Same generic business site as the other framework starters, built on the **T3 Stack** (Next.js App Router + tRPC + Drizzle + Tailwind). The unique shape here is **tRPC for the SDK surface** — instead of REST endpoints or server functions, every BD call is a typed tRPC procedure with end-to-end type inference into the React components.
+Same generic business site as the other framework starters, built on the **T3 Stack** (Next.js App Router + tRPC + Drizzle, with Tailwind if you chose it). The unique shape here is **tRPC for the SDK surface** — instead of REST endpoints or server functions, every BD call is a typed tRPC procedure with end-to-end type inference into the React components.
 
 ## What's new (SDK 0.9.53)
 
@@ -44,6 +44,14 @@ pnpm dev
 
 Open http://localhost:3000.
 
+The pages style themselves with plain CSS: `src/styles/globals.css` pulls in `reset.css` (the page reset) and holds the starter's colours, spacing and components; `src/app/layout.tsx` adds the SDK's form styles and the shop's, blog's and reviews' `bd-*.css` files.
+
+<!-- [bd:tailwind] -->
+### Tailwind CSS
+
+Tailwind is set up for your own markup: `src/styles/tailwind.css` is imported by `src/app/layout.tsx`, and `@tailwindcss/postcss` builds it (`postcss.config.js`). Use its classes anywhere in `src/`; `font-sans` is Geist. The starter's pages, shop, blog and reviews don't use Tailwind, so they look the same with it or without it. Preflight, Tailwind's reset, is left out because `reset.css` does the same job.
+
+<!-- [/bd:tailwind] -->
 For production:
 
 ```sh
@@ -67,6 +75,8 @@ pnpm start
 | **News banner** | `NewsBanner.tsx` (dismissible bar, `sessionStorage`) fed by `bundle.banner` | `bundle.banner` (passthrough) |
 | **Updates feed** | `Updates.tsx` fed by `bundle.updates` (Google Business posts) | `bundle.updates` (passthrough) |
 | **JSON-LD (SEO)** | `homeJsonLd()` in `src/server/lib/bd-seo.ts`, injected server-side into the page | `localBusiness()` + `website()` from `@businessdash/sdk/seo` |
+
+`/reviews` draws `<ReviewsView>`, the whole page, built from `RatingSummary` (the average and a bar per star, with the writer beside it), `ReviewFilter` (the platform links) and `ReviewCard` (one review), each its own file in `src/app/_components/bd/reviews/`, so you can lay them out your own way.
 
 <!-- [bd:store] -->
 ### Storefront (`src/app/store/*`)
@@ -92,6 +102,19 @@ for its page, and the wishlist, compare and recently viewed lists, which live in
 the browser's localStorage). The chosen options travel with the cart line
 (`options: { Size: "42" }`), and the cart prices them. Styles are in
 `src/styles/bd-shop.css`.
+
+#### The shop's parts
+
+`<ProductDetail>` is the whole product page, and the store and cart pages are laid out from the same kind of parts. Each part is its own file, so you can move, restyle or drop one, or build your own pages from them:
+
+| Page | Parts |
+| --- | --- |
+| Store | the filters (`StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`), `ProductGrid`, `ProductCard`, `StarRating`, `SaveButtons`, `CompareBar` |
+| Product (`ProductDetail`) | `ProductBreadcrumbs`, `ProductGallery`, `ProductTitle`, `ProductPrice`, `VariantPicker`, `OptionPicker`, `StockNote`, `QuantityStepper`, `AddToCartButton`, `CartNotice`, `SaveButtons`, `ShareButton`, `ProductPolicies`, `ProductSpecs`, `ProductAddons`, `ProductReviews`, `ProductRail`, `CompareBar` |
+| Cart | `CartLine`, `CouponForm`, `CartSummary` |
+| Wishlist, compare | `WishlistView`, `CompareTable` |
+
+The product page's parts are in `src/app/_components/bd/shop/`; the store page's (`ProductCard`, `ProductGrid`, and `StoreFilters.tsx`: `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`) and the cart's are next to `StoreView.tsx` and `CartClient.tsx` in `src/app/store/_components/`.
 <!-- [/bd:store] -->
 
 <!-- [bd:blog] -->
@@ -107,6 +130,15 @@ Liking and commenting need a signed-in customer (the `bd_session` cookie from
 `src/app/_components/bd/blog/blog.ts` on the server, and only that rebuilt HTML
 reaches the page, so a post can't carry a script. Styles are in
 `src/styles/bd-blog.css`.
+
+#### The blog's parts
+
+`<BlogIndex>` and `<BlogPost>` are the whole pages, built from parts in `src/app/_components/bd/blog/`, one file each:
+
+| Page | Parts |
+| --- | --- |
+| Blog (`BlogIndex`) | `BlogFilters` (categories and tags), `PostCard` |
+| Post (`BlogPost`) | `PostMeta`, `PostBody` (or `MembersOnly` for a members-only post signed out), `PostCta`, `PostTags`, `LikeButton`, `Comments` (`CommentForm`, `CommentList`) |
 <!-- [/bd:blog] -->
 
 <!-- [bd:subscriptions] -->
@@ -242,13 +274,13 @@ Validated in `src/env.js`, documented in `.env.example`:
 │   │   └── api/
 │   │       ├── bd/revalidate/route.ts          # one-liner webhook receiver
 │   │       └── bd-auth/[...slug]/route.ts      # createAuthHandler catch-all
-│   └── styles/globals.css                        # Tailwind + BD tokens + parity-surface styles (+ bd-shop.css, bd-blog.css)
+│   └── styles/globals.css                        # reset + BD tokens + parity-surface styles (+ bd-shop.css, bd-blog.css)
 ├── .env.example
 ├── README.md
 └── package.json
 ```
 
-The BD layer plugs into the existing T3 conventions cleanly — the tRPC client/server boundary, the Drizzle DB layer, the Tailwind setup all stay as-is.
+The BD layer plugs into the existing T3 conventions cleanly — the tRPC client/server boundary, the Drizzle DB layer all stay as-is.
 
 
 <!-- [bd:donations] -->

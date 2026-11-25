@@ -1,4 +1,6 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
+import tailwindcss from "@tailwindcss/vite"; // [bd-line:tailwind]
+
 export default defineNuxtConfig({
 	compatibilityDate: "2025-07-15",
 	devtools: { enabled: true },
@@ -20,6 +22,7 @@ export default defineNuxtConfig({
 		"~/assets/css/bd-blog.css",
 		// [/bd:blog]
 		"~/assets/css/bd-reviews.css",
+		"~/assets/css/tailwind.css", // [bd-line:tailwind]
 	],
 	/**
 	 * `@businessdash/sdk/vue` ships its `<BdForm>` binding as raw source (a `.vue`
@@ -29,7 +32,10 @@ export default defineNuxtConfig({
 	 * dep-pre-bundler from grabbing the `.vue` before `@vitejs/plugin-vue` does.
 	 */
 	build: { transpile: ["@businessdash/sdk"] },
-	vite: { optimizeDeps: { exclude: ["@businessdash/sdk"] } },
+	vite: {
+		plugins: [tailwindcss()], // [bd-line:tailwind]
+		optimizeDeps: { exclude: ["@businessdash/sdk"] },
+	},
 	/**
 	 * BD env, consolidated here — the one idiomatic place Nuxt centralizes
 	 * env, so the whole app reads it through `useRuntimeConfig()`. Each key

@@ -4,20 +4,20 @@ import TanStackQueryHeaderUser from "../integrations/tanstack-query/header-user.
 
 export default function Header() {
 	return (
-		<header class="site-header px-4">
+		<header class="site-header">
 			<nav class="page-wrap nav-shell">
-				<h2 class="m-0 flex-shrink-0 text-base font-semibold tracking-tight">
+				<h2 class="site-brand">
 					<Link to="/" class="brand-pill">
 						<span class="brand-dot" />
 						TanStack Start
 					</Link>
 				</h2>
 
-				<div class="ml-auto flex items-center gap-2">
+				<div class="site-header-user">
 					<TanStackQueryHeaderUser />
 				</div>
 
-				<div class="order-3 flex w-full flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-sm font-semibold sm:order-2 sm:w-auto sm:flex-nowrap sm:pb-0">
+				<div class="site-header-links">
 					<Link
 						to="/"
 						class="nav-link"
@@ -40,24 +40,24 @@ export default function Header() {
 					>
 						Docs
 					</a>
-					<details class="relative w-full sm:w-auto">
-						<summary class="nav-link list-none cursor-pointer">Demos</summary>
-						<div class="mt-2 min-w-56 rounded-xl border border-[var(--line)] bg-[var(--header-bg)] p-2 shadow-lg sm:absolute sm:right-0">
+					<details class="site-header-demos">
+						<summary class="nav-link site-header-demos-toggle">Demos</summary>
+						<div class="site-header-demos-menu">
 							<a
 								href="/demo/form"
-								class="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+								class="site-header-demo-link"
 							>
 								Form
 							</a>
 							<a
 								href="/demo/store"
-								class="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+								class="site-header-demo-link"
 							>
 								Store
 							</a>
 							<a
 								href="/demo/tanstack-query"
-								class="block rounded-lg px-3 py-2 text-sm text-[var(--sea-ink-soft)] no-underline transition hover:bg-[var(--link-bg-hover)] hover:text-[var(--sea-ink)]"
+								class="site-header-demo-link"
 							>
 								TanStack Query
 							</a>

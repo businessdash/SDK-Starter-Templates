@@ -6,11 +6,14 @@ import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
 import { Footer } from "../../components/bd/Footer";
 import { SiteHeader } from "../../components/bd/SiteHeader";
+import { CartLine } from "../../components/bd/shop/CartLine";
+import { CartSummary } from "../../components/bd/shop/CartSummary";
+import { CheckoutButton } from "../../components/bd/shop/CheckoutButton";
+import { CouponForm } from "../../components/bd/shop/CouponForm";
 import { StoreNav } from "../../components/bd/StoreNav";
 import {
 	applyCartCoupon,
 	clearCart,
-	formatDollars,
 	getCartSnapshot,
 	removeCartCoupon,
 	removeCartItem,
@@ -25,7 +28,9 @@ import { getCustomerSession } from "../../lib/bd-portal";
  * `this.cookie` and return a fresh snapshot the client swaps in. Checkout
  * starts a Stripe session and returns the hosted URL to redirect to.
  * Cart amounts are dollars. After each change the new item count goes to the
- * store bar as a `bd:cart-count` event.
+ * store bar as a `bd:cart-count` event. The page is laid out from the shop's
+ * parts (src/components/bd/shop/): a CartLine per item, the CouponForm, the
+ * CartSummary and the CheckoutButton.
  */
 export const useCart = routeLoader$(async ({ cookie }) => {
 	const [snapshot, session] = await Promise.all([
@@ -66,7 +71,6 @@ const startCheckoutRpc = server$(async function (this) {
 export default component$(() => {
 	const data = useCart();
 	const cart = useSignal<CartSnapshot | null>(data.value.snapshot);
-	const couponCode = useSignal("");
 	const error = useSignal<string | null>(null);
 	const busy = useSignal(false);
 
@@ -126,125 +130,32 @@ export default component$(() => {
 					) : (
 						<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
 							{items.map((item) => (
-								<div
+								<CartLine
+									disabled={busy.value}
+									item={item}
 									key={item.id}
-									style="display: flex; gap: 1rem; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 1rem;"
-								>
-									{item.productImage ? (
-										<img
-											alt={item.productName ?? "Item"}
-											src={item.productImage}
-											style="width: 64px; height: 64px; border-radius: 0.5rem; object-fit: cover;"
-										/>
-									) : null}
-									<div style="flex: 1;">
-										<div style="font-weight: 600; color: var(--title);">
-											{item.productName ?? "Item"}
-										</div>
-										{item.variantTitle ? (
-											<div style="color: var(--text-muted); font-size: 0.85rem;">
-												{item.variantTitle}
-											</div>
-										) : null}
-										<div style="color: var(--accent); font-weight: 600;">
-											{formatDollars(item.subtotal, item.currency)}
-										</div>
-									</div>
-									<div style="display: flex; align-items: center; gap: 0.5rem;">
-										<button
-											aria-label="Decrease quantity"
-											class="slot-button"
-											disabled={busy.value}
-											onClick$={() =>
-												apply(updateItemRpc(item.id, item.quantity - 1))
-											}
-											type="button"
-										>
-											−
-										</button>
-										<span style="min-width: 1.5rem; text-align: center;">
-											{item.quantity}
-										</span>
-										<button
-											aria-label="Increase quantity"
-											class="slot-button"
-											disabled={busy.value}
-											onClick$={() =>
-												apply(updateItemRpc(item.id, item.quantity + 1))
-											}
-											type="button"
-										>
-											+
-										</button>
-										<button
-											class="bd-btn bd-btn--ghost"
-											disabled={busy.value}
-											onClick$={() => apply(removeItemRpc(item.id))}
-											type="button"
-										>
-											Remove
-										</button>
-									</div>
-								</div>
+									onQuantity$={(quantity) => apply(updateItemRpc(item.id, quantity))}
+									onRemove$={() => apply(removeItemRpc(item.id))}
+								/>
 							))}
 
-							<div style="display: flex; gap: 0.5rem; align-items: flex-end;">
-								<div style="flex: 1;">
-									<label class="bd-label" for="coupon">
-										Coupon
-									</label>
-									<input
-										bind:value={couponCode}
-										class="bd-input"
-										id="coupon"
-										placeholder={snapshot?.couponCode ?? "Code"}
-									/>
-								</div>
-								{snapshot?.couponCode ? (
-									<button
-										class="bd-btn bd-btn--ghost"
-										disabled={busy.value}
-										onClick$={() => apply(removeCouponRpc())}
-										type="button"
-									>
-										Remove coupon
-									</button>
-								) : (
-									<button
-										class="bd-btn bd-btn--ghost"
-										disabled={busy.value || !couponCode.value}
-										onClick$={() => apply(applyCouponRpc(couponCode.value))}
-										type="button"
-									>
-										Apply
-									</button>
-								)}
-							</div>
-
-							<div style="display: flex; justify-content: space-between; align-items: center; padding-top: 0.5rem;">
-								<button
-									class="bd-btn bd-btn--ghost"
-									disabled={busy.value}
-									onClick$={() => apply(clearCartRpc())}
-									type="button"
-								>
-									Clear cart
-								</button>
-								<div style="font-size: 1.15rem; font-weight: 700; color: var(--title);">
-									{snapshot
-										? formatDollars(snapshot.subtotal, snapshot.currency)
-										: ""}
-								</div>
-							</div>
-
-							<button
-								class="bd-btn"
+							<CouponForm
+								code={snapshot?.couponCode}
 								disabled={busy.value}
-								onClick$={checkout}
-								type="button"
-							>
-								{busy.value ? "Working…" : "Checkout with Stripe"}
-							</button>
+								onApply$={(code) => apply(applyCouponRpc(code))}
+								onRemove$={() => apply(removeCouponRpc())}
+							/>
+
+							{snapshot ? (
+								<CartSummary
+									currency={snapshot.currency}
+									disabled={busy.value}
+									onClear$={() => apply(clearCartRpc())}
+									subtotal={snapshot.subtotal}
+								/>
+							) : null}
+
+							<CheckoutButton busy={busy.value} onCheckout$={checkout} />
 
 							{error.value ? (
 								<div style="color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;">

@@ -5,11 +5,19 @@ import 'package:flutter/services.dart';
 
 import 'app_state.dart';
 import 'bd_scope.dart';
+import 'product_parts.dart';
 import 'shop_parts.dart';
 
 /// One product: photos for the chosen style, the style and option rows,
 /// quantity, add to cart, add-ons, features and specs, its reviews, and
 /// "You may also like" / recently viewed.
+///
+/// It's laid out from the parts in product_parts.dart ([ProductGallery],
+/// [ProductTitle], [ProductPriceText], [StockNote], [VariantPicker],
+/// [OptionPicker], [QuantityStepper], [AddToCartButton], [ProductNotice],
+/// [ProductAddons], [ProductDetails], [ProductReviews]) and shop_parts.dart
+/// ([SaveButtons], [ProductRail]). Rearrange them here, or lay out a page of
+/// your own from them.
 class ProductPage extends StatefulWidget {
   const ProductPage({super.key, required this.productId});
 
@@ -180,7 +188,6 @@ class _ProductPageState extends State<ProductPage> {
   }
 
   Widget _page(BuildContext context, ProductView view) {
-    final theme = Theme.of(context);
     final app = AppScope.of(context);
     final variantId = _variantId;
     final groups = variantId == null ? const <OptionGroup>[] : view.optionGroups(variantId);
@@ -194,42 +201,32 @@ class _ProductPageState extends State<ProductPage> {
       image: view.images.firstOrNull,
       priceCents: view.defaultVariant?.price == null ? null : (view.defaultVariant!.price! * 100).round(),
     );
-    final amount = price.amount;
     final recent = app.recentlyViewed.items.where((item) => item.id != view.id).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        if (gallery.isNotEmpty) _Gallery(urls: gallery, name: view.name),
+        if (gallery.isNotEmpty) ProductGallery(urls: gallery, name: view.name),
         const SizedBox(height: 16),
-        if (view.categoryName != null) Text(view.categoryName!, style: theme.textTheme.bodySmall),
-        Text(view.name, style: theme.textTheme.headlineSmall),
+        ProductTitle(categoryName: view.categoryName, name: view.name),
         const SizedBox(height: 4),
-        Text(
-          amount == null ? 'Unavailable' : '${price.from ? 'From ' : ''}${Money.amount(amount)}',
-          style: theme.textTheme.titleLarge,
-        ),
-        if (stock != null && stock > 0 && stock <= 5)
-          Text('Only $stock left',
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error, fontWeight: FontWeight.w600)),
+        ProductPriceText(price: price),
+        StockNote(stock: stock),
         const SizedBox(height: 12),
         SaveButtons(product: saved),
-        if (view.variants.length > 1)
-          _OptionRow(
-            title: 'Style',
-            options: [for (final variant in view.variants) (id: variant.id, label: variant.name, available: variant.available)],
-            selected: variantId,
-            onSelect: (next) => setState(() {
-              _variantId = next;
-              _chosen = {};
-              _quantity = 1;
-              _message = null;
-            }),
-          ),
+        VariantPicker(
+          variants: view.variants,
+          selected: variantId,
+          onSelect: (next) => setState(() {
+            _variantId = next;
+            _chosen = {};
+            _quantity = 1;
+            _message = null;
+          }),
+        ),
         for (final group in groups)
-          _OptionRow(
-            title: group.title,
-            options: [for (final value in group.values) (id: value.id, label: value.value, available: value.available)],
+          OptionPicker(
+            group: group,
             selected: _chosen[group.id],
             onSelect: (next) => setState(() {
               _chosen = {..._chosen, group.id: next};
@@ -240,104 +237,26 @@ class _ProductPageState extends State<ProductPage> {
         Row(
           spacing: 12,
           children: [
-            Semantics(
-              label: 'Quantity $_quantity',
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      tooltip: 'One fewer',
-                      icon: const Icon(Icons.remove),
-                      onPressed: _quantity > 1 ? () => setState(() => _quantity--) : null,
-                    ),
-                    Text('$_quantity', style: theme.textTheme.titleMedium),
-                    IconButton(
-                      tooltip: 'One more',
-                      icon: const Icon(Icons.add),
-                      onPressed: _quantity < maxQuantity ? () => setState(() => _quantity++) : null,
-                    ),
-                  ],
-                ),
-              ),
+            QuantityStepper(
+              quantity: _quantity,
+              max: maxQuantity,
+              onChanged: (next) => setState(() => _quantity = next),
             ),
             Expanded(
-              child: FilledButton(
-                onPressed: _adding || !price.ready || variantId == null ? null : () => _addToCart(view, variantId),
-                child: Text(_adding
-                    ? 'Adding…'
-                    : price.ready
-                        ? 'Add to cart'
-                        : groups.isNotEmpty
-                            ? 'Choose options'
-                            : 'Unavailable'),
+              child: AddToCartButton(
+                price: price,
+                adding: _adding,
+                hasOptions: groups.isNotEmpty,
+                onPressed: variantId == null ? null : () => _addToCart(view, variantId),
               ),
             ),
           ],
         ),
-        if (_message != null)
-          Padding(
-            padding: const EdgeInsets.only(top: 8),
-            child: Text(_message!, style: TextStyle(color: theme.colorScheme.error)),
-          ),
-        if (_addons.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Text(_addons.first.groupLabel ?? 'Goes well with', style: theme.textTheme.titleMedium),
-          for (final addon in _addons)
-            ListTile(
-              contentPadding: EdgeInsets.zero,
-              leading: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: SizedBox.square(dimension: 48, child: Photo(addon.imageUrl)),
-              ),
-              title: Text(addon.name),
-              subtitle: addon.priceCents == null ? null : Text(Money.cents(addon.priceCents)),
-              trailing: OutlinedButton(
-                onPressed: _addedAddons.contains(addon.id) ? null : () => _addAddon(addon),
-                child: Text(_addedAddons.contains(addon.id) ? 'Added' : 'Add'),
-              ),
-            ),
-        ],
-        if (view.description.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Text(view.description, style: theme.textTheme.bodyLarge),
-        ],
-        if (view.features.isNotEmpty) ...[
-          const SizedBox(height: 24),
-          Text('Features', style: theme.textTheme.titleMedium),
-          const SizedBox(height: 6),
-          for (final feature in view.features)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 4),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                spacing: 8,
-                children: [const Text('•'), Expanded(child: Text(feature))],
-              ),
-            ),
-        ],
-        for (final group in view.specs) ...[
-          const SizedBox(height: 24),
-          Text(group.name, style: theme.textTheme.titleMedium),
-          const SizedBox(height: 6),
-          for (final row in group.rows)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: Text(row.label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor))),
-                  Expanded(child: Text(row.value)),
-                ],
-              ),
-            ),
-        ],
+        if (_message != null) ProductNotice(_message!),
+        ProductAddons(addons: _addons, added: _addedAddons, onAdd: _addAddon),
+        ProductDetails.of(view),
         const SizedBox(height: 24),
-        _ProductReviews(
+        ProductReviews(
           page: _reviews,
           loading: _loadingReviews,
           onMore: _reviewLimit >= 100
@@ -362,130 +281,6 @@ class _ProductPageState extends State<ProductPage> {
         ),
         if (_related.isNotEmpty && recent.isNotEmpty) const SizedBox(height: 24),
         ProductRail(title: 'Recently viewed', products: recent),
-      ],
-    );
-  }
-}
-
-class _Gallery extends StatelessWidget {
-  const _Gallery({required this.urls, required this.name});
-
-  final List<String> urls;
-  final String name;
-
-  @override
-  Widget build(BuildContext context) => LayoutBuilder(
-        builder: (context, constraints) {
-          final side = constraints.maxWidth.clamp(0.0, 520.0);
-          return SizedBox(
-            height: side,
-            child: PageView(
-              key: ValueKey(urls.join()),
-              children: [
-                for (final (index, url) in urls.indexed)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(14),
-                      child: Photo(url, label: urls.length > 1 ? '$name, photo ${index + 1} of ${urls.length}' : name),
-                    ),
-                  ),
-              ],
-            ),
-          );
-        },
-      );
-}
-
-class _OptionRow extends StatelessWidget {
-  const _OptionRow({required this.title, required this.options, required this.selected, required this.onSelect});
-
-  final String title;
-  final List<({String id, String label, bool available})> options;
-  final String? selected;
-  final ValueChanged<String> onSelect;
-
-  @override
-  Widget build(BuildContext context) {
-    final current = options.where((option) => option.id == selected).firstOrNull;
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 8,
-        children: [
-          Text(current == null ? title : '$title: ${current.label}', style: Theme.of(context).textTheme.labelLarge),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              for (final option in options)
-                ChoiceChip(
-                  label: Text(option.label),
-                  selected: option.id == selected,
-                  onSelected: option.available ? (_) => onSelect(option.id) : null,
-                  tooltip: option.available ? null : '${option.label} is sold out',
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ProductReviews extends StatelessWidget {
-  const _ProductReviews({required this.page, required this.loading, required this.onMore});
-
-  final ProductReviewPage? page;
-  final bool loading;
-  final VoidCallback? onMore;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final page = this.page;
-    if (page == null || page.items.isEmpty) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        spacing: 4,
-        children: [
-          Text('Reviews', style: theme.textTheme.titleMedium),
-          Text(page == null && loading ? 'Loading…' : 'No reviews yet.', style: theme.textTheme.bodyMedium),
-        ],
-      );
-    }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      spacing: 12,
-      children: [
-        Row(
-          spacing: 8,
-          children: [
-            Text('Reviews', style: theme.textTheme.titleMedium),
-            StarRating(page.avgRating ?? 0),
-            Text('${(page.avgRating ?? 0).toStringAsFixed(1)} · ${page.totalCount}', style: theme.textTheme.bodySmall),
-          ],
-        ),
-        for (final review in page.items)
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            spacing: 4,
-            children: [
-              StarRating(review.rating.toDouble(), size: 13),
-              if (review.title?.isNotEmpty ?? false) Text(review.title!, style: theme.textTheme.titleSmall),
-              if (review.body?.isNotEmpty ?? false) Text(review.body!),
-              Text(
-                [review.reviewerName ?? 'Customer', Reviews.date(review.createdAt)].where((part) => part.isNotEmpty).join(' · '),
-                style: theme.textTheme.bodySmall,
-              ),
-            ],
-          ),
-        if (page.items.length < page.totalCount && onMore != null)
-          OutlinedButton(
-            onPressed: loading ? null : onMore,
-            child: Text(loading ? 'Loading…' : 'Show more reviews'),
-          ),
       ],
     );
   }

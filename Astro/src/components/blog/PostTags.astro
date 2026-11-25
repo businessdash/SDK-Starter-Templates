@@ -1,0 +1,20 @@
+---
+// [bd-file:blog]
+/** The post's tags, each linking to the posts with it. */
+interface Props {
+	tags: string[];
+}
+const { tags } = Astro.props;
+---
+
+{
+	tags.length > 0 ? (
+		<ul class="post__tags">
+			{tags.map((tag) => (
+				<li>
+					<a href={`/blog?tag=${encodeURIComponent(tag)}`}>#{tag}</a>
+				</li>
+			))}
+		</ul>
+	) : null
+}

@@ -1,6 +1,8 @@
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 
+import '../src/tailwind.css' // [bd-line:tailwind]
+
 /**
  * The tabs, and the screens that open over them. Each pushed screen shows a
  * chevron alone: the screen behind is the "(tabs)" group, whose name iOS

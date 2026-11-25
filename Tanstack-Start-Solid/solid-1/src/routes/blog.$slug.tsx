@@ -1,10 +1,16 @@
 // [bd-file:blog]
 import { createFileRoute, Link } from "@tanstack/solid-router";
-import { For, Show } from "solid-js";
+import { Show } from "solid-js";
 
+import { Comments } from "../components/bd/blog/Comments";
+import { LikeButton } from "../components/bd/blog/LikeButton";
+import { MembersOnly } from "../components/bd/blog/MembersOnly";
+import { PostBody } from "../components/bd/blog/PostBody";
+import { PostCta } from "../components/bd/blog/PostCta";
+import { PostMeta } from "../components/bd/blog/PostMeta";
+import { PostTags } from "../components/bd/blog/PostTags";
 import { getBlogPost } from "../lib/bd-blog-fns";
-import { elementHtml, loadBlogElements } from "../lib/bd-elements";
-import { formatPostDate } from "../lib/shop/blog";
+import { loadBlogElements } from "../lib/bd-elements";
 
 /**
  * One post. The server rebuilds its HTML from an allowlist (`safePostHtml`,
@@ -13,6 +19,9 @@ import { formatPostDate } from "../lib/shop/blog";
  * (src/lib/shop/blog-elements.ts) post JSON to
  * /api/bd/blog/post/:slug/like and /comment; signed out, they lead to
  * sign-in and back to the post.
+ *
+ * The page is laid out from the blog's parts (src/components/bd/blog/), one
+ * file each: move, restyle or drop any.
  */
 export const Route = createFileRoute("/blog/$slug")({
 	component: BlogPost,
@@ -68,20 +77,12 @@ function BlogPost() {
 								</Link>
 								<header class="post__head">
 									<h1>{v().post.title}</h1>
-									<p class="post__meta">
-										<Show when={v().post.authorAvatarUrl}>
-											<img
-												alt=""
-												referrerpolicy="no-referrer"
-												src={v().post.authorAvatarUrl ?? ""}
-											/>
-										</Show>
-										<Show when={v().post.authorName}>
-											<span>{v().post.authorName}</span>
-										</Show>
-										<span>{formatPostDate(v().post.publishedAt)}</span>
-										<span>· {v().minutes} min read</span>
-									</p>
+									<PostMeta
+										authorAvatarUrl={v().post.authorAvatarUrl}
+										authorName={v().post.authorName}
+										minutes={v().minutes}
+										publishedAt={v().post.publishedAt}
+									/>
 								</header>
 								<Show when={v().post.imageUrl}>
 									<img
@@ -93,63 +94,30 @@ function BlogPost() {
 								</Show>
 								<Show
 									when={!v().paywalled}
-									fallback={
-										<div class="bd-empty">
-											This post is for members.
-											<p>
-												<a class="bd-btn" href={signInHref()}>
-													Sign in to read it
-												</a>
-											</p>
-										</div>
-									}
+									fallback={<MembersOnly signInHref={signInHref()} />}
 								>
-									{/* Rebuilt from an allowlist on the server: see src/lib/shop/blog.ts. */}
-									<div class="post__body" innerHTML={v().html} />
+									<PostBody html={v().html} />
 								</Show>
 								<Show when={v().post.ctaHref && v().post.ctaLabel}>
-									<aside class="bd-card post__cta">
-										<Show when={v().post.ctaDescription}>
-											<p>{v().post.ctaDescription}</p>
-										</Show>
-										<a class="bd-btn" href={v().post.ctaHref ?? ""}>
-											{v().post.ctaLabel}
-										</a>
-									</aside>
+									<PostCta
+										description={v().post.ctaDescription}
+										href={v().post.ctaHref ?? ""}
+										label={v().post.ctaLabel ?? ""}
+									/>
 								</Show>
-								<Show when={v().post.tags.length > 0}>
-									<ul class="post__tags">
-										<For each={v().post.tags}>
-											{(t) => (
-												<li>
-													<Link search={{ tag: t }} to="/blog">
-														#{t}
-													</Link>
-												</li>
-											)}
-										</For>
-									</ul>
-								</Show>
-								<div
-									innerHTML={elementHtml(
-										"bd-post-like",
-										{
-											"data-like-url": `${api()}/like`,
-											"data-sign-in-href": signInHref(),
-										},
-										{ likes: v().likes, signedIn: v().signedIn },
-									)}
+								<PostTags tags={v().post.tags} />
+								<LikeButton
+									likes={v().likes}
+									likeUrl={`${api()}/like`}
+									signedIn={v().signedIn}
+									signInHref={signInHref()}
 								/>
 							</article>
-							<div
-								innerHTML={elementHtml(
-									"bd-post-comments",
-									{
-										"data-comment-url": `${api()}/comment`,
-										"data-sign-in-href": signInHref(),
-									},
-									{ comments: v().comments, signedIn: v().signedIn },
-								)}
+							<Comments
+								commentUrl={`${api()}/comment`}
+								comments={v().comments}
+								signedIn={v().signedIn}
+								signInHref={signInHref()}
 							/>
 						</>
 					);

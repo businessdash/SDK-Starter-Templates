@@ -1,0 +1,24 @@
+<!-- Details: the feature list, then a table per spec group. -->
+#if(detail.hasDetails):
+  <section class="product-section" id="specs">
+    <h2 class="product-section__title">Details</h2>
+    #if(detail.hasFeatures):
+      <ul class="features">
+        #for(feature in detail.features):<li>#(feature)</li>#endfor
+      </ul>
+    #endif
+    #for(group in detail.specs):
+      <table class="specs">
+        <caption>#(group.name)</caption>
+        <tbody>
+          #for(row in group.rows):
+            <tr>
+              <th scope="row">#(row.label)</th>
+              <td>#(row.value)</td>
+            </tr>
+          #endfor
+        </tbody>
+      </table>
+    #endfor
+  </section>
+#endif

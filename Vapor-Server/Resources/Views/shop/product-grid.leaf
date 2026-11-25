@@ -1,0 +1,4 @@
+<!-- The products, three across on wide screens: a shop/product-card each. -->
+<div class="bd-grid-3">
+  #for(product in products):#extend("shop/product-card")#endfor
+</div>
