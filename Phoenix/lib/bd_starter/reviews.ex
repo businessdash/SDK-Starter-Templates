@@ -88,8 +88,12 @@ defmodule BdStarter.Reviews do
   @doc "An http(s) address, or nil."
   def web_url(url) when is_binary(url) and url != "" do
     case URI.parse(url) do
-      %URI{scheme: scheme, host: host} when scheme in ["http", "https"] and is_binary(host) and host != "" -> url
-      _ -> nil
+      %URI{scheme: scheme, host: host}
+      when scheme in ["http", "https"] and is_binary(host) and host != "" ->
+        url
+
+      _ ->
+        nil
     end
   end
 
@@ -132,14 +136,27 @@ defmodule BdStarter.Reviews do
   @doc "A written review, checked: `{:ok, fields BD takes}` or `{:error, why}`."
   def check(input) when is_map(input) do
     body = if is_binary(input["body"]), do: String.trim(input["body"]), else: ""
-    title = if is_binary(input["title"]), do: input["title"] |> String.trim() |> String.slice(0, 200), else: ""
+
+    title =
+      if is_binary(input["title"]),
+        do: input["title"] |> String.trim() |> String.slice(0, 200),
+        else: ""
 
     cond do
-      not (is_integer(input["rating"]) and input["rating"] in 1..5) -> {:error, "Choose a rating from 1 to 5 stars."}
-      body == "" -> {:error, "Write a few words about your experience."}
-      String.length(body) > @max_length -> {:error, "Reviews are up to 5,000 characters."}
-      title == "" -> {:ok, %{rating: input["rating"], body: body}}
-      true -> {:ok, %{rating: input["rating"], title: title, body: body}}
+      not (is_integer(input["rating"]) and input["rating"] in 1..5) ->
+        {:error, "Choose a rating from 1 to 5 stars."}
+
+      body == "" ->
+        {:error, "Write a few words about your experience."}
+
+      String.length(body) > @max_length ->
+        {:error, "Reviews are up to 5,000 characters."}
+
+      title == "" ->
+        {:ok, %{rating: input["rating"], body: body}}
+
+      true ->
+        {:ok, %{rating: input["rating"], title: title, body: body}}
     end
   end
 

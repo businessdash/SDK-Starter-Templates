@@ -22,30 +22,50 @@ defmodule BdStarter.Forms.FormView do
 
   @unsupported_types ~w(schedule signature payment credit_card icon_picker image_input month_year)
 
-  def faces, do: [{"😞", "Very unhappy"}, {"😕", "Unhappy"}, {"😐", "Neutral"}, {"🙂", "Happy"}, {"😄", "Very happy"}]
+  def faces,
+    do: [
+      {"😞", "Very unhappy"},
+      {"😕", "Unhappy"},
+      {"😐", "Neutral"},
+      {"🙂", "Happy"},
+      {"😄", "Very happy"}
+    ]
+
   def unsupported?(field), do: field.type in @unsupported_types
 
   @doc "The fields that hold a value, through layout nodes but not into repeaters."
   def value_fields(fields) do
     Enum.flat_map(fields, fn field ->
       cond do
-        field.type in @layout_types -> value_fields(field.children || [])
-        field.type in Rules.static_types() or field.type in ["calculation", "reference_value"] -> []
-        true -> [field]
+        field.type in @layout_types ->
+          value_fields(field.children || [])
+
+        field.type in Rules.static_types() or field.type in ["calculation", "reference_value"] ->
+          []
+
+        true ->
+          [field]
       end
     end)
   end
 
   @doc "A box's `name`: `input[a][0][b]`, with a part as `[first]`."
   def input_name(key, part \\ nil) do
-    "input" <> Enum.map_join(String.split(key, "."), "", &"[#{&1}]") <> if(part, do: "[#{part}]", else: "")
+    "input" <>
+      Enum.map_join(String.split(key, "."), "", &"[#{&1}]") <> if(part, do: "[#{part}]", else: "")
   end
 
   def dom_id(form_id, key, part \\ nil),
-    do: Regex.replace(~r/[^\p{L}\p{N}_-]/u, "bd-#{form_id}-#{key}" <> if(part, do: "-#{part}", else: ""), "-")
+    do:
+      Regex.replace(
+        ~r/[^\p{L}\p{N}_-]/u,
+        "bd-#{form_id}-#{key}" <> if(part, do: "-#{part}", else: ""),
+        "-"
+      )
 
   @doc "The upload a file field's picker uses: its path key, hex, so nothing in it splits."
-  def upload_name(%FieldPath{} = path), do: "k" <> Base.encode16(FieldPath.key(path), case: :lower)
+  def upload_name(%FieldPath{} = path),
+    do: "k" <> Base.encode16(FieldPath.key(path), case: :lower)
 
   def single_control?(%Field{type: "time_picker"} = f), do: Field.time_mode(f) == "simple"
   def single_control?(f), do: f.type in @single_control_types or f.type not in @known_types
@@ -54,9 +74,13 @@ defmodule BdStarter.Forms.FormView do
 
   @doc "What the field's wrapper is known by in CSS: its output key, else its id."
   def css_key(field) do
-    Enum.find_value([Field.str(field, "outputKey"), Field.str(field, "key")], field.id, fn explicit ->
-      if explicit != nil and Js.trim(explicit) != "", do: Js.trim(explicit)
-    end)
+    Enum.find_value(
+      [Field.str(field, "outputKey"), Field.str(field, "key")],
+      field.id,
+      fn explicit ->
+        if explicit != nil and Js.trim(explicit) != "", do: Js.trim(explicit)
+      end
+    )
   end
 
   @doc "A value as a box shows it."
@@ -91,8 +115,12 @@ defmodule BdStarter.Forms.FormView do
 
   def autocomplete(field) do
     case Field.str(field, "autocomplete") do
-      own when own not in [nil, ""] -> own
-      _ -> %{"email" => "email", "phone" => "tel", "url" => "url"}[field.type] || Rules.autocomplete_token(field)
+      own when own not in [nil, ""] ->
+        own
+
+      _ ->
+        %{"email" => "email", "phone" => "tel", "url" => "url"}[field.type] ||
+          Rules.autocomplete_token(field)
     end
   end
 
@@ -118,7 +146,10 @@ defmodule BdStarter.Forms.FormView do
   @doc "`[{value, label}]` for a simple time picker."
   def times(field) do
     h24 = Field.config(field, "timeConfig", "format") == "24h"
-    step = max(Kernel.trunc(Json.num(Field.config(field, "timeConfig", "stepMinutes")) || 30.0), 1)
+
+    step =
+      max(Kernel.trunc(Json.num(Field.config(field, "timeConfig", "stepMinutes")) || 30.0), 1)
+
     pad = &String.pad_leading(Integer.to_string(&1), 2, "0")
 
     for hour <- 0..23, minute <- 0..59//step do
@@ -134,7 +165,9 @@ defmodule BdStarter.Forms.FormView do
     suffix = Field.config(field, "nameConfig", "suffix") == true
 
     [
-      if(Field.config(field, "nameConfig", "prefix") == true, do: {"prefix", "Title", "honorific-prefix", "Dr.", true}),
+      if(Field.config(field, "nameConfig", "prefix") == true,
+        do: {"prefix", "Title", "honorific-prefix", "Dr.", true}
+      ),
       {"first", "First name", "given-name", "Jane", false},
       if(middle, do: {"middle", "Middle name", "additional-name", "Quinn", false}),
       {"last", "Last name", "family-name", "Doe", middle and not suffix},
@@ -149,10 +182,15 @@ defmodule BdStarter.Forms.FormView do
     units = if listed != [], do: listed, else: Units.symbols(category)
 
     unit =
-      Json.str(Json.get(value, "unit")) || Json.str(Field.config(field, "unitConfig", "defaultUnit")) || List.first(units) ||
+      Json.str(Json.get(value, "unit")) ||
+        Json.str(Field.config(field, "unitConfig", "defaultUnit")) || List.first(units) ||
         category.base_unit
 
-    %{units: units, unit: unit, fixed: Field.config(field, "unitConfig", "mode") == "fixed" or length(units) <= 1}
+    %{
+      units: units,
+      unit: unit,
+      fixed: Field.config(field, "unitConfig", "mode") == "fixed" or length(units) <= 1
+    }
   end
 
   @doc """
@@ -175,20 +213,34 @@ defmodule BdStarter.Forms.FormView do
       {:loaded, options} ->
         searchable = Rules.should_search?(length(options), Field.str(field, "display"))
         images = Enum.any?(options, &(Js.trim(&1.image || "") != ""))
-        %{status: if(not multi and not searchable and not images, do: "select", else: "list"), message: nil, options: options, multi: multi}
+
+        %{
+          status: if(not multi and not searchable and not images, do: "select", else: "list"),
+          message: nil,
+          options: options,
+          multi: multi
+        }
     end
   end
 
   def repeater(field, value) do
-    least = max(Kernel.trunc(Json.num(Field.config(field, "populatorConfig", "minInstances")) || 1.0), 1)
+    least =
+      max(
+        Kernel.trunc(Json.num(Field.config(field, "populatorConfig", "minInstances")) || 1.0),
+        1
+      )
+
     item = Json.str(Field.config(field, "populatorConfig", "itemLabel")) || "Item"
 
     %{
       least: least,
-      most: Kernel.trunc(Json.num(Field.config(field, "populatorConfig", "maxInstances")) || 10.0),
+      most:
+        Kernel.trunc(Json.num(Field.config(field, "populatorConfig", "maxInstances")) || 10.0),
       count: max(length(Json.list(value) || []), least),
       item: item,
-      add: Json.str(Field.config(field, "populatorConfig", "addButtonLabel")) || "Add " <> Js.lower(item)
+      add:
+        Json.str(Field.config(field, "populatorConfig", "addButtonLabel")) ||
+          "Add " <> Js.lower(item)
     }
   end
 
@@ -209,7 +261,9 @@ defmodule BdStarter.Forms.FormView do
   defp text(_), do: ""
 
   # A checkbox list: the hidden "" that keeps an empty list in the params dropped.
-  defp texts(raw) when is_list(raw), do: raw |> Enum.filter(&is_binary/1) |> Enum.reject(&(&1 == ""))
+  defp texts(raw) when is_list(raw),
+    do: raw |> Enum.filter(&is_binary/1) |> Enum.reject(&(&1 == ""))
+
   defp texts(_), do: []
 
   @doc "Repeater rows as the params carry them (`%{\"0\" => …}`), in order."
@@ -263,7 +317,8 @@ defmodule BdStarter.Forms.FormView do
           {:ok, if(Field.multi?(f), do: texts(raw), else: text(raw))}
 
         "tags" ->
-          {:ok, text(raw) |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))}
+          {:ok,
+           text(raw) |> String.split(",") |> Enum.map(&String.trim/1) |> Enum.reject(&(&1 == ""))}
 
         "url" ->
           {:ok, %{"url" => text(raw)}}
@@ -285,7 +340,13 @@ defmodule BdStarter.Forms.FormView do
           end
 
         "name" ->
-          {:ok, object.(Enum.filter(~w(prefix first middle last suffix nicknames), &(is_map(raw) and Map.has_key?(raw, &1))))}
+          {:ok,
+           object.(
+             Enum.filter(
+               ~w(prefix first middle last suffix nicknames),
+               &(is_map(raw) and Map.has_key?(raw, &1))
+             )
+           )}
 
         "address" ->
           {:ok, object.(~w(line1 line2 city state zip))}
@@ -328,11 +389,18 @@ defmodule BdStarter.Forms.FormView do
           |> rows()
           |> Enum.with_index()
           |> Enum.reduce(c, fn {row_input, row}, c ->
-            apply_input(c, if(is_map(row_input), do: row_input, else: %{}), value_fields(f.children || []), FieldPath.entry(path, row))
+            apply_input(
+              c,
+              if(is_map(row_input), do: row_input, else: %{}),
+              value_fields(f.children || []),
+              FieldPath.entry(path, row)
+            )
           end)
 
         {:ok, value} ->
-          if Json.equal?(value, FormController.value(c, path)), do: c, else: FormController.set_value(c, value, path)
+          if Json.equal?(value, FormController.value(c, path)),
+            do: c,
+            else: FormController.set_value(c, value, path)
       end
     end)
   end

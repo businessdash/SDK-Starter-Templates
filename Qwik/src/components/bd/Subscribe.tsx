@@ -34,9 +34,7 @@ const BD_SITE_ID =
 	(import.meta.env.PUBLIC_BD_SITE_ID as string | undefined) ??
 	(import.meta.env.PUBLIC_BD_SITE_ID as string | undefined);
 const BD_BASE_URL =
-	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as
-		| string
-		| undefined) ??
+	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined) ??
 	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined);
 const BD_FOLLOWERS_ENABLED = Boolean(BD_PK && BD_SITE_ID);
 
@@ -46,7 +44,9 @@ const FOLLOWER_STORE_PREFIX = "bd.followers.";
 function hasLocalFollow(siteId: string): boolean {
 	if (typeof window === "undefined") return false;
 	try {
-		const raw = window.localStorage.getItem(`${FOLLOWER_STORE_PREFIX}${siteId}`);
+		const raw = window.localStorage.getItem(
+			`${FOLLOWER_STORE_PREFIX}${siteId}`,
+		);
 		if (!raw) return false;
 		const parsed = JSON.parse(raw) as { email?: unknown };
 		return typeof parsed?.email === "string";
@@ -94,14 +94,16 @@ export const Subscribe = component$<SubscribeProps>((props) => {
 
 	// Read the per-browser hint on mount (client-only — localStorage isn't on
 	// the server). Skips straight to the "subscribed" state for repeat visitors.
+	// eslint-disable-next-line qwik/no-use-visible-task -- localStorage exists only in the browser; this reads one key.
 	useVisibleTask$(() => {
 		if (BD_SITE_ID && hasLocalFollow(BD_SITE_ID)) {
 			subscribedLocally.value = true;
 		}
 	});
 
+	// The form's `preventdefault:submit` stops the browser's own submit; an
+	// async handler runs too late to.
 	const onSubmit$ = $(async (event: SubmitEvent) => {
-		event.preventDefault();
 		const form = event.target as HTMLFormElement;
 		const email = String(new FormData(form).get("email") ?? "").trim();
 		if (!email) return;

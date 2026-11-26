@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-
-import { TodoCreateForm } from "./TodoCreateForm";
 import { api } from "@/trpc/server";
+import { TodoCreateForm } from "./TodoCreateForm";
 
 export const metadata: Metadata = {
 	title: "Todos",
@@ -33,8 +32,8 @@ export default async function TodosPage() {
 				<span className="bd-section__eyebrow">Custom collections</span>
 				<h1 className="bd-section__title">Todos</h1>
 				<p className="bd-section__sub">
-					Rows live in your org&apos;s custom database — two related
-					collections (<code>todos</code> + <code>todoImages</code>) declared in{" "}
+					Rows live in your org&apos;s custom database — two related collections
+					(<code>todos</code> + <code>todoImages</code>) declared in{" "}
 					<code>bd.data-model.config.ts</code>, read via{" "}
 					<code>dataModel.listRecords</code>, created through the generated{" "}
 					<code>todo-form</code>.
@@ -43,14 +42,14 @@ export default async function TodosPage() {
 
 			{result.status === "unconfigured" ? (
 				<div className="bd-empty">
-					BD isn&apos;t configured — set the env vars in <code>.env</code>{" "}
-					(see <code>.env.example</code>) to run this demo.
+					BD isn&apos;t configured — set the env vars in <code>.env</code> (see{" "}
+					<code>.env.example</code>) to run this demo.
 				</div>
 			) : result.status === "unavailable" ? (
 				<div className="bd-empty">
 					The todos model isn&apos;t readable yet. Run{" "}
-					<code>pnpm sync-data-model</code>, promote it in the BD dashboard,
-					and make sure your secret key carries the{" "}
+					<code>pnpm sync-data-model</code>, promote it in the BD dashboard, and
+					make sure your secret key carries the{" "}
 					<code>metadata:read_records</code> scope (custom objects are a
 					plan-gated surface).
 				</div>

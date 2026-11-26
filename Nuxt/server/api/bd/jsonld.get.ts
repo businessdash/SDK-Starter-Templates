@@ -1,19 +1,20 @@
-import { localBusiness, website, renderJsonLdToHtml } from "@businessdash/sdk/seo";
+import { localBusiness, website } from "@businessdash/sdk/seo";
 
 /**
  * GET /api/bd/jsonld
  *
  * Build the site's JSON-LD (LocalBusiness + WebSite) server-side from
- * the SDK's SEO builders and return it as a single HTML string of
- * `<script type="application/ld+json">` tags. The home page injects it
- * into the document head via `useHead`, so crawlers see structured data
- * in the server-rendered HTML.
+ * the SDK's SEO builders and return each node as a JSON string. The home
+ * page gives each its own `<script type="application/ld+json">` in the
+ * head via `useHead`, so crawlers see structured data in the
+ * server-rendered HTML. They're the scripts' bodies, not whole tags: a
+ * tag inside another would leave crawlers JSON they can't read.
  *
  * Company facts come from the marketing bundle (same source as the home
  * aggregator). Falls back to generic placeholder identity when BD
  * isn't configured, so the tags are always valid.
  */
-export type JsonLdResult = { html: string };
+export type JsonLdResult = { nodes: string[] };
 
 const DEFAULT_NAME = "Your Business";
 
@@ -38,5 +39,6 @@ export default defineEventHandler(async (event): Promise<JsonLdResult> => {
 		website({ siteUrl, name }),
 	];
 
-	return { html: renderJsonLdToHtml(nodes) };
+	// `<` escaped so no value can close the script tag early.
+	return { nodes: nodes.map((node) => JSON.stringify(node).replace(/</g, "\\u003c")) };
 });

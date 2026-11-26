@@ -1,6 +1,7 @@
 import { bd } from "../lib/bd";
 import { Link } from "../lib/router";
-import { ErrorBox, useApi } from "./ui";
+import { ErrorBox } from "./ui";
+import { useApi } from "./use-api";
 
 export function ServiceArea() {
 	const segs = window.location.pathname.split("/").filter(Boolean); // services / :service / :area

@@ -1,6 +1,7 @@
 import 'dart:convert';
 
-import 'package:businessdash_forms/businessdash_forms.dart' show BdSignInSession;
+import 'package:businessdash_forms/businessdash_forms.dart'
+    show BdSignInSession;
 import 'package:businessdash_sdk/businessdash_sdk.dart';
 import 'package:flutter/widgets.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -11,7 +12,8 @@ enum AppTab { shop, cart, blog, chat, form, quiz, account }
 /// What a saved list keeps of a product: enough to draw a card without a
 /// fetch.
 class SavedProduct {
-  const SavedProduct({required this.id, required this.name, this.image, this.priceCents});
+  const SavedProduct(
+      {required this.id, required this.name, this.image, this.priceCents});
 
   final String id;
   final String name;
@@ -20,15 +22,22 @@ class SavedProduct {
   /// **Integer cents.**
   final int? priceCents;
 
-  Map<String, Object?> toJson() => {'id': id, 'name': name, 'image': image, 'priceCents': priceCents};
+  Map<String, Object?> toJson() =>
+      {'id': id, 'name': name, 'image': image, 'priceCents': priceCents};
 
   static SavedProduct? fromJson(Object? json) {
-    if (json is! Map || json['id'] is! String || (json['id'] as String).isEmpty) return null;
+    if (json is! Map ||
+        json['id'] is! String ||
+        (json['id'] as String).isEmpty) {
+      return null;
+    }
     return SavedProduct(
       id: json['id'] as String,
       name: json['name'] is String ? json['name'] as String : '',
       image: json['image'] is String ? json['image'] as String : null,
-      priceCents: json['priceCents'] is num ? (json['priceCents'] as num).toInt() : null,
+      priceCents: json['priceCents'] is num
+          ? (json['priceCents'] as num).toInt()
+          : null,
     );
   }
 
@@ -45,7 +54,8 @@ class SavedProduct {
 /// customer between devices would need a table of its own. The web
 /// starters keep the same three lists, with the same limits.
 class SavedList {
-  SavedList._(this._key, this.limit, this._prefs, this._changed) : _items = _read(_prefs, _key, limit);
+  SavedList._(this._key, this.limit, this._prefs, this._changed)
+      : _items = _read(_prefs, _key, limit);
 
   final String _key;
   final int limit;
@@ -70,20 +80,24 @@ class SavedList {
   }
 
   /// Puts it first (recently viewed), dropping the oldest past the limit.
-  void add(SavedProduct product) => _set([product, ..._items.where((item) => item.id != product.id)]);
+  void add(SavedProduct product) =>
+      _set([product, ..._items.where((item) => item.id != product.id)]);
 
-  void remove(String id) => _set(_items.where((item) => item.id != id).toList());
+  void remove(String id) =>
+      _set(_items.where((item) => item.id != id).toList());
 
   void clear() => _set([]);
 
   void _set(List<SavedProduct> next) {
     _items = next.take(limit).toList();
     // A failed write just doesn't persist; the list on screen is right.
-    _prefs?.setString(_key, jsonEncode(_items.map((item) => item.toJson()).toList()));
+    _prefs?.setString(
+        _key, jsonEncode(_items.map((item) => item.toJson()).toList()));
     _changed();
   }
 
-  static List<SavedProduct> _read(SharedPreferences? prefs, String key, int limit) {
+  static List<SavedProduct> _read(
+      SharedPreferences? prefs, String key, int limit) {
     try {
       final raw = prefs?.getString(key);
       final decoded = raw == null ? const [] : jsonDecode(raw);
@@ -105,7 +119,8 @@ class AppState extends ChangeNotifier {
   AppState({SharedPreferences? prefs}) {
     wishlist = SavedList._('bd.wishlist', 60, prefs, notifyListeners);
     compare = SavedList._('bd.compare', 4, prefs, notifyListeners);
-    recentlyViewed = SavedList._('bd.recently-viewed', 12, prefs, notifyListeners);
+    recentlyViewed =
+        SavedList._('bd.recently-viewed', 12, prefs, notifyListeners);
   }
 
   late final SavedList wishlist;
@@ -163,7 +178,8 @@ class AppState extends ChangeNotifier {
 
 /// Hands [AppState] down the tree; reading it rebuilds on change.
 class AppScope extends InheritedNotifier<AppState> {
-  const AppScope({super.key, required AppState state, required super.child}) : super(notifier: state);
+  const AppScope({super.key, required AppState state, required super.child})
+      : super(notifier: state);
 
   static AppState of(BuildContext context) {
     final scope = context.dependOnInheritedWidgetOfExactType<AppScope>();

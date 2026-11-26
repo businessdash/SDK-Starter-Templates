@@ -1,8 +1,4 @@
-import {
-	BD_API_KEY,
-	BD_PACKAGE_API_BASE_URL,
-	NODE_ENV
-} from '$app/env/private';
+import { BD_API_KEY, BD_PACKAGE_API_BASE_URL, NODE_ENV } from '$app/env/private';
 
 import { createBdApiClient, getTenantSession } from '@businessdash/sdk';
 import type {

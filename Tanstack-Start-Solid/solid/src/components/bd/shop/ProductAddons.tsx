@@ -8,9 +8,9 @@ type Addon = StorefrontAddonsResponse["items"][number];
 
 /** The variant an add-on is added as: its first. */
 function addonVariant(addon: Addon): string | undefined {
-	const first = (Array.isArray(addon.variants) ? addon.variants[0] : undefined) as
-		| { variantId?: unknown; id?: unknown }
-		| undefined;
+	const first = (
+		Array.isArray(addon.variants) ? addon.variants[0] : undefined
+	) as { variantId?: unknown; id?: unknown } | undefined;
 	const id = first?.variantId ?? first?.id;
 	return typeof id === "string" ? id : undefined;
 }

@@ -22,7 +22,7 @@ import { type ReviewSummary, reviewStars } from "../../shop/reviews";
 				</div>
 				<ul class="reviews-bars">
 					@for (bar of bars(); track bar.stars) {
-						<li [attr.aria-label]="bar.stars + ' stars: ' + bar.count">
+						<li [attr.aria-label]="bar.stars + (bar.stars === 1 ? ' star: ' : ' stars: ') + bar.count">
 							<span>{{ bar.stars }} ★</span>
 							<span class="reviews-bars__track"
 								><span class="reviews-bars__fill" [style.width.%]="bar.width"></span

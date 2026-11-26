@@ -11,12 +11,17 @@ import 'package:http/testing.dart';
 /// A backend that answers from a script, recording what it was asked.
 class _FakeBackend implements BdSignInBackend {
   final calls = <String>[];
-  BdSignInOptions answerOptions = const BdSignInOptions(name: 'Acme', oauth: [BdOAuthProvider.github]);
+  BdSignInOptions answerOptions =
+      const BdSignInOptions(name: 'Acme', oauth: [BdOAuthProvider.github]);
   BdPasswordSignIn? answerSignIn;
   Object? failWith;
 
-  static const session = BdSignInSession(user: BdSignInUser(id: 'u1', email: 'a@b.co'), expiresAt: '2030-01-01T00:00:00Z', sessionToken: 'tok');
-  static const sent = BdCodeSent(pendingId: 'p1', expiresAt: '2030-01-01T00:00:00Z');
+  static const session = BdSignInSession(
+      user: BdSignInUser(id: 'u1', email: 'a@b.co'),
+      expiresAt: '2030-01-01T00:00:00Z',
+      sessionToken: 'tok');
+  static const sent =
+      BdCodeSent(pendingId: 'p1', expiresAt: '2030-01-01T00:00:00Z');
 
   Future<T> _answer<T>(String call, T value) async {
     calls.add(call);
@@ -31,45 +36,85 @@ class _FakeBackend implements BdSignInBackend {
   Future<BdPasswordSignIn> signIn(String email, String password) =>
       _answer('signIn $email', answerSignIn ?? const BdSignedIn(session));
   @override
-  Future<BdCodeSent> startSignUp({required String email, required String password, String? firstName, String? lastName}) =>
+  Future<BdCodeSent> startSignUp(
+          {required String email,
+          required String password,
+          String? firstName,
+          String? lastName}) =>
       _answer('signUp $email $firstName', sent);
   @override
   Future<BdCodeSent> startReset(String email) => _answer('reset $email', sent);
   @override
-  Future<BdSignInSession> verify({required String pendingId, required String code, String? newPassword}) =>
+  Future<BdSignInSession> verify(
+          {required String pendingId,
+          required String code,
+          String? newPassword}) =>
       _answer('verify $pendingId $code $newPassword', session);
   @override
-  Future<Uri> startOAuth({required BdOAuthProvider provider, required String redirectUri, required String codeChallenge}) =>
-      _answer('oauthStart ${provider.wire} $redirectUri', Uri.parse('https://auth.example/authorize'));
+  Future<Uri> startOAuth(
+          {required BdOAuthProvider provider,
+          required String redirectUri,
+          required String codeChallenge}) =>
+      _answer('oauthStart ${provider.wire} $redirectUri',
+          Uri.parse('https://auth.example/authorize'));
   @override
-  Future<BdSignInSession> finishOAuth({required String code, required String codeVerifier}) =>
+  Future<BdSignInSession> finishOAuth(
+          {required String code, required String codeVerifier}) =>
       _answer('oauthFinish $code', session);
 }
 
 void main() {
   group('BdSignInChecks', () {
     test('email', () {
-      expect(BdSignInChecks.problem(BdSignInBox.email, ' ', newPassword: false), 'Enter your email.');
-      expect(BdSignInChecks.problem(BdSignInBox.email, 'a@b', newPassword: false), startsWith('Enter a full email'));
-      expect(BdSignInChecks.problem(BdSignInBox.email, ' a@b.co ', newPassword: false), isNull);
+      expect(BdSignInChecks.problem(BdSignInBox.email, ' ', newPassword: false),
+          'Enter your email.');
+      expect(
+          BdSignInChecks.problem(BdSignInBox.email, 'a@b', newPassword: false),
+          startsWith('Enter a full email'));
+      expect(
+          BdSignInChecks.problem(BdSignInBox.email, ' a@b.co ',
+              newPassword: false),
+          isNull);
     });
 
-    test('a password signing in only needs to be there; a new one needs 10', () {
-      expect(BdSignInChecks.problem(BdSignInBox.password, 'short', newPassword: false), isNull);
-      expect(BdSignInChecks.problem(BdSignInBox.password, '', newPassword: false), 'Enter your password.');
-      expect(BdSignInChecks.problem(BdSignInBox.password, 'short', newPassword: true), startsWith('Use at least 10'));
-      expect(BdSignInChecks.problem(BdSignInBox.newPassword, '0123456789', newPassword: false), isNull);
+    test('a password signing in only needs to be there; a new one needs 10',
+        () {
+      expect(
+          BdSignInChecks.problem(BdSignInBox.password, 'short',
+              newPassword: false),
+          isNull);
+      expect(
+          BdSignInChecks.problem(BdSignInBox.password, '', newPassword: false),
+          'Enter your password.');
+      expect(
+          BdSignInChecks.problem(BdSignInBox.password, 'short',
+              newPassword: true),
+          startsWith('Use at least 10'));
+      expect(
+          BdSignInChecks.problem(BdSignInBox.newPassword, '0123456789',
+              newPassword: false),
+          isNull);
     });
 
     test('code is six digits', () {
-      expect(BdSignInChecks.problem(BdSignInBox.code, '12345', newPassword: false), isNotNull);
-      expect(BdSignInChecks.problem(BdSignInBox.code, '123456', newPassword: false), isNull);
+      expect(
+          BdSignInChecks.problem(BdSignInBox.code, '12345', newPassword: false),
+          isNotNull);
+      expect(
+          BdSignInChecks.problem(BdSignInBox.code, '123456',
+              newPassword: false),
+          isNull);
     });
 
     test("BD's answers about one box go under it", () {
-      expect(BdSignInChecks.boxFor('invalid_code', [BdSignInBox.code]), BdSignInBox.code);
-      expect(BdSignInChecks.boxFor('weak_password', [BdSignInBox.email, BdSignInBox.password]), BdSignInBox.password);
-      expect(BdSignInChecks.boxFor('invalid_credentials', [BdSignInBox.email]), isNull);
+      expect(BdSignInChecks.boxFor('invalid_code', [BdSignInBox.code]),
+          BdSignInBox.code);
+      expect(
+          BdSignInChecks.boxFor(
+              'weak_password', [BdSignInBox.email, BdSignInBox.password]),
+          BdSignInBox.password);
+      expect(BdSignInChecks.boxFor('invalid_credentials', [BdSignInBox.email]),
+          isNull);
     });
   });
 
@@ -78,7 +123,8 @@ void main() {
       final palette = BdSignInPalette.from('#ffcc00', null)!;
       expect(palette.accent, const Color(0xffffcc00));
       expect(palette.onAccent, const Color(0xff111827));
-      expect(BdSignInPalette.from('#123', null)!.accent, const Color(0xff112233));
+      expect(
+          BdSignInPalette.from('#123', null)!.accent, const Color(0xff112233));
       expect(BdSignInPalette.from('blue', null), isNull);
     });
 
@@ -93,14 +139,17 @@ void main() {
   test('PKCE challenge is the S256 of the verifier', () {
     final pair = bdNewPkcePair();
     expect(pair.verifier.length, 43);
-    final expected = base64Url.encode(crypto.sha256.convert(ascii.encode(pair.verifier)).bytes).replaceAll('=', '');
+    final expected = base64Url
+        .encode(crypto.sha256.convert(ascii.encode(pair.verifier)).bytes)
+        .replaceAll('=', '');
     expect(pair.challenge, expected);
   });
 
   group('BdSignInController', () {
     late _FakeBackend backend;
     late List<BdSignInSession> signedIn;
-    BdSignInController make({BdWebAuthenticate? authenticate}) => BdSignInController(
+    BdSignInController make({BdWebAuthenticate? authenticate}) =>
+        BdSignInController(
           backend: backend,
           onSignedIn: signedIn.add,
           authenticate: authenticate,
@@ -141,7 +190,9 @@ void main() {
       expect(signedIn.single.sessionToken, 'tok');
     });
 
-    test('an unconfirmed email goes to the code, which submits itself at six digits', () async {
+    test(
+        'an unconfirmed email goes to the code, which submits itself at six digits',
+        () async {
       backend.answerSignIn = const BdConfirmEmail(_FakeBackend.sent);
       final c = make()
         ..setValue(BdSignInBox.email, 'a@b.co')
@@ -155,7 +206,9 @@ void main() {
       expect(signedIn, hasLength(1));
     });
 
-    test('create account sends a code; BD refusing the code shows under the box', () async {
+    test(
+        'create account sends a code; BD refusing the code shows under the box',
+        () async {
       final c = make()..follow(BdSignInLink.createAccount);
       c
         ..setValue(BdSignInBox.firstName, ' Ada ')
@@ -163,7 +216,8 @@ void main() {
         ..setValue(BdSignInBox.password, 'long enough pw');
       await c.submit();
       expect(backend.calls.last, 'signUp a@b.co Ada');
-      backend.failWith = const BdSignInException('invalid_code', 'That code is wrong.');
+      backend.failWith =
+          const BdSignInException('invalid_code', 'That code is wrong.');
       c.setValue(BdSignInBox.code, '000000');
       await pumpEventQueue();
       expect(c.error(BdSignInBox.code), 'That code is wrong.');
@@ -174,21 +228,28 @@ void main() {
       final none = make();
       await none.load();
       expect(none.providers, isEmpty);
-      final c = make(authenticate: (url, scheme) async => Uri.parse('$scheme://bd-oauth?bd_oauth_code=abc'));
+      final c = make(
+          authenticate: (url, scheme) async =>
+              Uri.parse('$scheme://bd-oauth?bd_oauth_code=abc'));
       await c.load();
       expect(c.providers, [BdOAuthProvider.github]);
       await c.continueWith(BdOAuthProvider.github);
-      expect(backend.calls, containsAllInOrder(['oauthStart github bdstarter://bd-oauth', 'oauthFinish abc']));
+      expect(
+          backend.calls,
+          containsAllInOrder(
+              ['oauthStart github bdstarter://bd-oauth', 'oauthFinish abc']));
       expect(signedIn, hasLength(1));
     });
 
     test('a closed browser is not a problem; a failed provider is', () async {
-      final closed = make(authenticate: (_, _) async => throw const BdSignInCancelled());
+      final closed =
+          make(authenticate: (_, _) async => throw const BdSignInCancelled());
       await closed.load();
       await closed.continueWith(BdOAuthProvider.github);
       expect(closed.problem, isNull);
       final failed = make(
-        authenticate: (url, scheme) async => Uri.parse('$scheme://bd-oauth?bd_oauth_error=failed&bd_oauth_message=Nope.'),
+        authenticate: (url, scheme) async => Uri.parse(
+            '$scheme://bd-oauth?bd_oauth_error=failed&bd_oauth_message=Nope.'),
       );
       await failed.load();
       await failed.continueWith(BdOAuthProvider.github);
@@ -197,9 +258,14 @@ void main() {
     });
   });
 
-  testWidgets('BdSignIn: BD\'s name and colour, box checks, and a password sign-in', (tester) async {
+  testWidgets(
+      'BdSignIn: BD\'s name and colour, box checks, and a password sign-in',
+      (tester) async {
     final backend = _FakeBackend()
-      ..answerOptions = const BdSignInOptions(name: 'Acme', primaryColor: '#0055ff', oauth: [BdOAuthProvider.google]);
+      ..answerOptions = const BdSignInOptions(
+          name: 'Acme',
+          primaryColor: '#0055ff',
+          oauth: [BdOAuthProvider.google]);
     final signedIn = <BdSignInSession>[];
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
@@ -207,7 +273,8 @@ void main() {
           backend: backend,
           onSignedIn: signedIn.add,
           controls: BdControlStyle.material,
-          authenticate: (url, scheme) async => Uri.parse('$scheme://bd-oauth?bd_oauth_code=abc'),
+          authenticate: (url, scheme) async =>
+              Uri.parse('$scheme://bd-oauth?bd_oauth_code=abc'),
           callbackScheme: 'bdstarter',
         ),
       ),
@@ -217,7 +284,9 @@ void main() {
     expect(find.text('Continue with Google'), findsOneWidget);
 
     final button = find.widgetWithText(FilledButton, 'Sign in');
-    expect(tester.widget<FilledButton>(button).style?.backgroundColor?.resolve({}), const Color(0xff0055ff));
+    expect(
+        tester.widget<FilledButton>(button).style?.backgroundColor?.resolve({}),
+        const Color(0xff0055ff));
     await tester.tap(button);
     await tester.pumpAndSettle();
     expect(find.text('Enter your email.'), findsOneWidget);
@@ -234,25 +303,35 @@ void main() {
 
   group('BdBusinessDashSignInBackend', () {
     test('refuses a secret key, in release builds too', () {
-      expect(() => BdBusinessDashSignInBackend(publishableKey: 'bd_3ZxQf9'), throwsArgumentError);
-      expect(() => BdBusinessDashSignInBackend(publishableKey: 'sk_live_x'), throwsArgumentError);
+      expect(() => BdBusinessDashSignInBackend(publishableKey: 'bd_3ZxQf9'),
+          throwsArgumentError);
+      expect(() => BdBusinessDashSignInBackend(publishableKey: 'sk_live_x'),
+          throwsArgumentError);
     });
 
-    test('calls auth/customer with the publishable key; passes BD refusals on', () async {
+    test('calls auth/customer with the publishable key; passes BD refusals on',
+        () async {
       late http.Request seen;
       final backend = BdBusinessDashSignInBackend(
         publishableKey: 'pk_test_1',
         host: Uri.parse('https://bd.example'),
         httpClient: MockClient((request) async {
           seen = request;
-          return http.Response(jsonEncode({'error': 'invalid_credentials', 'message': 'Wrong email or password.'}), 401);
+          return http.Response(
+              jsonEncode({
+                'error': 'invalid_credentials',
+                'message': 'Wrong email or password.'
+              }),
+              401);
         }),
       );
       await expectLater(
         backend.signIn('a@b.co', 'x'),
-        throwsA(isA<BdSignInException>().having((e) => e.message, 'message', 'Wrong email or password.')),
+        throwsA(isA<BdSignInException>()
+            .having((e) => e.message, 'message', 'Wrong email or password.')),
       );
-      expect(seen.url.toString(), 'https://bd.example/api/package/v1/auth/customer/sign-in');
+      expect(seen.url.toString(),
+          'https://bd.example/api/package/v1/auth/customer/sign-in');
       expect(seen.headers['Authorization'], 'Bearer pk_test_1');
     });
 

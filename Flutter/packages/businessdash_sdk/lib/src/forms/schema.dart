@@ -26,7 +26,8 @@ extension type const _Reader(Map<String, Object?> m) {
 
   int? integer(String key) => switch (m[key]) {
         final int n => n,
-        final double d when d.isFinite && d == d.truncateToDouble() => d.toInt(),
+        final double d when d.isFinite && d == d.truncateToDouble() =>
+          d.toInt(),
         _ => null,
       };
 
@@ -101,7 +102,8 @@ class BdFormSchema {
       title: o.str('name') ?? o.str('title'),
       description: o.str('description'),
       fields: o.list('fields', (r) => BdFormField.fromJson(r.m)) ?? const [],
-      settings: o.obj('settings', BdFormSettings._read) ?? const BdFormSettings(),
+      settings:
+          o.obj('settings', BdFormSettings._read) ?? const BdFormSettings(),
       orgIcon: o.str('orgIcon'),
       actions: o.list('actions', BdFormAction._read) ?? const [],
       businessFunctions:
@@ -148,7 +150,8 @@ class BdFormSettings {
         progressStyle: o.str('progressStyle'),
         exitConfirm: o.obj(
           'exitConfirm',
-          (r) => BdExitConfirm(enabled: r.flag('enabled'), message: r.str('message')),
+          (r) => BdExitConfirm(
+              enabled: r.flag('enabled'), message: r.str('message')),
         ),
         urlSafety: o.flag('urlSafety'),
       );
@@ -310,7 +313,8 @@ class BdConditionRule {
   /// record (`"__label__"` = its label) instead of the stored record id.
   final String? matchField;
 
-  factory BdConditionRule.fromJson(Map<String, Object?> json) => _read(_Reader(json));
+  factory BdConditionRule.fromJson(Map<String, Object?> json) =>
+      _read(_Reader(json));
 
   static BdConditionRule _read(_Reader o) => BdConditionRule(
         fieldId: o.str('fieldId'),
@@ -401,7 +405,8 @@ class BdFormField {
         ),
         textareaConfig = o.obj(
           'textareaConfig',
-          (r) => BdTextareaConfig(rows: r.integer('rows'), resizable: r.flag('resizable')),
+          (r) => BdTextareaConfig(
+              rows: r.integer('rows'), resizable: r.flag('resizable')),
         ),
         richTextConfig = o.obj(
           'richTextConfig',
@@ -452,7 +457,10 @@ class BdFormField {
         ),
         flexConfig = o.obj(
           'flexConfig',
-          (r) => BdFlexConfig(justify: r.str('justify'), align: r.str('align'), gap: r.dbl('gap')),
+          (r) => BdFlexConfig(
+              justify: r.str('justify'),
+              align: r.str('align'),
+              gap: r.dbl('gap')),
         ),
         starRatingConfig = o.obj(
           'starRatingConfig',
@@ -467,7 +475,8 @@ class BdFormField {
         ),
         orConditionConfig = o.obj(
           'orConditionConfig',
-          (r) => BdOrConditionConfig(leftLabel: r.str('leftLabel'), rightLabel: r.str('rightLabel')),
+          (r) => BdOrConditionConfig(
+              leftLabel: r.str('leftLabel'), rightLabel: r.str('rightLabel')),
         ),
         timeConfig = o.obj(
           'timeConfig',
@@ -493,7 +502,10 @@ class BdFormField {
               final text = i.str('text');
               return text == null
                   ? null
-                  : BdListItem(text: text, description: i.str('description'), icon: i.str('icon'));
+                  : BdListItem(
+                      text: text,
+                      description: i.str('description'),
+                      icon: i.str('icon'));
             }),
           ),
         ),
@@ -533,13 +545,18 @@ class BdFormField {
               final header = c.str('header');
               return header == null
                   ? null
-                  : BdTableColumn(header: header, type: c.str('type'), align: c.str('align'));
+                  : BdTableColumn(
+                      header: header,
+                      type: c.str('type'),
+                      align: c.str('align'));
             }),
-            rows: r.list('rows', (row) => BdTableRow(cells: row.strings('cells'))),
+            rows: r.list(
+                'rows', (row) => BdTableRow(cells: row.strings('cells'))),
             highlightColumn: r.integer('highlightColumn'),
           ),
         ),
-        calculationConfig = o.obj('calculationConfig', BdCalculationConfig._read),
+        calculationConfig =
+            o.obj('calculationConfig', BdCalculationConfig._read),
         paymentConfig = o.obj(
           'paymentConfig',
           (r) => BdPaymentConfig(
@@ -558,7 +575,10 @@ class BdFormField {
               final title = s.str('title');
               return id == null || title == null
                   ? null
-                  : BdServiceOption(id: id, title: title, estimatedHours: s.dbl('estimatedHours'));
+                  : BdServiceOption(
+                      id: id,
+                      title: title,
+                      estimatedHours: s.dbl('estimatedHours'));
             }),
             multi: r.flag('multi'),
           ),
@@ -588,7 +608,8 @@ class BdFormField {
         ),
         monthYearConfig = o.obj(
           'monthYearConfig',
-          (r) => BdMonthYearConfig(minYear: r.integer('minYear'), maxYear: r.integer('maxYear')),
+          (r) => BdMonthYearConfig(
+              minYear: r.integer('minYear'), maxYear: r.integer('maxYear')),
         );
 
   factory BdFormField.fromJson(Map<String, Object?> json) =>
@@ -597,7 +618,8 @@ class BdFormField {
   /// Build a field in code: previews, tests, or a form defined in the app.
   factory BdFormField.make(BdJson json) {
     final plain = json.toPlain();
-    return BdFormField.fromJson(plain is Map<String, Object?> ? plain : const {});
+    return BdFormField.fromJson(
+        plain is Map<String, Object?> ? plain : const {});
   }
 
   /// The element as received; equality compares it.
@@ -672,7 +694,8 @@ class BdFormField {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || (other is BdFormField && other.id == id && other.raw == raw);
+      identical(this, other) ||
+      (other is BdFormField && other.id == id && other.raw == raw);
 
   @override
   int get hashCode => id.hashCode;
@@ -772,7 +795,8 @@ class BdIconConfig {
 }
 
 class BdImageInputConfig {
-  const BdImageInputConfig({this.allowedTypes, this.maxSize, this.showPreview, this.sources});
+  const BdImageInputConfig(
+      {this.allowedTypes, this.maxSize, this.showPreview, this.sources});
 
   final List<String>? allowedTypes;
 
@@ -883,7 +907,11 @@ class BdListItem {
 }
 
 class BdPopulatorConfig {
-  const BdPopulatorConfig({this.maxInstances, this.minInstances, this.addButtonLabel, this.itemLabel});
+  const BdPopulatorConfig(
+      {this.maxInstances,
+      this.minInstances,
+      this.addButtonLabel,
+      this.itemLabel});
 
   final int? maxInstances;
   final int? minInstances;
@@ -912,7 +940,8 @@ class BdUnitConfig {
 }
 
 class BdCurrencyConfig {
-  const BdCurrencyConfig({this.currency, this.symbol, this.allowNegative, this.allowDecimal});
+  const BdCurrencyConfig(
+      {this.currency, this.symbol, this.allowNegative, this.allowDecimal});
 
   final String? currency;
   final String? symbol;
@@ -968,7 +997,8 @@ class BdCalculationConfig {
   /// Computed by the server only; no value until submit.
   final bool? sensitive;
 
-  factory BdCalculationConfig.fromJson(Map<String, Object?> json) => _read(_Reader(json));
+  factory BdCalculationConfig.fromJson(Map<String, Object?> json) =>
+      _read(_Reader(json));
 
   static BdCalculationConfig _read(_Reader o) => BdCalculationConfig(
         mode: o.str('mode'),
@@ -978,7 +1008,9 @@ class BdCalculationConfig {
         inputMap: o.list('inputMap', (b) {
           final variable = b.str('variable');
           final fieldId = b.str('fieldId');
-          return variable == null || fieldId == null ? null : BdBinding(variable, fieldId);
+          return variable == null || fieldId == null
+              ? null
+              : BdBinding(variable, fieldId);
         }),
         display: o.obj('display', BdCalcDisplay._read),
         sensitive: o.flag('sensitive'),
@@ -1000,7 +1032,8 @@ class BdCalcDisplay {
   final String? suffix;
   final int? decimals;
 
-  factory BdCalcDisplay.fromJson(Map<String, Object?> json) => _read(_Reader(json));
+  factory BdCalcDisplay.fromJson(Map<String, Object?> json) =>
+      _read(_Reader(json));
 
   static BdCalcDisplay _read(_Reader o) => BdCalcDisplay(
         show: o.flag('show'),
@@ -1011,7 +1044,12 @@ class BdCalcDisplay {
 }
 
 class BdPaymentConfig {
-  const BdPaymentConfig({this.mode, this.amountCents, this.currency, this.buttonLabel, this.description});
+  const BdPaymentConfig(
+      {this.mode,
+      this.amountCents,
+      this.currency,
+      this.buttonLabel,
+      this.description});
 
   /// `"card_on_file" | "deposit"`.
   final String? mode;
@@ -1029,7 +1067,8 @@ class BdServiceConfig {
 }
 
 class BdServiceOption {
-  const BdServiceOption({required this.id, required this.title, this.estimatedHours});
+  const BdServiceOption(
+      {required this.id, required this.title, this.estimatedHours});
 
   final String id;
   final String title;
@@ -1085,7 +1124,8 @@ class BdMonthYearConfig {
 /// Element type names, as BD stores them.
 abstract final class BdFieldType {
   static const Set<String> staticTypes = {
-    'title', 'subtitle', 'separator', 'image', 'richtext', 'body_text', 'bullet_list', 'table', //
+    'title', 'subtitle', 'separator', 'image', 'richtext', 'body_text',
+    'bullet_list', 'table', //
   };
 
   static const Set<String> containerTypes = {
@@ -1096,19 +1136,23 @@ abstract final class BdFieldType {
   /// doesn't type (a calculation, a hidden reference, a stepper's count).
   /// Mirrors `STATIC_OR_LAYOUT` in the server's validator.
   static const Set<String> staticOrLayout = {
-    'title', 'subtitle', 'separator', 'flex_row', 'input_group', 'condition_block', //
+    'title', 'subtitle', 'separator', 'flex_row', 'input_group',
+    'condition_block', //
     'or_condition', 'image', 'richtext', 'body_text', 'bullet_list', 'table', //
     'stepper', 'calculation', 'reference_value', //
   };
 
   /// Carry no submitted value at all. Mirrors the server's `LAYOUT_ONLY`.
   static const Set<String> layoutOnly = {
-    'title', 'subtitle', 'separator', 'flex_row', 'input_group', 'condition_block', //
-    'or_condition', 'image', 'richtext', 'body_text', 'bullet_list', 'table', 'reference_value', //
+    'title', 'subtitle', 'separator', 'flex_row', 'input_group',
+    'condition_block', //
+    'or_condition', 'image', 'richtext', 'body_text', 'bullet_list', 'table',
+    'reference_value', //
   };
 
   /// Static/no-label elements: the field row draws no heading for them.
   static const Set<String> noLabel = {
-    'title', 'subtitle', 'separator', 'richtext', 'body_text', 'bullet_list', 'table', //
+    'title', 'subtitle', 'separator', 'richtext', 'body_text', 'bullet_list',
+    'table', //
   };
 }

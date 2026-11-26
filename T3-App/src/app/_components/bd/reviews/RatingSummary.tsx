@@ -37,7 +37,7 @@ export function RatingSummary({
 					<ul className="reviews-bars">
 						{summary.histogram.map((row) => (
 							<li
-								aria-label={`${row.stars} stars: ${row.count}`}
+								aria-label={`${row.stars} ${row.stars === 1 ? "star" : "stars"}: ${row.count}`}
 								key={row.stars}
 							>
 								<span>{row.stars} ★</span>

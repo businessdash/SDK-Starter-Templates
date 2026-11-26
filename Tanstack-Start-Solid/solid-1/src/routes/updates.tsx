@@ -42,9 +42,7 @@ function Updates() {
 				<Show
 					when={updates().length > 0}
 					fallback={
-						<div class="bd-empty">
-							No updates posted yet. Check back soon.
-						</div>
+						<div class="bd-empty">No updates posted yet. Check back soon.</div>
 					}
 				>
 					<div style="display: flex; flex-direction: column; gap: 1.25rem;">

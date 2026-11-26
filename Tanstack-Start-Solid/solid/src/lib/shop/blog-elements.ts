@@ -15,9 +15,19 @@
  * commenting POSTs `{ content }` and gets `{ ok, approved, comments }` or
  * `{ ok: false, error }`. Signed out, both lead to sign-in and back.
  */
-import type { BlogLikeResponse, BlogPublicComment } from "@businessdash/sdk/contracts";
+import type {
+	BlogLikeResponse,
+	BlogPublicComment,
+} from "@businessdash/sdk/contracts";
 
-import { define, h, patch, postJson, readJson, upgradeProperty } from "./bd-dom";
+import {
+	define,
+	h,
+	patch,
+	postJson,
+	readJson,
+	upgradeProperty,
+} from "./bd-dom";
 import { formatPostDate } from "./blog";
 
 // For pages that list posts in the browser.
@@ -30,15 +40,25 @@ class PostLike extends HTMLElement {
 	#busy = false;
 	#ready = false;
 	#onClick = async (event: Event) => {
-		if (!(event.target as Element | null)?.closest("[data-act=like]") || this.#busy) return;
+		if (
+			!(event.target as Element | null)?.closest("[data-act=like]") ||
+			this.#busy
+		)
+			return;
 		this.#busy = true;
 		this.#error = "";
-		const { data } = await postJson<"liked" | "likesCount" | "error">(this.getAttribute("data-like-url") ?? "", {});
+		const { data } = await postJson<"liked" | "likesCount" | "error">(
+			this.getAttribute("data-like-url") ?? "",
+			{},
+		);
 		this.#busy = false;
 		if (typeof data.likesCount === "number") {
 			this.#likes = { liked: data.liked === true, likesCount: data.likesCount };
 		} else {
-			this.#error = typeof data.error === "string" ? data.error : "Couldn't save your like. Try again.";
+			this.#error =
+				typeof data.error === "string"
+					? data.error
+					: "Couldn't save your like. Try again.";
 		}
 		this.render();
 	};
@@ -55,7 +75,9 @@ class PostLike extends HTMLElement {
 	connectedCallback() {
 		upgradeProperty(this, "data");
 		if (!this.#ready) {
-			const data = readJson<{ likes: BlogLikeResponse; signedIn: boolean }>(this);
+			const data = readJson<{ likes: BlogLikeResponse; signedIn: boolean }>(
+				this,
+			);
 			if (data) {
 				this.#likes = data.likes;
 				this.#signedIn = data.signedIn;
@@ -81,13 +103,28 @@ class PostLike extends HTMLElement {
 				this.#signedIn
 					? h(
 							"button",
-							{ "aria-pressed": String(likes.liked), class: `like${likes.liked ? " like--on" : ""}`, "data-act": "like", type: "button" },
+							{
+								"aria-pressed": String(likes.liked),
+								class: `like${likes.liked ? " like--on" : ""}`,
+								"data-act": "like",
+								type: "button",
+							},
 							h("span", { "aria-hidden": "true" }, likes.liked ? "♥" : "♡"),
 							likes.liked ? "Liked" : "Like",
 						)
-					: h("a", { class: "like", href: signIn }, h("span", { "aria-hidden": "true" }, "♡"), " Sign in to like"),
-				h("span", { class: "post__likes" }, `${likes.likesCount} ${likes.likesCount === 1 ? "like" : "likes"}`),
-				this.#error && h("span", { class: "post__error", role: "alert" }, this.#error),
+					: h(
+							"a",
+							{ class: "like", href: signIn },
+							h("span", { "aria-hidden": "true" }, "♡"),
+							" Sign in to like",
+						),
+				h(
+					"span",
+					{ class: "post__likes" },
+					`${likes.likesCount} ${likes.likesCount === 1 ? "like" : "likes"}`,
+				),
+				this.#error &&
+					h("span", { class: "post__error", role: "alert" }, this.#error),
 			),
 		]);
 	}
@@ -109,19 +146,28 @@ class PostComments extends HTMLElement {
 		this.#posting = true;
 		this.#note = null;
 		this.render();
-		const { data } = await postJson<"ok" | "comments" | "approved" | "error">(this.getAttribute("data-comment-url") ?? "", { content });
+		const { data } = await postJson<"ok" | "comments" | "approved" | "error">(
+			this.getAttribute("data-comment-url") ?? "",
+			{ content },
+		);
 		this.#posting = false;
 		if (data.ok === true && Array.isArray(data.comments)) {
 			if (box) box.value = "";
 			this.#comments = data.comments as BlogPublicComment[];
 			this.#note = {
 				kind: "ok",
-				text: data.approved === true ? "Comment posted." : "Thanks! Your comment shows once it's approved.",
+				text:
+					data.approved === true
+						? "Comment posted."
+						: "Thanks! Your comment shows once it's approved.",
 			};
 		} else {
 			this.#note = {
 				kind: "error",
-				text: typeof data.error === "string" ? data.error : "Couldn't post your comment. Try again.",
+				text:
+					typeof data.error === "string"
+						? data.error
+						: "Couldn't post your comment. Try again.",
 			};
 		}
 		this.render();
@@ -139,7 +185,10 @@ class PostComments extends HTMLElement {
 	connectedCallback() {
 		upgradeProperty(this, "data");
 		if (!this.#ready) {
-			const data = readJson<{ comments: BlogPublicComment[]; signedIn: boolean }>(this);
+			const data = readJson<{
+				comments: BlogPublicComment[];
+				signedIn: boolean;
+			}>(this);
 			if (data) {
 				this.#comments = data.comments;
 				this.#signedIn = data.signedIn;
@@ -163,22 +212,52 @@ class PostComments extends HTMLElement {
 			h(
 				"section",
 				{ "aria-labelledby": "comments-title", class: "comments" },
-				h("h2", { id: "comments-title" }, `${comments.length} ${comments.length === 1 ? "comment" : "comments"}`),
+				h(
+					"h2",
+					{ id: "comments-title" },
+					`${comments.length} ${comments.length === 1 ? "comment" : "comments"}`,
+				),
 				this.#signedIn
 					? h(
 							"form",
 							{ class: "comments__form" },
-							h("label", { class: "bd-label", for: "comment" }, "Add a comment"),
-							h("textarea", { class: "bd-textarea", id: "comment", maxlength: 5000, name: "content", required: true, rows: 4 }),
-							h("button", { class: "bd-btn", disabled: this.#posting, type: "submit" }, this.#posting ? "Posting…" : "Post comment"),
+							h(
+								"label",
+								{ class: "bd-label", for: "comment" },
+								"Add a comment",
+							),
+							h("textarea", {
+								class: "bd-textarea",
+								id: "comment",
+								maxlength: 5000,
+								name: "content",
+								required: true,
+								rows: 4,
+							}),
+							h(
+								"button",
+								{ class: "bd-btn", disabled: this.#posting, type: "submit" },
+								this.#posting ? "Posting…" : "Post comment",
+							),
 							note &&
 								h(
 									"p",
-									{ class: note.kind === "ok" ? "comments__ok" : "post__error", role: note.kind === "ok" ? "status" : "alert" },
+									{
+										class: note.kind === "ok" ? "comments__ok" : "post__error",
+										role: note.kind === "ok" ? "status" : "alert",
+									},
 									note.text,
 								),
 						)
-					: h("p", { class: "comments__signin" }, h("a", { class: "bd-btn bd-btn--ghost", href: signIn }, "Sign in to comment")),
+					: h(
+							"p",
+							{ class: "comments__signin" },
+							h(
+								"a",
+								{ class: "bd-btn bd-btn--ghost", href: signIn },
+								"Sign in to comment",
+							),
+						),
 				comments.length > 0 &&
 					h(
 						"ol",
@@ -186,8 +265,15 @@ class PostComments extends HTMLElement {
 						comments.map((c) =>
 							h(
 								"li",
-								{ class: `comment${c.parentId !== null ? " comment--reply" : ""}` },
-								h("p", { class: "comment__head" }, h("strong", null, c.authorName ?? "Reader"), h("span", null, formatPostDate(c.createdAt))),
+								{
+									class: `comment${c.parentId !== null ? " comment--reply" : ""}`,
+								},
+								h(
+									"p",
+									{ class: "comment__head" },
+									h("strong", null, c.authorName ?? "Reader"),
+									h("span", null, formatPostDate(c.createdAt)),
+								),
 								h("p", { class: "comment__body" }, c.content),
 							),
 						),

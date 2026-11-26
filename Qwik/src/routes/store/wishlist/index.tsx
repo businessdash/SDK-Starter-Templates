@@ -10,7 +10,10 @@ import { getCustomerSession } from "../../../lib/bd-portal";
 import { getCartSnapshot } from "../../../lib/bd-store";
 
 export const useWishlistPage = routeLoader$(async ({ cookie }) => {
-	const [cart, session] = await Promise.all([getCartSnapshot(cookie), getCustomerSession(cookie)]);
+	const [cart, session] = await Promise.all([
+		getCartSnapshot(cookie),
+		getCustomerSession(cookie),
+	]);
 	return { cartCount: cart?.itemCount ?? 0, signedIn: !!session };
 });
 
@@ -43,5 +46,7 @@ export default component$(() => {
 
 export const head: DocumentHead = {
 	title: "Wishlist — Your Business",
-	meta: [{ name: "description", content: "Products you saved to come back to." }],
+	meta: [
+		{ name: "description", content: "Products you saved to come back to." },
+	],
 };

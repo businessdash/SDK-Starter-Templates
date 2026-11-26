@@ -69,6 +69,10 @@ defmodule BdStarter.Forms.Backend do
 
   def schema(backend, form), do: backend.__struct__.schema(backend, form)
   def submit(backend, form, submission), do: backend.__struct__.submit(backend, form, submission)
-  def upload(backend, form, field_id, file), do: backend.__struct__.upload(backend, form, field_id, file)
-  def collection_options(backend, form, field_id), do: backend.__struct__.collection_options(backend, form, field_id)
+
+  def upload(backend, form, field_id, file),
+    do: backend.__struct__.upload(backend, form, field_id, file)
+
+  def collection_options(backend, form, field_id),
+    do: backend.__struct__.collection_options(backend, form, field_id)
 end

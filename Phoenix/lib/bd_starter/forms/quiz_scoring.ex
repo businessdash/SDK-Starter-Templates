@@ -65,7 +65,10 @@ defmodule BdStarter.Forms.QuizScoring do
     else
       rationale = Json.obj(Json.get(o, "rationale"))
       answer = Json.get(o, "answer")
-      additional = Enum.map(Json.list(Json.get(o, "additional_accepted_answers")) || [], &accepted/1)
+
+      additional =
+        Enum.map(Json.list(Json.get(o, "additional_accepted_answers")) || [], &accepted/1)
+
       first = if Json.truthy?(answer), do: accepted(answer)
 
       %{
@@ -87,7 +90,9 @@ defmodule BdStarter.Forms.QuizScoring do
   end
 
   def option_ids(field) do
-    Enum.map(Json.list(field.raw["quizOptionIds"]) || [], fn id -> if is_binary(id), do: id, else: Js.string(id) end)
+    Enum.map(Json.list(field.raw["quizOptionIds"]) || [], fn id ->
+      if is_binary(id), do: id, else: Js.string(id)
+    end)
   end
 
   # ── Text ──────────────────────────────────────────────────────────────────
@@ -107,7 +112,9 @@ defmodule BdStarter.Forms.QuizScoring do
     Js.lower(Regex.replace(Re.get("[" <> Js.whitespace() <> "]+", "u"), text, " "))
   end
 
-  def option_labels(%Field{type: "choice_cards"} = field), do: Enum.map(Field.cards(field), & &1["label"])
+  def option_labels(%Field{type: "choice_cards"} = field),
+    do: Enum.map(Field.cards(field), & &1["label"])
+
   def option_labels(field), do: Field.options(field) || []
 
   defp clean_rationale(nil), do: nil
@@ -175,11 +182,20 @@ defmodule BdStarter.Forms.QuizScoring do
     accepted = key.accepted |> Enum.map(&choice_id/1) |> Enum.reject(&is_nil/1)
 
     explain = fn option_id, accepted? ->
-      clean_rationale(if accepted?, do: why_right, else: Map.get(key.why_wrong_by_option_id, option_id) || why_wrong)
+      clean_rationale(
+        if accepted?,
+          do: why_right,
+          else: Map.get(key.why_wrong_by_option_id, option_id) || why_wrong
+      )
     end
 
     note = fn id, option, accepted?, explanation ->
-      %{"optionId" => id, "option" => option, "accepted" => accepted?, "explanation" => explanation}
+      %{
+        "optionId" => id,
+        "option" => option,
+        "accepted" => accepted?,
+        "explanation" => explanation
+      }
     end
 
     selections =
@@ -207,7 +223,11 @@ defmodule BdStarter.Forms.QuizScoring do
         end
       end)
 
-    explanation = if blank?(value) or outcome == "correct", do: why_right, else: selected_explanation || why_wrong
+    explanation =
+      if blank?(value) or outcome == "correct",
+        do: why_right,
+        else: selected_explanation || why_wrong
+
     any_selected = Enum.any?(selections, &(&1["explanation"] != nil))
 
     if explanation == nil and not any_selected and option_explanations == [] do
@@ -304,14 +324,19 @@ defmodule BdStarter.Forms.QuizScoring do
         points = safe_points(key.points)
         correct_threshold = safe_percent(key.correct_threshold, @default_correct_threshold)
         passing_grade = safe_percent(key.passing_grade, @default_passing_grade)
-        partial_threshold = min(correct_threshold, safe_percent(key.partial_threshold, @default_partial_threshold))
+
+        partial_threshold =
+          min(correct_threshold, safe_percent(key.partial_threshold, @default_partial_threshold))
 
         correct =
           if key.no_wrong_answer,
             do: not blank?(value),
             else: Enum.any?(key.accepted, &matches?(field, &1, value))
 
-        pending_ai = not correct and not blank?(value) and Enum.any?(key.accepted, &(&1.has_text and &1.validate_with_ai))
+        pending_ai =
+          not correct and not blank?(value) and
+            Enum.any?(key.accepted, &(&1.has_text and &1.validate_with_ai))
+
         accuracy = if pending_ai, do: nil, else: if(correct, do: 100.0, else: 0.0)
 
         status =
@@ -338,7 +363,8 @@ defmodule BdStarter.Forms.QuizScoring do
           "partiallyCorrectThreshold" => partial_threshold,
           "passed" => if(accuracy == nil, do: nil, else: accuracy >= passing_grade),
           "correctAnswers" => if(correct_answers == [], do: nil, else: correct_answers),
-          "rationale" => if(status == "pending_ai", do: nil, else: result_rationale(field, key, value, status)),
+          "rationale" =>
+            if(status == "pending_ai", do: nil, else: result_rationale(field, key, value, status)),
           "reason" => if(reason == "", do: nil, else: reason)
         }
     end
@@ -348,7 +374,9 @@ defmodule BdStarter.Forms.QuizScoring do
     Enum.flat_map(nodes, fn field ->
       case field.type do
         "condition_block" ->
-          if condition_matches?(field, scope), do: walk(field.children || [], scope, prefix), else: []
+          if condition_matches?(field, scope),
+            do: walk(field.children || [], scope, prefix),
+            else: []
 
         t when t in ["input_group", "flex_row", "or_condition"] ->
           walk(field.children || [], scope, prefix)

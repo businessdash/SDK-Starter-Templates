@@ -29,8 +29,7 @@ class Chatbot
     public function __construct(
         private readonly Client $client,
         private readonly ?string $sessionToken = null,
-    ) {
-    }
+    ) {}
 
     /** Widget config: greeting, branding, which features are on. */
     public function config(): array

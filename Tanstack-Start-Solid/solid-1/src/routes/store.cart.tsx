@@ -2,12 +2,11 @@
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { createSignal, For, Show } from "solid-js";
-
+import { StoreNav } from "../components/bd/StoreNav";
 import { CartActions } from "../components/bd/shop/CartActions";
 import { CartLine } from "../components/bd/shop/CartLine";
 import { CartSummary } from "../components/bd/shop/CartSummary";
 import { CouponForm } from "../components/bd/shop/CouponForm";
-import { StoreNav } from "../components/bd/StoreNav";
 import {
 	applyCartCoupon,
 	type CartResult,
@@ -133,7 +132,11 @@ function CartView() {
 								currency={cart()?.currency}
 								subtotal={cart()?.subtotal ?? 0}
 							/>
-							<CartActions busy={busy()} onCheckout={checkout} onClear={empty} />
+							<CartActions
+								busy={busy()}
+								onCheckout={checkout}
+								onClear={empty}
+							/>
 
 							<Show when={error()}>
 								<div style="color: var(--danger); background: var(--danger-bg); padding: 0.75rem 1rem; border-radius: 0.5rem; font-size: 0.9rem;">

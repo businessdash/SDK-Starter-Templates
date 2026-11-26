@@ -22,7 +22,9 @@ defmodule BdStarterWeb.BdAuthController do
         if Auth.hosted_page?() do
           start(conn, client, a, params)
         else
-          redirect(conn, to: if(a == "sign-up", do: "/my-account?start=create", else: "/my-account"))
+          redirect(conn,
+            to: if(a == "sign-up", do: "/my-account?start=create", else: "/my-account")
+          )
         end
 
       {client, "callback"} ->

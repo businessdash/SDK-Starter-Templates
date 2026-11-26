@@ -16,10 +16,20 @@ export const CouponForm = component$<{
 				<label class="bd-label" for="coupon">
 					Coupon
 				</label>
-				<input bind:value={draft} class="bd-input" id="coupon" placeholder={code ?? "Code"} />
+				<input
+					bind:value={draft}
+					class="bd-input"
+					id="coupon"
+					placeholder={code ?? "Code"}
+				/>
 			</div>
 			{code ? (
-				<button class="bd-btn bd-btn--ghost" disabled={disabled} onClick$={() => onRemove$()} type="button">
+				<button
+					class="bd-btn bd-btn--ghost"
+					disabled={disabled}
+					onClick$={() => onRemove$()}
+					type="button"
+				>
 					Remove coupon
 				</button>
 			) : (

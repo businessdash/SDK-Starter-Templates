@@ -144,7 +144,10 @@ export const useSubmitReview = routeAction$(
 function WorkSummary({ work }: { work: CustomerWorkBundle }) {
 	const s = work.summary;
 	return (
-		<div class="bd-card" style="padding: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;">
+		<div
+			class="bd-card"
+			style="padding: 1.5rem; display: flex; gap: 1.5rem; flex-wrap: wrap;"
+		>
 			<div>
 				<div style="font-size: 1.5rem; font-weight: 700; color: var(--title);">
 					{s.openJobCount}
@@ -209,8 +212,12 @@ export default component$(() => {
 						<div class="bd-card" style="padding: 2rem 1.25rem;">
 							<BdSignIn
 								start={"start" in data.value ? data.value.start : "signIn"}
-								redirectTo={"next" in data.value ? data.value.next : "/my-account"}
-								brand={{ tagline: "Sign in to view your jobs, quotes, and invoices." }}
+								redirectTo={
+									"next" in data.value ? data.value.next : "/my-account"
+								}
+								brand={{
+									tagline: "Sign in to view your jobs, quotes, and invoices.",
+								}}
 							/>
 						</div>
 					) : (
@@ -236,7 +243,10 @@ export default component$(() => {
 							) : null}
 
 							{/* [bd:subscriptions] */}
-							<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
+							<div
+								class="bd-card"
+								style="padding: 2rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;"
+							>
 								<h3>Your plan</h3>
 								{plan?.hasAccess ? (
 									<>
@@ -264,7 +274,9 @@ export default component$(() => {
 														value={cancelPending ? "resume" : "cancel"}
 													/>
 													<button
-														class={cancelPending ? "bd-btn" : "bd-btn bd-btn--ghost"}
+														class={
+															cancelPending ? "bd-btn" : "bd-btn bd-btn--ghost"
+														}
 														type="submit"
 													>
 														{cancelPending ? "Keep my plan" : "Cancel plan"}
@@ -293,9 +305,7 @@ export default component$(() => {
 							<div class="bd-card" style="padding: 2rem;">
 								<h3 style="margin-bottom: 1rem;">Leave a review</h3>
 								{review.value?.ok ? (
-									<p style="color: var(--success);">
-										{review.value.message}
-									</p>
+									<p style="color: var(--success);">{review.value.message}</p>
 								) : (
 									<Form
 										action={review}
@@ -346,7 +356,10 @@ export default component$(() => {
 								)}
 							</div>
 							<p style="font-size: 0.875rem;">
-								<a href="/api/bd-auth/delete-account" style="color: var(--text-muted);">
+								<a
+									href="/api/bd-auth/delete-account"
+									style="color: var(--text-muted);"
+								>
 									Delete my account
 								</a>
 							</p>

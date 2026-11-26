@@ -1,11 +1,10 @@
 import type { FormSchema as SdkFormSchema } from "@businessdash/sdk";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
-
-import { TODO_FORM_SLUG } from "../../../../bd.data-model.config";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { getBd } from "@/server/lib/bd";
 import { listTodosWithImages } from "@/server/lib/bd-todos";
+import { TODO_FORM_SLUG } from "../../../../bd.data-model.config";
 
 /**
  * The BD tRPC surface. One router groups every SDK call the

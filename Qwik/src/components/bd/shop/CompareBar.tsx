@@ -6,5 +6,7 @@
  * Qwik to leave that alone when the page around it renders again.
  */
 export function CompareBar({ storeHref = "/store" }: { storeHref?: string }) {
-	return <bd-compare-bar dangerouslySetInnerHTML="" data-store-href={storeHref} />;
+	return (
+		<bd-compare-bar dangerouslySetInnerHTML="" data-store-href={storeHref} />
+	);
 }

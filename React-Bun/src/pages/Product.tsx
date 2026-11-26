@@ -4,11 +4,13 @@ import type {
 	StorefrontProductReviewsResponse,
 } from "@businessdash/sdk/contracts";
 
-import { announceCartCount, StoreNav } from "../components/StoreNav";
+import { StoreNav } from "../components/StoreNav";
+import { announceCartCount } from "../components/shop/cart-count";
 import { type AddToCartInput, type AddToCartResult, ProductDetail } from "../components/shop/ProductDetail";
 import { bd } from "../lib/bd";
-import { Link, useRoute, useSearchParams } from "../lib/router";
-import { useApi } from "./ui";
+import { Link } from "../lib/router";
+import { useRoute, useSearchParams } from "../lib/route";
+import { useApi } from "./use-api";
 
 /** Reviews shown at first; "Show more reviews" adds this many each time. */
 const REVIEWS_PAGE = 10;

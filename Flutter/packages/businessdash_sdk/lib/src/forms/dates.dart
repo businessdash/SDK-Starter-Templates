@@ -14,7 +14,8 @@ abstract final class BdDates {
   /// as text.
   static int? parse(BdJson value) => switch (value) {
         // `new Date(n)`: TimeClip truncates and refuses past ±8.64e15.
-        BdNum(:final value) => value.isFinite && value.abs() <= 8.64e15 ? value.truncate() : null,
+        BdNum(:final value) =>
+          value.isFinite && value.abs() <= 8.64e15 ? value.truncate() : null,
         _ => parseInstant(BdJS.string(value)),
       };
 
@@ -22,7 +23,8 @@ abstract final class BdDates {
   static final _instant = RegExp(
     r'^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d{1,9}))?)?([Zz]|[+-]\d{2}:?\d{2})$',
   );
-  static final _local = RegExp(r'^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$');
+  static final _local = RegExp(
+      r'^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$');
   static final _ym = RegExp(r'^(\d{4})-(\d{2})$');
   static final _y = RegExp(r'^(\d{4})$');
 
@@ -48,7 +50,9 @@ abstract final class BdDates {
     // ISO 8601 with an explicit offset or Z (Temporal.Instant.from).
     if (_instant.firstMatch(s) case final m?) {
       final fraction = m[7];
-      final micros = fraction == null ? 0 : int.parse(fraction.padRight(9, '0').substring(0, 6));
+      final micros = fraction == null
+          ? 0
+          : int.parse(fraction.padRight(9, '0').substring(0, 6));
       final utc = DateTime.utc(
         int.parse(m[1]!),
         int.parse(m[2]!),
@@ -64,7 +68,9 @@ abstract final class BdDates {
       if (zone != 'Z' && zone != 'z') {
         final sign = zone.startsWith('-') ? -1 : 1;
         final digits = zone.substring(1).replaceAll(':', '');
-        offsetSeconds = sign * (int.parse(digits.substring(0, 2)) * 3600 + int.parse(digits.substring(2)) * 60);
+        offsetSeconds = sign *
+            (int.parse(digits.substring(0, 2)) * 3600 +
+                int.parse(digits.substring(2)) * 60);
       }
       return utc.millisecondsSinceEpoch - offsetSeconds * 1000;
     }
@@ -81,11 +87,17 @@ abstract final class BdDates {
         ms,
       ).millisecondsSinceEpoch;
     }
-    if (_ym.firstMatch(s) case final m?) return utcMillis(int.parse(m[1]!), int.parse(m[2]!), 1);
-    if (_y.firstMatch(s) case final m?) return utcMillis(int.parse(m[1]!), 1, 1);
+    if (_ym.firstMatch(s) case final m?) {
+      return utcMillis(int.parse(m[1]!), int.parse(m[2]!), 1);
+    }
+    if (_y.firstMatch(s) case final m?) {
+      return utcMillis(int.parse(m[1]!), 1, 1);
+    }
     if (_monthDayYear.firstMatch(s) case final m?) {
       final month = _monthIndex(m[1]!, allowFull: true);
-      if (month != null) return _localDate(int.parse(m[3]!), month, int.parse(m[2]!));
+      if (month != null) {
+        return _localDate(int.parse(m[3]!), month, int.parse(m[2]!));
+      }
     }
     if (_slashYmd.firstMatch(s) case final m?) {
       return _localDate(int.parse(m[1]!), int.parse(m[2]!), int.parse(m[3]!));
@@ -109,7 +121,9 @@ abstract final class BdDates {
       final zone = m[7]!;
       if (zone.startsWith('+') || zone.startsWith('-')) {
         final sign = zone.startsWith('-') ? -1 : 1;
-        final offset = sign * (int.parse(zone.substring(1, 3)) * 3600 + int.parse(zone.substring(3)) * 60);
+        final offset = sign *
+            (int.parse(zone.substring(1, 3)) * 3600 +
+                int.parse(zone.substring(3)) * 60);
         return utc - offset * 1000;
       }
       return utc;
@@ -120,7 +134,10 @@ abstract final class BdDates {
   static int? _monthIndex(String name, {required bool allowFull}) {
     final lower = name.toLowerCase();
     for (var i = 0; i < _months.length; i++) {
-      if (lower == _months[i].substring(0, 3) || (allowFull && lower == _months[i])) return i + 1;
+      if (lower == _months[i].substring(0, 3) ||
+          (allowFull && lower == _months[i])) {
+        return i + 1;
+      }
     }
     return null;
   }
@@ -133,11 +150,14 @@ abstract final class BdDates {
 
   /// A strictly valid calendar date at local midnight, else null.
   static int? _localDate(int year, int month, int day) =>
-      _validDate(year, month, day) ? DateTime(year, month, day).millisecondsSinceEpoch : null;
+      _validDate(year, month, day)
+          ? DateTime(year, month, day).millisecondsSinceEpoch
+          : null;
 
   /// `Date.UTC(year, month - 1, day)`. Out-of-range parts roll over (month
   /// 13 is next January), as `Date.UTC` does.
-  static int utcMillis(int year, int month, int day) => DateTime.utc(year, month, day).millisecondsSinceEpoch;
+  static int utcMillis(int year, int month, int day) =>
+      DateTime.utc(year, month, day).millisecondsSinceEpoch;
 
   static BdDateParts utcParts(int ms) {
     final d = DateTime.fromMillisecondsSinceEpoch(ms, isUtc: true);

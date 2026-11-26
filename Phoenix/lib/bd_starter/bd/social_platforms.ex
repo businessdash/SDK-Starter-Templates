@@ -8,14 +8,44 @@ defmodule BdStarter.Bd.SocialPlatforms do
   """
 
   @all [
-    %{key: "meta", label: "Facebook", icon_slug: "facebook", href_prefix: "https://facebook.com/"},
-    %{key: "instagram", label: "Instagram", icon_slug: "instagram", href_prefix: "https://instagram.com/"},
+    %{
+      key: "meta",
+      label: "Facebook",
+      icon_slug: "facebook",
+      href_prefix: "https://facebook.com/"
+    },
+    %{
+      key: "instagram",
+      label: "Instagram",
+      icon_slug: "instagram",
+      href_prefix: "https://instagram.com/"
+    },
     %{key: "twitterX", label: "X", icon_slug: "x", href_prefix: "https://x.com/"},
     %{key: "tikTok", label: "TikTok", icon_slug: "tiktok", href_prefix: "https://tiktok.com/@"},
-    %{key: "youTube", label: "YouTube", icon_slug: "youtube", href_prefix: "https://youtube.com/"},
-    %{key: "linkedIn", label: "LinkedIn", icon_slug: "linkedin", href_prefix: "https://linkedin.com/"},
-    %{key: "pinterest", label: "Pinterest", icon_slug: "pinterest", href_prefix: "https://pinterest.com/"},
-    %{key: "threads", label: "Threads", icon_slug: "threads", href_prefix: "https://threads.net/@"},
+    %{
+      key: "youTube",
+      label: "YouTube",
+      icon_slug: "youtube",
+      href_prefix: "https://youtube.com/"
+    },
+    %{
+      key: "linkedIn",
+      label: "LinkedIn",
+      icon_slug: "linkedin",
+      href_prefix: "https://linkedin.com/"
+    },
+    %{
+      key: "pinterest",
+      label: "Pinterest",
+      icon_slug: "pinterest",
+      href_prefix: "https://pinterest.com/"
+    },
+    %{
+      key: "threads",
+      label: "Threads",
+      icon_slug: "threads",
+      href_prefix: "https://threads.net/@"
+    },
     %{key: "bluesky", label: "Bluesky", icon_slug: "bluesky", href_prefix: nil},
     %{key: "mastodon", label: "Mastodon", icon_slug: "mastodon", href_prefix: nil},
     %{key: "truthSocial", label: "Truth Social", icon_slug: "truthsocial", href_prefix: nil},

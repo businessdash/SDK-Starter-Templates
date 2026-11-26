@@ -14,7 +14,9 @@ export function ProductTitle({
 }) {
 	return (
 		<div>
-			{product.categoryName ? <p class="product-detail__eyebrow">{product.categoryName}</p> : null}
+			{product.categoryName ? (
+				<p class="product-detail__eyebrow">{product.categoryName}</p>
+			) : null}
 			<h1>{product.name}</h1>
 			{reviews && reviews.totalCount > 0 ? (
 				<a class="product-detail__rating" href="#reviews">

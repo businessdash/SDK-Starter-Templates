@@ -39,28 +39,52 @@ defmodule BdStarter.Forms.Messages do
 
       "format" ->
         case type do
-          "email" -> "Enter a valid email address."
-          "phone" -> "Enter a valid phone number."
-          t when t in ["url", "image_input"] -> "Enter a valid web address, like example.com."
-          "address" -> "Enter a 5-digit ZIP code."
-          "month_year" -> "Choose a month and a year."
-          "color_picker" -> "Enter a hex color, like #3366FF."
-          "schedule" -> "Choose a valid time."
-          t when t in ["number", "measurement"] -> "Enter a whole number."
+          "email" ->
+            "Enter a valid email address."
+
+          "phone" ->
+            "Enter a valid phone number."
+
+          t when t in ["url", "image_input"] ->
+            "Enter a valid web address, like example.com."
+
+          "address" ->
+            "Enter a 5-digit ZIP code."
+
+          "month_year" ->
+            "Choose a month and a year."
+
+          "color_picker" ->
+            "Enter a hex color, like #3366FF."
+
+          "schedule" ->
+            "Choose a valid time."
+
+          t when t in ["number", "measurement"] ->
+            "Enter a whole number."
+
           "currency" ->
             if Field.config(field, "currencyConfig", "allowDecimal") == false,
               do: "Enter a whole amount.",
               else: "Enter an amount of 0 or more."
 
-          _ -> "#{name} isn't valid."
+          _ ->
+            "#{name} isn't valid."
         end
 
       "min" ->
-        min = field && (Json.num(Field.config(field, "validation", "min")) || Json.num(Field.config(field, "sliderConfig", "min")))
+        min =
+          field &&
+            (Json.num(Field.config(field, "validation", "min")) ||
+               Json.num(Field.config(field, "sliderConfig", "min")))
+
         if min != nil, do: "Enter #{Js.number_string(min)} or more.", else: "Enter 0 or more."
 
       "max" ->
-        max = field && (Json.num(Field.config(field, "validation", "max")) || Json.num(Field.config(field, "sliderConfig", "max")))
+        max =
+          field &&
+            (Json.num(Field.config(field, "validation", "max")) ||
+               Json.num(Field.config(field, "sliderConfig", "max")))
 
         cond do
           max != nil ->
@@ -84,7 +108,13 @@ defmodule BdStarter.Forms.Messages do
         # A repeater reports its child: "Age: max".
         case :binary.match(reason, ":") do
           {at, 1} ->
-            inner = message(String.trim(binary_part(reason, at + 1, byte_size(reason) - at - 1), " "), "", nil)
+            inner =
+              message(
+                String.trim(binary_part(reason, at + 1, byte_size(reason) - at - 1), " "),
+                "",
+                nil
+              )
+
             binary_part(reason, 0, at) <> ": " <> Js.lower(inner)
 
           :nomatch ->

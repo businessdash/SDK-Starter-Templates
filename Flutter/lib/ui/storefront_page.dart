@@ -33,7 +33,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
 
   String _search = '';
   String? _categoryId;
-  StoreFilters _filters = (sort: 'featured', minDollars: null, maxDollars: null, minRating: null);
+  StoreFilters _filters =
+      (sort: 'featured', minDollars: null, maxDollars: null, minRating: null);
 
   ProductListing? _shown;
   Object? _error;
@@ -65,7 +66,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
     super.dispose();
   }
 
-  int? _cents(double? dollars) => dollars == null ? null : (dollars * 100).round();
+  int? _cents(double? dollars) =>
+      dollars == null ? null : (dollars * 100).round();
 
   Future<void> _load() async {
     final client = _client;
@@ -112,14 +114,21 @@ class _StorefrontPageState extends State<StorefrontPage> {
     _searchBox.clear();
     _search = '';
     _categoryId = null;
-    _filters = (sort: _filters.sort, minDollars: null, maxDollars: null, minRating: null);
+    _filters = (
+      sort: _filters.sort,
+      minDollars: null,
+      maxDollars: null,
+      minRating: null
+    );
     _load();
   }
 
   int get _sheetCount =>
-      (_filters.minDollars != null || _filters.maxDollars != null ? 1 : 0) + (_filters.minRating != null ? 1 : 0);
+      (_filters.minDollars != null || _filters.maxDollars != null ? 1 : 0) +
+      (_filters.minRating != null ? 1 : 0);
 
-  bool get _narrowed => _search.trim().isNotEmpty || _categoryId != null || _sheetCount > 0;
+  bool get _narrowed =>
+      _search.trim().isNotEmpty || _categoryId != null || _sheetCount > 0;
 
   Future<void> _openFilters() async {
     final next = await showModalBottomSheet<StoreFilters>(
@@ -143,14 +152,21 @@ class _StorefrontPageState extends State<StorefrontPage> {
         actions: [
           IconButton(
             tooltip: saved == 0 ? 'Wishlist' : 'Wishlist, $saved saved',
-            icon: Badge.count(count: saved, isLabelVisible: saved > 0, child: const Icon(Icons.favorite_border)),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const WishlistPage())),
+            icon: Badge.count(
+                count: saved,
+                isLabelVisible: saved > 0,
+                child: const Icon(Icons.favorite_border)),
+            onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const WishlistPage())),
           ),
         ],
       ),
       body: Column(
         children: [
-          Expanded(child: _client == null ? const StoreNotice('Not connected to BD.') : _results(context)),
+          Expanded(
+              child: _client == null
+                  ? const StoreNotice('Not connected to BD.')
+                  : _results(context)),
           const CompareBar(),
         ],
       ),
@@ -162,15 +178,21 @@ class _StorefrontPageState extends State<StorefrontPage> {
     final shown = _shown;
     final error = _error;
     if (shown == null) {
-      if (error == null) return const Center(child: CircularProgressIndicator());
+      if (error == null) {
+        return const Center(child: CircularProgressIndicator());
+      }
       final unavailable = error is BdException && error.isUnavailable;
       return StoreNotice(
-        unavailable ? 'The store is temporarily unavailable.' : "Couldn't load the store.",
+        unavailable
+            ? 'The store is temporarily unavailable.'
+            : "Couldn't load the store.",
         action: TextButton(onPressed: _load, child: const Text('Try again')),
       );
     }
     final products = shown.items;
-    final counted = _categories.where((category) => (shown.categoryCounts[category.id] ?? 0) > 0 || category.id == _categoryId);
+    final counted = _categories.where((category) =>
+        (shown.categoryCounts[category.id] ?? 0) > 0 ||
+        category.id == _categoryId);
     return CustomScrollView(
       slivers: [
         SliverPadding(
@@ -179,7 +201,8 @@ class _StorefrontPageState extends State<StorefrontPage> {
             children: [
               ReviewStrip(totals: _totals),
               if (_totals?.rating != null) const SizedBox(height: 12),
-              StoreSearchField(controller: _searchBox, onChanged: _searchChanged),
+              StoreSearchField(
+                  controller: _searchBox, onChanged: _searchChanged),
               if (counted.isNotEmpty) ...[
                 const SizedBox(height: 10),
                 CategoryChips(
@@ -211,8 +234,12 @@ class _StorefrontPageState extends State<StorefrontPage> {
               child: Column(
                 spacing: 8,
                 children: [
-                  Text(_narrowed ? 'No matches' : 'No products yet', style: theme.textTheme.titleMedium),
-                  if (_narrowed) TextButton(onPressed: _clearAll, child: const Text('Clear all filters')),
+                  Text(_narrowed ? 'No matches' : 'No products yet',
+                      style: theme.textTheme.titleMedium),
+                  if (_narrowed)
+                    TextButton(
+                        onPressed: _clearAll,
+                        child: const Text('Clear all filters')),
                 ],
               ),
             ),

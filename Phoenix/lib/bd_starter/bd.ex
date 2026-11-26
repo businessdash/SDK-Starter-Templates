@@ -42,7 +42,12 @@ defmodule BdStarter.Bd do
   end
 
   def featured_products(limit \\ 6) do
-    cached("storefront:featured:#{limit}", ["bd:storefront"], &Storefront.list(&1, limit: limit), %{})
+    cached(
+      "storefront:featured:#{limit}",
+      ["bd:storefront"],
+      &Storefront.list(&1, limit: limit),
+      %{}
+    )
     |> Map.get("items", [])
   end
 
@@ -81,7 +86,12 @@ defmodule BdStarter.Bd do
 
   @doc "A page of a product's reviews with `totalCount` and `avgRating`; nil when BD doesn't answer."
   def product_review_page(id, limit) do
-    cached("storefront:reviews:#{id}:#{limit}", ["bd:storefront"], &Storefront.reviews(&1, id, limit), nil)
+    cached(
+      "storefront:reviews:#{id}:#{limit}",
+      ["bd:storefront"],
+      &Storefront.reviews(&1, id, limit),
+      nil
+    )
   end
 
   def product_addons(id) do
@@ -94,7 +104,12 @@ defmodule BdStarter.Bd do
   end
 
   def related_products(id, limit \\ 4) do
-    cached("storefront:related:#{id}:#{limit}", ["bd:storefront"], &Storefront.related(&1, id, limit), %{})
+    cached(
+      "storefront:related:#{id}:#{limit}",
+      ["bd:storefront"],
+      &Storefront.related(&1, id, limit),
+      %{}
+    )
     |> Map.get("items", [])
   end
 
@@ -111,7 +126,11 @@ defmodule BdStarter.Bd do
   @doc "One page of posts: `%{\"items\", \"nextCursor\"}`, in a category or not."
   def post_page(limit, cursor, category_id) do
     key = "blog:page:#{limit}:#{cursor}:#{category_id}"
-    cached(key, ["bd:blog"], &Blog.list(&1, limit, cursor, category_id), %{"items" => [], "nextCursor" => nil})
+
+    cached(key, ["bd:blog"], &Blog.list(&1, limit, cursor, category_id), %{
+      "items" => [],
+      "nextCursor" => nil
+    })
   end
 
   def blog_categories do
@@ -137,7 +156,12 @@ defmodule BdStarter.Bd do
   "nextOffset"}`, read a page of up to 50 at a time.
   """
   def reviews_page(shown \\ 10, source \\ nil) do
-    cached("reviews:#{source || "all"}:#{shown}", ["bd:reviews"], &first_reviews(&1, shown, source), %{})
+    cached(
+      "reviews:#{source || "all"}:#{shown}",
+      ["bd:reviews"],
+      &first_reviews(&1, shown, source),
+      %{}
+    )
   end
 
   @doc "The newest 50 reviews, for the platform filter; nil when BD doesn't answer."
@@ -158,7 +182,12 @@ defmodule BdStarter.Bd do
         if next && got != [] && length(items) < shown do
           first_reviews(client, shown, source, items, next)
         else
-          {:ok, %{"items" => items, "totalCount" => page["totalCount"] || length(items), "nextOffset" => next}}
+          {:ok,
+           %{
+             "items" => items,
+             "totalCount" => page["totalCount"] || length(items),
+             "nextOffset" => next
+           }}
         end
 
       {:ok, _} ->
@@ -175,17 +204,27 @@ defmodule BdStarter.Bd do
   end
 
   def service_area_variants do
-    cached("parallel:variants", ["bd:parallel-pages"], &ParallelPages.variants(&1, "service-area"), %{})
+    cached(
+      "parallel:variants",
+      ["bd:parallel-pages"],
+      &ParallelPages.variants(&1, "service-area"),
+      %{}
+    )
     |> Map.get("variants", [])
   end
 
   def service_area(service, area) do
     key = "parallel:#{service}:#{area}"
 
-    cached(key, ["bd:parallel-pages"], &ParallelPages.render(&1, "service-area", %{
-      "service" => service,
-      "area" => area
-    }), nil)
+    cached(
+      key,
+      ["bd:parallel-pages"],
+      &ParallelPages.render(&1, "service-area", %{
+        "service" => service,
+        "area" => area
+      }),
+      nil
+    )
   end
 
   def todos do
@@ -204,11 +243,16 @@ defmodule BdStarter.Bd do
   def cart_update(visitor_token, item_id, input),
     do: uncached(&Cart.update_item(&1, visitor_token, item_id, input), nil)
 
-  def cart_remove(visitor_token, item_id), do: uncached(&Cart.remove_item(&1, visitor_token, item_id), nil)
-  def cart_coupon(visitor_token, code), do: uncached(&Cart.apply_coupon(&1, visitor_token, code), nil)
+  def cart_remove(visitor_token, item_id),
+    do: uncached(&Cart.remove_item(&1, visitor_token, item_id), nil)
+
+  def cart_coupon(visitor_token, code),
+    do: uncached(&Cart.apply_coupon(&1, visitor_token, code), nil)
+
   def cart_clear(visitor_token), do: uncached(&Cart.clear(&1, visitor_token), nil)
 
-  def checkout_start(visitor_token, urls), do: uncached(&Checkout.start(&1, visitor_token, urls), nil)
+  def checkout_start(visitor_token, urls),
+    do: uncached(&Checkout.start(&1, visitor_token, urls), nil)
 
   @doc "Back from Stripe: the checkout session's status (`paymentStatus`, `customerEmail`)."
   def checkout_status(session_id), do: uncached(&Checkout.get(&1, nil, session_id), nil)
@@ -217,8 +261,11 @@ defmodule BdStarter.Bd do
   def post_comments_fresh(slug),
     do: uncached(&Blog.comments(&1, slug), %{}) |> Map.get("items", [])
 
-  def like_status(slug, session_token), do: uncached(&Blog.like_status(&1, slug, session_token), nil)
-  def toggle_like(slug, session_token), do: uncached(&Blog.toggle_like(&1, slug, session_token), nil)
+  def like_status(slug, session_token),
+    do: uncached(&Blog.like_status(&1, slug, session_token), nil)
+
+  def toggle_like(slug, session_token),
+    do: uncached(&Blog.toggle_like(&1, slug, session_token), nil)
 
   def post_comment(slug, content, session_token),
     do: uncached(&Blog.post_comment(&1, slug, content, session_token), nil)

@@ -130,7 +130,11 @@ defmodule BdStarterWeb.PostHtml do
       |> Regex.scan(attrs, return: :index)
       |> Enum.reduce({[], false}, fn [_whole, key | values], {parts, external} ->
         key = attrs |> slice(key) |> String.downcase()
-        value = values |> Enum.find(fn {at, _} -> at >= 0 end) |> then(&if(&1, do: slice(attrs, &1), else: ""))
+
+        value =
+          values
+          |> Enum.find(fn {at, _} -> at >= 0 end)
+          |> then(&if(&1, do: slice(attrs, &1), else: ""))
 
         cond do
           key not in allowed ->
@@ -171,7 +175,9 @@ defmodule BdStarterWeb.PostHtml do
   def reading_minutes(nil), do: 1
 
   def reading_minutes(html) do
-    words = ~r/<[^>]*>/ |> Regex.replace(html, " ") |> String.split(~r/\s+/, trim: true) |> length()
+    words =
+      ~r/<[^>]*>/ |> Regex.replace(html, " ") |> String.split(~r/\s+/, trim: true) |> length()
+
     max(1, round(words / 230))
   end
 
@@ -203,7 +209,9 @@ defmodule BdStarterWeb.PostHtml do
   defp escape_attribute(value), do: value |> escape_text() |> String.replace("\"", "&quot;")
 
   defp decode_entities(value) do
-    value = Regex.replace(~r/&#x([0-9a-f]+);?/i, value, fn _, digits -> code_point(digits, 16) end)
+    value =
+      Regex.replace(~r/&#x([0-9a-f]+);?/i, value, fn _, digits -> code_point(digits, 16) end)
+
     value = Regex.replace(~r/&#([0-9]+);?/, value, fn _, digits -> code_point(digits, 10) end)
 
     Enum.reduce(

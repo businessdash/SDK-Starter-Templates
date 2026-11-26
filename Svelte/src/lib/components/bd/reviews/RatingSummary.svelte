@@ -25,7 +25,7 @@
 		</div>
 		<ul class="reviews-bars">
 			{#each summary.histogram as row (row.stars)}
-				<li aria-label={`${row.stars} stars: ${row.count}`}>
+				<li aria-label={`${row.stars} ${row.stars === 1 ? 'star' : 'stars'}: ${row.count}`}>
 					<span>{row.stars} ★</span>
 					<span class="reviews-bars__track"
 						><span class="reviews-bars__fill" style:width={`${Math.round(row.share * 100)}%`}

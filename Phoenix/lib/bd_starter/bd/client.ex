@@ -98,7 +98,11 @@ defmodule BdStarter.Bd.Client do
         method: method,
         url: client.base_url <> "/" <> String.trim_leading(path, "/"),
         auth: {:bearer, client.api_key},
-        headers: [{"accept", "application/json"}, {"origin", client.origin}, {"x-bd-client", client_header()}],
+        headers: [
+          {"accept", "application/json"},
+          {"origin", client.origin},
+          {"x-bd-client", client_header()}
+        ],
         receive_timeout: 15_000,
         retry: false
       ]
@@ -123,6 +127,7 @@ defmodule BdStarter.Bd.Client do
   @spec client_header() :: String.t()
   def client_header do
     phoenix = to_string(Application.spec(:phoenix, :vsn) || "")
+
     "phoenix/1 elixir/#{System.version()} otp/#{System.otp_release()} phoenix-framework/#{phoenix}"
   end
 
@@ -136,7 +141,11 @@ defmodule BdStarter.Bd.Client do
 
   defp request(client, method, path, opts) do
     headers =
-      [{"accept", "application/json"}, {"origin", client.origin}, {"x-bd-client", client_header()}] ++
+      [
+        {"accept", "application/json"},
+        {"origin", client.origin},
+        {"x-bd-client", client_header()}
+      ] ++
         Keyword.get(opts, :headers, [])
 
     opts =
@@ -169,7 +178,9 @@ defmodule BdStarter.Bd.Client do
     {:ok, if(is_map(body), do: body, else: %{})}
   end
 
-  defp handle({:ok, %Req.Response{status: status, body: body}}), do: {:error, {:http, status, body}}
+  defp handle({:ok, %Req.Response{status: status, body: body}}),
+    do: {:error, {:http, status, body}}
+
   defp handle({:error, reason}), do: {:error, {:transport, reason}}
 
   @doc """
@@ -178,8 +189,9 @@ defmodule BdStarter.Bd.Client do
   this; everything else just falls back to local content.
   """
   @spec unavailable?(error()) :: boolean()
-  def unavailable?({:access_rejected, reason, _}) when reason in ~w(payment_required service_suspended),
-    do: true
+  def unavailable?({:access_rejected, reason, _})
+      when reason in ~w(payment_required service_suspended),
+      do: true
 
   def unavailable?(_), do: false
 

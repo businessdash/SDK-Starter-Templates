@@ -85,10 +85,15 @@ abstract final class BdUnits {
   /// value reaches, rounded to 4 places.
   static String format(double? value, String unit, BdUnitCategory cat) {
     if (value == null || value.isNaN) return '';
-    String tidy(double n) => BdJS.formatNumber(BdJS.parseNumber(BdJS.toFixed(n, 4)));
-    final base = !cat.isAffine && cat.contains(unit) ? convertToBase(value, unit, cat) : null;
+    String tidy(double n) =>
+        BdJS.formatNumber(BdJS.parseNumber(BdJS.toFixed(n, 4)));
+    final base = !cat.isAffine && cat.contains(unit)
+        ? convertToBase(value, unit, cat)
+        : null;
     if (base == null) return '${tidy(value)} $unit';
-    final indexed = [for (var i = 0; i < cat.units.length; i++) (i, cat.units[i])];
+    final indexed = [
+      for (var i = 0; i < cat.units.length; i++) (i, cat.units[i])
+    ];
     indexed.sort((a, b) {
       final byFactor = b.$2.factor.compareTo(a.$2.factor);
       return byFactor != 0 ? byFactor : a.$1.compareTo(b.$1);

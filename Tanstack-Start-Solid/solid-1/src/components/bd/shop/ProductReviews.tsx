@@ -41,7 +41,9 @@ export function ProductReviews(props: {
 											<p class="review__title">{review.title}</p>
 										</Show>
 										<Show when={review.content || review.body}>
-											<p class="review__body">{review.content || review.body}</p>
+											<p class="review__body">
+												{review.content || review.body}
+											</p>
 										</Show>
 									</article>
 								)}

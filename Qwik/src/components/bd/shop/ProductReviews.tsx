@@ -27,11 +27,19 @@ export function ProductReviews({
 							<article class="review" key={review.id}>
 								<div class="review__head">
 									<ShopStars rating={review.rating} />
-									<span class="review__name">{review.reviewerName || "Verified buyer"}</span>
-									<span class="review__date">{reviewDate(review.createdAt)}</span>
+									<span class="review__name">
+										{review.reviewerName || "Verified buyer"}
+									</span>
+									<span class="review__date">
+										{reviewDate(review.createdAt)}
+									</span>
 								</div>
-								{review.title ? <p class="review__title">{review.title}</p> : null}
-								{review.content || review.body ? <p class="review__body">{review.content || review.body}</p> : null}
+								{review.title ? (
+									<p class="review__title">{review.title}</p>
+								) : null}
+								{review.content || review.body ? (
+									<p class="review__body">{review.content || review.body}</p>
+								) : null}
 							</article>
 						))}
 					</div>

@@ -65,7 +65,9 @@ class _CartPageState extends State<CartPage> {
   }
 
   /// Runs a cart change; the cart it answers with is the one shown.
-  Future<void> _change(Future<CartSnapshot> Function(BdClient client, String visitor) call, {String? failed}) async {
+  Future<void> _change(
+      Future<CartSnapshot> Function(BdClient client, String visitor) call,
+      {String? failed}) async {
     final client = _client;
     if (client == null || _busy) return;
     final visitor = BdScope.of(context).visitorToken;
@@ -79,7 +81,10 @@ class _CartPageState extends State<CartPage> {
       app.noteCart(cart);
       if (mounted) setState(() => _cart = cart);
     } on Exception catch (error) {
-      if (mounted) setState(() => _note = bdProblem(error, failed ?? "Couldn't update your cart. Try again."));
+      if (mounted) {
+        setState(() => _note = bdProblem(
+            error, failed ?? "Couldn't update your cart. Try again."));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -88,7 +93,8 @@ class _CartPageState extends State<CartPage> {
   Future<void> _applyCoupon() async {
     final code = _coupon.text.trim();
     if (code.isEmpty) return;
-    await _change((client, visitor) => client.cartApplyCoupon(visitor, code), failed: "That code didn't work.");
+    await _change((client, visitor) => client.cartApplyCoupon(visitor, code),
+        failed: "That code didn't work.");
     if (mounted && _cart?.couponCode != null) _coupon.clear();
   }
 
@@ -110,20 +116,30 @@ class _CartPageState extends State<CartPage> {
       final session = await client.startCheckout(
         visitor,
         // Stripe substitutes the real id for the placeholder.
-        successUrl: '$bdCallbackScheme://checkout/success?session_id={CHECKOUT_SESSION_ID}',
+        successUrl:
+            '$bdCallbackScheme://checkout/success?session_id={CHECKOUT_SESSION_ID}',
         cancelUrl: '$bdCallbackScheme://checkout/cancel',
       );
-      final back = Uri.parse(await FlutterWebAuth2.authenticate(url: session.stripeUrl, callbackUrlScheme: bdCallbackScheme));
+      final back = Uri.parse(await FlutterWebAuth2.authenticate(
+          url: session.stripeUrl, callbackUrlScheme: bdCallbackScheme));
       final sessionId = back.queryParameters['session_id'];
-      if (back.path.endsWith('/success') && sessionId != null && sessionId.isNotEmpty) {
-        await navigator.push(MaterialPageRoute<void>(builder: (_) => OrderPage(sessionId: sessionId)));
+      if (back.path.endsWith('/success') &&
+          sessionId != null &&
+          sessionId.isNotEmpty) {
+        await navigator.push(MaterialPageRoute<void>(
+            builder: (_) => OrderPage(sessionId: sessionId)));
         if (mounted) await _reload();
       }
     } on PlatformException catch (error) {
       // Closing Stripe's page leaves the cart as it was.
-      if (error.code != 'CANCELED' && mounted) setState(() => _note = "Couldn't open checkout. Try again.");
+      if (error.code != 'CANCELED' && mounted) {
+        setState(() => _note = "Couldn't open checkout. Try again.");
+      }
     } on Exception catch (error) {
-      if (mounted) setState(() => _note = bdProblem(error, "Couldn't start checkout. Try again."));
+      if (mounted) {
+        setState(() =>
+            _note = bdProblem(error, "Couldn't start checkout. Try again."));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -141,7 +157,9 @@ class _CartPageState extends State<CartPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(error is BdException && error.isUnavailable ? 'Temporarily unavailable.' : "Couldn't load your cart."),
+                Text(error is BdException && error.isUnavailable
+                    ? 'Temporarily unavailable.'
+                    : "Couldn't load your cart."),
                 TextButton(onPressed: _reload, child: const Text('Try again')),
               ],
             ),
@@ -157,9 +175,11 @@ class _CartPageState extends State<CartPage> {
           mainAxisSize: MainAxisSize.min,
           spacing: 6,
           children: [
-            Text('Your cart is empty', style: Theme.of(context).textTheme.titleMedium),
+            Text('Your cart is empty',
+                style: Theme.of(context).textTheme.titleMedium),
             TextButton(
-              onPressed: () => AppScope.read(context).showTab(context, AppTab.shop),
+              onPressed: () =>
+                  AppScope.read(context).showTab(context, AppTab.shop),
               child: const Text('Browse the store →'),
             ),
           ],
@@ -181,17 +201,24 @@ class _CartPageState extends State<CartPage> {
                 CartLine(
                   item: item,
                   currency: currency,
-                  onOpen: item.productId == null ? null : () => openProduct(context, item.productId!),
+                  onOpen: item.productId == null
+                      ? null
+                      : () => openProduct(context, item.productId!),
                   onDecrease: _busy
                       ? null
                       : () => _change((client, visitor) => item.quantity <= 1
                           ? client.cartRemove(visitor, item.id)
-                          : client.cartSetQuantity(visitor, itemId: item.id, quantity: item.quantity - 1)),
+                          : client.cartSetQuantity(visitor,
+                              itemId: item.id, quantity: item.quantity - 1)),
                   onIncrease: _busy
                       ? null
-                      : () => _change(
-                          (client, visitor) => client.cartSetQuantity(visitor, itemId: item.id, quantity: item.quantity + 1)),
-                  onRemove: _busy ? null : () => _change((client, visitor) => client.cartRemove(visitor, item.id)),
+                      : () => _change((client, visitor) =>
+                          client.cartSetQuantity(visitor,
+                              itemId: item.id, quantity: item.quantity + 1)),
+                  onRemove: _busy
+                      ? null
+                      : () => _change((client, visitor) =>
+                          client.cartRemove(visitor, item.id)),
                 ),
                 const Divider(height: 1, indent: 16, endIndent: 16),
               ],
@@ -201,13 +228,17 @@ class _CartPageState extends State<CartPage> {
                   coupon: coupon,
                   controller: _coupon,
                   onApply: _busy ? null : _applyCoupon,
-                  onRemove: _busy ? null : () => _change((client, visitor) => client.cartRemoveCoupon(visitor)),
+                  onRemove: _busy
+                      ? null
+                      : () => _change((client, visitor) =>
+                          client.cartRemoveCoupon(visitor)),
                 ),
               ),
               if (_note != null)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: Text(_note!, style: TextStyle(color: theme.colorScheme.error)),
+                  child: Text(_note!,
+                      style: TextStyle(color: theme.colorScheme.error)),
                 ),
             ],
           ),
@@ -220,7 +251,10 @@ class _CartPageState extends State<CartPage> {
             child: CartSummaryBar(
               subtotal: cart.subtotal,
               currency: currency,
-              onClear: _busy ? null : () => _change((client, visitor) => client.cartClear(visitor)),
+              onClear: _busy
+                  ? null
+                  : () =>
+                      _change((client, visitor) => client.cartClear(visitor)),
               onCheckout: _busy ? null : _checkout,
             ),
           ),

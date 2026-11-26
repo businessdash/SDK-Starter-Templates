@@ -21,10 +21,15 @@ class BdStaticContent extends StatelessWidget {
       case 'title':
         return Semantics(
           header: true,
-          child: Text(field.label.isEmpty ? 'Untitled' : field.label, style: type.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+          child: Text(field.label.isEmpty ? 'Untitled' : field.label,
+              style: type.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
         );
       case 'subtitle':
-        return Semantics(header: true, child: Text(field.label, style: type.titleMedium?.copyWith(fontWeight: FontWeight.w600)));
+        return Semantics(
+            header: true,
+            child: Text(field.label,
+                style:
+                    type.titleMedium?.copyWith(fontWeight: FontWeight.w600)));
       case 'separator':
         return Divider(height: 1, color: BdColors.of(context).outlineVariant);
       case 'richtext':
@@ -32,7 +37,9 @@ class BdStaticContent extends StatelessWidget {
         return html == null ? const SizedBox.shrink() : BdHtmlText(html);
       case 'body_text':
         final text = field.content.nonEmpty;
-        return text == null ? const SizedBox.shrink() : Text(text, style: type.bodyLarge);
+        return text == null
+            ? const SizedBox.shrink()
+            : Text(text, style: type.bodyLarge);
       case 'bullet_list':
         return _BulletList(field.listConfig);
       case 'table':
@@ -98,7 +105,8 @@ class _BdHtmlTextState extends State<BdHtmlText> {
         fontWeight: s.bold ? FontWeight.bold : null,
         fontStyle: s.italic ? FontStyle.italic : null,
         fontFamily: s.code ? 'monospace' : null,
-        color: s.link != null ? colors.primary : (s.quote ? colors.muted : null),
+        color:
+            s.link != null ? colors.primary : (s.quote ? colors.muted : null),
         decoration: TextDecoration.combine([
           if (s.underline || s.link != null) TextDecoration.underline,
           if (s.strike) TextDecoration.lineThrough,
@@ -116,7 +124,9 @@ class _BdHtmlTextState extends State<BdHtmlText> {
               style: styleOf(s),
               recognizer: s.link == null || open == null
                   ? null
-                  : (TapGestureRecognizer()..onTap = () => open(Uri.parse(s.link!))).also(_recognizers.add),
+                  : (TapGestureRecognizer()
+                        ..onTap = () => open(Uri.parse(s.link!)))
+                      .also(_recognizers.add),
             ),
         ],
       ),
@@ -143,9 +153,15 @@ class _StaticImage extends StatelessWidget {
     final radius = BdFormScope.of(context).style.cornerRadius * 0.5;
     Widget image = ClipRRect(
       borderRadius: BorderRadius.circular(radius),
-      child: BdRemoteImage(url, height: cfg?.height, fit: BoxFit.contain, semanticLabel: cfg?.alt.nonEmpty),
+      child: BdRemoteImage(url,
+          height: cfg?.height,
+          fit: BoxFit.contain,
+          semanticLabel: cfg?.alt.nonEmpty),
     );
-    if (cfg?.width case final w?) image = ConstrainedBox(constraints: BoxConstraints(maxWidth: w), child: image);
+    if (cfg?.width case final w?) {
+      image = ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: w), child: image);
+    }
     return Center(child: image);
   }
 }
@@ -165,7 +181,8 @@ class _BulletList extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: 10,
       children: [
-        if (!details && config?.title.nonEmpty != null) Text(config!.title!, style: theme.textTheme.titleMedium),
+        if (!details && config?.title.nonEmpty != null)
+          Text(config!.title!, style: theme.textTheme.titleMedium),
         for (final item in items)
           if (details)
             Row(
@@ -173,15 +190,21 @@ class _BulletList extends StatelessWidget {
               spacing: 12,
               children: [
                 if (item.icon.nonEmpty case final icon?)
-                  Padding(padding: const EdgeInsets.only(top: 2), child: BdIcon(icon, size: 20, color: colors.primary)),
+                  Padding(
+                      padding: const EdgeInsets.only(top: 2),
+                      child: BdIcon(icon, size: 20, color: colors.primary)),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     spacing: 2,
                     children: [
-                      Text(item.text, style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w600)),
+                      Text(item.text,
+                          style: theme.textTheme.bodyLarge
+                              ?.copyWith(fontWeight: FontWeight.w600)),
                       if (item.description.nonEmpty case final d?)
-                        Text(d, style: theme.textTheme.bodyMedium?.copyWith(color: colors.muted)),
+                        Text(d,
+                            style: theme.textTheme.bodyMedium
+                                ?.copyWith(color: colors.muted)),
                     ],
                   ),
                 ),
@@ -193,7 +216,8 @@ class _BulletList extends StatelessWidget {
               spacing: 8,
               children: [
                 Text('•', style: TextStyle(color: colors.muted)),
-                Expanded(child: Text(item.text, style: theme.textTheme.bodyLarge)),
+                Expanded(
+                    child: Text(item.text, style: theme.textTheme.bodyLarge)),
               ],
             ),
       ],
@@ -232,10 +256,15 @@ class _Table extends StatelessWidget {
         );
 
     Widget body(String text, int ci) {
-      final kind = columns[ci].type == 'check' ? logic.tableCheckState(text) : 'text';
+      final kind =
+          columns[ci].type == 'check' ? logic.tableCheckState(text) : 'text';
       return switch (kind) {
-        'yes' => Icon(Icons.check, size: 18, color: colors.primary, semanticLabel: 'Yes'),
-        'no' => Semantics(label: 'No', excludeSemantics: true, child: Text('–', style: TextStyle(color: colors.muted))),
+        'yes' => Icon(Icons.check,
+            size: 18, color: colors.primary, semanticLabel: 'Yes'),
+        'no' => Semantics(
+            label: 'No',
+            excludeSemantics: true,
+            child: Text('–', style: TextStyle(color: colors.muted))),
         _ => Text(text, style: theme.textTheme.bodyMedium),
       };
     }
@@ -248,19 +277,32 @@ class _Table extends StatelessWidget {
           child: Table(
             defaultColumnWidth: const IntrinsicColumnWidth(flex: 1),
             defaultVerticalAlignment: TableCellVerticalAlignment.fill,
-            border: TableBorder(horizontalInside: BorderSide.none, top: BorderSide.none),
+            border: TableBorder(
+                horizontalInside: BorderSide.none, top: BorderSide.none),
             children: [
               TableRow(
-                decoration: BoxDecoration(border: Border(bottom: BorderSide(color: colors.outlineVariant))),
+                decoration: BoxDecoration(
+                    border: Border(
+                        bottom: BorderSide(color: colors.outlineVariant))),
                 children: [
-                  for (var ci = 0; ci < columns.length; ci++) cell(ci, Text(columns[ci].header, style: theme.textTheme.labelLarge)),
+                  for (var ci = 0; ci < columns.length; ci++)
+                    cell(
+                        ci,
+                        Text(columns[ci].header,
+                            style: theme.textTheme.labelLarge)),
                 ],
               ),
               for (final row in rows)
                 TableRow(
                   children: [
                     for (var ci = 0; ci < columns.length; ci++)
-                      cell(ci, body(ci < (row.cells?.length ?? 0) ? row.cells![ci] : '', ci)),
+                      cell(
+                          ci,
+                          body(
+                              ci < (row.cells?.length ?? 0)
+                                  ? row.cells![ci]
+                                  : '',
+                              ci)),
                   ],
                 ),
             ],
@@ -283,19 +325,23 @@ class BdCalculationView extends StatelessWidget {
     final colors = BdColors.of(context);
     final cfg = ctx.field.calculationConfig;
     final value = ctx.value;
-    final hasValue = !(value == null || value.isNull || value == const BdStr(''));
+    final hasValue =
+        !(value == null || value.isNull || value == const BdStr(''));
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(color: colors.fill, borderRadius: BorderRadius.circular(scope.style.cornerRadius)),
+      decoration: BoxDecoration(
+          color: colors.fill,
+          borderRadius: BorderRadius.circular(scope.style.cornerRadius)),
       child: cfg?.sensitive == true && !hasValue
-          ? Text(scope.strings.calculatedOnSubmit, style: TextStyle(color: colors.muted))
+          ? Text(scope.strings.calculatedOnSubmit,
+              style: TextStyle(color: colors.muted))
           : SelectableText(
               hasValue ? BdCalculation.format(value, cfg?.display) : '—',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    fontFeatures: const [FontFeature.tabularFigures()],
-                  ),
+                fontWeight: FontWeight.w600,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
             ),
     );
   }

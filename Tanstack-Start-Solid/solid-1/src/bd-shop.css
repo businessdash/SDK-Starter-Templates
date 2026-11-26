@@ -921,11 +921,10 @@
 	display: flex;
 	gap: 0.5rem;
 }
-.compare-bar__actions a[aria-disabled='true'] {
+.compare-bar__actions a[aria-disabled="true"] {
 	pointer-events: none;
 	opacity: 0.55;
 }
-
 
 /* The shop's custom elements wrap markup the page draws and add no box of
    their own, so the page lays out as if they weren't there. What they hide
@@ -939,5 +938,6 @@ bd-recently-viewed {
 }
 
 :is(bd-gallery, bd-product-form, bd-share) [hidden] {
+	/* biome-ignore lint/complexity/noImportantStyles: hidden has to beat any display a class gives the element */
 	display: none !important;
 }

@@ -2,7 +2,10 @@
 import { component$ } from "@builder.io/qwik";
 import { type DocumentHead, Link, routeLoader$ } from "@builder.io/qwik-city";
 
-import { BdPaymentLapsedError, BdServiceSuspendedError } from "@businessdash/sdk";
+import {
+	BdPaymentLapsedError,
+	BdServiceSuspendedError,
+} from "@businessdash/sdk";
 
 import { Footer } from "../../../components/bd/Footer";
 import { SiteHeader } from "../../../components/bd/SiteHeader";
@@ -29,46 +32,57 @@ const REVIEWS_PAGE = 10;
  * /api/bd/cart/add), save, compare, share, add-ons, reviews, related and
  * recently viewed.
  */
-export const useProduct = routeLoader$(async ({ params, cookie, query, status }) => {
-	const bd = getBd();
-	const [cart, session] = await Promise.all([getCartSnapshot(cookie), getCustomerSession(cookie)]);
-	const base = {
-		configured: bd !== null,
-		suspended: false,
-		data: null as ProductPageData | null,
-		cartCount: cart?.itemCount ?? 0,
-		signedIn: !!session,
-	};
-	if (!bd) return base;
-
-	const asked = Number.parseInt(query.get("reviews") ?? "", 10);
-	const reviewLimit = Math.min(100, Number.isFinite(asked) && asked > REVIEWS_PAGE ? asked : REVIEWS_PAGE);
-	try {
-		const [product, reviews, addons, related] = await Promise.all([
-			bd.storefront.getProduct(params.id),
-			getStoreProductReviews(params.id, { limit: reviewLimit }),
-			getStoreProductAddons(params.id),
-			getStoreRelatedProducts(params.id, { limit: 6 }),
+export const useProduct = routeLoader$(
+	async ({ params, cookie, query, status }) => {
+		const bd = getBd();
+		const [cart, session] = await Promise.all([
+			getCartSnapshot(cookie),
+			getCustomerSession(cookie),
 		]);
-		const data: ProductPageData = {
-			product,
-			reviews,
-			addons: addons?.items ?? [],
-			related: related?.items ?? [],
-			moreReviewsHref:
-				reviews && reviews.totalCount > reviews.items.length
-					? `/store/${encodeURIComponent(params.id)}?reviews=${reviewLimit + REVIEWS_PAGE}#reviews`
-					: null,
+		const base = {
+			configured: bd !== null,
+			suspended: false,
+			data: null as ProductPageData | null,
+			cartCount: cart?.itemCount ?? 0,
+			signedIn: !!session,
 		};
-		return { ...base, data };
-	} catch (err) {
-		if (err instanceof BdServiceSuspendedError || err instanceof BdPaymentLapsedError) {
-			return { ...base, suspended: true };
+		if (!bd) return base;
+
+		const asked = Number.parseInt(query.get("reviews") ?? "", 10);
+		const reviewLimit = Math.min(
+			100,
+			Number.isFinite(asked) && asked > REVIEWS_PAGE ? asked : REVIEWS_PAGE,
+		);
+		try {
+			const [product, reviews, addons, related] = await Promise.all([
+				bd.storefront.getProduct(params.id),
+				getStoreProductReviews(params.id, { limit: reviewLimit }),
+				getStoreProductAddons(params.id),
+				getStoreRelatedProducts(params.id, { limit: 6 }),
+			]);
+			const data: ProductPageData = {
+				product,
+				reviews,
+				addons: addons?.items ?? [],
+				related: related?.items ?? [],
+				moreReviewsHref:
+					reviews && reviews.totalCount > reviews.items.length
+						? `/store/${encodeURIComponent(params.id)}?reviews=${reviewLimit + REVIEWS_PAGE}#reviews`
+						: null,
+			};
+			return { ...base, data };
+		} catch (err) {
+			if (
+				err instanceof BdServiceSuspendedError ||
+				err instanceof BdPaymentLapsedError
+			) {
+				return { ...base, suspended: true };
+			}
+			status(404);
+			return base;
 		}
-		status(404);
-		return base;
-	}
-});
+	},
+);
 
 export default component$(() => {
 	const loaded = useProduct();
@@ -80,14 +94,18 @@ export default component$(() => {
 			<StoreNav cartCount={loaded.value.cartCount} />
 			<main class="bd-page">
 				{suspended ? (
-					<div class="bd-empty">The store is temporarily unavailable. Please check back soon.</div>
+					<div class="bd-empty">
+						The store is temporarily unavailable. Please check back soon.
+					</div>
 				) : !configured ? (
 					<div class="bd-empty">
-						Store isn't connected yet. Set the BD env vars (see <code>.env.example</code>) to go live.
+						Store isn't connected yet. Set the BD env vars (see{" "}
+						<code>.env.example</code>) to go live.
 					</div>
 				) : !data ? (
 					<div class="bd-empty">
-						That product isn't available. <Link href="/store">Browse the store</Link>
+						That product isn't available.{" "}
+						<Link href="/store">Browse the store</Link>
 					</div>
 				) : (
 					<ProductDetail cartHref="/cart" contactHref="/#contact" data={data} />

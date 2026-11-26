@@ -11,9 +11,7 @@ use App\Bd\Client;
  */
 class Reviews
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /**
      * One page, newest first: `{ items, totalCount, nextOffset }`. `$source`

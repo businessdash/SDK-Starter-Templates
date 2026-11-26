@@ -18,14 +18,28 @@ export function ProductRail({
 			<ul class="product-rail__row">
 				{products.map((product) => (
 					<li key={product.id}>
-						<a class="bd-card product-rail__card" href={`${storeHref}/${encodeURIComponent(product.id)}`}>
+						<a
+							class="bd-card product-rail__card"
+							href={`${storeHref}/${encodeURIComponent(product.id)}`}
+						>
 							{product.image ? (
-								<img alt="" loading="lazy" referrerPolicy="no-referrer" src={product.image} />
+								<img
+									width={400}
+									height={400}
+									alt=""
+									loading="lazy"
+									referrerPolicy="no-referrer"
+									src={product.image}
+								/>
 							) : (
 								<span aria-hidden="true" class="product-rail__noimg" />
 							)}
 							<span class="product-rail__name">{product.name}</span>
-							{product.priceCents != null ? <span class="product-rail__price">{formatCents(product.priceCents)}</span> : null}
+							{product.priceCents != null ? (
+								<span class="product-rail__price">
+									{formatCents(product.priceCents)}
+								</span>
+							) : null}
 						</a>
 					</li>
 				))}

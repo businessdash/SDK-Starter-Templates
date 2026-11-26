@@ -11,7 +11,11 @@ import '../forms/form_hooks.dart';
 /// against BusinessDash. Without it, it's a built-in sample with every kind
 /// of field that submits nowhere, so the tab works on a fresh clone.
 class FormPage extends StatelessWidget {
-  const FormPage({super.key, required this.host, required this.publishableKey, required this.form});
+  const FormPage(
+      {super.key,
+      required this.host,
+      required this.publishableKey,
+      required this.form});
 
   final String host;
   final String publishableKey;
@@ -22,7 +26,9 @@ class FormPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     void submitted(BdSubmitSuccess result) {
-      final text = isLive ? 'Sent (${result.submissionId ?? 'ok'}).' : 'Sample submitted — nothing was sent; the payload is in the log.';
+      final text = isLive
+          ? 'Sent (${result.submissionId ?? 'ok'}).'
+          : 'Sample submitted — nothing was sent; the payload is in the log.';
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
     }
 

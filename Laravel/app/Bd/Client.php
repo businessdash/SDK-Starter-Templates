@@ -46,8 +46,7 @@ class Client
         private readonly string $apiKey,
         private readonly string $siteId,
         private readonly string $siteOrigin,
-    ) {
-    }
+    ) {}
 
     /**
      * Build from config. Returns null when the app isn't wired to BD yet,

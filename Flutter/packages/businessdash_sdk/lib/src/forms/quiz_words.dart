@@ -9,9 +9,12 @@ class BdQuizWords {
   const BdQuizWords({
     this.empty = "This quiz has no questions yet.",
     this.readyTitle = "Ready to begin?",
-    this.readyLimitOne = "You have 1 minute. The quiz submits automatically when time expires, and unanswered questions are marked incorrect.",
-    this.readyLimitMany = "You have {minutes} minutes. The quiz submits automatically when time expires, and unanswered questions are marked incorrect.",
-    this.readyElapsed = "The elapsed timer begins when you press Start. It does not impose a deadline.",
+    this.readyLimitOne =
+        "You have 1 minute. The quiz submits automatically when time expires, and unanswered questions are marked incorrect.",
+    this.readyLimitMany =
+        "You have {minutes} minutes. The quiz submits automatically when time expires, and unanswered questions are marked incorrect.",
+    this.readyElapsed =
+        "The elapsed timer begins when you press Start. It does not impose a deadline.",
     this.start = "Start quiz",
     this.starting = "Starting…",
     this.timeRemaining = "Time remaining",
@@ -20,7 +23,8 @@ class BdQuizWords {
     this.questionOf = "Question {number} of {total}",
     this.answeredOf = "{answered} of {total} answered",
     this.locksWhenChecked = "Answers lock when checked",
-    this.endNotice = "Answers and rationale appear after the complete quiz is submitted.",
+    this.endNotice =
+        "Answers and rationale appear after the complete quiz is submitted.",
     this.endNoticeHidden = "Your answers are reviewed after you submit.",
     this.checkAnswer = "Check answer",
     this.lockAnswer = "Lock answer & check",
@@ -58,15 +62,18 @@ class BdQuizWords {
     this.inDuration = "{label} in {duration}",
     this.messageExcellent = "Excellent. You know this material well.",
     this.messageSolid = "Solid. Review the ones you missed.",
-    this.messageGettingThere = "Getting there. Review the ones you missed and try again.",
+    this.messageGettingThere =
+        "Getting there. Review the ones you missed and try again.",
     this.messageKeepGoing = "Keep going. Study the material and try again.",
     this.retake = "Retake",
     this.submittedEyebrow = "Quiz submitted",
     this.submittedTitle = "Thanks — your responses are in.",
-    this.submittedBody = "The team will review your answers and follow up with next steps.",
+    this.submittedBody =
+        "The team will review your answers and follow up with next steps.",
     this.lockedEyebrow = "Quiz complete",
     this.lockedTitle = "Your results are ready.",
-    this.lockedBody = "Sign in — or create a free account with the email this invitation was sent to — to see how you did.",
+    this.lockedBody =
+        "Sign in — or create a free account with the email this invitation was sent to — to see how you did.",
     this.lockedAction = "Sign in to see your results",
     this.startFailed = "Couldn't start quiz.",
     this.lockFailed = "Couldn't lock answer.",
@@ -75,14 +82,16 @@ class BdQuizWords {
     this.timedSubmitFailed = "Couldn't submit the timed quiz.",
     this.unscorable = "The answer could not be scored.",
     this.loading = "Loading your quiz…",
-    this.loadFailed = "We couldn't load your quiz just now. Your progress is saved.",
+    this.loadFailed =
+        "We couldn't load your quiz just now. Your progress is saved.",
     this.tryAgain = "Try again",
     this.invalid = "This quiz invitation isn't valid or has been withdrawn.",
     this.expired = "This quiz invitation has expired.",
     this.closed = "This quiz is not currently accepting responses.",
     this.signInTitle = "Sign in to begin",
     this.switchAccountTitle = "Different account required",
-    this.accountBody = "This invitation must be completed by the account matching {email}.",
+    this.accountBody =
+        "This invitation must be completed by the account matching {email}.",
     this.signInAction = "Sign in to continue",
     this.switchAccountAction = "Sign out and switch account",
     this.eyebrow = "Competency quiz",
@@ -276,5 +285,6 @@ class BdQuizWords {
 
   /// `{name}` placeholders filled from [values]; unknown ones stay as written.
   static String fill(String template, Map<String, String> values) =>
-      template.replaceAllMapped(_placeholder, (m) => values[m.group(1)!] ?? m.group(0)!);
+      template.replaceAllMapped(
+          _placeholder, (m) => values[m.group(1)!] ?? m.group(0)!);
 }

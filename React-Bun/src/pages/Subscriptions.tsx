@@ -1,7 +1,8 @@
 // [bd-file:subscriptions]
 import { useState } from "react";
-import { bd, money } from "../lib/bd";
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { bd, type Loose, money } from "../lib/bd";
+import { ErrorBox, PageHead } from "./ui";
+import { useApi } from "./use-api";
 import { StoreNav } from "../components/StoreNav";
 
 const SIGN_IN = "/my-account?next=/subscriptions";
@@ -18,7 +19,7 @@ export function Subscriptions() {
 
 function SubscriptionsBody() {
 	const { data, error, loading } = useApi(() => bd.subscriptions.list());
-	const items: Record<string, any>[] = data?.items ?? [];
+	const items: Loose[] = data?.items ?? [];
 	const subscribed = new URLSearchParams(window.location.search).has("session_id");
 	const [busyId, setBusyId] = useState<string | null>(null);
 	const [failure, setFailure] = useState<string | null>(null);
@@ -29,7 +30,7 @@ function SubscriptionsBody() {
 		setFailure(null);
 		try {
 			const res = await bd.subscriptions.checkout(planId, window.location.origin);
-			window.location.href = res.url ?? res.signIn ?? SIGN_IN;
+			window.location.assign(res.url ?? res.signIn ?? SIGN_IN);
 		} catch (e) {
 			setFailure(e instanceof Error ? e.message : "Couldn't start checkout.");
 			setBusyId(null);

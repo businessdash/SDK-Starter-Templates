@@ -168,9 +168,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 							<div class="bd-label">Next available slots</div>
 							<Show
 								when={slots() !== null}
-								fallback={
-									<div class="bd-loading">Computing availability…</div>
-								}
+								fallback={<div class="bd-loading">Computing availability…</div>}
 							>
 								<Show
 									when={(slots() ?? []).length > 0}
@@ -184,7 +182,9 @@ export function Booking(props: { eventTypes: EventType[] }) {
 										<For each={(slots() ?? []).slice(0, 12)}>
 											{(slot) => (
 												<button
-													aria-pressed={pickedSlot() === slot.startAt ? "true" : "false"}
+													aria-pressed={
+														pickedSlot() === slot.startAt ? "true" : "false"
+													}
 													class="slot-button"
 													onClick={() => setPickedSlot(slot.startAt)}
 													type="button"

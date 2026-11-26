@@ -9,7 +9,12 @@ import { getCustomerSession } from "../../../../../../../lib/bd-portal";
  * now or waits for approval, and the comments as they are now:
  * `{ ok, approved, comments }`, or `{ ok: false, error }`.
  */
-export const onPost: RequestHandler = async ({ params, request, cookie, json }) => {
+export const onPost: RequestHandler = async ({
+	params,
+	request,
+	cookie,
+	json,
+}) => {
 	const bd = getBd();
 	if (!bd) {
 		json(503, { ok: false, error: "The blog isn't connected yet." });
@@ -24,7 +29,9 @@ export const onPost: RequestHandler = async ({ params, request, cookie, json }) 
 		json(401, { ok: false, error: "Sign in to comment." });
 		return;
 	}
-	const body = (await request.json().catch(() => null)) as { content?: unknown } | null;
+	const body = (await request.json().catch(() => null)) as {
+		content?: unknown;
+	} | null;
 	const content = typeof body?.content === "string" ? body.content.trim() : "";
 	if (!content) {
 		json(400, { ok: false, error: "Write something first." });
@@ -35,9 +42,15 @@ export const onPost: RequestHandler = async ({ params, request, cookie, json }) 
 		return;
 	}
 	try {
-		const posted = await bd.blog.withSession(session.token).postComment(params.slug, { content });
+		const posted = await bd.blog
+			.withSession(session.token)
+			.postComment(params.slug, { content });
 		const comments = await bd.blog.listComments(params.slug, { limit: 50 });
-		json(200, { ok: true, approved: posted.moderation.isApproved, comments: comments.items });
+		json(200, {
+			ok: true,
+			approved: posted.moderation.isApproved,
+			comments: comments.items,
+		});
 	} catch {
 		json(502, { ok: false, error: "Couldn't post your comment. Try again." });
 	}

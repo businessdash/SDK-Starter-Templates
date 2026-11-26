@@ -79,9 +79,14 @@ defmodule BdStarter.Forms.QuizController do
 
   def advance(q) do
     case QuizEngine.advance(q.config, q.state, q.clock.()) do
-      {:lock, state, field_id, answer} -> q |> set(state) |> lock(field_id, answer)
-      {:submit, state, answers} -> q |> set(state) |> submit(answers, q.config.words.submit_failed)
-      {:none, state} -> set(q, state)
+      {:lock, state, field_id, answer} ->
+        q |> set(state) |> lock(field_id, answer)
+
+      {:submit, state, answers} ->
+        q |> set(state) |> submit(answers, q.config.words.submit_failed)
+
+      {:none, state} ->
+        set(q, state)
     end
   end
 
@@ -92,7 +97,15 @@ defmodule BdStarter.Forms.QuizController do
     seed = QuizArrange.random_seed()
     config = QuizConfig.new(q.options, seed)
     now = q.clock.()
-    %{q | seed: seed, config: config, now: now, state: QuizEngine.initial_state(config, %{}, now), last_draft: %{}}
+
+    %{
+      q
+      | seed: seed,
+        config: config,
+        now: now,
+        state: QuizEngine.initial_state(config, %{}, now),
+        last_draft: %{}
+    }
   end
 
   @doc "The clock, re-read: at zero the quiz submits what it has."
@@ -119,7 +132,8 @@ defmodule BdStarter.Forms.QuizController do
   end
 
   @doc "Whether the page should keep re-reading the clock."
-  def clock_running?(q), do: q.config.timer_enabled and q.state.started_at != nil and q.state.completion == nil
+  def clock_running?(q),
+    do: q.config.timer_enabled and q.state.started_at != nil and q.state.completion == nil
 
   # ── Internals ─────────────────────────────────────────────────────────────
 
@@ -130,9 +144,15 @@ defmodule BdStarter.Forms.QuizController do
     answers = q.state.answers
 
     cond do
-      q.backend == nil or q.backend.save_draft == nil or q.config.feedback_mode != "end" -> q
-      q.config.timer_enabled and q.state.started_at == nil -> q
-      Json.equal?(answers, q.last_draft) -> q
+      q.backend == nil or q.backend.save_draft == nil or q.config.feedback_mode != "end" ->
+        q
+
+      q.config.timer_enabled and q.state.started_at == nil ->
+        q
+
+      Json.equal?(answers, q.last_draft) ->
+        q
+
       true ->
         q = %{q | last_draft: answers}
 

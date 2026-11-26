@@ -115,6 +115,7 @@ function safeUrl(raw: string): string | null {
 	// Browsers ignore control characters and whitespace inside a scheme
 	// ("java\nscript:"), so they are removed before the check.
 	// biome-ignore lint/suspicious/noControlCharactersInRegex: removing control characters is the point
+	// eslint-disable-next-line no-control-regex
 	const value = decodeEntities(raw).replace(/[\u0000- \u007f-\u009f]/g, "");
 	if (/^(https?:|mailto:|tel:)/i.test(value)) return raw.trim();
 	if (/^[a-z][a-z0-9+.-]*:/i.test(value)) return null;

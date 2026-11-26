@@ -10,10 +10,7 @@ import { Blog, type BlogPost } from "../components/bd/Blog";
 // [bd:booking]
 import { Booking, type EventType } from "../components/bd/Booking";
 // [/bd:booking]
-import {
-	ContactForm,
-	type FormSchema,
-} from "../components/bd/ContactForm";
+import { ContactForm, type FormSchema } from "../components/bd/ContactForm";
 import { Footer } from "../components/bd/Footer";
 import { Gallery, type GalleryItem } from "../components/bd/Gallery";
 import { Header } from "../components/bd/Header";
@@ -96,7 +93,13 @@ const FORM_FALLBACK: FormSchema = {
 	],
 };
 
-const GALLERY_FIELDS = ["id", "src", "title", "category", "blurDataURL"] as const;
+const GALLERY_FIELDS = [
+	"id",
+	"src",
+	"title",
+	"category",
+	"blurDataURL",
+] as const;
 
 export const useBdData = routeLoader$(async ({ url }) => {
 	const bd = getBd();
@@ -215,6 +218,7 @@ export const useBdData = routeLoader$(async ({ url }) => {
 export default component$(() => {
 	const data = useBdData();
 
+	// eslint-disable-next-line qwik/no-use-visible-task -- analytics counts what the browser shows, so it starts there.
 	useVisibleTask$(() => {
 		// Prefer the canonical PUBLIC_BD_* names (Vite envPrefix), falling
 		// back to the starter's original PUBLIC_BD_* names.
@@ -222,9 +226,7 @@ export default component$(() => {
 			(import.meta.env.PUBLIC_BD_SITE_ID as string | undefined) ??
 			(import.meta.env.PUBLIC_BD_SITE_ID as string | undefined);
 		const baseUrl =
-			(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as
-				| string
-				| undefined) ??
+			(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined) ??
 			(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined);
 		const apiKey =
 			(import.meta.env.PUBLIC_BD_PK as string | undefined) ??
@@ -250,7 +252,10 @@ export default component$(() => {
 				{/* [bd:blog] */}
 				<Blog posts={data.value.blogPosts} />
 				{/* [/bd:blog] */}
-				<ContactForm schema={data.value.formSchema} slug={data.value.formSlug} />
+				<ContactForm
+					schema={data.value.formSchema}
+					slug={data.value.formSlug}
+				/>
 			</main>
 			<Footer />
 		</>

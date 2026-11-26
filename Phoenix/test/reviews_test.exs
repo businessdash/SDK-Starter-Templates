@@ -43,7 +43,11 @@ defmodule BdStarter.ReviewsTest do
     assert Reviews.source_label("other") == "Other"
     assert Reviews.source_param("tripadvisor") == nil
 
-    assert Reviews.sources_in([%{"source" => "google"}, %{"source" => "other"}, %{"source" => "google"}]) ==
+    assert Reviews.sources_in([
+             %{"source" => "google"},
+             %{"source" => "other"},
+             %{"source" => "google"}
+           ]) ==
              ["google", "other"]
   end
 
@@ -57,9 +61,14 @@ defmodule BdStarter.ReviewsTest do
   end
 
   test "a written review is checked" do
-    assert Reviews.check(%{"rating" => 6, "body" => "Good"}) == {:error, "Choose a rating from 1 to 5 stars."}
-    assert Reviews.check(%{"rating" => 4.5, "body" => "Good"}) == {:error, "Choose a rating from 1 to 5 stars."}
-    assert Reviews.check(%{"rating" => 4, "body" => "   "}) == {:error, "Write a few words about your experience."}
+    assert Reviews.check(%{"rating" => 6, "body" => "Good"}) ==
+             {:error, "Choose a rating from 1 to 5 stars."}
+
+    assert Reviews.check(%{"rating" => 4.5, "body" => "Good"}) ==
+             {:error, "Choose a rating from 1 to 5 stars."}
+
+    assert Reviews.check(%{"rating" => 4, "body" => "   "}) ==
+             {:error, "Write a few words about your experience."}
 
     assert Reviews.check(%{"rating" => 4, "body" => String.duplicate("a", 5001)}) ==
              {:error, "Reviews are up to 5,000 characters."}
@@ -67,7 +76,9 @@ defmodule BdStarter.ReviewsTest do
     assert Reviews.check(%{"rating" => 4, "title" => " ", "body" => " Good fitting. "}) ==
              {:ok, %{rating: 4, body: "Good fitting."}}
 
-    {:ok, review} = Reviews.check(%{"rating" => 5, "title" => String.duplicate("t", 300), "body" => "x"})
+    {:ok, review} =
+      Reviews.check(%{"rating" => 5, "title" => String.duplicate("t", 300), "body" => "x"})
+
     assert String.length(review.title) == 200
   end
 end

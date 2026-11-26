@@ -10,7 +10,11 @@ export function About({ body }: { body: string }) {
 				</h2>
 			</div>
 			<p
-				style={{ color: "var(--text)", fontSize: "1.05rem", textAlign: "center" }}
+				style={{
+					color: "var(--text)",
+					fontSize: "1.05rem",
+					textAlign: "center",
+				}}
 			>
 				{body}
 			</p>

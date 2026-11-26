@@ -36,7 +36,13 @@ defmodule BdStarter.Bd.Resources.Blog do
   moderation verdict: `moderation.isApproved` false means it waits for review.
   """
   def post_comment(client, slug, content, session_token),
-    do: Client.post(client, "blog/posts/#{enc(slug)}/comments", %{content: content}, session(session_token))
+    do:
+      Client.post(
+        client,
+        "blog/posts/#{enc(slug)}/comments",
+        %{content: content},
+        session(session_token)
+      )
 
   defp session(nil), do: []
   defp session(token), do: [{"x-bd-session-token", token}]

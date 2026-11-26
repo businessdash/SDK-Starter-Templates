@@ -81,7 +81,10 @@ class _ReviewsPageState extends State<ReviewsPage> {
       if (!mounted) return;
       final shown = reviews.map((review) => review.id).toSet();
       setState(() {
-        _reviews = [...reviews, ...page.items.where((review) => !shown.contains(review.id))];
+        _reviews = [
+          ...reviews,
+          ...page.items.where((review) => !shown.contains(review.id))
+        ];
         _nextOffset = page.nextOffset;
       });
     } on Exception {
@@ -101,7 +104,8 @@ class _ReviewsPageState extends State<ReviewsPage> {
           : ListView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
               children: [
-                ReviewSummaryCard(summary: Reviews.summarize(_totals, fallbackTotal: _total)),
+                ReviewSummaryCard(
+                    summary: Reviews.summarize(_totals, fallbackTotal: _total)),
                 const SizedBox(height: 16),
                 if (_sources.length > 1 || _source != null)
                   ReviewSourceFilter(
@@ -114,11 +118,16 @@ class _ReviewsPageState extends State<ReviewsPage> {
                   ),
                 const SizedBox(height: 8),
                 if (_failed)
-                  const EmptyNote("Reviews aren't available right now. Please check back soon.")
+                  const EmptyNote(
+                      "Reviews aren't available right now. Please check back soon.")
                 else if (reviews == null)
-                  const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
+                  const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator()))
                 else if (reviews.isEmpty)
-                  const EmptyNote('No reviews yet', detail: "Write one in Business Dash and it'll appear here.")
+                  const EmptyNote('No reviews yet',
+                      detail:
+                          "Write one in Business Dash and it'll appear here.")
                 else ...[
                   for (final review in reviews) ReviewCard(review: review),
                   if (_nextOffset != null)

@@ -49,7 +49,8 @@ class BdFieldPattern {
   final bool sticky;
 
   /// `RegExp.prototype.test` on a fresh regex.
-  bool test(String value) => sticky ? regExp.matchAsPrefix(value) != null : regExp.hasMatch(value);
+  bool test(String value) =>
+      sticky ? regExp.matchAsPrefix(value) != null : regExp.hasMatch(value);
 }
 
 /// BD's form rules, ported from the server validator
@@ -77,7 +78,16 @@ abstract final class BdFormRules {
   static const maxIconNameLen = 64;
   static const maxRichTextLen = 20000;
   static const maxKeys = 500;
-  static const _nameValueKeys = {'prefix', 'first', 'middle', 'last', 'suffix', 'nicknames', 'full', 'short'};
+  static const _nameValueKeys = {
+    'prefix',
+    'first',
+    'middle',
+    'last',
+    'suffix',
+    'nicknames',
+    'full',
+    'short'
+  };
 
   static final _email = RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]{2,}$');
   static final _url = RegExp(
@@ -101,7 +111,8 @@ abstract final class BdFormRules {
     final m = _regexLiteral.firstMatch(trimmed);
     final source = m?[1] ?? trimmed;
     final flags = m?[2] ?? '';
-    final valid = flags.split('').toSet().length == flags.length && !(flags.contains('u') && flags.contains('v'));
+    final valid = flags.split('').toSet().length == flags.length &&
+        !(flags.contains('u') && flags.contains('v'));
     if (valid) {
       try {
         return BdFieldPattern._(
@@ -127,10 +138,13 @@ abstract final class BdFormRules {
 
   // ── Conditions ─────────────────────────────────────────────────────────
 
-  static bool evalClause(BdJson? value, String op, String target) => switch (op) {
+  static bool evalClause(BdJson? value, String op, String target) =>
+      switch (op) {
         'eq' => BdJS.string(value) == target,
         'neq' => BdJS.string(value) != target,
-        'contains' => BdJS.toLowerCase(BdJS.string(value)).contains(BdJS.toLowerCase(target)) || target.isEmpty,
+        'contains' => BdJS.toLowerCase(BdJS.string(value))
+                .contains(BdJS.toLowerCase(target)) ||
+            target.isEmpty,
         'gt' => BdJS.number(value) > BdJS.parseNumber(target),
         'lt' => BdJS.number(value) < BdJS.parseNumber(target),
         'is_empty' => BdJson.isBlank(value),
@@ -163,7 +177,9 @@ abstract final class BdFormRules {
 
   /// Only a `condition_block` or an `input_group` can be hidden by a rule.
   static bool isNodeVisible(BdFormField node, BdRuleResolver resolve) {
-    if (node.type != 'condition_block' && node.type != 'input_group') return true;
+    if (node.type != 'condition_block' && node.type != 'input_group') {
+      return true;
+    }
     return evalConditionWith(node.conditionRule, resolve);
   }
 
@@ -190,7 +206,9 @@ abstract final class BdFormRules {
       case 'checkbox' || 'tags' || 'file_upload':
         return emptyArray();
       case 'collection_select':
-        return field.collectionSelectConfig?.multi == true ? emptyArray() : emptyString();
+        return field.collectionSelectConfig?.multi == true
+            ? emptyArray()
+            : emptyString();
       case 'rich_text_input':
         final s = value?.stringValue;
         if (s == null) return true;
@@ -198,11 +216,15 @@ abstract final class BdFormRules {
       case 'month_year':
         return emptyString();
       case 'choice_cards':
-        return field.choiceConfig?.mode == 'multi' ? emptyArray() : emptyString();
+        return field.choiceConfig?.mode == 'multi'
+            ? emptyArray()
+            : emptyString();
       case 'boolean':
         // Consent: empty unless exactly true. Otherwise any explicit choice,
         // true or false, is an answer.
-        return field.mustBeTrue == true ? value != const BdBool(true) : value?.boolValue == null;
+        return field.mustBeTrue == true
+            ? value != const BdBool(true)
+            : value?.boolValue == null;
       case 'schedule':
         final s = value?.objectValue ?? const <String, BdJson>{};
         final slot = s['slotStartAt']?.stringValue?.isNotEmpty ?? false;
@@ -217,7 +239,10 @@ abstract final class BdFormRules {
       case 'date_range':
         return isFalsy(value?['start']) || isFalsy(value?['end']);
       case 'address':
-        return isFalsy(value?['line1']) || isFalsy(value?['city']) || isFalsy(value?['state']) || isFalsy(value?['zip']);
+        return isFalsy(value?['line1']) ||
+            isFalsy(value?['city']) ||
+            isFalsy(value?['state']) ||
+            isFalsy(value?['zip']);
       case 'name':
         final first = BdJS.trim(value?['first']?.stringValue ?? '');
         final last = BdJS.trim(value?['last']?.stringValue ?? '');
@@ -272,7 +297,8 @@ abstract final class BdFormRules {
 
   static bool _isAsciiDigit(int c) => c >= 0x30 && c <= 0x39;
 
-  static String _digits(String s) => String.fromCharCodes(s.codeUnits.where(_isAsciiDigit));
+  static String _digits(String s) =>
+      String.fromCharCodes(s.codeUnits.where(_isAsciiDigit));
 
   /// Why a non-empty value doesn't conform to its field, or null when it
   /// does. Reasons are the server's: `type`, `format`, `min`, `max`,
@@ -288,7 +314,8 @@ abstract final class BdFormRules {
         if (s == null) return 'type';
         if (s.length > maxStringLen) return 'max';
         if (!_email.hasMatch(s)) return 'format';
-        if (field.emailConfig?.businessOnly == true && isConsumerEmailDomain(emailDomain(s) ?? '')) {
+        if (field.emailConfig?.businessOnly == true &&
+            isConsumerEmailDomain(emailDomain(s) ?? '')) {
           return 'business_email';
         }
         return null;
@@ -304,7 +331,10 @@ abstract final class BdFormRules {
         final verified = o['verified'];
         if (verified != null) {
           final vs = verified.stringValue;
-          if (vs == null || !const {'unverified', 'safe', 'unsafe'}.contains(vs)) return 'options';
+          if (vs == null ||
+              !const {'unverified', 'safe', 'unsafe'}.contains(vs)) {
+            return 'options';
+          }
         }
         return onlyBoundedPrimitives(o, maxStringLen) ? null : 'type';
       case 'phone':
@@ -317,19 +347,29 @@ abstract final class BdFormRules {
         if (field.phoneConfig?.international == true) {
           return digits.length >= 7 && digits.length <= 15 ? null : 'format';
         }
-        final national = digits.length == 11 && digits.startsWith('1') ? digits.substring(1) : digits;
+        final national = digits.length == 11 && digits.startsWith('1')
+            ? digits.substring(1)
+            : digits;
         return national.length == 10 ? null : 'format';
       case 'number' || 'slider' || 'stepper':
         final double n;
         if (value is BdNum) {
           n = value.value;
-        } else if (value is BdStr && BdJS.trim(value.value).isNotEmpty && !BdJS.parseNumber(value.value).isNaN) {
+        } else if (value is BdStr &&
+            BdJS.trim(value.value).isNotEmpty &&
+            !BdJS.parseNumber(value.value).isNaN) {
           n = BdJS.parseNumber(value.value);
         } else {
           return 'type';
         }
-        if (field.type == 'number' && field.allowDecimal == false && !_isWhole(n)) return 'format';
-        if (field.type == 'number' && field.allowNegative == false && n < 0) return 'min';
+        if (field.type == 'number' &&
+            field.allowDecimal == false &&
+            !_isWhole(n)) {
+          return 'format';
+        }
+        if (field.type == 'number' && field.allowNegative == false && n < 0) {
+          return 'min';
+        }
         final min = field.validation?.min ?? field.sliderConfig?.min;
         final max = field.validation?.max ?? field.sliderConfig?.max;
         if (min != null && n < min) return 'min';
@@ -353,7 +393,9 @@ abstract final class BdFormRules {
         final s = value.stringValue;
         if (s == null) return 'type';
         if (s.length > maxStringLen) return 'max';
-        if (opts != null && field.allowCustom != true && !opts.contains(s)) return 'options';
+        if (opts != null && field.allowCustom != true && !opts.contains(s)) {
+          return 'options';
+        }
         return null;
       case 'collection_select':
         if (field.collectionSelectConfig?.multi == true) {
@@ -388,7 +430,9 @@ abstract final class BdFormRules {
         if (s.length > maxIconNameLen) return 'max';
         if (!_iconName.hasMatch(s)) return 'format';
         final allowed = field.iconConfig?.allowedIcons;
-        if (allowed != null && allowed.isNotEmpty && !allowed.contains(s)) return 'options';
+        if (allowed != null && allowed.isNotEmpty && !allowed.contains(s)) {
+          return 'options';
+        }
         return null;
       case 'image_input':
         final s = value.stringValue;
@@ -412,14 +456,20 @@ abstract final class BdFormRules {
         for (final v in a) {
           final s = v.stringValue;
           if (s == null) return 'type';
-          if (opts != null && field.allowCustom != true && !opts.contains(s)) return 'options';
+          if (opts != null && field.allowCustom != true && !opts.contains(s)) {
+            return 'options';
+          }
         }
         return null;
       case 'service_selector':
         final a = value.arrayValue;
         if (a == null) return 'type';
         if (a.length > maxArrayLen) return 'max';
-        final offered = [for (final o in field.serviceConfig?.options ?? const <BdServiceOption>[]) o.id];
+        final offered = [
+          for (final o
+              in field.serviceConfig?.options ?? const <BdServiceOption>[])
+            o.id
+        ];
         for (final v in a) {
           final s = v.stringValue;
           if (s == null) return 'type';
@@ -427,7 +477,11 @@ abstract final class BdFormRules {
         }
         return null;
       case 'choice_cards':
-        final labels = [for (final o in field.choiceConfig?.options ?? const <BdChoiceOption>[]) o.label];
+        final labels = [
+          for (final o
+              in field.choiceConfig?.options ?? const <BdChoiceOption>[])
+            o.label
+        ];
         if (field.choiceConfig?.mode == 'multi') {
           final a = value.arrayValue;
           if (a == null) return 'type';
@@ -447,7 +501,8 @@ abstract final class BdFormRules {
       case 'file_upload':
         final a = value.arrayValue;
         if (a == null) return 'type';
-        final maxFiles = math.min(field.fileConfig?.maxFiles ?? maxArrayLen, maxArrayLen);
+        final maxFiles =
+            math.min(field.fileConfig?.maxFiles ?? maxArrayLen, maxArrayLen);
         if (a.length > maxFiles) return 'max';
         for (final item in a) {
           final o = item.objectValue;
@@ -458,8 +513,12 @@ abstract final class BdFormRules {
       case 'currency':
         final n = value.doubleValue;
         if (n == null || n.isNaN) return 'type';
-        if (field.currencyConfig?.allowNegative != true && n < 0) return 'format';
-        if (field.currencyConfig?.allowDecimal == false && !_isWhole(n)) return 'format';
+        if (field.currencyConfig?.allowNegative != true && n < 0) {
+          return 'format';
+        }
+        if (field.currencyConfig?.allowDecimal == false && !_isWhole(n)) {
+          return 'format';
+        }
         return null;
       case 'measurement':
         final o = value.objectValue;
@@ -471,12 +530,15 @@ abstract final class BdFormRules {
         if (unit == null) return 'type';
         final cat = BdUnits.category(field.unitConfig?.category);
         if (cat != null && !cat.contains(unit)) return 'options';
-        if (field.unitConfig?.allowDecimal == false && !_isWhole(n)) return 'format';
+        if (field.unitConfig?.allowDecimal == false && !_isWhole(n)) {
+          return 'format';
+        }
         return onlyBoundedPrimitives(o, maxDateLen) ? null : 'type';
       case 'multi_populator':
         final a = value.arrayValue;
         if (a == null) return 'type';
-        final maxInstances = math.min(field.populatorConfig?.maxInstances ?? 10, maxArrayLen);
+        final maxInstances =
+            math.min(field.populatorConfig?.maxInstances ?? 10, maxArrayLen);
         if (a.length > maxInstances) return 'max';
         final known = instanceValueFields(field.children ?? const []);
         for (final instance in a) {
@@ -487,7 +549,9 @@ abstract final class BdFormRules {
             final child = known[key];
             if (child == null) return 'options';
             final reason = validateValue(child, v);
-            if (reason != null) return '${child.label.isEmpty ? key : child.label}: $reason';
+            if (reason != null) {
+              return '${child.label.isEmpty ? key : child.label}: $reason';
+            }
           }
         }
         return null;
@@ -519,7 +583,9 @@ abstract final class BdFormRules {
           if (key == 'nicknames' || v.isNull) continue;
           final s = v.stringValue;
           if (s == null) return 'type';
-          final cap = key == 'full' || key == 'short' ? maxNameStringLen : maxNamePartLen;
+          final cap = key == 'full' || key == 'short'
+              ? maxNameStringLen
+              : maxNamePartLen;
           if (s.length > cap) return 'max';
         }
         switch (o['nicknames']) {
@@ -573,8 +639,10 @@ abstract final class BdFormRules {
       default:
         return switch (value) {
           BdNum() || BdBool() => null,
-          BdStr(value: final s) =>
-            s.length > (field.type == 'textarea' ? maxTextareaLen : maxStringLen) ? 'max' : regexFail(field, s),
+          BdStr(value: final s) => s.length >
+                  (field.type == 'textarea' ? maxTextareaLen : maxStringLen)
+              ? 'max'
+              : regexFail(field, s),
           _ => 'type',
         };
     }
@@ -588,7 +656,8 @@ abstract final class BdFormRules {
     return re.test(value) ? null : 'regex';
   }
 
-  static bool onlyBoundedPrimitives(Map<String, BdJson> obj, int maxLen) => obj.values.every(
+  static bool onlyBoundedPrimitives(Map<String, BdJson> obj, int maxLen) =>
+      obj.values.every(
         (v) => switch (v) {
           BdNull() || BdNum() || BdBool() => true,
           BdStr(:final value) => value.length <= maxLen,
@@ -597,7 +666,8 @@ abstract final class BdFormRules {
       );
 
   /// Value-bearing fields inside a repeater, keyed by id and output key.
-  static Map<String, BdFormField> instanceValueFields(List<BdFormField> children) {
+  static Map<String, BdFormField> instanceValueFields(
+      List<BdFormField> children) {
     final out = <String, BdFormField>{};
     void walk(List<BdFormField> nodes) {
       for (final f in nodes) {
@@ -605,7 +675,9 @@ abstract final class BdFormRules {
           out[f.id] = f;
           if (f.key != null) out[f.key!] = f;
         }
-        if (f.type != 'multi_populator' && f.children != null) walk(f.children!);
+        if (f.type != 'multi_populator' && f.children != null) {
+          walk(f.children!);
+        }
       }
     }
 
@@ -642,15 +714,20 @@ abstract final class BdFormRules {
     Map<String, BdJson> data, [
     BdMatchResolver? resolveMatch,
   ]) {
-    final derived = withDerivedFieldValues(fields, deriveReferenceValues(fields, data));
+    final derived =
+        withDerivedFieldValues(fields, deriveReferenceValues(fields, data));
     final missing = <BdMissingField>[];
     _walkRequired(fields, derived, '', resolveMatch, missing);
     return missing;
   }
 
-  static BdRuleResolver resolver(Map<String, BdJson> scope, BdMatchResolver? resolveMatch) => (rule) {
+  static BdRuleResolver resolver(
+          Map<String, BdJson> scope, BdMatchResolver? resolveMatch) =>
+      (rule) {
         final raw = scope[rule.fieldId ?? ''];
-        return rule.matchField != null && resolveMatch != null ? resolveMatch(rule, raw) : raw;
+        return rule.matchField != null && resolveMatch != null
+            ? resolveMatch(rule, raw)
+            : raw;
       };
 
   static void _walkRequired(
@@ -665,28 +742,43 @@ abstract final class BdFormRules {
       switch (f.type) {
         case 'condition_block':
           if (!evalConditionWith(f.conditionRule, resolve)) continue;
-          _walkRequired(f.children ?? const [], scope, prefix, resolveMatch, missing);
+          _walkRequired(
+              f.children ?? const [], scope, prefix, resolveMatch, missing);
         case 'or_condition':
           final children = f.children ?? const <BdFormField>[];
-          final filled = [for (final c in children) subtreeHasValue([c], scope, resolveMatch)];
+          final filled = [
+            for (final c in children) subtreeHasValue([c], scope, resolveMatch)
+          ];
           if (children.isNotEmpty && !filled.contains(true)) {
-            missing.add(BdMissingField(f.id, f.label.isEmpty ? 'Either side required' : f.label, prefix + f.id));
+            missing.add(BdMissingField(
+                f.id,
+                f.label.isEmpty ? 'Either side required' : f.label,
+                prefix + f.id));
             continue;
           }
           for (var i = 0; i < children.length; i++) {
-            if (filled[i]) _walkRequired([children[i]], scope, prefix, resolveMatch, missing);
+            if (filled[i]) {
+              _walkRequired(
+                  [children[i]], scope, prefix, resolveMatch, missing);
+            }
           }
         case 'input_group' || 'flex_row':
           if (!isNodeVisible(f, resolve)) continue;
-          _walkRequired(f.children ?? const [], scope, prefix, resolveMatch, missing);
+          _walkRequired(
+              f.children ?? const [], scope, prefix, resolveMatch, missing);
         case 'multi_populator':
           final instances = scope[f.id]?.arrayValue ?? const <BdJson>[];
           final filled = [
             for (var i = 0; i < instances.length; i++)
-              if (instances[i].objectValue != null && instanceHasValue(instances[i])) (i, instances[i]),
+              if (instances[i].objectValue != null &&
+                  instanceHasValue(instances[i]))
+                (i, instances[i]),
           ];
           if (f.required && filled.isEmpty) {
-            missing.add(BdMissingField(f.id, f.label.isEmpty ? 'At least one entry required' : f.label, prefix + f.id));
+            missing.add(BdMissingField(
+                f.id,
+                f.label.isEmpty ? 'At least one entry required' : f.label,
+                prefix + f.id));
             continue;
           }
           for (final (index, inst) in filled) {
@@ -701,7 +793,8 @@ abstract final class BdFormRules {
         default:
           if (BdFieldType.staticOrLayout.contains(f.type)) continue;
           if ((f.required || f.mustBeTrue == true) && isEmpty(f, scope[f.id])) {
-            missing.add(BdMissingField(f.id, f.label.isEmpty ? 'Untitled' : f.label, prefix + f.id));
+            missing.add(BdMissingField(
+                f.id, f.label.isEmpty ? 'Untitled' : f.label, prefix + f.id));
           }
       }
     }
@@ -719,10 +812,14 @@ abstract final class BdFormRules {
       switch (f.type) {
         case 'condition_block':
           if (!evalConditionWith(f.conditionRule, resolve)) continue;
-          if (subtreeHasValue(f.children ?? const [], data, resolveMatch)) return true;
+          if (subtreeHasValue(f.children ?? const [], data, resolveMatch)) {
+            return true;
+          }
         case 'or_condition' || 'input_group' || 'flex_row':
           if (!isNodeVisible(f, resolve)) continue;
-          if (subtreeHasValue(f.children ?? const [], data, resolveMatch)) return true;
+          if (subtreeHasValue(f.children ?? const [], data, resolveMatch)) {
+            return true;
+          }
         default:
           if (BdFieldType.staticOrLayout.contains(f.type)) continue;
           if (!isEmpty(f, data[f.id])) return true;
@@ -733,7 +830,8 @@ abstract final class BdFormRules {
 
   /// Concurrent reveal: show children up to and including the first one
   /// that still has a missing required answer.
-  static int concurrentRevealCount(List<BdFormField> children, Map<String, BdJson> data) {
+  static int concurrentRevealCount(
+      List<BdFormField> children, Map<String, BdJson> data) {
     for (var i = 0; i < children.length; i++) {
       if (findMissingRequired([children[i]], data).isNotEmpty) return i + 1;
     }
@@ -744,7 +842,8 @@ abstract final class BdFormRules {
 
   /// Hidden `reference_value` elements mirror their source once the source
   /// is complete (non-empty and passing its regex), else null.
-  static Map<String, BdJson> deriveReferenceValues(List<BdFormField> fields, Map<String, BdJson> data) {
+  static Map<String, BdJson> deriveReferenceValues(
+      List<BdFormField> fields, Map<String, BdJson> data) {
     final byId = fieldsById(fields);
     final out = Map<String, BdJson>.of(data);
     for (final f in byId.values) {
@@ -752,7 +851,9 @@ abstract final class BdFormRules {
       BdJson derived = const BdNull();
       final sourceId = f.referenceFieldId;
       final source = sourceId == null ? null : byId[sourceId];
-      if (sourceId != null && source != null && !isEmpty(source, data[sourceId])) {
+      if (sourceId != null &&
+          source != null &&
+          !isEmpty(source, data[sourceId])) {
         final v = data[sourceId] ?? const BdNull();
         var ok = true;
         final pattern = source.regexPattern;
@@ -770,20 +871,27 @@ abstract final class BdFormRules {
   /// One derived value per exploded checkbox option (`id::optionKey`),
   /// month/year part (`id::year`), and name part (`id::first`), so a
   /// condition can point at any of them.
-  static Map<String, BdJson> withDerivedFieldValues(List<BdFormField> fields, Map<String, BdJson> data) {
+  static Map<String, BdJson> withDerivedFieldValues(
+      List<BdFormField> fields, Map<String, BdJson> data) {
     final out = Map<String, BdJson>.of(data);
     for (final field in fieldsById(fields).values) {
       final options = field.options;
-      if (field.type == 'checkbox' && field.explodeOptions == true && options != null && options.isNotEmpty) {
+      if (field.type == 'checkbox' &&
+          field.explodeOptions == true &&
+          options != null &&
+          options.isNotEmpty) {
         final picked = data[field.id]?.stringArray ?? const <String>[];
-        for (final (key, option) in checkboxOptionKeys(keyBase(field), options)) {
+        for (final (key, option)
+            in checkboxOptionKeys(keyBase(field), options)) {
           out['${field.id}::$key'] = BdBool(picked.contains(option));
         }
       }
       if (field.type == 'month_year' && field.explodeMonthYear == true) {
         final parts = monthYearParts(data[field.id]);
-        out['${field.id}::year'] = parts == null ? const BdNull() : BdNum(parts.$1.toDouble());
-        out['${field.id}::month'] = parts == null ? const BdNull() : BdNum(parts.$2.toDouble());
+        out['${field.id}::year'] =
+            parts == null ? const BdNull() : BdNum(parts.$1.toDouble());
+        out['${field.id}::month'] =
+            parts == null ? const BdNull() : BdNum(parts.$2.toDouble());
       }
       if (field.type == 'name') {
         final cfg = field.nameConfig;
@@ -803,7 +911,8 @@ abstract final class BdFormRules {
     return out;
   }
 
-  static String keyBase(BdFormField field) => field.outputKey ?? toOutputKey(field.label);
+  static String keyBase(BdFormField field) =>
+      field.outputKey ?? toOutputKey(field.label);
 
   static final _monthYearParse = RegExp(r'^([0-9]{4})-([0-9]{1,2})$');
 
@@ -820,9 +929,16 @@ abstract final class BdFormRules {
     if (o == null) return null;
     String? nonEmpty(String? s) => s == null || s.isEmpty ? null : s;
     return switch (part) {
-      'prefix' || 'first' || 'middle' || 'last' || 'suffix' => nonEmpty(o[part]?.stringValue),
-      'full' => nonEmpty(o['full']?.stringValue) ?? nonEmpty(composeFullName(o)),
-      'short' => nonEmpty(o['short']?.stringValue) ?? nonEmpty(composeShortName(o)),
+      'prefix' ||
+      'first' ||
+      'middle' ||
+      'last' ||
+      'suffix' =>
+        nonEmpty(o[part]?.stringValue),
+      'full' =>
+        nonEmpty(o['full']?.stringValue) ?? nonEmpty(composeFullName(o)),
+      'short' =>
+        nonEmpty(o['short']?.stringValue) ?? nonEmpty(composeShortName(o)),
       'nicknames' => switch (o['nicknames']?.arrayValue) {
           final list? when list.isNotEmpty => list.map(BdJS.string).join(', '),
           _ => null,
@@ -851,23 +967,33 @@ abstract final class BdFormRules {
   /// "Best time to reach:" → "bestTimeToReach". "" when the label has no
   /// usable characters.
   static String toOutputKey(String raw) {
-    final words = raw.replaceAll(_nonAlnum, ' ').split(' ').where((w) => w.isNotEmpty).toList();
+    final words = raw
+        .replaceAll(_nonAlnum, ' ')
+        .split(' ')
+        .where((w) => w.isNotEmpty)
+        .toList();
     if (words.isEmpty) return '';
     final key = [
       for (var i = 0; i < words.length; i++)
-        i == 0 ? words[i].toLowerCase() : words[i].substring(0, 1).toUpperCase() + words[i].substring(1).toLowerCase(),
+        i == 0
+            ? words[i].toLowerCase()
+            : words[i].substring(0, 1).toUpperCase() +
+                words[i].substring(1).toLowerCase(),
     ].join();
     return _isAsciiDigit(key.codeUnitAt(0)) ? '_$key' : key;
   }
 
-  static List<(String, String)> checkboxOptionKeys(String fieldKey, List<String> options) {
+  static List<(String, String)> checkboxOptionKeys(
+      String fieldKey, List<String> options) {
     final used = <String>{};
     return [
       for (final option in options)
         () {
           final raw = toOutputKey(option);
           final optKey = raw.isEmpty ? 'option' : raw;
-          var key = fieldKey + optKey.substring(0, 1).toUpperCase() + optKey.substring(1);
+          var key = fieldKey +
+              optKey.substring(0, 1).toUpperCase() +
+              optKey.substring(1);
           if (used.contains(key)) {
             var n = 2;
             while (used.contains('$key$n')) {
@@ -891,9 +1017,11 @@ abstract final class BdFormRules {
             if (BdJS.trim(s) case final t when t.isNotEmpty) t,
       ].join(' ');
 
-  static String composeFullName(Map<String, BdJson> v) => _joinParts(v, _namePartOrder);
+  static String composeFullName(Map<String, BdJson> v) =>
+      _joinParts(v, _namePartOrder);
 
-  static String composeShortName(Map<String, BdJson> v) => _joinParts(v, const ['first', 'last']);
+  static String composeShortName(Map<String, BdJson> v) =>
+      _joinParts(v, const ['first', 'last']);
 
   /// Trimmed parts, nicknames split into a list, `full`/`short` recomputed.
   static BdJson normalizeNameValue(BdJson raw) {
@@ -905,7 +1033,8 @@ abstract final class BdFormRules {
       if (s != null && BdJS.trim(s).isNotEmpty) out[key] = BdStr(BdJS.trim(s));
     }
     final nicknames = switch (o['nicknames']) {
-      BdStr(:final value) => value.split(',').map(BdJS.trim).where((s) => s.isNotEmpty).toList(),
+      BdStr(:final value) =>
+        value.split(',').map(BdJS.trim).where((s) => s.isNotEmpty).toList(),
       BdArr(:final items) => [
           for (final item in items)
             if (item.stringValue case final s?)
@@ -913,7 +1042,9 @@ abstract final class BdFormRules {
         ],
       _ => const <String>[],
     };
-    if (nicknames.isNotEmpty) out['nicknames'] = BdArr([for (final n in nicknames) BdStr(n)]);
+    if (nicknames.isNotEmpty) {
+      out['nicknames'] = BdArr([for (final n in nicknames) BdStr(n)]);
+    }
     out['full'] = BdStr(composeFullName(out));
     out['short'] = BdStr(composeShortName(out));
     return BdObj(out);
@@ -922,10 +1053,15 @@ abstract final class BdFormRules {
   // ── Seed + payload ─────────────────────────────────────────────────────
 
   static const _noSeedStatic = {
-    'title', 'subtitle', 'separator', 'image', 'richtext', 'body_text', 'bullet_list', 'table', //
+    'title', 'subtitle', 'separator', 'image', 'richtext', 'body_text',
+    'bullet_list', 'table', //
     'calculation', 'reference_value', //
   };
-  static const _stepContainers = {'input_group', 'condition_block', 'or_condition'};
+  static const _stepContainers = {
+    'input_group',
+    'condition_block',
+    'or_condition'
+  };
 
   /// Starting values: what each element shows before the visitor touches it.
   static Map<String, BdJson> seedInitialData(List<BdFormField> fields) {
@@ -937,7 +1073,9 @@ abstract final class BdFormRules {
           if (d != null) out[f.id] = d;
           continue;
         }
-        if (!_noSeedStatic.contains(f.type) && !_stepContainers.contains(f.type) && f.type != 'flex_row') {
+        if (!_noSeedStatic.contains(f.type) &&
+            !_stepContainers.contains(f.type) &&
+            f.type != 'flex_row') {
           final d = defaultValue(f);
           if (d != null) out[f.id] = d;
         }
@@ -951,20 +1089,31 @@ abstract final class BdFormRules {
 
   /// A field's starting value, or null for one that starts unanswered.
   static BdJson? defaultValue(BdFormField field) {
-    final stringDefault = field.defaultValue is BdStr ? field.defaultValue! : const BdStr('');
+    final stringDefault =
+        field.defaultValue is BdStr ? field.defaultValue! : const BdStr('');
     switch (field.type) {
       case 'checkbox' || 'tags':
         return const BdArr([]);
       case 'choice_cards':
-        return field.choiceConfig?.mode == 'multi' ? const BdArr([]) : const BdStr('');
+        return field.choiceConfig?.mode == 'multi'
+            ? const BdArr([])
+            : const BdStr('');
       case 'collection_select':
-        return field.collectionSelectConfig?.multi == true ? const BdArr([]) : stringDefault;
+        return field.collectionSelectConfig?.multi == true
+            ? const BdArr([])
+            : stringDefault;
       case 'multi_populator':
         return const BdArr([BdObj({})]);
       case 'measurement':
-        final cat = BdUnits.category(field.unitConfig?.category) ?? BdUnits.category('length')!;
-        final unit = field.unitConfig?.defaultUnit ?? (cat.units.isEmpty ? '' : cat.units.first.symbol);
-        return BdObj({'value': const BdStr(''), 'unit': BdStr(unit), 'baseUnit': BdStr(cat.baseUnit)});
+        final cat = BdUnits.category(field.unitConfig?.category) ??
+            BdUnits.category('length')!;
+        final unit = field.unitConfig?.defaultUnit ??
+            (cat.units.isEmpty ? '' : cat.units.first.symbol);
+        return BdObj({
+          'value': const BdStr(''),
+          'unit': BdStr(unit),
+          'baseUnit': BdStr(cat.baseUnit)
+        });
       case 'boolean':
         return BdBool(field.defaultValue == const BdBool(true));
       case 'number' || 'stepper' || 'star_rating':
@@ -992,14 +1141,18 @@ abstract final class BdFormRules {
   /// The wire payload: values re-keyed by each field's published output
   /// key, repeaters remapped per entry, names normalized. Hidden references
   /// never travel (the server would reject them as unknown keys).
-  static Map<String, BdJson> toSubmissionPayload(List<BdFormField> fields, Map<String, BdJson> data) {
+  static Map<String, BdJson> toSubmissionPayload(
+      List<BdFormField> fields, Map<String, BdJson> data) {
     final all = fieldsById(fields);
-    Map<String, BdJson> remap(List<BdFormField> scopeFields, Map<String, BdJson> scopeData) {
+    Map<String, BdJson> remap(
+        List<BdFormField> scopeFields, Map<String, BdJson> scopeData) {
       final byId = flattenValueFields(scopeFields);
       final out = <String, BdJson>{};
       for (final MapEntry(key: id, value: input) in scopeData.entries) {
         final known = all[id];
-        if (known != null && BdFieldType.layoutOnly.contains(known.type)) continue;
+        if (known != null && BdFieldType.layoutOnly.contains(known.type)) {
+          continue;
+        }
         final field = byId[id];
         if (field == null) {
           out[id] = input;
@@ -1010,10 +1163,15 @@ abstract final class BdFormRules {
         if (field.type == 'multi_populator' && arr != null) {
           value = BdArr([
             for (final inst in arr)
-              if (inst.objectValue case final o?) BdObj(remap(field.children ?? const [], o)) else inst,
+              if (inst.objectValue case final o?)
+                BdObj(remap(field.children ?? const [], o))
+              else
+                inst,
           ]);
         }
-        if (field.type == 'name' && input.objectValue != null) value = normalizeNameValue(input);
+        if (field.type == 'name' && input.objectValue != null) {
+          value = normalizeNameValue(input);
+        }
         out[field.key ?? id] = value;
       }
       return out;
@@ -1030,7 +1188,10 @@ abstract final class BdFormRules {
           out[f.id] = f;
           continue;
         }
-        if (!BdFieldType.staticOrLayout.contains(f.type) || f.type == 'stepper') out[f.id] = f;
+        if (!BdFieldType.staticOrLayout.contains(f.type) ||
+            f.type == 'stepper') {
+          out[f.id] = f;
+        }
         if (f.children != null) walk(f.children!);
       }
     }
@@ -1064,8 +1225,12 @@ abstract final class BdFormRules {
   /// A table cell in a `check` column: ✓, –, or its own text.
   static String tableCheckState(String cell) {
     final v = cell.trim().toLowerCase();
-    if (const {'yes', 'y', 'true', '1', 'x', '✓', '✔', 'check'}.contains(v)) return 'yes';
-    if (const {'no', 'n', 'false', '0', '-', '–', '—', ''}.contains(v)) return 'no';
+    if (const {'yes', 'y', 'true', '1', 'x', '✓', '✔', 'check'}.contains(v)) {
+      return 'yes';
+    }
+    if (const {'no', 'n', 'false', '0', '-', '–', '—', ''}.contains(v)) {
+      return 'no';
+    }
     return 'text';
   }
 
@@ -1088,7 +1253,8 @@ abstract final class BdFormRules {
     Map<String, BdJson> data, [
     BdMatchResolver? resolveMatch,
   ]) {
-    final derived = withDerivedFieldValues(fields, deriveReferenceValues(fields, data));
+    final derived =
+        withDerivedFieldValues(fields, deriveReferenceValues(fields, data));
     final out = <BdInvalidField>[];
     _walkValues(fields, derived, '', resolveMatch, out);
     return out;
@@ -1105,25 +1271,35 @@ abstract final class BdFormRules {
     for (final f in nodes) {
       switch (f.type) {
         case 'condition_block' || 'input_group' || 'flex_row' || 'or_condition':
-          final visible =
-              f.type == 'condition_block' ? evalConditionWith(f.conditionRule, resolve) : isNodeVisible(f, resolve);
+          final visible = f.type == 'condition_block'
+              ? evalConditionWith(f.conditionRule, resolve)
+              : isNodeVisible(f, resolve);
           if (!visible) continue;
           _walkValues(f.children ?? const [], scope, prefix, resolveMatch, out);
         case 'multi_populator':
           final instances = scope[f.id]?.arrayValue ?? const <BdJson>[];
-          final max = math.min(f.populatorConfig?.maxInstances ?? 10, maxArrayLen);
-          if (instances.length > max) out.add(BdInvalidField(f.id, f.label, prefix + f.id, 'max'));
+          final max =
+              math.min(f.populatorConfig?.maxInstances ?? 10, maxArrayLen);
+          if (instances.length > max) {
+            out.add(BdInvalidField(f.id, f.label, prefix + f.id, 'max'));
+          }
           for (var index = 0; index < instances.length; index++) {
             final o = instances[index].objectValue;
             if (o == null) continue;
-            _walkValues(f.children ?? const [], o, '$prefix${f.id}[$index].', resolveMatch, out);
+            _walkValues(f.children ?? const [], o, '$prefix${f.id}[$index].',
+                resolveMatch, out);
           }
         default:
-          if (BdFieldType.layoutOnly.contains(f.type) || f.type == 'calculation') continue;
+          if (BdFieldType.layoutOnly.contains(f.type) ||
+              f.type == 'calculation') {
+            continue;
+          }
           final value = scope[f.id];
           if (isPendingUpload(value)) continue;
           final reason = validateValue(f, value) ?? clientOnlyRule(f, value);
-          if (reason != null) out.add(BdInvalidField(f.id, f.label, prefix + f.id, reason));
+          if (reason != null) {
+            out.add(BdInvalidField(f.id, f.label, prefix + f.id, reason));
+          }
       }
     }
   }
@@ -1136,7 +1312,9 @@ abstract final class BdFormRules {
     if (s == null || s.isEmpty || e == null || e.isEmpty) return null;
     if (field.type == 'date_range') {
       if (e.compareTo(s) < 0) return 'range_order';
-      if (e == s && field.dateRangeConfig?.allowSameDay == false) return 'range_same_day';
+      if (e == s && field.dateRangeConfig?.allowSameDay == false) {
+        return 'range_same_day';
+      }
       return null;
     }
     if (field.type == 'time_picker' && field.timeConfig?.mode == 'time_block') {
@@ -1151,7 +1329,9 @@ abstract final class BdFormRules {
   /// placeholder object so required checks and file counts see it, and
   /// swapped for the uploaded file (or image URL) on submit.
   static bool isPendingUpload(BdJson? value) =>
-      value != null && value['pending'] == const BdBool(true) && value['localId']?.stringValue != null;
+      value != null &&
+      value['pending'] == const BdBool(true) &&
+      value['localId']?.stringValue != null;
 
   static const _phoneImageTypes = ['image/heic', 'image/heif'];
   static const _phoneVideoTypes = ['video/quicktime'];
@@ -1165,7 +1345,8 @@ abstract final class BdFormRules {
       if (!out.contains(t)) out.add(t);
     }
 
-    if (allowed.any((t) => t == 'image/*' || (t.startsWith('image/') && !t.contains('heic')))) {
+    if (allowed.any((t) =>
+        t == 'image/*' || (t.startsWith('image/') && !t.contains('heic')))) {
       _phoneImageTypes.forEach(add);
       add('.heic');
       add('.heif');
@@ -1177,7 +1358,8 @@ abstract final class BdFormRules {
     return out;
   }
 
-  static bool isFileTypeAllowed(String name, String mimeType, List<String>? allowed) {
+  static bool isFileTypeAllowed(
+      String name, String mimeType, List<String>? allowed) {
     if (allowed == null || allowed.isEmpty) return true;
     final type = mimeType.toLowerCase();
     final dot = name.lastIndexOf('.');
@@ -1199,7 +1381,8 @@ abstract final class BdFormRules {
   }
 
   /// Why a picked file is refused, or null. Same wording as the web renderer.
-  static String? fileProblem(String name, String mimeType, int size, List<String>? allowed, double? maxMB) {
+  static String? fileProblem(String name, String mimeType, int size,
+      List<String>? allowed, double? maxMB) {
     if (!isFileTypeAllowed(name, mimeType, allowed)) {
       return 'File type not allowed: ${mimeType.isEmpty ? name : mimeType}';
     }
@@ -1222,14 +1405,23 @@ abstract final class BdFormRules {
       (r'company|organi[sz]ation|business[\s_-]?name|employer', 'organization'),
       (r'job[\s_-]?title|position|occupation', 'organization-title'),
       (r'web[\s_-]?site|homepage|\burl\b', 'url'),
-      (r'address[\s_-]?line[\s_-]?2|apartment|\bapt\b|\bsuite\b|\bunit\b', 'address-line2'),
-      (r'street|address[\s_-]?line[\s_-]?1|^address1?$|street[\s_-]?address', 'street-address'),
+      (
+        r'address[\s_-]?line[\s_-]?2|apartment|\bapt\b|\bsuite\b|\bunit\b',
+        'address-line2'
+      ),
+      (
+        r'street|address[\s_-]?line[\s_-]?1|^address1?$|street[\s_-]?address',
+        'street-address'
+      ),
       (r'\bcity\b|\btown\b', 'address-level2'),
       (r'\bstate\b|province|region', 'address-level1'),
       (r'\bzip\b|postal|post[\s_-]?code', 'postal-code'),
       (r'\bcountry\b', 'country-name'),
       (r'birth|\bdob\b', 'bday'),
-      (r'work[\s_-]?phone|office[\s_-]?phone|company[\s_-]?phone|mobile|cell', 'tel'),
+      (
+        r'work[\s_-]?phone|office[\s_-]?phone|company[\s_-]?phone|mobile|cell',
+        'tel'
+      ),
     ])
       (RegExp(pattern, caseSensitive: false), token),
   ];

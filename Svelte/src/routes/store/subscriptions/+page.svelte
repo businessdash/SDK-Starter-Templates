@@ -23,8 +23,7 @@
 				method: 'POST'
 			});
 			const body = (await res.json()) as
-				| { ok: true; url: string }
-				| { ok: false; error: string; signIn?: string };
+				{ ok: true; url: string } | { ok: false; error: string; signIn?: string };
 			if (body.ok) {
 				window.location.href = body.url;
 				return;
@@ -83,7 +82,8 @@
 								{busyId === sub.id ? 'Working…' : 'Subscribe'}
 							</button>
 						{:else}
-							<a class="bd-btn" href="/my-account?next=/store/subscriptions">Sign in to subscribe</a>
+							<a class="bd-btn" href="/my-account?next=/store/subscriptions">Sign in to subscribe</a
+							>
 						{/if}
 					</div>
 				</article>

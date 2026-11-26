@@ -1,5 +1,5 @@
 // [bd-file:store]
-import { dollars } from "../../lib/bd";
+import { dollars, type Loose } from "../../lib/bd";
 
 /**
  * One line of the cart: photo, name and option, the price each, − and +
@@ -11,7 +11,7 @@ export function CartLine({
 	onQuantity,
 	onRemove,
 }: {
-	item: Record<string, any>;
+	item: Loose;
 	currency: string;
 	onQuantity: (quantity: number) => void;
 	onRemove: () => void;

@@ -46,8 +46,16 @@ defmodule BdStarterWeb.CartController do
         {conn, token} = CartVisitor.ensure(conn)
 
         input =
-          %{productId: product_id, quantity: params |> Map.get("quantity", 1) |> to_int(1) |> max(1) |> min(99)}
-          |> then(&if(is_binary(variant_id) and variant_id != "", do: Map.put(&1, :variantId, variant_id), else: &1))
+          %{
+            productId: product_id,
+            quantity: params |> Map.get("quantity", 1) |> to_int(1) |> max(1) |> min(99)
+          }
+          |> then(
+            &if(is_binary(variant_id) and variant_id != "",
+              do: Map.put(&1, :variantId, variant_id),
+              else: &1
+            )
+          )
           |> then(&if(options != %{}, do: Map.put(&1, :options, options), else: &1))
 
         case Bd.cart_add(token, input) do

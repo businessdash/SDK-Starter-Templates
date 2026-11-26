@@ -27,6 +27,9 @@ const client = getBd();
 const document = client
 	? await resolveLegalPage({ client, slug: Astro.params.slug })
 	: null;
+// Not a legal page: the not-found body below, with a 404 so crawlers and
+// link checkers see it as missing rather than as a page.
+if (!document) Astro.response.status = 404;
 ---
 
 {

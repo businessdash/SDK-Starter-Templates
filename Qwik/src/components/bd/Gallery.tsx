@@ -29,6 +29,8 @@ export const Gallery = component$<{ items: GalleryItem[] }>(({ items }) => {
 						<div class="bd-card gallery-tile" key={item.id}>
 							{item.src ? (
 								<img
+									width={800}
+									height={600}
 									alt={item.title ?? item.category ?? "Gallery item"}
 									loading="lazy"
 									src={item.src}

@@ -24,15 +24,19 @@ defmodule BdStarterWeb.ChatLive do
     # It comes off the Plug session so a hard refresh rejoins the same thread.
     visitor_token = Map.get(session, "bd_visitor") || Ecto.UUID.generate()
 
+    # Messages are a stream: each delta is sent to the page once and LiveView
+    # appends it, rather than this process keeping the whole conversation.
+    # They come off the API with string keys, so the stream is told its id.
     socket =
       socket
       |> assign(
         session_id: nil,
         visitor_token: visitor_token,
         draft: "",
-        messages: [],
         status: :connecting
       )
+      |> stream_configure(:messages, dom_id: &"msg-#{&1["id"]}")
+      |> stream(:messages, [])
 
     # Mint the Front Desk session on connect. The visitor token is NOT a
     # session id, so this can't be skipped — polling with one returns nothing
@@ -69,7 +73,7 @@ defmodule BdStarterWeb.ChatLive do
   # Deltas arrive from the shared poller, not from this process asking.
   @impl true
   def handle_info({:bd_chat_messages, new_messages}, socket) do
-    {:noreply, assign(socket, messages: socket.assigns.messages ++ new_messages)}
+    {:noreply, stream(socket, :messages, new_messages)}
   end
 
   @impl true
@@ -79,12 +83,16 @@ defmodule BdStarterWeb.ChatLive do
       <h1>Front desk</h1>
 
       <p :if={@status == :unavailable} class="muted">
-        Chat isn't configured yet. Set <code>BD_SITE_ID</code> and
-        <code>BD_API_KEY</code>, then reload.
+        Chat isn't configured yet. Set <code>BD_SITE_ID</code>
+        and <code>BD_API_KEY</code>, then reload.
       </p>
 
-      <ul id="chat-messages" class="chat-messages" phx-update="append">
-        <li :for={message <- @messages} id={"msg-#{message["id"]}"} class={"chat-msg chat-msg--#{message["role"]}"}>
+      <ul id="chat-messages" class="chat-messages" phx-update="stream">
+        <li
+          :for={{dom_id, message} <- @streams.messages}
+          id={dom_id}
+          class={"chat-msg chat-msg--#{message["role"]}"}
+        >
           <span class="chat-msg__who">{message["role"]}</span>
           <p>{message["content"]}</p>
         </li>

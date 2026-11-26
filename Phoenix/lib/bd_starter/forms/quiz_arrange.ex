@@ -12,7 +12,8 @@ defmodule BdStarter.Forms.QuizArrange do
   @m 0xFFFFFFFF
   @multiple_choice_types ~w(radio checkbox multi_select choice_cards)
 
-  def multiple_choice?(field), do: field.type in @multiple_choice_types and QuizScoring.option_labels(field) != []
+  def multiple_choice?(field),
+    do: field.type in @multiple_choice_types and QuizScoring.option_labels(field) != []
 
   def multi_select?(field) do
     field.type in ["checkbox", "multi_select"] or
@@ -82,7 +83,11 @@ defmodule BdStarter.Forms.QuizArrange do
       raw =
         cond do
           field.type == "choice_cards" and Json.object?(config) and is_list(config["options"]) ->
-            Map.put(raw, "choiceConfig", Map.put(config, "options", reorder(config["options"], order)))
+            Map.put(
+              raw,
+              "choiceConfig",
+              Map.put(config, "options", reorder(config["options"], order))
+            )
 
           is_list(raw["options"]) ->
             Map.put(raw, "options", reorder(raw["options"], order))
@@ -91,7 +96,11 @@ defmodule BdStarter.Forms.QuizArrange do
             raw
         end
 
-      raw = if is_list(raw["quizOptionIds"]), do: Map.put(raw, "quizOptionIds", reorder(raw["quizOptionIds"], order)), else: raw
+      raw =
+        if is_list(raw["quizOptionIds"]),
+          do: Map.put(raw, "quizOptionIds", reorder(raw["quizOptionIds"], order)),
+          else: raw
+
       Field.new(raw)
     end
   end
@@ -115,6 +124,8 @@ defmodule BdStarter.Forms.QuizArrange do
         do: Enum.take(questions, options.question_limit),
         else: questions
 
-    if options.shuffle_choices, do: Enum.map(questions, &shuffled_choices(&1, seed)), else: questions
+    if options.shuffle_choices,
+      do: Enum.map(questions, &shuffled_choices(&1, seed)),
+      else: questions
   end
 end

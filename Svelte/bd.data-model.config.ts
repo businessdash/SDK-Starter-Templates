@@ -23,54 +23,32 @@
  * when either is missing.
  */
 
-import { bd, createFormSchemaOrchestrator } from "@businessdash/sdk";
-import { collection } from "@businessdash/sdk/collections";
+import { bd, createFormSchemaOrchestrator } from '@businessdash/sdk';
+import { collection } from '@businessdash/sdk/collections';
 
-export const todos = collection("todos", {
-	labelIdentifierFieldName: "title",
-	description:
-		"Starter demo — a minimal todo list in the org's custom database.",
+export const todos = collection('todos', {
+	labelIdentifierFieldName: 'title',
+	description: "Starter demo — a minimal todo list in the org's custom database.",
 	fields: {
-		title: bd
-			.text()
-			.formElement("short_text")
-			.required()
-			.helper("What needs doing."),
+		title: bd.text().formElement('short_text').required().helper('What needs doing.'),
 		done: bd
 			.boolean()
-			.formElement("yes_no_toggle")
+			.formElement('yes_no_toggle')
 			.default(false)
 			.helper("Flip on when it's finished."),
-		notes: bd
-			.text()
-			.formElement("long_text")
-			.optional()
-			.helper("Optional details."),
-	},
+		notes: bd.text().formElement('long_text').optional().helper('Optional details.')
+	}
 });
 
-export const todoImages = collection("todoImages", {
-	labelIdentifierFieldName: "url",
-	description:
-		"Starter demo — images attached to a todo via a RELATION field.",
+export const todoImages = collection('todoImages', {
+	labelIdentifierFieldName: 'url',
+	description: 'Starter demo — images attached to a todo via a RELATION field.',
 	fields: {
-		todo: bd
-			.relation()
-			.references("todos")
-			.onDelete("CASCADE")
-			.required(),
-		url: bd.text().formElement("url").required().helper("Where the image lives."),
-		alt: bd
-			.text()
-			.formElement("short_text")
-			.optional()
-			.helper("Accessible description."),
-		label: bd
-			.text()
-			.formElement("short_text")
-			.optional()
-			.helper("Short caption."),
-	},
+		todo: bd.relation().references('todos').onDelete('CASCADE').required(),
+		url: bd.text().formElement('url').required().helper('Where the image lives.'),
+		alt: bd.text().formElement('short_text').optional().helper('Accessible description.'),
+		label: bd.text().formElement('short_text').optional().helper('Short caption.')
+	}
 });
 
 /**
@@ -82,8 +60,8 @@ export const TODOS_OBJECT_ID = todos.universalIdentifier;
 export const TODO_IMAGES_OBJECT_ID = todoImages.universalIdentifier;
 
 /** Slug of the generated create form (`<singular>-form`) — the write path. */
-export const TODO_FORM_SLUG = "todo-form";
+export const TODO_FORM_SLUG = 'todo-form';
 
 export default createFormSchemaOrchestrator([todos, todoImages], {
-	defaultIdType: "uuid",
+	defaultIdType: 'uuid'
 });

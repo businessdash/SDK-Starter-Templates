@@ -251,7 +251,9 @@ defmodule BdStarterWeb.StoreComponents do
       <div class="product-card__save">
         <.save_buttons
           compact
-          product={%{id: @product["id"], name: @name, image: @product["coverImage"], priceCents: @price}}
+          product={
+            %{id: @product["id"], name: @name, image: @product["coverImage"], priceCents: @price}
+          }
         />
       </div>
     </div>

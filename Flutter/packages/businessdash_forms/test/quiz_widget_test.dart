@@ -10,12 +10,16 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
 final _capital = BdFormField.fromJson({
-  'id': 'q_capital', 'type': 'radio', 'label': 'Capital of France?', 'required': true, //
+  'id': 'q_capital', 'type': 'radio', 'label': 'Capital of France?',
+  'required': true, //
   'options': ['Paris', 'Lyon', 'Nice'],
   'quizOptionIds': ['o_paris', 'o_lyon', 'o_nice'],
   'quizAnswerKey': {
     'answer': {'option_id': 'o_paris'},
-    'rationale': {'why_right': 'It has been since 987.', 'why_wrong': 'Lyon is the second city.'},
+    'rationale': {
+      'why_right': 'It has been since 987.',
+      'why_wrong': 'Lyon is the second city.'
+    },
   },
 });
 final _ocean = BdFormField.fromJson({
@@ -25,7 +29,8 @@ final _ocean = BdFormField.fromJson({
   },
 });
 final _essay = BdFormField.fromJson({
-  'id': 'q_essay', 'type': 'textarea', 'label': 'Why do leaves change colour?', //
+  'id': 'q_essay', 'type': 'textarea',
+  'label': 'Why do leaves change colour?', //
   'quizAnswerKey': {
     'answer': {'text': 'Chlorophyll breaks down.'},
     'no_wrong_answer': true,
@@ -49,9 +54,12 @@ Future<void> _tap(WidgetTester tester, String text) async {
 }
 
 void main() {
-  testWidgets('a local quiz: pick, check, see why, then the results', (tester) async {
+  testWidgets('a local quiz: pick, check, see why, then the results',
+      (tester) async {
     final quiz = BdQuizController(
-      BdQuizOptions(fields: [_capital, _ocean], feedbackMode: BdQuizFeedbackMode.immediate),
+      BdQuizOptions(
+          fields: [_capital, _ocean],
+          feedbackMode: BdQuizFeedbackMode.immediate),
     );
     final done = <BdQuizCompletion>[];
     await tester.pumpWidget(_app(BdQuiz.controller(quiz, onDone: done.add)));
@@ -93,7 +101,8 @@ void main() {
     quiz.dispose();
   });
 
-  testWidgets('an open question with no wrong answer, at the end', (tester) async {
+  testWidgets('an open question with no wrong answer, at the end',
+      (tester) async {
     final quiz = BdQuizController(BdQuizOptions(fields: [_essay]));
     await tester.pumpWidget(_app(BdQuiz.controller(quiz)));
     await tester.enterText(find.byType(TextField), 'The days get shorter.');
@@ -103,7 +112,8 @@ void main() {
     quiz.dispose();
   });
 
-  testWidgets('a countdown: ready, ticking, warning, then it submits itself', (tester) async {
+  testWidgets('a countdown: ready, ticking, warning, then it submits itself',
+      (tester) async {
     final clock = _Clock();
     final quiz = BdQuizController(
       BdQuizOptions(fields: [_capital], timeLimitMinutes: 1),
@@ -132,7 +142,8 @@ void main() {
 
   testWidgets('Cupertino controls when asked', (tester) async {
     final quiz = BdQuizController(BdQuizOptions(fields: [_ocean]));
-    await tester.pumpWidget(_app(BdQuiz.controller(quiz, style: const BdFormStyle(controls: BdControlStyle.cupertino))));
+    await tester.pumpWidget(_app(BdQuiz.controller(quiz,
+        style: const BdFormStyle(controls: BdControlStyle.cupertino))));
     expect(find.byType(CupertinoTextField), findsOneWidget);
     expect(find.byType(CupertinoButton), findsWidgets);
     expect(find.byType(TextField), findsNothing);
@@ -148,11 +159,18 @@ void main() {
         requests.add('${request.method} ${request.url.path}');
         return http.Response(
           jsonEncode({
-            'quizId': 'qz', 'slug': 'capitals', 'name': 'Capitals', 'description': 'Warm up.', //
-            'estimatedMinutes': 3, 'passingScore': 70, 'feedbackMode': 'end', 'showTimer': false,
+            'quizId': 'qz', 'slug': 'capitals', 'name': 'Capitals',
+            'description': 'Warm up.', //
+            'estimatedMinutes': 3, 'passingScore': 70, 'feedbackMode': 'end',
+            'showTimer': false,
             'questionFieldIds': ['q_capital'],
             'fields': [
-              {'id': 'q_capital', 'type': 'radio', 'label': 'Capital of France?', 'options': ['Paris', 'Lyon']},
+              {
+                'id': 'q_capital',
+                'type': 'radio',
+                'label': 'Capital of France?',
+                'options': ['Paris', 'Lyon']
+              },
             ],
             'settings': {'quiz': {}},
           }),
@@ -161,7 +179,8 @@ void main() {
         );
       }),
     );
-    await tester.pumpWidget(_app(BdQuiz(source: const BdQuizSource.practice('capitals'), quizzes: quizzes)));
+    await tester.pumpWidget(_app(BdQuiz(
+        source: const BdQuizSource.practice('capitals'), quizzes: quizzes)));
     expect(find.text('Loading your quiz…'), findsOneWidget);
     await tester.pump();
     await tester.pump();
@@ -172,16 +191,20 @@ void main() {
     expect(find.text('Capital of France?'), findsOneWidget);
   });
 
-  testWidgets('an invitation for a signed-out taker asks them to sign in', (tester) async {
+  testWidgets('an invitation for a signed-out taker asks them to sign in',
+      (tester) async {
     var signIns = 0;
     final quizzes = BdQuizzes.packageApi(
       publishableKey: 'pk_test',
       host: 'https://bd.test',
       httpClient: MockClient((_) async => http.Response(
             jsonEncode({
-              'id': 'inv_1', 'quizId': 'qz', 'name': 'Onboarding check', 'description': '', //
-              'requireAuthentication': true, 'authenticationStatus': 'required', 'recipientEmailHint': 'a***@example.com',
-              'status': 'pending', 'expired': false, 'active': true, 'fields': [], 'questionFieldIds': [],
+              'id': 'inv_1', 'quizId': 'qz', 'name': 'Onboarding check',
+              'description': '', //
+              'requireAuthentication': true, 'authenticationStatus': 'required',
+              'recipientEmailHint': 'a***@example.com',
+              'status': 'pending', 'expired': false, 'active': true,
+              'fields': [], 'questionFieldIds': [],
             }),
             200,
             headers: {'content-type': 'application/json'},
@@ -200,22 +223,27 @@ void main() {
     expect(signIns, 1);
   });
 
-  testWidgets('a missing invitation says so; a failure offers a retry', (tester) async {
+  testWidgets('a missing invitation says so; a failure offers a retry',
+      (tester) async {
     var fail = true;
     final quizzes = BdQuizzes.packageApi(
       publishableKey: 'pk_test',
       host: 'https://bd.test',
       httpClient: MockClient((request) async => fail
-          ? http.Response('{"message":"Something broke."}', 500, headers: {'content-type': 'application/json'})
-          : http.Response('{"message":"Not found"}', 404, headers: {'content-type': 'application/json'})),
+          ? http.Response('{"message":"Something broke."}', 500,
+              headers: {'content-type': 'application/json'})
+          : http.Response('{"message":"Not found"}', 404,
+              headers: {'content-type': 'application/json'})),
     );
-    await tester.pumpWidget(_app(BdQuiz(source: const BdQuizSource.invitation('gone'), quizzes: quizzes)));
+    await tester.pumpWidget(_app(BdQuiz(
+        source: const BdQuizSource.invitation('gone'), quizzes: quizzes)));
     await tester.pump();
     await tester.pump();
     expect(find.text('Something broke.'), findsOneWidget);
     fail = false;
     await _tap(tester, 'Try again');
     await tester.pump();
-    expect(find.text("This quiz invitation isn't valid or has been withdrawn."), findsOneWidget);
+    expect(find.text("This quiz invitation isn't valid or has been withdrawn."),
+        findsOneWidget);
   });
 }

@@ -249,9 +249,10 @@ defmodule BdStarter.Bd.SignInCore do
   characters, at most 512 characters.
   """
   def safe_next("/" <> _ = raw) do
-    if byte_size(raw) > 512 or String.starts_with?(raw, "//") or Regex.match?(~r/[\\\x00-\x1f\x7f]/, raw),
-      do: nil,
-      else: raw
+    if byte_size(raw) > 512 or String.starts_with?(raw, "//") or
+         Regex.match?(~r/[\\\x00-\x1f\x7f]/, raw),
+       do: nil,
+       else: raw
   end
 
   def safe_next(_), do: nil

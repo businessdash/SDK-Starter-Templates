@@ -18,11 +18,13 @@ abstract interface class BdFormsBackend {
   Future<BdUploadedFile> upload(String form, String fieldId, BdPickedFile file);
 
   /// Open booking start times (ISO instants) between two epoch-ms times.
-  Future<List<String>> scheduleSlots(String form, String fieldId, int fromMs, int toMs);
+  Future<List<String>> scheduleSlots(
+      String form, String fieldId, int fromMs, int toMs);
 
   Future<BdPaymentIntent> paymentIntent(String form, String fieldId);
 
-  Future<List<BdCollectionOption>> collectionOptions(String form, String fieldId);
+  Future<List<BdCollectionOption>> collectionOptions(
+      String form, String fieldId);
 }
 
 /// What goes over the wire on submit.
@@ -61,7 +63,8 @@ class BdSubmission {
 
 /// A file the visitor picked, held in memory until submit uploads it.
 class BdPickedFile {
-  const BdPickedFile({required this.data, required this.name, required this.mimeType});
+  const BdPickedFile(
+      {required this.data, required this.name, required this.mimeType});
 
   final Uint8List data;
   final String name;
@@ -119,7 +122,8 @@ class BdPaymentIntent {
 /// One live option of a `collection_select`: a record from the org's
 /// collection, with the columns its conditions compare.
 class BdCollectionOption {
-  const BdCollectionOption({required this.value, required this.label, this.image, this.match});
+  const BdCollectionOption(
+      {required this.value, required this.label, this.image, this.match});
 
   final String value;
   final String label;
@@ -148,7 +152,11 @@ class BdCollectionOption {
 }
 
 class BdFormIssue {
-  BdFormIssue({required this.fieldId, required this.label, required this.reason, String? message})
+  BdFormIssue(
+      {required this.fieldId,
+      required this.label,
+      required this.reason,
+      String? message})
       : message = message ?? BdFormMessages.message(reason, label, null);
 
   final String fieldId;
@@ -167,7 +175,11 @@ sealed class BdSubmitResult {
 }
 
 final class BdSubmitSuccess extends BdSubmitResult {
-  const BdSubmitSuccess({this.status = 201, this.submissionId, this.dryRun = false, this.body = const {}});
+  const BdSubmitSuccess(
+      {this.status = 201,
+      this.submissionId,
+      this.dryRun = false,
+      this.body = const {}});
 
   final int status;
   final String? submissionId;
@@ -197,7 +209,11 @@ enum BdSubmitFailureReason {
 }
 
 final class BdSubmitFailure extends BdSubmitResult {
-  const BdSubmitFailure({required this.status, required this.reason, required this.message, this.issues = const []});
+  const BdSubmitFailure(
+      {required this.status,
+      required this.reason,
+      required this.message,
+      this.issues = const []});
 
   final int status;
   final BdSubmitFailureReason reason;
@@ -239,7 +255,8 @@ class BdPackageFormsBackend implements BdFormsBackend {
     // token" catches every one. Empty means the app has no key yet.
     final key = publishableKey.trim();
     if (key.isNotEmpty && !key.startsWith('pk_')) {
-      throw ArgumentError('BdForms: an app takes a publishable pk_ key only, never a secret key.');
+      throw ArgumentError(
+          'BdForms: an app takes a publishable pk_ key only, never a secret key.');
     }
   }
 
@@ -248,12 +265,17 @@ class BdPackageFormsBackend implements BdFormsBackend {
   final http.Client _http;
 
   Uri _url(String form, [String? suffix, Map<String, String>? query]) {
-    final path = ['forms', form, if (suffix != null) suffix].map(Uri.encodeComponent).join('/');
+    final path = ['forms', form, if (suffix != null) suffix]
+        .map(Uri.encodeComponent)
+        .join('/');
     final base = Uri.parse('$baseUrl/$path');
-    return query == null || query.isEmpty ? base : base.replace(queryParameters: query);
+    return query == null || query.isEmpty
+        ? base
+        : base.replace(queryParameters: query);
   }
 
-  Future<http.Response> _call(String method, String form, {String? suffix, Map<String, String>? query, BdJson? json}) async {
+  Future<http.Response> _call(String method, String form,
+      {String? suffix, Map<String, String>? query, BdJson? json}) async {
     final request = http.Request(method, _url(form, suffix, query))
       ..headers.addAll({
         'Authorization': 'Bearer $_key',
@@ -279,10 +301,12 @@ class BdPackageFormsBackend implements BdFormsBackend {
   static BdJson _decode(http.Response response) {
     if (!_ok(response)) {
       final message = _tryParse(response.body)?['message']?.stringValue;
-      throw BdFormsException(message ?? 'BD returned ${response.statusCode}.', status: response.statusCode);
+      throw BdFormsException(message ?? 'BD returned ${response.statusCode}.',
+          status: response.statusCode);
     }
     return _tryParse(response.body) ??
-        (throw BdFormsException('BD sent a response this app can\'t read.', status: response.statusCode));
+        (throw BdFormsException('BD sent a response this app can\'t read.',
+            status: response.statusCode));
   }
 
   /// Transport failures become a [BdFormsException] with status 0.
@@ -297,12 +321,14 @@ class BdPackageFormsBackend implements BdFormsBackend {
   }
 
   static String _str(BdJson json, String key) =>
-      json[key]?.stringValue ?? (throw BdFormsException('BD\'s response is missing "$key".'));
+      json[key]?.stringValue ??
+      (throw BdFormsException('BD\'s response is missing "$key".'));
 
   @override
   Future<BdFormSchema> schema(String form) => _guarded(() async {
         final plain = _decode(await _call('GET', form)).toPlain();
-        return BdFormSchema.fromJson(plain is Map<String, Object?> ? plain : const {});
+        return BdFormSchema.fromJson(
+            plain is Map<String, Object?> ? plain : const {});
       });
 
   @override
@@ -311,9 +337,13 @@ class BdPackageFormsBackend implements BdFormsBackend {
     try {
       response = await _call('POST', form, json: submission.toJson());
     } catch (e) {
-      return BdSubmitFailure(status: 0, reason: BdSubmitFailureReason.networkError, message: 'Could not reach BD: $e');
+      return BdSubmitFailure(
+          status: 0,
+          reason: BdSubmitFailureReason.networkError,
+          message: 'Could not reach BD: $e');
     }
-    final json = _tryParse(response.body)?.objectValue ?? const <String, BdJson>{};
+    final json =
+        _tryParse(response.body)?.objectValue ?? const <String, BdJson>{};
     if (_ok(response)) {
       return BdSubmitSuccess(
         status: response.statusCode,
@@ -326,22 +356,31 @@ class BdPackageFormsBackend implements BdFormsBackend {
   }
 
   @override
-  Future<BdUploadedFile> upload(String form, String fieldId, BdPickedFile file) => _guarded(() async {
+  Future<BdUploadedFile> upload(
+          String form, String fieldId, BdPickedFile file) =>
+      _guarded(() async {
         final body = BdObj({
           'fieldId': BdStr(fieldId),
           'filename': BdStr(file.name),
           'contentType': BdStr(file.mimeType),
           'sizeBytes': BdNum(file.size.toDouble()),
         });
-        final presign = _decode(await _call('POST', form, suffix: 'upload-url', json: body));
+        final presign = _decode(
+            await _call('POST', form, suffix: 'upload-url', json: body));
         // The presigned URL carries its own authorization: no bearer token.
         final put = await _http.put(
           Uri.parse(_str(presign, 'uploadUrl')),
-          headers: {'Content-Type': file.mimeType.isEmpty ? 'application/octet-stream' : file.mimeType},
+          headers: {
+            'Content-Type': file.mimeType.isEmpty
+                ? 'application/octet-stream'
+                : file.mimeType
+          },
           body: file.data,
         );
         if (!_ok(put)) {
-          throw BdFormsException('Uploading ${file.name} failed (${put.statusCode}).', status: put.statusCode);
+          throw BdFormsException(
+              'Uploading ${file.name} failed (${put.statusCode}).',
+              status: put.statusCode);
         }
         return BdUploadedFile(
           storageId: _str(presign, 'storageId'),
@@ -353,9 +392,16 @@ class BdPackageFormsBackend implements BdFormsBackend {
       });
 
   @override
-  Future<List<String>> scheduleSlots(String form, String fieldId, int fromMs, int toMs) => _guarded(() async {
-        final query = {'fieldId': fieldId, 'from': BdDates.isoString(fromMs), 'to': BdDates.isoString(toMs)};
-        final json = _decode(await _call('GET', form, suffix: 'schedule-slots', query: query));
+  Future<List<String>> scheduleSlots(
+          String form, String fieldId, int fromMs, int toMs) =>
+      _guarded(() async {
+        final query = {
+          'fieldId': fieldId,
+          'from': BdDates.isoString(fromMs),
+          'to': BdDates.isoString(toMs)
+        };
+        final json = _decode(
+            await _call('GET', form, suffix: 'schedule-slots', query: query));
         return [
           for (final slot in json['slots']?.arrayValue ?? const <BdJson>[])
             if (slot['startAt']?.stringValue case final s?) s,
@@ -363,9 +409,12 @@ class BdPackageFormsBackend implements BdFormsBackend {
       });
 
   @override
-  Future<BdPaymentIntent> paymentIntent(String form, String fieldId) => _guarded(() async {
+  Future<BdPaymentIntent> paymentIntent(String form, String fieldId) =>
+      _guarded(() async {
         final json = _decode(
-          await _call('POST', form, suffix: 'payment-intent', json: BdObj({'fieldId': BdStr(fieldId)})),
+          await _call('POST', form,
+              suffix: 'payment-intent',
+              json: BdObj({'fieldId': BdStr(fieldId)})),
         );
         return BdPaymentIntent(
           mode: _str(json, 'mode'),
@@ -377,8 +426,11 @@ class BdPackageFormsBackend implements BdFormsBackend {
       });
 
   @override
-  Future<List<BdCollectionOption>> collectionOptions(String form, String fieldId) => _guarded(() async {
-        final json = _decode(await _call('GET', form, suffix: 'collection-options', query: {'fieldId': fieldId}));
+  Future<List<BdCollectionOption>> collectionOptions(
+          String form, String fieldId) =>
+      _guarded(() async {
+        final json = _decode(await _call('GET', form,
+            suffix: 'collection-options', query: {'fieldId': fieldId}));
         return [
           for (final raw in json['options']?.arrayValue ?? const <BdJson>[])
             if (BdCollectionOption.fromJson(raw) case final option?) option,
@@ -391,16 +443,24 @@ class BdPackageFormsBackend implements BdFormsBackend {
   /// answer becomes the same reason in every language.
   static BdSubmitFailure failure(int status, Map<String, BdJson> body) {
     final rawMessage = body['message']?.stringValue;
-    final message = rawMessage == null || rawMessage.isEmpty ? 'Submission failed ($status).' : rawMessage;
+    final message = rawMessage == null || rawMessage.isEmpty
+        ? 'Submission failed ($status).'
+        : rawMessage;
     final code = body['error']?.stringValue;
     final gate = body['reason']?.stringValue;
     final issues = [
       for (final raw in body['issues']?.arrayValue ?? const <BdJson>[])
         () {
-          final id = raw['id']?.stringValue ?? raw['fieldId']?.stringValue ?? '';
-          final label = raw['label']?.stringValue ?? (id.isEmpty ? 'field' : id);
+          final id =
+              raw['id']?.stringValue ?? raw['fieldId']?.stringValue ?? '';
+          final label =
+              raw['label']?.stringValue ?? (id.isEmpty ? 'field' : id);
           final reason = raw['reason']?.stringValue ?? 'type';
-          return BdFormIssue(fieldId: id, label: label, reason: reason, message: raw['message']?.stringValue);
+          return BdFormIssue(
+              fieldId: id,
+              label: label,
+              reason: reason,
+              message: raw['message']?.stringValue);
         }(),
     ];
     final reason = switch (status) {
@@ -418,7 +478,8 @@ class BdPackageFormsBackend implements BdFormsBackend {
           : BdSubmitFailureReason.invalidRequest,
       _ => BdSubmitFailureReason.serverError,
     };
-    return BdSubmitFailure(status: status, reason: reason, message: message, issues: issues);
+    return BdSubmitFailure(
+        status: status, reason: reason, message: message, issues: issues);
   }
 }
 
@@ -432,8 +493,12 @@ abstract final class BdFormMessages {
     final name = label.isEmpty ? 'This field' : label;
     switch (reason) {
       case 'required':
-        if (field?.type == 'boolean' && field?.mustBeTrue == true) return 'Please confirm to continue.';
-        if (field?.type == 'or_condition') return 'Fill in at least one side to continue.';
+        if (field?.type == 'boolean' && field?.mustBeTrue == true) {
+          return 'Please confirm to continue.';
+        }
+        if (field?.type == 'or_condition') {
+          return 'Fill in at least one side to continue.';
+        }
         if (field?.type == 'multi_populator') return 'Add at least one entry.';
         return '$name is required.';
       case 'business_email':
@@ -452,19 +517,24 @@ abstract final class BdFormMessages {
         return switch (field?.type) {
           'email' => 'Enter a valid email address.',
           'phone' => 'Enter a valid phone number.',
-          'url' || 'image_input' => 'Enter a valid web address, like example.com.',
+          'url' ||
+          'image_input' =>
+            'Enter a valid web address, like example.com.',
           'address' => 'Enter a 5-digit ZIP code.',
           'month_year' => 'Choose a month and a year.',
           'color_picker' => 'Enter a hex color, like #3366FF.',
           'schedule' => 'Choose a valid time.',
           'number' || 'measurement' => 'Enter a whole number.',
-          'currency' =>
-            field?.currencyConfig?.allowDecimal == false ? 'Enter a whole amount.' : 'Enter an amount of 0 or more.',
+          'currency' => field?.currencyConfig?.allowDecimal == false
+              ? 'Enter a whole amount.'
+              : 'Enter an amount of 0 or more.',
           _ => "$name isn't valid.",
         };
       case 'min':
         final min = field?.validation?.min ?? field?.sliderConfig?.min;
-        return min != null ? 'Enter ${BdJS.formatNumber(min)} or more.' : 'Enter 0 or more.';
+        return min != null
+            ? 'Enter ${BdJS.formatNumber(min)} or more.'
+            : 'Enter 0 or more.';
       case 'max':
         final max = field?.validation?.max ?? field?.sliderConfig?.max;
         if (max != null) return 'Enter ${BdJS.formatNumber(max)} or less.';
@@ -472,7 +542,9 @@ abstract final class BdFormMessages {
           final n = field?.fileConfig?.maxFiles ?? 1;
           return 'Attach at most $n file${n == 1 ? '' : 's'}.';
         }
-        if (field?.type == 'star_rating') return 'Choose up to ${field?.starRatingConfig?.maxStars ?? 5} stars.';
+        if (field?.type == 'star_rating') {
+          return 'Choose up to ${field?.starRatingConfig?.maxStars ?? 5} stars.';
+        }
         return '$name is too long.';
       case 'type':
         return '$name has an invalid value.';

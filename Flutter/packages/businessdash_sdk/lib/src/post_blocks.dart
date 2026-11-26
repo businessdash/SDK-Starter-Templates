@@ -20,7 +20,12 @@ class PostBlocks {
 
 /// A stretch of text with its inline styles.
 class PostRun {
-  const PostRun(this.text, {this.bold = false, this.italic = false, this.code = false, this.strike = false, this.link});
+  const PostRun(this.text,
+      {this.bold = false,
+      this.italic = false,
+      this.code = false,
+      this.strike = false,
+      this.link});
 
   final String text;
   final bool bold;
@@ -31,8 +36,8 @@ class PostRun {
   /// http(s), mailto: or tel: only.
   final String? link;
 
-  PostRun withText(String text) =>
-      PostRun(text, bold: bold, italic: italic, code: code, strike: strike, link: link);
+  PostRun withText(String text) => PostRun(text,
+      bold: bold, italic: italic, code: code, strike: strike, link: link);
 
   @override
   bool operator ==(Object other) =>
@@ -55,7 +60,8 @@ class PostRun {
 String plainText(List<PostRun> runs) => runs.map((run) => run.text).join();
 
 class PostListItem {
-  const PostListItem({required this.marker, required this.text, required this.depth});
+  const PostListItem(
+      {required this.marker, required this.text, required this.depth});
 
   /// "1.", "•" or "◦"; empty for a line that continues the item above.
   final String marker;
@@ -116,7 +122,8 @@ class PostImage extends PostBlock {
   final String alt;
 
   @override
-  bool operator ==(Object other) => other is PostImage && other.url == url && other.alt == alt;
+  bool operator ==(Object other) =>
+      other is PostImage && other.url == url && other.alt == alt;
 
   @override
   int get hashCode => Object.hash(url, alt);
@@ -146,7 +153,8 @@ class PostRule extends PostBlock {
 final _tag = RegExp(r'<(\/?)([a-z0-9]+)((?:\s+[a-z-]+="[^"]*")*)\s*\/?>');
 final _attribute = RegExp(r'([a-z-]+)="([^"]*)"');
 final _space = RegExp(r'[\t\n\r\f ]+');
-final _entity = RegExp(r'&(#[0-9]{1,7}|#x[0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,31});');
+final _entity =
+    RegExp(r'&(#[0-9]{1,7}|#x[0-9a-fA-F]{1,6}|[a-zA-Z][a-zA-Z0-9]{1,31});');
 const _named = {
   'amp': '&', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'nbsp': ' ', //
   'lsquo': '‘', 'rsquo': '’', 'ldquo': '“', 'rdquo': '”', //
@@ -235,7 +243,9 @@ class _Reader {
         // A list inside an item: the item's text so far is its first line.
         _finishParagraph();
         final start = int.tryParse(attrs['start'] ?? '');
-        _lists.add(_ListState(ordered: name == 'ol', next: start == null || start == 0 ? 1 : start));
+        _lists.add(_ListState(
+            ordered: name == 'ol',
+            next: start == null || start == 0 ? 1 : start));
       case 'li':
         _finishParagraph();
         if (_lists.isEmpty) break;
@@ -263,7 +273,9 @@ class _Reader {
       case 'img':
         _finishParagraph();
         final src = attrs['src'] ?? '';
-        if (RegExp(r'^https?://', caseSensitive: false).hasMatch(src)) _emit(PostImage(src, attrs['alt'] ?? ''));
+        if (RegExp(r'^https?://', caseSensitive: false).hasMatch(src)) {
+          _emit(PostImage(src, attrs['alt'] ?? ''));
+        }
       case 'hr':
         _finishParagraph();
         _emit(const PostRule());
@@ -297,7 +309,9 @@ class _Reader {
       case 'pre':
         final text = plainText(_inline);
         _inline = [];
-        if (text.trim().isNotEmpty) _emit(PostCode(text.replaceAll(RegExp(r'^\n+|\n+$'), '')));
+        if (text.trim().isNotEmpty) {
+          _emit(PostCode(text.replaceAll(RegExp(r'^\n+|\n+$'), '')));
+        }
         if (_preDepth > 0) _preDepth -= 1;
       case 'li':
         _finishParagraph();
@@ -312,7 +326,8 @@ class _Reader {
       case 'tr':
         final row = _row;
         if (row != null && row.isNotEmpty) {
-          _tableRows?.add(PostTableRow(cells: row, isHeader: _inHead || _rowIsHeader));
+          _tableRows?.add(
+              PostTableRow(cells: row, isHeader: _inHead || _rowIsHeader));
         }
         _row = null;
       case 'thead':
@@ -346,7 +361,9 @@ class _Reader {
       // Spaces collapse, as in a browser: none at the start of a line.
       final gathered = plainText(_inline);
       final last = gathered.isEmpty ? '' : gathered[gathered.length - 1];
-      if (last == '' || last == ' ' || last == '\n') value = value.replaceFirst(RegExp(r'^ +'), '');
+      if (last == '' || last == ' ' || last == '\n') {
+        value = value.replaceFirst(RegExp(r'^ +'), '');
+      }
     }
     if (value.isEmpty) return;
     String? link;
@@ -368,7 +385,9 @@ class _Reader {
 
   void _newLine() {
     final gathered = plainText(_inline);
-    if (gathered.isNotEmpty && !gathered.endsWith('\n')) _inline.add(const PostRun('\n'));
+    if (gathered.isNotEmpty && !gathered.endsWith('\n')) {
+      _inline.add(const PostRun('\n'));
+    }
   }
 
   /// Send the text gathered so far where it belongs: a list line, a
@@ -380,7 +399,8 @@ class _Reader {
     if (_lists.isNotEmpty) {
       // In an item (or loose in the list): one line, marked the first time.
       final marker = _items.isEmpty ? '' : _items.last;
-      _listItems.add(PostListItem(marker: marker, text: text, depth: _lists.length - 1));
+      _listItems.add(
+          PostListItem(marker: marker, text: text, depth: _lists.length - 1));
       if (_items.isNotEmpty) _items[_items.length - 1] = '';
     } else if (_inCaption) {
       _emit(PostCaption(text));
@@ -426,11 +446,15 @@ List<PostRun> _trimmed(List<PostRun> runs) {
 /// the website would go nowhere, so its text stays plain.
 String? _linkUrl(String? href) {
   if (href == null || href.isEmpty) return null;
-  return RegExp(r'^(https?://|mailto:|tel:)', caseSensitive: false).hasMatch(href) ? href : null;
+  return RegExp(r'^(https?://|mailto:|tel:)', caseSensitive: false)
+          .hasMatch(href)
+      ? href
+      : null;
 }
 
 Map<String, String> _attributes(String raw) => {
-      for (final match in _attribute.allMatches(raw)) match.group(1)!: decodeEntities(match.group(2)!),
+      for (final match in _attribute.allMatches(raw))
+        match.group(1)!: decodeEntities(match.group(2)!),
     };
 
 /// Character references: numeric ones, and the named ones posts use. An
@@ -441,8 +465,12 @@ String decodeEntities(String value) {
     final body = match.group(1)!;
     if (body.startsWith('#')) {
       final hex = body.length > 1 && (body[1] == 'x' || body[1] == 'X');
-      final code = int.tryParse(hex ? body.substring(2) : body.substring(1), radix: hex ? 16 : 10) ?? 0;
-      if (code <= 0 || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) return '�';
+      final code = int.tryParse(hex ? body.substring(2) : body.substring(1),
+              radix: hex ? 16 : 10) ??
+          0;
+      if (code <= 0 || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) {
+        return '�';
+      }
       return String.fromCharCode(code);
     }
     return _named[body] ?? match.group(0)!;

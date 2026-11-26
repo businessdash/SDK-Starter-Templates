@@ -37,7 +37,11 @@ bool? _bool(BdJson? j) => j?.boolValue;
 BdJson? quizPresent(BdJson? j) => j == null || j.isNull ? null : j;
 
 class BdQuizOptionExplanation {
-  const BdQuizOptionExplanation({required this.optionId, required this.option, required this.accepted, this.explanation});
+  const BdQuizOptionExplanation(
+      {required this.optionId,
+      required this.option,
+      required this.accepted,
+      this.explanation});
 
   factory BdQuizOptionExplanation.fromJson(BdJson j) => BdQuizOptionExplanation(
         optionId: _str(j['optionId']) ?? '',
@@ -51,18 +55,32 @@ class BdQuizOptionExplanation {
   final bool accepted;
   final String? explanation;
 
-  Map<String, Object?> toJson() =>
-      {'optionId': optionId, 'option': option, 'accepted': accepted, 'explanation': explanation};
+  Map<String, Object?> toJson() => {
+        'optionId': optionId,
+        'option': option,
+        'accepted': accepted,
+        'explanation': explanation
+      };
 }
 
 class BdQuizQuestionRationale {
-  const BdQuizQuestionRationale({required this.outcome, this.explanation, this.selectedOptions, this.optionExplanations});
+  const BdQuizQuestionRationale(
+      {required this.outcome,
+      this.explanation,
+      this.selectedOptions,
+      this.optionExplanations});
 
   factory BdQuizQuestionRationale.fromJson(BdJson j) => BdQuizQuestionRationale(
         outcome: _str(j['outcome']) ?? 'incorrect',
         explanation: _str(j['explanation']),
-        selectedOptions: j['selectedOptions']?.arrayValue?.map(BdQuizOptionExplanation.fromJson).toList(),
-        optionExplanations: j['optionExplanations']?.arrayValue?.map(BdQuizOptionExplanation.fromJson).toList(),
+        selectedOptions: j['selectedOptions']
+            ?.arrayValue
+            ?.map(BdQuizOptionExplanation.fromJson)
+            .toList(),
+        optionExplanations: j['optionExplanations']
+            ?.arrayValue
+            ?.map(BdQuizOptionExplanation.fromJson)
+            .toList(),
       );
 
   /// `correct`, `partially_correct` or `incorrect`.
@@ -75,21 +93,26 @@ class BdQuizQuestionRationale {
         'outcome': outcome,
         'explanation': explanation,
         'selectedOptions': selectedOptions?.map((o) => o.toJson()).toList(),
-        'optionExplanations': optionExplanations?.map((o) => o.toJson()).toList(),
+        'optionExplanations':
+            optionExplanations?.map((o) => o.toJson()).toList(),
       };
 }
 
 class BdQuizValidation {
-  const BdQuizValidation({required this.source, this.confidence, this.rationale});
+  const BdQuizValidation(
+      {required this.source, this.confidence, this.rationale});
 
-  factory BdQuizValidation.fromJson(BdJson j) =>
-      BdQuizValidation(source: _str(j['source']) ?? '', confidence: _num(j['confidence']), rationale: _str(j['rationale']));
+  factory BdQuizValidation.fromJson(BdJson j) => BdQuizValidation(
+      source: _str(j['source']) ?? '',
+      confidence: _num(j['confidence']),
+      rationale: _str(j['rationale']));
 
   final String source;
   final double? confidence;
   final String? rationale;
 
-  Map<String, Object?> toJson() => {'source': source, 'confidence': confidence, 'rationale': rationale};
+  Map<String, Object?> toJson() =>
+      {'source': source, 'confidence': confidence, 'rationale': rationale};
 }
 
 class BdQuizQuestionResult {
@@ -123,10 +146,17 @@ class BdQuizQuestionResult {
         correctThreshold: _num(j['correctThreshold']),
         partiallyCorrectThreshold: _num(j['partiallyCorrectThreshold']),
         passed: _bool(j['passed']),
-        correctAnswers: j['correctAnswers']?.arrayValue?.map((a) => a.stringValue ?? BdJS.string(a)).toList(),
-        rationale: quizPresent(j['rationale']) == null ? null : BdQuizQuestionRationale.fromJson(j['rationale']!),
+        correctAnswers: j['correctAnswers']
+            ?.arrayValue
+            ?.map((a) => a.stringValue ?? BdJS.string(a))
+            .toList(),
+        rationale: quizPresent(j['rationale']) == null
+            ? null
+            : BdQuizQuestionRationale.fromJson(j['rationale']!),
         reason: _str(j['reason']),
-        validation: quizPresent(j['validation']) == null ? null : BdQuizValidation.fromJson(j['validation']!),
+        validation: quizPresent(j['validation']) == null
+            ? null
+            : BdQuizValidation.fromJson(j['validation']!),
       );
 
   final String fieldId;
@@ -216,7 +246,8 @@ class _Accepted {
   final bool validateWithAI;
 
   /// `"option_id" in answer && answer.option_id`
-  String? get choiceId => optionId == null || optionId!.isEmpty ? null : optionId;
+  String? get choiceId =>
+      optionId == null || optionId!.isEmpty ? null : optionId;
 }
 
 class _AnswerKey {
@@ -225,7 +256,9 @@ class _AnswerKey {
     whyRight = _str(rationale?['why_right']);
     whyWrong = _str(rationale?['why_wrong']);
     whyWrongByOptionId = {
-      for (final e in (rationale?['why_wrong_by_option_id']?.objectValue ?? const <String, BdJson>{}).entries)
+      for (final e in (rationale?['why_wrong_by_option_id']?.objectValue ??
+              const <String, BdJson>{})
+          .entries)
         if (e.value.stringValue case final s?) e.key: s,
     };
   }
@@ -235,9 +268,14 @@ class _AnswerKey {
   late final String? whyWrong;
   late final Map<String, String> whyWrongByOptionId;
 
-  _Accepted? get answer => BdQuizScoring.truthy(_o['answer']) ? _Accepted(_o['answer']!) : null;
+  _Accepted? get answer =>
+      BdQuizScoring.truthy(_o['answer']) ? _Accepted(_o['answer']!) : null;
   bool get noWrongAnswer => BdQuizScoring.truthy(_o['no_wrong_answer']);
-  List<_Accepted> get additional => [for (final a in _o['additional_accepted_answers']?.arrayValue ?? const <BdJson>[]) _Accepted(a)];
+  List<_Accepted> get additional => [
+        for (final a in _o['additional_accepted_answers']?.arrayValue ??
+            const <BdJson>[])
+          _Accepted(a)
+      ];
   String? get reason => _str(_o['reason']);
   double? get points => _num(_o['points']);
   double? get passingGrade => _num(_o['passing_grade']);
@@ -255,8 +293,10 @@ _AnswerKey? _answerKey(BdFormField field) {
 /// Quiz facts a question field carries.
 extension BdQuizField on BdFormField {
   /// Stable ids of the options, in display order (graded quizzes only).
-  List<String> get quizOptionIds =>
-      [for (final id in raw['quizOptionIds']?.arrayValue ?? const <BdJson>[]) id.stringValue ?? BdJS.string(id)];
+  List<String> get quizOptionIds => [
+        for (final id in raw['quizOptionIds']?.arrayValue ?? const <BdJson>[])
+          id.stringValue ?? BdJS.string(id)
+      ];
 
   /// "Keep these choices in order": never shuffled.
   bool get quizKeepChoiceOrder => raw['quizKeepChoiceOrder']?.boolValue == true;
@@ -272,8 +312,10 @@ abstract final class BdQuizScoring {
 
   /// Layout, display and payment nodes, never graded.
   static const Set<String> nonQuestionTypes = {
-    'title', 'subtitle', 'separator', 'flex_row', 'input_group', 'multi_populator', //
-    'condition_block', 'or_condition', 'image', 'richtext', 'body_text', 'bullet_list',
+    'title', 'subtitle', 'separator', 'flex_row', 'input_group',
+    'multi_populator', //
+    'condition_block', 'or_condition', 'image', 'richtext', 'body_text',
+    'bullet_list',
     'table', 'calculation', 'credit_card',
   };
 
@@ -296,20 +338,27 @@ abstract final class BdQuizScoring {
   static bool isBlank(BdJson? value) => switch (value) {
         null || BdNull() => true,
         BdArr(:final items) => items.isEmpty,
-        BdStr(:final value) => value.isEmpty || BdJS.trim(stripTags(value)).isEmpty,
+        BdStr(:final value) =>
+          value.isEmpty || BdJS.trim(stripTags(value)).isEmpty,
         _ => false,
       };
 
   /// Tags stripped, whitespace collapsed, lower-cased: how answers compare.
-  static String normalizedText(BdJson? value) =>
-      BdJS.toLowerCase(BdJS.trim(stripTags(BdJS.string(value))).replaceAll(_spaces, ' '));
+  static String normalizedText(BdJson? value) => BdJS.toLowerCase(
+      BdJS.trim(stripTags(BdJS.string(value))).replaceAll(_spaces, ' '));
 
-  static String _normalized(String? value) => normalizedText(value == null ? null : BdStr(value));
+  static String _normalized(String? value) =>
+      normalizedText(value == null ? null : BdStr(value));
 
   /// The visible choices of an option question, in order.
-  static List<String> optionLabels(BdFormField field) => field.type == 'choice_cards'
-      ? [for (final o in field.choiceConfig?.options ?? const <BdChoiceOption>[]) o.label]
-      : field.options ?? const [];
+  static List<String> optionLabels(BdFormField field) =>
+      field.type == 'choice_cards'
+          ? [
+              for (final o
+                  in field.choiceConfig?.options ?? const <BdChoiceOption>[])
+                o.label
+            ]
+          : field.options ?? const [];
 
   static String? cleanRationale(String? value) {
     if (value == null) return null;
@@ -324,7 +373,8 @@ abstract final class BdQuizScoring {
     if (optionId == null) return null;
     final index = field.quizOptionIds.indexOf(optionId);
     final labels = optionLabels(field);
-    return cleanRationale(index >= 0 && index < labels.length ? labels[index] : optionId);
+    return cleanRationale(
+        index >= 0 && index < labels.length ? labels[index] : optionId);
   }
 
   /// The accepted answers' labels, attached only to locked or submitted results.
@@ -338,7 +388,8 @@ abstract final class BdQuizScoring {
     ];
   }
 
-  static List<(String, String)> _selectedOptions(BdFormField field, BdJson? value) {
+  static List<(String, String)> _selectedOptions(
+      BdFormField field, BdJson? value) {
     final labels = optionLabels(field);
     final ids = field.quizOptionIds;
     final List<BdJson?> values = value?.arrayValue ?? [value];
@@ -347,7 +398,8 @@ abstract final class BdQuizScoring {
       final normalized = normalizedText(selected);
       var index = -1;
       for (var i = 0; i < labels.length; i++) {
-        if (_normalized(labels[i]) == normalized || _normalized(i < ids.length ? ids[i] : null) == normalized) {
+        if (_normalized(labels[i]) == normalized ||
+            _normalized(i < ids.length ? ids[i] : null) == normalized) {
           index = i;
           break;
         }
@@ -360,15 +412,16 @@ abstract final class BdQuizScoring {
     return out;
   }
 
-  static BdQuizQuestionRationale? _resultRationale(BdFormField field, _AnswerKey key, BdJson? value, String outcome) {
+  static BdQuizQuestionRationale? _resultRationale(
+      BdFormField field, _AnswerKey key, BdJson? value, String outcome) {
     final whyRight = cleanRationale(key.whyRight ?? key.reason);
     final whyWrong = cleanRationale(key.whyWrong);
     final accepted = {
       for (final a in key.accepted)
         if (a.choiceId case final id?) id,
     };
-    String? explain(String optionId, bool isAccepted) =>
-        cleanRationale(isAccepted ? whyRight : key.whyWrongByOptionId[optionId] ?? whyWrong);
+    String? explain(String optionId, bool isAccepted) => cleanRationale(
+        isAccepted ? whyRight : key.whyWrongByOptionId[optionId] ?? whyWrong);
     final selections = [
       for (final (optionId, option) in _selectedOptions(field, value))
         BdQuizOptionExplanation(
@@ -378,7 +431,8 @@ abstract final class BdQuizScoring {
           explanation: explain(optionId, accepted.contains(optionId)),
         ),
     ];
-    final selectedExplanation = selections.length == 1 ? selections[0].explanation : null;
+    final selectedExplanation =
+        selections.length == 1 ? selections[0].explanation : null;
     final ids = field.quizOptionIds;
     final labels = optionLabels(field);
     final optionExplanations = <BdQuizOptionExplanation>[];
@@ -389,26 +443,40 @@ abstract final class BdQuizScoring {
       final explanation = explain(optionId, isAccepted);
       if (explanation != null) {
         optionExplanations.add(
-          BdQuizOptionExplanation(optionId: optionId, option: labels[i], accepted: isAccepted, explanation: explanation),
+          BdQuizOptionExplanation(
+              optionId: optionId,
+              option: labels[i],
+              accepted: isAccepted,
+              explanation: explanation),
         );
       }
     }
-    final explanation = isBlank(value) || outcome == 'correct' ? whyRight : selectedExplanation ?? whyWrong;
-    if (explanation == null && !selections.any((s) => s.explanation != null) && optionExplanations.isEmpty) return null;
+    final explanation = isBlank(value) || outcome == 'correct'
+        ? whyRight
+        : selectedExplanation ?? whyWrong;
+    if (explanation == null &&
+        !selections.any((s) => s.explanation != null) &&
+        optionExplanations.isEmpty) {
+      return null;
+    }
     return BdQuizQuestionRationale(
       outcome: outcome,
       explanation: explanation,
       selectedOptions: selections.isEmpty ? null : selections,
-      optionExplanations: optionExplanations.isEmpty ? null : optionExplanations,
+      optionExplanations:
+          optionExplanations.isEmpty ? null : optionExplanations,
     );
   }
 
   static bool _matches(BdFormField field, _Accepted accepted, BdJson? value) {
     final optionId = accepted.choiceId;
-    if (optionId == null) return normalizedText(value) == _normalized(accepted.text);
+    if (optionId == null) {
+      return normalizedText(value) == _normalized(accepted.text);
+    }
     final labels = optionLabels(field);
     final index = field.quizOptionIds.indexOf(optionId);
-    final wantLabel = _normalized(index >= 0 && index < labels.length ? labels[index] : null);
+    final wantLabel =
+        _normalized(index >= 0 && index < labels.length ? labels[index] : null);
     final wantId = _normalized(optionId);
     bool hit(BdJson? item) {
       final n = normalizedText(item);
@@ -422,7 +490,8 @@ abstract final class BdQuizScoring {
   /// Whether a result's accepted answers include this choice label.
   static bool isAcceptedLabel(BdQuizQuestionResult result, String label) {
     final wanted = _normalized(label);
-    return (result.correctAnswers ?? const []).any((a) => _normalized(a) == wanted);
+    return (result.correctAnswers ?? const [])
+        .any((a) => _normalized(a) == wanted);
   }
 
   static bool _conditionMatches(BdFormField field, Map<String, BdJson> data) {
@@ -448,15 +517,19 @@ abstract final class BdQuizScoring {
     });
   }
 
-  static double _safePoints(double? value) => value == null || !value.isFinite ? 1 : value.clamp(0, 1000).toDouble();
+  static double _safePoints(double? value) =>
+      value == null || !value.isFinite ? 1 : value.clamp(0, 1000).toDouble();
 
   static double _safePercent(double? value, double fallback) =>
-      value == null || !value.isFinite ? fallback : value.clamp(0, 100).toDouble();
+      value == null || !value.isFinite
+          ? fallback
+          : value.clamp(0, 100).toDouble();
 
   /// Deterministically score a submission. A free-text answer that a key lets
   /// AI judge goes to `pendingAi` only when it doesn't already match an
   /// accepted answer exactly; BD grades those, never the app.
-  static BdQuizScore score(List<BdFormField> fields, Map<String, BdJson> answers, double passingScore) {
+  static BdQuizScore score(List<BdFormField> fields,
+      Map<String, BdJson> answers, double passingScore) {
     final results = <BdQuizQuestionResult>[];
 
     void grade(BdFormField field, BdJson? value, String resultId) {
@@ -475,13 +548,20 @@ abstract final class BdQuizScoring {
         return;
       }
       final points = _safePoints(key.points);
-      final correctThreshold = _safePercent(key.correctThreshold, defaultCorrectThreshold);
+      final correctThreshold =
+          _safePercent(key.correctThreshold, defaultCorrectThreshold);
       final passingGrade = _safePercent(key.passingGrade, defaultPassingGrade);
-      final partialThreshold = [correctThreshold, _safePercent(key.partialThreshold, defaultPartialThreshold)]
-          .reduce((a, b) => a < b ? a : b);
+      final partialThreshold = [
+        correctThreshold,
+        _safePercent(key.partialThreshold, defaultPartialThreshold)
+      ].reduce((a, b) => a < b ? a : b);
       final accepted = key.accepted;
-      final correct = key.noWrongAnswer ? !isBlank(value) : accepted.any((a) => _matches(field, a, value));
-      final pendingAi = !correct && !isBlank(value) && accepted.any((a) => a.hasText && a.validateWithAI);
+      final correct = key.noWrongAnswer
+          ? !isBlank(value)
+          : accepted.any((a) => _matches(field, a, value));
+      final pendingAi = !correct &&
+          !isBlank(value) &&
+          accepted.any((a) => a.hasText && a.validateWithAI);
       final double? accuracy = pendingAi ? null : (correct ? 100 : 0);
       final status = accuracy == null
           ? BdQuizQuestionStatus.pendingAi
@@ -505,23 +585,31 @@ abstract final class BdQuizScoring {
         partiallyCorrectThreshold: partialThreshold,
         passed: accuracy == null ? null : accuracy >= passingGrade,
         correctAnswers: answersShown.isEmpty ? null : answersShown,
-        rationale: status == BdQuizQuestionStatus.pendingAi ? null : _resultRationale(field, key, value, status.wire),
+        rationale: status == BdQuizQuestionStatus.pendingAi
+            ? null
+            : _resultRationale(field, key, value, status.wire),
         reason: reason == null || reason.isEmpty ? null : reason,
       ));
     }
 
-    void walk(List<BdFormField> nodes, Map<String, BdJson> scope, String prefix) {
+    void walk(
+        List<BdFormField> nodes, Map<String, BdJson> scope, String prefix) {
       for (final field in nodes) {
         switch (field.type) {
           case 'condition_block':
-            if (_conditionMatches(field, scope)) walk(field.children ?? const [], scope, prefix);
+            if (_conditionMatches(field, scope)) {
+              walk(field.children ?? const [], scope, prefix);
+            }
           case 'input_group' || 'flex_row' || 'or_condition':
             walk(field.children ?? const [], scope, prefix);
           case 'multi_populator':
             final instances = scope[field.id]?.arrayValue ?? const <BdJson>[];
             for (var i = 0; i < instances.length; i++) {
               final instance = instances[i].objectValue;
-              if (instance != null) walk(field.children ?? const [], instance, '$prefix${field.id}[$i].');
+              if (instance != null) {
+                walk(field.children ?? const [], instance,
+                    '$prefix${field.id}[$i].');
+              }
             }
           default:
             grade(field, scope[field.id], '$prefix${field.id}');
@@ -532,10 +620,12 @@ abstract final class BdQuizScoring {
     walk(fields, answers, '');
 
     final scorable = results.where((r) => r.pointsPossible > 0).toList();
-    final possible = scorable.fold<double>(0, (sum, r) => sum + r.pointsPossible);
+    final possible =
+        scorable.fold<double>(0, (sum, r) => sum + r.pointsPossible);
     final earned = scorable.fold<double>(0, (sum, r) => sum + r.pointsEarned);
     final provisional = possible == 0 ? 0.0 : (earned / possible) * 100;
-    final pending = scorable.any((r) => r.status == BdQuizQuestionStatus.pendingAi);
+    final pending =
+        scorable.any((r) => r.status == BdQuizQuestionStatus.pendingAi);
     final percent = pending ? null : provisional;
     return BdQuizScore(
       status: pending ? 'pending_ai_review' : 'scored',

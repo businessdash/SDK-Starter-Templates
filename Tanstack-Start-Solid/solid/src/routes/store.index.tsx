@@ -2,7 +2,7 @@
 import type { StorefrontSort } from "@businessdash/sdk/contracts";
 import { createFileRoute } from "@tanstack/solid-router";
 import { Show } from "solid-js";
-
+import { StoreNav } from "../components/bd/StoreNav";
 import { CompareBar } from "../components/bd/shop/CompareBar";
 import { ProductGrid } from "../components/bd/shop/ProductGrid";
 import {
@@ -12,13 +12,12 @@ import {
 	PriceFilter,
 	positive,
 	RatingFilter,
+	StoreSearch as SearchBox,
 	SORT_LABELS,
 	SortSelect,
 	type StoreSearch,
-	StoreSearch as SearchBox,
 	text,
 } from "../components/bd/shop/StoreFilters";
-import { StoreNav } from "../components/bd/StoreNav";
 import { getStoreListing } from "../lib/bd-server-fns";
 import { getCartCount } from "../lib/bd-shop-fns";
 

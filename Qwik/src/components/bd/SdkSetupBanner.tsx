@@ -19,9 +19,7 @@ const PK =
 	(import.meta.env.PUBLIC_BD_PK as string | undefined) ??
 	(import.meta.env.PUBLIC_BD_PK as string | undefined);
 const BASE_URL =
-	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as
-		| string
-		| undefined) ??
+	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined) ??
 	(import.meta.env.PUBLIC_BD_PACKAGE_API_BASE_URL as string | undefined) ??
 	"https://businessdash.us";
 
@@ -34,6 +32,7 @@ export const SdkSetupBanner = component$(() => {
 	// (localStorage is client-only). `document-ready` (not the default
 	// intersection-observer) because the component renders nothing until this
 	// runs, so there's no visible host element to observe.
+	// eslint-disable-next-line qwik/no-use-visible-task -- localStorage exists only in the browser; this reads one key.
 	useVisibleTask$(
 		() => {
 			if (SITE_ID && PK) return; // configured — nothing to show

@@ -75,7 +75,10 @@ export default component$(() => {
 						<div class="bd-empty">Page not found.</div>
 					) : (
 						<>
-							<header class="bd-section__lead" style="text-align: left; align-items: flex-start;">
+							<header
+								class="bd-section__lead"
+								style="text-align: left; align-items: flex-start;"
+							>
 								<h1 class="bd-section__title">
 									{value.meta.title.split(" | ")[0]}
 								</h1>

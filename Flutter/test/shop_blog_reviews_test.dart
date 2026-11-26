@@ -2,7 +2,8 @@ import 'dart:convert';
 
 import 'package:bd_starter/main.dart';
 import 'package:bd_starter/ui/app_state.dart';
-import 'package:businessdash_forms/businessdash_forms.dart' show BdSignInSession, BdSignInUser;
+import 'package:businessdash_forms/businessdash_forms.dart'
+    show BdSignInSession, BdSignInUser;
 import 'package:businessdash_sdk/businessdash_sdk.dart';
 // ignore: deprecated_member_use
 import 'package:flutter/material.dart';
@@ -23,9 +24,30 @@ class FakeBd {
   Map<String, Object?>? review;
 
   static const products = [
-    {'id': 'p1', 'name': 'Trail Runner', 'categoryId': 'c1', 'cheapestPriceCents': 12000, 'hasMultipleVariants': true, 'isNew': true, 'avgRating': 4.5, 'reviewCount': 2},
-    {'id': 'p2', 'name': 'Road Racer', 'categoryId': 'c1', 'cheapestPriceCents': 9900, 'isOnSale': true, 'comparePriceCents': 11900},
-    {'id': 'p3', 'name': 'Wool Socks', 'categoryId': 'c2', 'cheapestPriceCents': 1800},
+    {
+      'id': 'p1',
+      'name': 'Trail Runner',
+      'categoryId': 'c1',
+      'cheapestPriceCents': 12000,
+      'hasMultipleVariants': true,
+      'isNew': true,
+      'avgRating': 4.5,
+      'reviewCount': 2
+    },
+    {
+      'id': 'p2',
+      'name': 'Road Racer',
+      'categoryId': 'c1',
+      'cheapestPriceCents': 9900,
+      'isOnSale': true,
+      'comparePriceCents': 11900
+    },
+    {
+      'id': 'p3',
+      'name': 'Wool Socks',
+      'categoryId': 'c2',
+      'cheapestPriceCents': 1800
+    },
   ];
 
   static final reviews = [
@@ -35,7 +57,8 @@ class FakeBd {
         'source': i.isEven ? 'google' : 'yelp',
         'rating': i < 8 ? 5 : 4,
         'text': 'Review number $i',
-        'reviewUrl': i == 0 ? 'javascript:alert(1)' : 'https://example.com/r/$i',
+        'reviewUrl':
+            i == 0 ? 'javascript:alert(1)' : 'https://example.com/r/$i',
         'reviewerName': 'Customer $i',
         'reviewerImageUrl': null,
         'timeCreated': '2026-11-20T12:00:00Z',
@@ -45,17 +68,21 @@ class FakeBd {
 
   Map<String, Object?> _cart() => {
         'items': cart,
-        'subtotal': cart.fold<num>(0, (sum, line) => sum + (line['subtotal'] as num)),
+        'subtotal':
+            cart.fold<num>(0, (sum, line) => sum + (line['subtotal'] as num)),
         'currency': 'USD',
         'couponCode': coupon,
-        'itemCount': cart.fold<int>(0, (sum, line) => sum + (line['quantity'] as int)),
+        'itemCount':
+            cart.fold<int>(0, (sum, line) => sum + (line['quantity'] as int)),
       };
 
   Future<http.Response> handle(http.Request request) async {
     requests.add(request);
     final path = request.url.path.replaceFirst('/api/package/v1/', '');
     final query = request.url.queryParameters;
-    final body = request.body.isEmpty ? const <String, Object?>{} : jsonDecode(request.body) as Map<String, Object?>;
+    final body = request.body.isEmpty
+        ? const <String, Object?>{}
+        : jsonDecode(request.body) as Map<String, Object?>;
     Object? answer;
     var status = 200;
     switch ((request.method, path)) {
@@ -64,7 +91,8 @@ class FakeBd {
           final category = query['categoryId'];
           final search = query['search']?.toLowerCase();
           return (category == null || product['categoryId'] == category) &&
-              (search == null || (product['name'] as String).toLowerCase().contains(search));
+              (search == null ||
+                  (product['name'] as String).toLowerCase().contains(search));
         }).toList();
         answer = {
           'items': items,
@@ -107,8 +135,18 @@ class FakeBd {
             {'id': 't1', 'title': 'Size', 'variantId': null},
           ],
           'crossVariants': [
-            {'id': 'o2', 'crossVariantTitleId': 't1', 'value': 'M', 'price': 120},
-            {'id': 'o1', 'crossVariantTitleId': 't1', 'value': 'S', 'price': 120},
+            {
+              'id': 'o2',
+              'crossVariantTitleId': 't1',
+              'value': 'M',
+              'price': 120
+            },
+            {
+              'id': 'o1',
+              'crossVariantTitleId': 't1',
+              'value': 'S',
+              'price': 120
+            },
           ],
           'specifications': {
             'features': ['Rock plate'],
@@ -131,7 +169,13 @@ class FakeBd {
       case ('GET', 'storefront/products/p1/reviews'):
         answer = {
           'items': [
-            {'id': 'pr1', 'rating': 5, 'title': 'Great grip', 'body': 'Held on wet rock.', 'reviewerName': 'Sam'},
+            {
+              'id': 'pr1',
+              'rating': 5,
+              'title': 'Great grip',
+              'body': 'Held on wet rock.',
+              'reviewerName': 'Sam'
+            },
           ],
           'avgRating': 5,
           'totalCount': 1,
@@ -147,7 +191,10 @@ class FakeBd {
           'productId': body['productId'],
           'variantId': body['variantId'],
           'productName': 'Trail Runner',
-          'variantTitle': ['Onyx', if (options != null) 'Size ${options['Size']}'].join(' · '),
+          'variantTitle': [
+            'Onyx',
+            if (options != null) 'Size ${options['Size']}'
+          ].join(' · '),
           'quantity': body['quantity'],
           'unitPrice': 120,
           'subtotal': 120 * (body['quantity'] as int),
@@ -170,8 +217,22 @@ class FakeBd {
       case ('GET', 'blog/posts'):
         answer = {
           'items': [
-            {'id': 'b1', 'slug': 'first-run', 'title': 'Your first run', 'excerpt': 'Start slow.', 'tags': ['training'], 'publishedAt': '2026-11-10T00:00:00Z'},
-            {'id': 'b2', 'slug': 'shoe-guide', 'title': 'Choosing a shoe', 'isPinned': true, 'tags': ['gear'], 'publishedAt': '2026-11-01T00:00:00Z'},
+            {
+              'id': 'b1',
+              'slug': 'first-run',
+              'title': 'Your first run',
+              'excerpt': 'Start slow.',
+              'tags': ['training'],
+              'publishedAt': '2026-11-10T00:00:00Z'
+            },
+            {
+              'id': 'b2',
+              'slug': 'shoe-guide',
+              'title': 'Choosing a shoe',
+              'isPinned': true,
+              'tags': ['gear'],
+              'publishedAt': '2026-11-01T00:00:00Z'
+            },
           ],
           'nextCursor': null,
         };
@@ -181,7 +242,8 @@ class FakeBd {
             'id': 'b2',
             'slug': 'shoe-guide',
             'title': 'Choosing a shoe',
-            'content': '<h2>Fit first</h2><p>Try them <strong>late</strong> in the day.</p><script>alert(1)</script>',
+            'content':
+                '<h2>Fit first</h2><p>Try them <strong>late</strong> in the day.</p><script>alert(1)</script>',
             'tags': ['gear'],
             'likes': 3,
             'ctaLabel': 'Book a fitting',
@@ -198,7 +260,11 @@ class FakeBd {
       case ('GET', 'blog/posts/shoe-guide/comments'):
         answer = {'items': comments};
       case ('POST', 'blog/posts/shoe-guide/comments'):
-        comments.add({'id': 'k${comments.length}', 'content': body['content'], 'authorName': 'Ada'});
+        comments.add({
+          'id': 'k${comments.length}',
+          'content': body['content'],
+          'authorName': 'Ada'
+        });
         answer = {
           'comment': comments.last,
           'moderation': {'status': 'approved', 'isApproved': true},
@@ -207,7 +273,9 @@ class FakeBd {
         final source = query['source'];
         final offset = int.parse(query['offset'] ?? '0');
         final limit = int.parse(query['limit'] ?? '10');
-        final matched = reviews.where((review) => source == null || review['source'] == source).toList();
+        final matched = reviews
+            .where((review) => source == null || review['source'] == source)
+            .toList();
         final end = (offset + limit).clamp(0, matched.length);
         answer = {
           'items': matched.sublist(offset, end),
@@ -221,7 +289,8 @@ class FakeBd {
         status = 404;
         answer = {'message': 'No route for ${request.method} $path'};
     }
-    return http.Response(jsonEncode(answer), status, headers: {'content-type': 'application/json'});
+    return http.Response(jsonEncode(answer), status,
+        headers: {'content-type': 'application/json'});
   }
 
   late final client = BdClient(
@@ -251,7 +320,8 @@ void main() {
     addTearDown(tester.view.reset);
     bd = FakeBd();
     state = AppState();
-    await tester.pumpWidget(BdStarterApp(visitorToken: 'visitor-1', state: state, client: bd.client));
+    await tester.pumpWidget(BdStarterApp(
+        visitorToken: 'visitor-1', state: state, client: bd.client));
     await tester.pumpAndSettle();
   }
 
@@ -261,7 +331,9 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the store: rating, categories with counts, and a category filter', (tester) async {
+  testWidgets(
+      'the store: rating, categories with counts, and a category filter',
+      (tester) async {
     await start(tester);
     expect(find.text('4.6'), findsOneWidget);
     expect(find.text('3 products'), findsOneWidget);
@@ -276,7 +348,8 @@ void main() {
     expect(bd.requests.last.url.queryParameters['categoryId'], 'c2');
   });
 
-  testWidgets('a product: choose a size, add to cart, the badge counts it', (tester) async {
+  testWidgets('a product: choose a size, add to cart, the badge counts it',
+      (tester) async {
     await start(tester);
     await tapText(tester, 'Trail Runner');
     expect(find.text('Choose options'), findsOneWidget);
@@ -286,14 +359,23 @@ void main() {
     expect(find.text('You may also like'), findsOneWidget);
 
     // Sizes go smallest first.
-    final sizes = tester.widgetList<ChoiceChip>(find.byType(ChoiceChip)).map((chip) => (chip.label as Text).data);
+    final sizes = tester
+        .widgetList<ChoiceChip>(find.byType(ChoiceChip))
+        .map((chip) => (chip.label as Text).data);
     expect(sizes, ['S', 'M']);
 
     await tapText(tester, 'M');
     expect(find.text('Size: M'), findsOneWidget);
     await tapText(tester, 'Add to cart');
-    final added = jsonDecode(bd.requests.lastWhere((request) => request.url.path.endsWith('cart/items')).body);
-    expect(added, {'productId': 'p1', 'quantity': 1, 'variantId': 'v1', 'options': {'Size': 'M'}});
+    final added = jsonDecode(bd.requests
+        .lastWhere((request) => request.url.path.endsWith('cart/items'))
+        .body);
+    expect(added, {
+      'productId': 'p1',
+      'quantity': 1,
+      'variantId': 'v1',
+      'options': {'Size': 'M'}
+    });
     expect(state.cartCount, 1);
     expect(state.recentlyViewed.items.single.id, 'p1');
 
@@ -302,12 +384,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(state.tab, AppTab.cart);
     expect(find.text('Onyx · Size M'), findsOneWidget);
-    expect(find.descendant(of: find.byType(Badge), matching: find.text('1')), findsOneWidget);
+    expect(find.descendant(of: find.byType(Badge), matching: find.text('1')),
+        findsOneWidget);
   });
 
-  testWidgets('the cart: a bad coupon says why; a good one applies', (tester) async {
+  testWidgets('the cart: a bad coupon says why; a good one applies',
+      (tester) async {
     await start(tester);
-    bd.cart.add({'id': 'line1', 'productName': 'Trail Runner', 'variantTitle': 'Onyx', 'quantity': 2, 'unitPrice': 120, 'subtotal': 240});
+    bd.cart.add({
+      'id': 'line1',
+      'productName': 'Trail Runner',
+      'variantTitle': 'Onyx',
+      'quantity': 2,
+      'unitPrice': 120,
+      'subtotal': 240
+    });
     state.tab = AppTab.cart;
     await tester.pumpAndSettle();
     expect(find.text('\$240.00'), findsWidgets);
@@ -321,7 +412,9 @@ void main() {
     expect(find.text('Coupon RUN10 applied'), findsOneWidget);
   });
 
-  testWidgets('the blog: pinned first, a tag filter, and a post to like and comment on', (tester) async {
+  testWidgets(
+      'the blog: pinned first, a tag filter, and a post to like and comment on',
+      (tester) async {
     await start(tester);
     state.tab = AppTab.blog;
     await tester.pumpAndSettle();
@@ -350,7 +443,8 @@ void main() {
     await tester.pumpAndSettle();
     await tapText(tester, 'Like');
     expect(find.text('4 likes'), findsOneWidget);
-    final like = bd.requests.lastWhere((request) => request.method == 'POST' && request.url.path.endsWith('/like'));
+    final like = bd.requests.lastWhere((request) =>
+        request.method == 'POST' && request.url.path.endsWith('/like'));
     expect(like.headers['X-BD-Session-Token'], 'tok-1');
 
     await tester.enterText(find.byType(TextField), 'Size up for trails.');
@@ -361,7 +455,8 @@ void main() {
     expect(find.text('Comments (1)'), findsOneWidget);
   });
 
-  testWidgets('reviews: the summary, more, a platform filter, and writing one', (tester) async {
+  testWidgets('reviews: the summary, more, a platform filter, and writing one',
+      (tester) async {
     await start(tester, height: 4000);
     await tapText(tester, '4.6');
     expect(find.text('14 reviews'), findsOneWidget);
@@ -388,28 +483,37 @@ void main() {
     expect(find.text('Choose a rating from 1 to 5 stars.'), findsOneWidget);
 
     await tester.tap(find.byTooltip('4 stars'));
-    await tester.enterText(find.widgetWithText(TextField, 'Your review'), '  Friendly and quick.  ');
+    await tester.enterText(find.widgetWithText(TextField, 'Your review'),
+        '  Friendly and quick.  ');
     await tapText(tester, 'Send review');
     expect(find.text(Reviews.sent), findsOneWidget);
     expect(bd.review, {'rating': 4, 'body': 'Friendly and quick.'});
-    final sent = bd.requests.lastWhere((request) => request.url.path.endsWith('customer-portal/reviews'));
+    final sent = bd.requests.lastWhere(
+        (request) => request.url.path.endsWith('customer-portal/reviews'));
     expect(sent.headers['X-BD-Session-Token'], 'tok-1');
   });
 
-  testWidgets('saved lists: compare holds four, and the lists outlast a relaunch', (tester) async {
+  testWidgets(
+      'saved lists: compare holds four, and the lists outlast a relaunch',
+      (tester) async {
     SharedPreferences.setMockInitialValues({});
     final prefs = await SharedPreferences.getInstance();
     final first = AppState(prefs: prefs);
     for (var i = 0; i < 5; i++) {
       first.compare.toggle(SavedProduct(id: 'p$i', name: 'Product $i'));
     }
-    first.wishlist.toggle(const SavedProduct(id: 'p1', name: 'Product 1', priceCents: 1200));
-    expect(first.compare.items.map((item) => item.id), ['p0', 'p1', 'p2', 'p3']);
+    first.wishlist.toggle(
+        const SavedProduct(id: 'p1', name: 'Product 1', priceCents: 1200));
+    expect(
+        first.compare.items.map((item) => item.id), ['p0', 'p1', 'p2', 'p3']);
 
     final relaunched = AppState(prefs: prefs);
     expect(relaunched.compare.items.length, 4);
     expect(relaunched.wishlist.items.single.priceCents, 1200);
-    expect(relaunched.wishlist.toggle(const SavedProduct(id: 'p1', name: 'Product 1')), isFalse);
+    expect(
+        relaunched.wishlist
+            .toggle(const SavedProduct(id: 'p1', name: 'Product 1')),
+        isFalse);
     expect(relaunched.wishlist.items, isEmpty);
   });
 }

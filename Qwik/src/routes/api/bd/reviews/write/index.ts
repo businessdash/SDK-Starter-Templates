@@ -13,7 +13,12 @@ import { checkReview } from "../../../../../lib/shop/reviews";
  * or `{ ok: false, error }` out. It shows once the business approves it.
  * Checked again here with the shared rules.
  */
-export const onPost: RequestHandler = async ({ request, cookie, headers, json }) => {
+export const onPost: RequestHandler = async ({
+	request,
+	cookie,
+	headers,
+	json,
+}) => {
 	headers.set("Cache-Control", "no-store");
 	if (!isCustomerPortalConfigured()) {
 		json(503, { ok: false, error: "Reviews aren't connected yet." });
@@ -28,7 +33,9 @@ export const onPost: RequestHandler = async ({ request, cookie, headers, json })
 		json(401, { ok: false, error: "Sign in to write a review." });
 		return;
 	}
-	const checked = checkReview(((await request.json().catch(() => null)) ?? {}) as Record<string, unknown>);
+	const checked = checkReview(
+		((await request.json().catch(() => null)) ?? {}) as Record<string, unknown>,
+	);
 	if (!checked.ok) {
 		json(400, { ok: false, error: checked.error });
 		return;

@@ -1,10 +1,11 @@
-import { bd } from "../lib/bd";
+import { bd, type Loose } from "../lib/bd";
 import { Link } from "../lib/router";
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { ErrorBox, PageHead } from "./ui";
+import { useApi } from "./use-api";
 
 export function ServiceAreas() {
 	const { data, error, loading } = useApi(() => bd.parallelPages.listVariants("service-area"));
-	const variants: Record<string, any>[] = data?.variants ?? data?.items ?? [];
+	const variants: Loose[] = data?.variants ?? data?.items ?? [];
 	return (
 		<main className="page">
 			<PageHead title="Service areas" sub="Programmatic-SEO pages, one per service × area." />

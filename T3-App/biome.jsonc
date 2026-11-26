@@ -1,69 +1,94 @@
 {
-  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
-  "root": true,
-  "vcs": {
-    "enabled": true,
-    "useIgnoreFile": true,
-    "clientKind": "git",
-  },
-  "assist": {
-    "enabled": true,
-    "actions": {
-      "recommended": true,
-      "source": {
-        "recommended": true,
-        "organizeImports": "on",
-        "useSortedAttributes": "on",
-      },
-    },
-  },
-  "formatter": {
-    "enabled": true,
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true,
-      "nursery": {
-        "useSortedClasses": {
-          "level": "warn",
-          "fix": "safe",
-          "options": {
-            "functions": ["clsx", "cva", "cn"],
-          },
-        },
-      },
-    },
-  },
-  "html": {
-    "formatter": {
-      "enabled": true,
-    },
-  },
-  "javascript": {
-    "assist": {
-      "enabled": true,
-    },
-    "formatter": {
-      "enabled": true,
-    },
-    "linter": {
-      "enabled": true,
-    },
-  },
-  "css": {
-    "assist": {
-      "enabled": true,
-    },
-    "formatter": {
-      "enabled": true,
-    },
-    "linter": {
-      "enabled": true,
-    },
-    "parser": {
-      "cssModules": true,
-      "tailwindDirectives": true, // [bd-line:tailwind]
-    },
-  },
+	"$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+	"root": true,
+	"vcs": {
+		"enabled": true,
+		"useIgnoreFile": true,
+		"clientKind": "git"
+	},
+	// Markdown tables end some rows with a [bd-line:…] comment the installer
+	// reads; the Markdown formatter would add a cell after it.
+	"files": { "includes": ["**", "!**/*.md"] },
+	"assist": {
+		"enabled": true,
+		"actions": {
+			"preset": "recommended",
+			"source": {
+				"preset": "recommended",
+				"organizeImports": "on",
+				"useSortedAttributes": "on"
+			}
+		}
+	},
+	"formatter": {
+		"enabled": true
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "recommended",
+			// [bd:tailwind]
+			"nursery": {
+				// Its fix drops the space before a class added in a template
+				// literal (`card${on ? " card--on" : ""}`), so it runs only with
+				// `pnpm check:unsafe`, where you can review what it changed.
+				"useTailwindSortedClasses": {
+					"level": "warn",
+					"fix": "unsafe"
+				}
+			}
+			// [/bd:tailwind]
+		}
+	},
+	"html": {
+		"formatter": {
+			"enabled": true
+		}
+	},
+	"javascript": {
+		"assist": {
+			"enabled": true
+		},
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
+		}
+	},
+	"css": {
+		"assist": {
+			"enabled": true
+		},
+		"formatter": {
+			"enabled": true
+		},
+		"linter": {
+			"enabled": true
+		},
+		"parser": {
+			"cssModules": true,
+			"tailwindDirectives": true // [bd-line:tailwind]
+		}
+	},
+	"tailwind": { "mergeFunctions": ["clsx", "cn"], "variantFunctions": ["cva"] }, // [bd-line:tailwind]
+	"overrides": [
+		{
+			// BD's shop, blog and reviews: photos from whatever hosts the business
+			// uses, which next/image would need listed one by one in next.config's
+			// images.remotePatterns; and their own CSS classes, which the class
+			// sorter leaves alone.
+			"includes": [
+				"src/app/_components/bd/**",
+				"src/app/store/**",
+				"src/app/todos/**"
+			],
+			"linter": {
+				"rules": {
+					"performance": { "noImgElement": "off" },
+					"nursery": { "useTailwindSortedClasses": "off" } // [bd-line:tailwind]
+				}
+			}
+		}
+	]
 }

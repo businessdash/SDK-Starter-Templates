@@ -1,8 +1,8 @@
-import { mcpManifestHandler } from "@businessdash/sdk/mcp";
+import { mcpManifestHandler } from '@businessdash/sdk/mcp';
 
-import { aiSurfaceConfig } from "#lib/server/bd-ai.ts";
+import { aiSurfaceConfig } from '#lib/server/bd-ai.ts';
 
-import type { RequestHandler } from "./$types";
+import type { RequestHandler } from './$types';
 
 /**
  * GET /.well-known/mcp.json
@@ -26,8 +26,8 @@ export const GET: RequestHandler = async ({ request }) => {
 	const manifest = getHandler();
 	if (!manifest) {
 		return Response.json(
-			{ error: "MCP is not configured (set the BD env vars)." },
-			{ status: 503 },
+			{ error: 'MCP is not configured (set the BD env vars).' },
+			{ status: 503 }
 		);
 	}
 	return manifest(request);

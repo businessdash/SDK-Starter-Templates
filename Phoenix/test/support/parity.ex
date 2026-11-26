@@ -6,7 +6,8 @@ defmodule BdStarter.Parity do
 
   alias BdStarter.Forms.{Js, Json}
 
-  def fixtures(name), do: Path.join([__DIR__, "..", "fixtures", name]) |> File.read!() |> Json.decode!()
+  def fixtures(name),
+    do: Path.join([__DIR__, "..", "fixtures", name]) |> File.read!() |> Json.decode!()
 
   @doc "Undo the generator's `{\"$number\": \"NaN\"}` tagging."
   def untag(%{"$number" => "NaN"}), do: :nan
@@ -30,7 +31,8 @@ defmodule BdStarter.Parity do
         end
 
       is_list(a) and is_list(b) ->
-        length(a) == length(b) and Enum.all?(Enum.zip(a, b), fn {x, y} -> same?(x, y, tolerance) end)
+        length(a) == length(b) and
+          Enum.all?(Enum.zip(a, b), fn {x, y} -> same?(x, y, tolerance) end)
 
       is_map(a) and is_map(b) and not is_struct(a) and not is_struct(b) ->
         keys = Enum.uniq(Map.keys(a) ++ Map.keys(b))

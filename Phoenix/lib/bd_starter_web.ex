@@ -7,7 +7,8 @@ defmodule BdStarterWeb do
   """
 
   def static_paths,
-    do: ~w(assets fonts images favicon.ico bd-sign-in.css forms.css shop bd-pages.css bd-shop.css bd-blog.css bd-reviews.css)
+    do:
+      ~w(assets fonts images favicon.ico bd-sign-in.css forms.css shop bd-pages.css bd-shop.css bd-blog.css bd-reviews.css)
 
   def router do
     quote do

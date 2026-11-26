@@ -28,6 +28,7 @@ import {
 	defaultVariant,
 	galleryFor,
 	optionGroupsFor,
+	type ProductView,
 	priceFor,
 	recentlyViewed,
 	type SavedProduct,
@@ -45,6 +46,16 @@ export type AddToCartInput = {
 export type AddToCartResult =
 	| { ok: true; itemCount: number }
 	| { ok: false; error: string };
+
+/** The saved-list entry for a product at a price. */
+function savedSummary(view: ProductView, dollars: number | null): SavedProduct {
+	return {
+		id: view.id,
+		name: view.name,
+		image: view.images[0] ?? null,
+		priceCents: dollars != null ? Math.round(dollars * 100) : null,
+	};
+}
 
 /**
  * The product page: photos that follow the chosen option, option and size
@@ -108,18 +119,16 @@ export function ProductDetail({
 	const groups = optionGroupsFor(view, variantId);
 	const price = priceFor(view, variantId, chosen);
 	const startDollars = price.amount ?? view.variants[0]?.price ?? null;
-	const summary: SavedProduct = {
-		id: view.id,
-		name: view.name,
-		image: view.images[0] ?? null,
-		priceCents: startDollars != null ? Math.round(startDollars * 100) : null,
-	};
+	const summary = savedSummary(view, startDollars);
 
-	// Recently viewed: shown before this one is added, so it isn't in its own list.
+	// Recently viewed: read before this one is added, so it isn't in its own list.
 	useEffect(() => {
 		setRecent(recentlyViewed.read().filter((item) => item.id !== view.id));
-		recentlyViewed.add(summary);
-	}, [view.id]);
+		const start = defaultVariant(view)?.id ?? "";
+		const dollars =
+			priceFor(view, start, {}).amount ?? view.variants[0]?.price ?? null;
+		recentlyViewed.add(savedSummary(view, dollars));
+	}, [view]);
 
 	function pickVariant(next: string) {
 		setVariantId(next);

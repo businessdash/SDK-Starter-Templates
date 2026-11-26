@@ -54,17 +54,23 @@ List<HeadTag> seoHeadTags(Map<String, dynamic>? seo, {String? baseUrl}) {
     final joined = keywords.whereType<String>().join(', ');
     if (joined.isNotEmpty) tags.add(_meta('name', 'keywords', joined));
   }
-  tags.add(_meta('name', 'robots', noIndex ? 'noindex, nofollow' : 'index, follow'));
+  tags.add(
+      _meta('name', 'robots', noIndex ? 'noindex, nofollow' : 'index, follow'));
 
   if (ogTitle != null) tags.add(_meta('property', 'og:title', ogTitle));
-  if (ogDescription != null) tags.add(_meta('property', 'og:description', ogDescription));
+  if (ogDescription != null) {
+    tags.add(_meta('property', 'og:description', ogDescription));
+  }
   if (ogImage != null) tags.add(_meta('property', 'og:image', ogImage));
   if (canonical != null) tags.add(_meta('property', 'og:url', canonical));
   tags.add(_meta('property', 'og:type', 'website'));
 
-  tags.add(_meta('name', 'twitter:card', _text(seo['twitterCard']) ?? 'summary_large_image'));
+  tags.add(_meta('name', 'twitter:card',
+      _text(seo['twitterCard']) ?? 'summary_large_image'));
   if (ogTitle != null) tags.add(_meta('name', 'twitter:title', ogTitle));
-  if (ogDescription != null) tags.add(_meta('name', 'twitter:description', ogDescription));
+  if (ogDescription != null) {
+    tags.add(_meta('name', 'twitter:description', ogDescription));
+  }
   if (ogImage != null) tags.add(_meta('name', 'twitter:image', ogImage));
 
   if (canonical != null) {

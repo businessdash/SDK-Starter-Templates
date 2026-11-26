@@ -14,14 +14,63 @@
  */
 
 const ALLOWED_TAGS = new Set([
-	"a", "abbr", "b", "blockquote", "br", "caption", "code", "del", "div", "em",
-	"figcaption", "figure", "h1", "h2", "h3", "h4", "h5", "h6", "hr", "i", "img",
-	"ins", "kbd", "li", "mark", "ol", "p", "pre", "s", "small", "span", "strong",
-	"sub", "sup", "table", "tbody", "td", "tfoot", "th", "thead", "tr", "u", "ul",
+	"a",
+	"abbr",
+	"b",
+	"blockquote",
+	"br",
+	"caption",
+	"code",
+	"del",
+	"div",
+	"em",
+	"figcaption",
+	"figure",
+	"h1",
+	"h2",
+	"h3",
+	"h4",
+	"h5",
+	"h6",
+	"hr",
+	"i",
+	"img",
+	"ins",
+	"kbd",
+	"li",
+	"mark",
+	"ol",
+	"p",
+	"pre",
+	"s",
+	"small",
+	"span",
+	"strong",
+	"sub",
+	"sup",
+	"table",
+	"tbody",
+	"td",
+	"tfoot",
+	"th",
+	"thead",
+	"tr",
+	"u",
+	"ul",
 ]);
 const VOID_TAGS = new Set(["br", "hr", "img"]);
 /** Tags whose whole content goes, not only the tag. */
-const DROPPED_WITH_CONTENT = new Set(["script", "style", "iframe", "object", "embed", "template", "noscript", "textarea", "select"]);
+const DROPPED_WITH_CONTENT = new Set([
+	"script",
+	"style",
+	"iframe",
+	"object",
+	"embed",
+	"template",
+	"noscript",
+	"textarea",
+	"select",
+]);
 const ALLOWED_ATTRIBUTES: Record<string, Set<string>> = {
 	"*": new Set(["title", "id", "class"]),
 	a: new Set(["href"]),
@@ -35,7 +84,10 @@ const URL_ATTRIBUTES = new Set(["href", "src"]);
 function escapeText(value: string): string {
 	// An entity already in the text (&amp; &#8217;) stays one.
 	return value
-		.replace(/&(?![a-zA-Z][a-zA-Z0-9]{1,31};|#[0-9]{1,7};|#x[0-9a-fA-F]{1,6};)/g, "&amp;")
+		.replace(
+			/&(?![a-zA-Z][a-zA-Z0-9]{1,31};|#[0-9]{1,7};|#x[0-9a-fA-F]{1,6};)/g,
+			"&amp;",
+		)
 		.replace(/</g, "&lt;")
 		.replace(/>/g, "&gt;");
 }
@@ -46,8 +98,12 @@ function escapeAttribute(value: string): string {
 
 function decodeEntities(value: string): string {
 	return value
-		.replace(/&#x([0-9a-f]+);?/gi, (_, hex: string) => String.fromCodePoint(Number.parseInt(hex, 16) || 0xfffd))
-		.replace(/&#([0-9]+);?/g, (_, dec: string) => String.fromCodePoint(Number.parseInt(dec, 10) || 0xfffd))
+		.replace(/&#x([0-9a-f]+);?/gi, (_, hex: string) =>
+			String.fromCodePoint(Number.parseInt(hex, 16) || 0xfffd),
+		)
+		.replace(/&#([0-9]+);?/g, (_, dec: string) =>
+			String.fromCodePoint(Number.parseInt(dec, 10) || 0xfffd),
+		)
 		.replace(/&colon;/gi, ":")
 		.replace(/&tab;/gi, "\t")
 		.replace(/&newline;/gi, "\n")
@@ -67,7 +123,8 @@ function safeUrl(raw: string): string | null {
 }
 
 const TAG = /<\/?([a-zA-Z][a-zA-Z0-9]*)\b((?:[^>"']|"[^"]*"|'[^']*')*)>/y;
-const ATTRIBUTE = /([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
+const ATTRIBUTE =
+	/([^\s"'>/=]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+)))?/g;
 
 /** Make a post's HTML safe to render (see the note at the top). */
 export function safePostHtml(html: string): string {
@@ -131,7 +188,8 @@ export function safePostHtml(html: string): string {
 		if (name === "a" && external) {
 			attributes += ' target="_blank" rel="noopener noreferrer nofollow"';
 		}
-		if (name === "img" && !/\sloading=/.test(attributes)) attributes += ' loading="lazy"';
+		if (name === "img" && !/\sloading=/.test(attributes))
+			attributes += ' loading="lazy"';
 		out += `<${name}${attributes}>`;
 		if (!VOID_TAGS.has(name)) open.push(name);
 	}
@@ -141,13 +199,24 @@ export function safePostHtml(html: string): string {
 
 /** The words a post has, for reading time; tags don't count. */
 export function readingMinutes(html: string): number {
-	const words = html.replace(/<[^>]*>/g, " ").trim().split(/\s+/).filter(Boolean).length;
+	const words = html
+		.replace(/<[^>]*>/g, " ")
+		.trim()
+		.split(/\s+/)
+		.filter(Boolean).length;
 	return Math.max(1, Math.round(words / 230));
 }
 
-export function formatPostDate(iso: string | null | undefined, locale?: string): string {
+export function formatPostDate(
+	iso: string | null | undefined,
+	locale?: string,
+): string {
 	if (!iso) return "";
 	const date = new Date(iso);
 	if (Number.isNaN(date.getTime())) return "";
-	return date.toLocaleDateString(locale, { year: "numeric", month: "long", day: "numeric" });
+	return date.toLocaleDateString(locale, {
+		year: "numeric",
+		month: "long",
+		day: "numeric",
+	});
 }

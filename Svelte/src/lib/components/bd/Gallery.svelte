@@ -20,14 +20,12 @@
 		<span class="bd-section__eyebrow">Recent work</span>
 		<h2 class="bd-section__title">Gallery</h2>
 		<p class="bd-section__sub">
-			Pulled live from the BD gallery surface. Each tile only fetches the
-			fields it actually displays.
+			Pulled live from the BD gallery surface. Each tile only fetches the fields it actually
+			displays.
 		</p>
 	</div>
 	{#if items.length === 0}
-		<div class="bd-empty">
-			No gallery items yet. Add a few in BD and they'll appear here.
-		</div>
+		<div class="bd-empty">No gallery items yet. Add a few in BD and they'll appear here.</div>
 	{:else}
 		<div class="bd-grid-4">
 			{#each items as item (item.id)}

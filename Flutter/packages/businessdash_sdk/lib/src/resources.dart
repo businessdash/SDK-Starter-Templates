@@ -8,8 +8,8 @@ extension BdResources on BdClient {
   // ── Storefront ────────────────────────────────────────────────────────
 
   Future<List<Product>> products({int? limit}) async {
-    final body = await get('storefront/products',
-        query: {'limit': limit?.toString()});
+    final body =
+        await get('storefront/products', query: {'limit': limit?.toString()});
     return ((body['items'] as List?) ?? [])
         .map((p) => Product.fromJson(p as Map<String, dynamic>))
         .toList();
@@ -54,16 +54,19 @@ extension BdResources on BdClient {
         .toList();
   }
 
-  Future<Product> product(String id) async =>
-      Product.fromJson(await get('storefront/products/${Uri.encodeComponent(id)}'));
+  Future<Product> product(String id) async => Product.fromJson(
+      await get('storefront/products/${Uri.encodeComponent(id)}'));
 
   /// One product shaped for its page: photos per style, option groups,
   /// prices and specs (see [ProductView]).
-  Future<ProductView> productDetail(String id) async =>
-      ProductView.fromJson(await get('storefront/products/${Uri.encodeComponent(id)}'));
+  Future<ProductView> productDetail(String id) async => ProductView.fromJson(
+      await get('storefront/products/${Uri.encodeComponent(id)}'));
 
-  Future<List<RelatedProduct>> relatedProducts(String id, {int limit = 6}) async {
-    final body = await get('storefront/products/${Uri.encodeComponent(id)}/related', query: {'limit': '$limit'});
+  Future<List<RelatedProduct>> relatedProducts(String id,
+      {int limit = 6}) async {
+    final body = await get(
+        'storefront/products/${Uri.encodeComponent(id)}/related',
+        query: {'limit': '$limit'});
     return ((body['items'] as List?) ?? [])
         .map((p) => RelatedProduct.fromJson(p as Map<String, dynamic>))
         .toList();
@@ -71,11 +74,14 @@ extension BdResources on BdClient {
 
   /// A product's own reviews, newest first. "Show more" asks for a longer
   /// page (up to 100).
-  Future<ProductReviewPage> productReviews(String id, {int limit = 10}) async => ProductReviewPage.fromJson(
-      await get('storefront/products/${Uri.encodeComponent(id)}/reviews', query: {'limit': '$limit'}));
+  Future<ProductReviewPage> productReviews(String id, {int limit = 10}) async =>
+      ProductReviewPage.fromJson(await get(
+          'storefront/products/${Uri.encodeComponent(id)}/reviews',
+          query: {'limit': '$limit'}));
 
   Future<List<ProductAddon>> productAddons(String id) async {
-    final body = await get('storefront/products/${Uri.encodeComponent(id)}/addons');
+    final body =
+        await get('storefront/products/${Uri.encodeComponent(id)}/addons');
     return ((body['items'] as List?) ?? [])
         .map((a) => ProductAddon.fromJson(a as Map<String, dynamic>))
         .toList();
@@ -86,8 +92,8 @@ extension BdResources on BdClient {
   Map<String, String> _cartHeaders(String visitorToken) =>
       {'X-BD-Cart-Visitor': visitorToken};
 
-  Future<CartSnapshot> cart(String visitorToken) async =>
-      CartSnapshot.fromJson(await get('cart', headers: _cartHeaders(visitorToken)));
+  Future<CartSnapshot> cart(String visitorToken) async => CartSnapshot.fromJson(
+      await get('cart', headers: _cartHeaders(visitorToken)));
 
   /// [options] are the chosen option groups, `{'Size': 'M'}`
   /// ([ProductView.chosenOptions]).
@@ -128,14 +134,18 @@ extension BdResources on BdClient {
 
   /// A code the business doesn't have answers 400 ([BdHttpException]) with
   /// a message to show.
-  Future<CartSnapshot> cartApplyCoupon(String visitorToken, String code) async => CartSnapshot.fromJson(
-      await post('cart/coupon', body: {'code': code}, headers: _cartHeaders(visitorToken)));
+  Future<CartSnapshot> cartApplyCoupon(
+          String visitorToken, String code) async =>
+      CartSnapshot.fromJson(await post('cart/coupon',
+          body: {'code': code}, headers: _cartHeaders(visitorToken)));
 
   Future<CartSnapshot> cartRemoveCoupon(String visitorToken) async =>
-      CartSnapshot.fromJson(await delete('cart/coupon', headers: _cartHeaders(visitorToken)));
+      CartSnapshot.fromJson(
+          await delete('cart/coupon', headers: _cartHeaders(visitorToken)));
 
   Future<CartSnapshot> cartClear(String visitorToken) async =>
-      CartSnapshot.fromJson(await post('cart/clear', headers: _cartHeaders(visitorToken)));
+      CartSnapshot.fromJson(
+          await post('cart/clear', headers: _cartHeaders(visitorToken)));
 
   /// Hand off to Stripe. Open [CheckoutSession.stripeUrl] in a browser — no
   /// card data touches this process, which keeps the app out of PCI scope.
@@ -152,7 +162,8 @@ extension BdResources on BdClient {
 
   /// Back from Stripe: whether the order is paid.
   Future<CheckoutStatus> checkoutStatus(String sessionId) async =>
-      CheckoutStatus.fromJson(await get('checkout/${Uri.encodeComponent(sessionId)}'));
+      CheckoutStatus.fromJson(
+          await get('checkout/${Uri.encodeComponent(sessionId)}'));
 
   // ── Blog ──────────────────────────────────────────────────────────────
   //
@@ -160,12 +171,15 @@ extension BdResources on BdClient {
   // token goes out as `X-BD-Session-Token` (the portal's header, not the
   // `x-bd-session` that sign-in's `auth/me` takes).
 
-  Map<String, String> _session(String? token) => token == null ? const {} : {'X-BD-Session-Token': token};
+  Map<String, String> _session(String? token) =>
+      token == null ? const {} : {'X-BD-Session-Token': token};
 
-  Future<List<BlogPost>> posts({int limit = 20}) async => (await blogPage(limit: limit)).items;
+  Future<List<BlogPost>> posts({int limit = 20}) async =>
+      (await blogPage(limit: limit)).items;
 
   /// A page of posts; pass [BlogPage.nextCursor] back for the next.
-  Future<BlogPage> blogPage({int limit = 20, int? cursor, String? categoryId}) async =>
+  Future<BlogPage> blogPage(
+          {int limit = 20, int? cursor, String? categoryId}) async =>
       BlogPage.fromJson(await get('blog/posts', query: {
         'limit': '$limit',
         'cursor': cursor?.toString(),
@@ -185,24 +199,33 @@ extension BdResources on BdClient {
   }
 
   /// One post. Signed in, a members-only post comes with its body.
-  Future<BlogPostDetail> blogPost(String slug, {String? sessionToken}) async => BlogPostDetail.fromJson(
-      await get('blog/posts/${Uri.encodeComponent(slug)}', headers: _session(sessionToken)));
+  Future<BlogPostDetail> blogPost(String slug, {String? sessionToken}) async =>
+      BlogPostDetail.fromJson(await get(
+          'blog/posts/${Uri.encodeComponent(slug)}',
+          headers: _session(sessionToken)));
 
   /// The like count, and whether this customer liked it (signed in).
-  Future<PostLikes> postLikes(String slug, {String? sessionToken}) async => PostLikes.fromJson(
-      await get('blog/posts/${Uri.encodeComponent(slug)}/like', headers: _session(sessionToken)));
+  Future<PostLikes> postLikes(String slug, {String? sessionToken}) async =>
+      PostLikes.fromJson(await get(
+          'blog/posts/${Uri.encodeComponent(slug)}/like',
+          headers: _session(sessionToken)));
 
-  Future<PostLikes> togglePostLike(String slug, {required String sessionToken}) async => PostLikes.fromJson(
-      await post('blog/posts/${Uri.encodeComponent(slug)}/like', headers: _session(sessionToken)));
+  Future<PostLikes> togglePostLike(String slug,
+          {required String sessionToken}) async =>
+      PostLikes.fromJson(await post(
+          'blog/posts/${Uri.encodeComponent(slug)}/like',
+          headers: _session(sessionToken)));
 
   Future<List<BlogComment>> postComments(String slug, {int limit = 50}) async {
-    final body = await get('blog/posts/${Uri.encodeComponent(slug)}/comments', query: {'limit': '$limit'});
+    final body = await get('blog/posts/${Uri.encodeComponent(slug)}/comments',
+        query: {'limit': '$limit'});
     return ((body['items'] as List?) ?? [])
         .map((c) => BlogComment.fromJson(c as Map<String, dynamic>))
         .toList();
   }
 
-  Future<CommentPosted> postComment(String slug, String content, {required String sessionToken}) async =>
+  Future<CommentPosted> postComment(String slug, String content,
+          {required String sessionToken}) async =>
       CommentPosted.fromJson(await post(
         'blog/posts/${Uri.encodeComponent(slug)}/comments',
         body: {'content': content},
@@ -216,7 +239,10 @@ extension BdResources on BdClient {
 
   /// A page of the business's reviews, newest first. [source] is one of
   /// [Reviews.sources].
-  Future<ReviewPage> reviewPage({int limit = Reviews.pageSize, int offset = 0, String? source}) async =>
+  Future<ReviewPage> reviewPage(
+          {int limit = Reviews.pageSize,
+          int offset = 0,
+          String? source}) async =>
       ReviewPage.fromJson(await get('reviews', query: {
         'limit': '$limit',
         'offset': '$offset',
@@ -228,7 +254,9 @@ extension BdResources on BdClient {
   Future<ReviewTotals?> reviewTotals() async {
     final bundle = await pageBundle();
     final reviews = bundle['reviews'];
-    return reviews is Map<String, dynamic> ? ReviewTotals.fromJson(reviews) : null;
+    return reviews is Map<String, dynamic>
+        ? ReviewTotals.fromJson(reviews)
+        : null;
   }
 
   Future<List<SubscriptionPlan>> subscriptionPlans() async {
@@ -274,7 +302,8 @@ extension BdResources on BdClient {
   ///
   /// Reads need `metadata:read_records` on the key, and a publishable token
   /// only ever sees objects marked `public`.
-  Future<List<DataModelRecord>> records(String object, {int limit = 200}) async {
+  Future<List<DataModelRecord>> records(String object,
+      {int limit = 200}) async {
     final all = <DataModelRecord>[];
     String? cursor;
 

@@ -112,7 +112,8 @@ export const marketing = defineSiteMarketingSchema({
 
 		brand: section({
 			label: "Brand & SEO",
-			description: "Site-wide identity: title, description, tagline, social URLs.",
+			description:
+				"Site-wide identity: title, description, tagline, social URLs.",
 			icon: "sparkles",
 			schema: z.object({
 				siteTitle: z.string(),
@@ -157,7 +158,8 @@ export const marketing = defineSiteMarketingSchema({
 
 		hero: section({
 			label: "Hero",
-			description: "Top-of-home headline, subhead, primary CTA, background image.",
+			description:
+				"Top-of-home headline, subhead, primary CTA, background image.",
 			icon: "layout",
 			schema: z.object({
 				headline: z.string(),

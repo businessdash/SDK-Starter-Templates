@@ -5,7 +5,8 @@ import type { Loose } from "../lib/bd";
 // [bd:subscriptions]
 import type { CustomerPlan } from "../lib/bd";
 // [/bd:subscriptions]
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { ErrorBox, PageHead } from "./ui";
+import { useApi } from "./use-api";
 
 /** Where sign-in returns to: a path on this site, or the account page. */
 function signInReturn(): string {
@@ -31,8 +32,8 @@ export function MyAccount() {
 			const res: Loose = await bd.portal.submitReview({ rating: Number(rating), body: body.trim() });
 			setMsg(res?.status === "pending" ? "Thanks! Your review is pending moderation." : "Thanks for your review!");
 			setBody("");
-		} catch (e: any) {
-			setMsg(e?.message ?? "Couldn't submit your review.");
+		} catch (e) {
+			setMsg(e instanceof Error ? e.message : "Couldn't submit your review.");
 		} finally {
 			setSubmitting(false);
 		}
@@ -76,7 +77,7 @@ export function MyAccount() {
 
 	const u: Loose = data.user ?? {};
 	const work: Loose = data.work ?? {};
-	const jobs: Record<string, any>[] = work.jobs ?? work.items ?? [];
+	const jobs: Loose[] = work.jobs ?? work.items ?? [];
 
 	return (
 		<main className="page">

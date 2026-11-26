@@ -3,8 +3,10 @@ import { useEffect } from "react";
 
 import { BlogPost } from "../components/blog/BlogPost";
 import { bd } from "../lib/bd";
-import { Link, useRoute } from "../lib/router";
-import { ErrorBox, useApi } from "./ui";
+import { Link } from "../lib/router";
+import { useRoute } from "../lib/route";
+import { ErrorBox } from "./ui";
+import { useApi } from "./use-api";
 
 /**
  * One post. Its HTML is rebuilt from an allowlist on the server

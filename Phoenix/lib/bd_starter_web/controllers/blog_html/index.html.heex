@@ -11,7 +11,9 @@
   <div class="bd-section__lead">
     <span class="bd-section__eyebrow">Blog</span>
     <h1 class="bd-section__title">{(@active && @active["name"]) || "From the blog"}</h1>
-    <p :if={@active && @active["description"]} class="bd-section__sub">{@active["description"]}</p>
+    <p :if={@active && @active["description"]} class="bd-section__sub">
+      {@active["description"]}
+    </p>
   </div>
 
   <.blog_filters categories={@categories} category={@category} tag={@tag} tags={@tags} />

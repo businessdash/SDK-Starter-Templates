@@ -2,7 +2,11 @@
 import { Link } from "@builder.io/qwik-city";
 
 /** The list's link with one filter changed (the other kept). */
-function filterHref(current: { category: string; tag: string }, key: "category" | "tag", value: string | null): string {
+function filterHref(
+	current: { category: string; tag: string },
+	key: "category" | "tag",
+	value: string | null,
+): string {
 	const params = new URLSearchParams();
 	if (current.category) params.set("category", current.category);
 	if (current.tag) params.set("tag", current.tag);
@@ -33,13 +37,19 @@ export function BlogFilters({
 			{categories.length > 0 ? (
 				<ul>
 					<li>
-						<Link aria-current={category ? undefined : "true"} href={filterHref(current, "category", null)}>
+						<Link
+							aria-current={category ? undefined : "true"}
+							href={filterHref(current, "category", null)}
+						>
 							All
 						</Link>
 					</li>
 					{categories.map((c) => (
 						<li key={c.id}>
-							<Link aria-current={category === c.id ? "true" : undefined} href={filterHref(current, "category", c.id)}>
+							<Link
+								aria-current={category === c.id ? "true" : undefined}
+								href={filterHref(current, "category", c.id)}
+							>
 								{c.name}
 							</Link>
 						</li>
@@ -50,7 +60,10 @@ export function BlogFilters({
 				<ul class="blog-filters__tags">
 					{tags.map((t) => (
 						<li key={t}>
-							<Link aria-current={tag === t ? "true" : undefined} href={filterHref(current, "tag", tag === t ? null : t)}>
+							<Link
+								aria-current={tag === t ? "true" : undefined}
+								href={filterHref(current, "tag", tag === t ? null : t)}
+							>
 								#{t}
 							</Link>
 						</li>

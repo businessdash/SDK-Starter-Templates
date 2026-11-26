@@ -1,4 +1,4 @@
-import { localBusiness, renderJsonLdToHtml, website } from "@businessdash/sdk/seo";
+import { localBusiness, renderJsonLdToHtml, website } from '@businessdash/sdk/seo';
 
 /**
  * Server-side JSON-LD builders. `+page.server.ts` calls `buildHomeJsonLd`
@@ -28,13 +28,13 @@ export function buildHomeJsonLd(company: SeoCompany): string {
 			description: company.description,
 			telephone: company.telephone,
 			email: company.email,
-			areaServed: company.city ? [company.city] : undefined,
+			areaServed: company.city ? [company.city] : undefined
 		}),
 		website({
 			siteUrl: company.siteUrl,
 			name: company.name,
-			description: company.description,
-		}),
+			description: company.description
+		})
 	];
 	return renderJsonLdToHtml(nodes);
 }

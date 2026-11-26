@@ -14,9 +14,7 @@ use App\Bd\Client;
  */
 class Followers
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /** @return array<string, mixed> */
     public function join(string $email, ?string $name = null, ?string $source = null): array

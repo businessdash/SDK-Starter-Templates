@@ -154,7 +154,7 @@ public struct ReviewSummaryCard: View {
                                 .frame(minWidth: 18, alignment: .trailing)
                         }
                         .accessibilityElement(children: .ignore)
-                        .accessibilityLabel("\(row.stars) stars: \(row.count) \(row.count == 1 ? "review" : "reviews")")
+                        .accessibilityLabel("\(row.stars) \(row.stars == 1 ? "star" : "stars"): \(row.count) \(row.count == 1 ? "review" : "reviews")")
                     }
                 }
             }

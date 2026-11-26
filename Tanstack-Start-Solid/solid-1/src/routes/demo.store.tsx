@@ -37,9 +37,7 @@ function LastName() {
 
 function FullName() {
 	const fName = useStore(fullName);
-	return (
-		<div class="demo-store-value">{fName()}</div>
-	);
+	return <div class="demo-store-value">{fName()}</div>;
 }
 
 function DemoStore() {

@@ -26,7 +26,10 @@ defmodule BdStarterWeb.ReviewComponents do
 
   def rating_summary(assigns) do
     ~H"""
-    <section class="reviews-summary" aria-label={if @summary.average, do: "Rating", else: "Write a review"}>
+    <section
+      class="reviews-summary"
+      aria-label={if @summary.average, do: "Rating", else: "Write a review"}
+    >
       <%= if @summary.average do %>
         <div class="reviews-summary__score">
           <span class="reviews-summary__average">{average(@summary)}</span>
@@ -38,15 +41,24 @@ defmodule BdStarterWeb.ReviewComponents do
           </span>
         </div>
         <ul class="reviews-bars">
-          <li :for={row <- @summary.histogram} aria-label={"#{row.stars} stars: #{row.count}"}>
+          <li
+            :for={row <- @summary.histogram}
+            aria-label={"#{row.stars} #{if row.stars == 1, do: "star", else: "stars"}: #{row.count}"}
+          >
             <span>{row.stars} ★</span>
-            <span class="reviews-bars__track"><span class="reviews-bars__fill" style={"width: #{round(row.share * 100)}%"}></span></span>
+            <span class="reviews-bars__track"><span
+              class="reviews-bars__fill"
+              style={"width: #{round(row.share * 100)}%"}
+            ></span></span>
             <span>{row.count}</span>
           </li>
         </ul>
       <% end %>
       <div class="reviews-summary__write">
-        <bd-review-writer data-write-url={~p"/reviews/write"} data-sign-in-href="/my-account?next=%2Freviews">
+        <bd-review-writer
+          data-write-url={~p"/reviews/write"}
+          data-sign-in-href="/my-account?next=%2Freviews"
+        >
           <.element_data value={%{signedIn: @signed_in}} />
         </bd-review-writer>
       </div>
@@ -85,7 +97,11 @@ defmodule BdStarterWeb.ReviewComponents do
         avatar: Reviews.web_url(review["reviewerImageUrl"]),
         platform: Reviews.platform_name(review["source"]),
         link: Reviews.link(review),
-        pictures: review["photos"] |> List.wrap() |> Enum.map(&Reviews.web_url/1) |> Enum.reject(&is_nil/1)
+        pictures:
+          review["photos"]
+          |> List.wrap()
+          |> Enum.map(&Reviews.web_url/1)
+          |> Enum.reject(&is_nil/1)
       )
 
     ~H"""
@@ -110,7 +126,13 @@ defmodule BdStarterWeb.ReviewComponents do
       <p :if={@platform || @review["verified"] == true} class="review-card__foot">
         <span :if={@platform} class="review-card__platform">{@platform}</span>
         <span :if={@review["verified"] == true} class="review-card__verified">✓ Verified</span>
-        <a :if={@link && @platform} class="review-card__link" href={@link} target="_blank" rel="noopener noreferrer">
+        <a
+          :if={@link && @platform}
+          class="review-card__link"
+          href={@link}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
           Read on {@platform}
         </a>
       </p>

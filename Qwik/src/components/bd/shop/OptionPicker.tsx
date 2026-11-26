@@ -6,7 +6,13 @@ import type { OptionGroup } from "../../../lib/shop/shop";
  * name beside the title. A group that belongs to one variant shows only
  * while that variant is chosen.
  */
-export function OptionPicker({ group, hidden }: { group: OptionGroup & { variantId: string | null }; hidden: boolean }) {
+export function OptionPicker({
+	group,
+	hidden,
+}: {
+	group: OptionGroup & { variantId: string | null };
+	hidden: boolean;
+}) {
 	return (
 		<fieldset
 			class="choice"

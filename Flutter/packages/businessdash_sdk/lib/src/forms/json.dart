@@ -59,7 +59,8 @@ sealed class BdJson {
         BdBool(:final value) => value,
         BdNum(:final value) => !value.isFinite
             ? null
-            : value == value.truncateToDouble() && value.abs() < 9007199254740992
+            : value == value.truncateToDouble() &&
+                    value.abs() < 9007199254740992
                 ? value.toInt()
                 : value,
         BdStr(:final value) => value,
@@ -409,19 +410,23 @@ abstract final class BdJS {
     if (!s.runes.any(data.upperExpansions.containsKey)) return s.toUpperCase();
     final out = StringBuffer();
     for (final rune in s.runes) {
-      out.write(data.upperExpansions[rune] ?? String.fromCharCode(rune).toUpperCase());
+      out.write(data.upperExpansions[rune] ??
+          String.fromCharCode(rune).toUpperCase());
     }
     return out.toString();
   }
 
   static final _cased = RegExp(r'[\p{Lu}\p{Ll}\p{Lt}]', unicode: true);
-  static final _caseIgnorable = RegExp(r"[\p{Mn}\p{Me}\p{Cf}\p{Lm}\p{Sk}'.:·’]", unicode: true);
+  static final _caseIgnorable =
+      RegExp(r"[\p{Mn}\p{Me}\p{Cf}\p{Lm}\p{Sk}'.:·’]", unicode: true);
 
   /// JS `toLowerCase`: Dart's, plus `İ` → `i̇` and the final-sigma rule
   /// (`ΟΔΟΣ` → `οδος`).
   static String toLowerCase(String s) {
     final runes = s.runes.toList();
-    if (!runes.any((r) => r == 0x3A3 || data.lowerExpansions.containsKey(r))) return s.toLowerCase();
+    if (!runes.any((r) => r == 0x3A3 || data.lowerExpansions.containsKey(r))) {
+      return s.toLowerCase();
+    }
     bool test(RegExp re, int rune) => re.hasMatch(String.fromCharCode(rune));
     final out = StringBuffer();
     for (var i = 0; i < runes.length; i++) {
@@ -441,7 +446,8 @@ abstract final class BdJS {
         out.write(finalSigma ? 'ς' : 'σ');
         continue;
       }
-      out.write(data.lowerExpansions[rune] ?? String.fromCharCode(rune).toLowerCase());
+      out.write(data.lowerExpansions[rune] ??
+          String.fromCharCode(rune).toLowerCase());
     }
     return out.toString();
   }

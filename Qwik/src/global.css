@@ -43,7 +43,11 @@
 
 	/* Page background gradient */
 	--app-bg-gradient:
-		radial-gradient(ellipse 80% 60% at 50% 0%, var(--accent-bg) 0%, transparent 60%),
+		radial-gradient(
+			ellipse 80% 60% at 50% 0%,
+			var(--accent-bg) 0%,
+			transparent 60%
+		),
 		linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
 
 	/* Type system */
@@ -118,7 +122,9 @@
 		color: var(--link);
 		text-decoration: none;
 		border-bottom: 1px solid transparent;
-		transition: border-color 0.15s ease, color 0.15s ease;
+		transition:
+			border-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	a:hover {

@@ -18,8 +18,7 @@ class Cart
         private readonly Client $client,
         private readonly ?string $visitorToken = null,
         private readonly ?string $sessionToken = null,
-    ) {
-    }
+    ) {}
 
     /** Mint a fresh anonymous visitor token. Store the result in a cookie. */
     public function createSession(): array

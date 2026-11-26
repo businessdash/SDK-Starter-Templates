@@ -95,7 +95,7 @@
 	font-size: 0.88rem;
 	text-decoration: none;
 }
-.reviews-filter a[aria-current='true'] {
+.reviews-filter a[aria-current="true"] {
 	border-color: var(--accent);
 	background: var(--accent-bg);
 	color: var(--accent);

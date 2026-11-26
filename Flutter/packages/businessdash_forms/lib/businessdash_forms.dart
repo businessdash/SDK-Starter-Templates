@@ -23,8 +23,10 @@ export 'package:businessdash_sdk/forms.dart';
 
 export 'src/form.dart' show BdForm, BdFormControllerListenable;
 export 'src/icons.dart' show BdIcon, BdIconStore;
-export 'src/quiz.dart' show BdQuiz, BdQuizInvitationSource, BdQuizPracticeSource, BdQuizSource;
-export 'src/primitives.dart' show BdOption, BdOptionPicker, BdTextInput, BdKeyboard;
+export 'src/quiz.dart'
+    show BdQuiz, BdQuizInvitationSource, BdQuizPracticeSource, BdQuizSource;
+export 'src/primitives.dart'
+    show BdOption, BdOptionPicker, BdTextInput, BdKeyboard;
 export 'src/style.dart'
     show
         BdButtonProminence,

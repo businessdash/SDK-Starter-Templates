@@ -40,5 +40,6 @@ defmodule BdStarterWeb.PageController do
     |> redirect(to: ~p"/")
   end
 
-  defp valid_email?(email), do: is_binary(email) and String.match?(email, ~r/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
+  defp valid_email?(email),
+    do: is_binary(email) and String.match?(email, ~r/^[^@\s]+@[^@\s]+\.[^@\s]+$/)
 end

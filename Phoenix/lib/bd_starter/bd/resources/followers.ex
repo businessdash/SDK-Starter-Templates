@@ -18,7 +18,9 @@ defmodule BdStarter.Bd.Resources.Followers do
   def me(client, email), do: run(client, "followers.me", %{email: email})
 
   def run(client, action_name, payload \\ %{}) do
-    Client.post(client, Client.site_path(client, "actions/#{enc(action_name)}"), %{payload: payload})
+    Client.post(client, Client.site_path(client, "actions/#{enc(action_name)}"), %{
+      payload: payload
+    })
   end
 
   defp enc(v), do: URI.encode(to_string(v), &URI.char_unreserved?/1)

@@ -4,27 +4,21 @@ import { Link } from "../lib/router";
 import { useEffect, useState } from "react";
 
 import { bd } from "../lib/bd";
+import { CART_EVENT } from "./shop/cart-count";
 import { compareList, wishlist } from "./shop/shop";
-
-const CART_EVENT = "bd:cart-count";
-
-/** Tells the store bar the cart's new item count, after a change. */
-export function announceCartCount(count: number) {
-	window.dispatchEvent(new CustomEvent(CART_EVENT, { detail: count }));
-}
 // [/bd:store]
 
 /**
  * The bar under the header on every store page: products and plans on the
  * left; wishlist, compare and the cart with their counts on the right. The
- * cart count loads here and follows `announceCartCount`; the saved lists
+ * cart count loads here and follows `announceCartCount` (`shop/cart-count.ts`); the saved lists
  * live in this browser.
  */
 export function StoreNav() {
 	// [bd:store]
 	const [cart, setCart] = useState(0);
-	const [saved, setSaved] = useState(0);
-	const [comparing, setComparing] = useState(0);
+	const [saved, setSaved] = useState(() => wishlist.read().length);
+	const [comparing, setComparing] = useState(() => compareList.read().length);
 	useEffect(() => {
 		let alive = true;
 		bd.cart
@@ -33,8 +27,6 @@ export function StoreNav() {
 				if (alive) setCart(Number(snapshot?.itemCount) || 0);
 			})
 			.catch(() => {});
-		setSaved(wishlist.read().length);
-		setComparing(compareList.read().length);
 		const offWish = wishlist.subscribe((items) => setSaved(items.length));
 		const offCompare = compareList.subscribe((items) => setComparing(items.length));
 		const onCart = (e: Event) => setCart(Number((e as CustomEvent<number>).detail) || 0);

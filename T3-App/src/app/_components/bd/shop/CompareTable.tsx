@@ -31,6 +31,7 @@ export function CompareTable({
 	onIdsChange: (ids: string[]) => void;
 }) {
 	// Only on arrival: later changes come from this table itself.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only on arrival
 	useEffect(() => {
 		if (ids.length > 0) return;
 		const saved = compareList.read().map((item) => item.id);

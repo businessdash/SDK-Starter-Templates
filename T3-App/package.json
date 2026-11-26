@@ -1,64 +1,64 @@
 {
-  "name": "T3-App",
-  "version": "0.1.0",
-  "private": true,
-  "type": "module",
-  "scripts": {
-    "build": "next build",
-    "check": "biome check .",
-    "check:unsafe": "biome check --write --unsafe .",
-    "check:write": "biome check --write .",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "dev": "next dev --turbo",
-    "preview": "next build && next start",
-    "start": "next start",
-    "typecheck": "tsc --noEmit",
-    "sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config bd.config.ts",
-    "sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config bd.config.ts",
-    "print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config bd.config.ts",
-    "sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config bd.data-model.config.ts",
-    "print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
-  },
-  "dependencies": {
-    "@businessdash/sdk": "^0.9.97",
-    "@t3-oss/env-nextjs": "^0.13.11",
-    "@tanstack/react-query": "^5.69.0",
-    "@trpc/client": "^11.0.0",
-    "@trpc/react-query": "^11.0.0",
-    "@trpc/server": "^11.0.0",
-    "drizzle-orm": "^0.45.2",
-    "next": "^15.5.24",
-    "postgres": "^3.4.4",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "server-only": "^0.0.1",
-    "superjson": "^2.2.1",
-    "zod": "^4.6.7"
-  },
-  "devDependencies": {
-    "@biomejs/biome": "^2.2.5",
-    "@tailwindcss/postcss": "^4.0.15",
-    "@types/node": "^20.14.10",
-    "@types/react": "^19.0.0",
-    "@types/react-dom": "^19.0.0",
-    "drizzle-kit": "^0.30.5",
-    "postcss": "^8.5.3",
-    "tailwindcss": "^4.0.15",
-    "tsx": "^4.22.3",
-    "typescript": "^5.8.2"
-  },
-  "pnpm": {
-    "overrides": {
-      "esbuild": "^0.25.0",
-      "postcss": "^8.5.10",
-      "sharp@<0.35.0": ">=0.35.3 <0.36.0"
-    }
-  },
-  "ct3aMetadata": {
-    "initVersion": "7.40.0"
-  },
-  "packageManager": "pnpm@9.15.3"
+	"name": "T3-App",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"build": "next build",
+		"check": "biome check .",
+		"check:unsafe": "biome check --write --unsafe .",
+		"check:write": "biome check --write .",
+		"db:generate": "drizzle-kit generate",
+		"db:migrate": "drizzle-kit migrate",
+		"db:push": "drizzle-kit push",
+		"db:studio": "drizzle-kit studio",
+		"dev": "next dev --turbo",
+		"preview": "next build && next start",
+		"start": "next start",
+		"typecheck": "tsc --noEmit",
+		"sync-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-schema --config bd.config.ts",
+		"sync-content": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-content --config bd.config.ts",
+		"print-schema": "tsx node_modules/@businessdash/sdk/dist/cli.js print-schema --config bd.config.ts",
+		"sync-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js sync-data-model --config bd.data-model.config.ts",
+		"print-data-model": "tsx node_modules/@businessdash/sdk/dist/cli.js print-data-model --config bd.data-model.config.ts"
+	},
+	"dependencies": {
+		"@businessdash/sdk": "^0.9.97",
+		"@t3-oss/env-nextjs": "^0.13.11",
+		"@tanstack/react-query": "^5.69.0",
+		"@trpc/client": "^11.0.0",
+		"@trpc/react-query": "^11.0.0",
+		"@trpc/server": "^11.0.0",
+		"drizzle-orm": "^0.45.2",
+		"next": "^15.5.24",
+		"postgres": "^3.4.4",
+		"react": "^19.0.0",
+		"react-dom": "^19.0.0",
+		"server-only": "^0.0.1",
+		"superjson": "^2.2.1",
+		"zod": "^4.6.7"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.6.8",
+		"@tailwindcss/postcss": "^4.0.15",
+		"@types/node": "^20.14.10",
+		"@types/react": "^19.0.0",
+		"@types/react-dom": "^19.0.0",
+		"drizzle-kit": "^0.30.5",
+		"postcss": "^8.5.3",
+		"tailwindcss": "^4.0.15",
+		"tsx": "^4.22.3",
+		"typescript": "^5.8.2"
+	},
+	"pnpm": {
+		"overrides": {
+			"esbuild": "^0.25.0",
+			"postcss": "^8.5.10",
+			"sharp@<0.35.0": ">=0.35.3 <0.36.0"
+		}
+	},
+	"ct3aMetadata": {
+		"initVersion": "7.40.0"
+	},
+	"packageManager": "pnpm@9.15.3"
 }

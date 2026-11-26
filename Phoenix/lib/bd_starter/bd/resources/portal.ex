@@ -38,10 +38,12 @@ defmodule BdStarter.Bd.Resources.Portal do
     do: Client.get(client, "customer-portal/quotes/#{enc(id)}", [], headers(token, org_id))
 
   def accept_quote(client, token, org_id, id),
-    do: Client.post(client, "customer-portal/quotes/#{enc(id)}/accept", nil, headers(token, org_id))
+    do:
+      Client.post(client, "customer-portal/quotes/#{enc(id)}/accept", nil, headers(token, org_id))
 
   def reject_quote(client, token, org_id, id),
-    do: Client.post(client, "customer-portal/quotes/#{enc(id)}/reject", nil, headers(token, org_id))
+    do:
+      Client.post(client, "customer-portal/quotes/#{enc(id)}/reject", nil, headers(token, org_id))
 
   def invoice(client, token, org_id, id),
     do: Client.get(client, "customer-portal/invoices/#{enc(id)}", [], headers(token, org_id))
@@ -76,15 +78,15 @@ defmodule BdStarter.Bd.Resources.Portal do
   @doc """
   Hand a customer-portal invite link out again.
 
-ROTATES the token — the previous link stops working. That is the point rather
-than a side effect: if the reason for resending was "it went to the wrong
-address", rotating IS the fix, and reusing the token would leave the wrong
-recipient holding a working invitation.
+  ROTATES the token — the previous link stops working. That is the point rather
+  than a side effect: if the reason for resending was "it went to the wrong
+  address", rotating IS the fix, and reusing the token would leave the wrong
+  recipient holding a working invitation.
 
-Rate limited to one send a minute per invitation, answering 429 with a retry
-hint — resend mails an address the caller chose, so an unbounded one is a
-mail-bombing tool. Refuses a revoked invitation (resending would quietly
-un-revoke it) and a fully-redeemed one.
+  Rate limited to one send a minute per invitation, answering 429 with a retry
+  hint — resend mails an address the caller chose, so an unbounded one is a
+  mail-bombing tool. Refuses a revoked invitation (resending would quietly
+  un-revoke it) and a fully-redeemed one.
   """
   def resend_customer_invite(client, token, org_id \\ nil, invite_id, expires_in_days \\ nil) do
     body = if expires_in_days, do: %{"expiresInDays" => expires_in_days}, else: %{}

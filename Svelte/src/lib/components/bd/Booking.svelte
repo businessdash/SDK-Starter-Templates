@@ -52,7 +52,7 @@
 			month: 'short',
 			day: 'numeric',
 			hour: 'numeric',
-			minute: '2-digit',
+			minute: '2-digit'
 		});
 	}
 
@@ -64,7 +64,7 @@
 		const params = new URLSearchParams({
 			slug,
 			from: from.toISOString(),
-			to: to.toISOString(),
+			to: to.toISOString()
 		});
 		try {
 			const res = await fetch(`/api/bd/scheduling/slots?${params}`);
@@ -92,10 +92,10 @@
 						email: invitee.email,
 						name: invitee.name,
 						phone: invitee.phone || null,
-						timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+						timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
 					},
-					notes: invitee.notes || null,
-				}),
+					notes: invitee.notes || null
+				})
 			});
 			if (!res.ok) throw new Error(await res.text());
 			const result = (await res.json()) as { bookingId: string };
@@ -124,24 +124,17 @@
 		<div class="bd-section__lead">
 			<span class="bd-section__eyebrow">Schedule</span>
 			<h2 class="bd-section__title">Book a time</h2>
-			<p class="bd-section__sub">
-				Pick a slot and we'll send confirmation + a calendar invite.
-			</p>
+			<p class="bd-section__sub">Pick a slot and we'll send confirmation + a calendar invite.</p>
 		</div>
 		<div class="bd-card booking">
 			{#if eventTypes.length === 0}
 				<div class="bd-empty">
-					No event types configured yet. Add one in BD at Dashboard →
-					Scheduling → Event Types.
+					No event types configured yet. Add one in BD at Dashboard → Scheduling → Event Types.
 				</div>
 			{:else}
 				<div>
 					<label class="bd-label" for="event-type">What for?</label>
-					<select
-						class="bd-select"
-						id="event-type"
-						bind:value={selectedSlug}
-					>
+					<select class="bd-select" id="event-type" bind:value={selectedSlug}>
 						{#each eventTypes as event (event.slug)}
 							<option value={event.slug}>
 								{event.name} · {event.durationMinutes}min
@@ -155,9 +148,7 @@
 					{#if slots === null}
 						<div class="bd-loading">Computing availability…</div>
 					{:else if slots.length === 0}
-						<div class="bd-empty">
-							No availability in the next week. Try another event type.
-						</div>
+						<div class="bd-empty">No availability in the next week. Try another event type.</div>
 					{:else}
 						<div class="booking__row">
 							{#each slots.slice(0, 12) as slot (slot.startAt)}
@@ -197,9 +188,7 @@
 						</div>
 					</div>
 					<div>
-						<label class="bd-label" for="booking-phone"
-							>Phone (optional)</label
-						>
+						<label class="bd-label" for="booking-phone">Phone (optional)</label>
 						<input
 							class="bd-input"
 							id="booking-phone"
@@ -209,9 +198,7 @@
 						/>
 					</div>
 					<div>
-						<label class="bd-label" for="booking-notes"
-							>Anything we should know?</label
-						>
+						<label class="bd-label" for="booking-notes">Anything we should know?</label>
 						<textarea
 							class="bd-textarea"
 							id="booking-notes"
@@ -225,9 +212,7 @@
 						disabled={confirming || !invitee.email || !invitee.name}
 						onclick={handleConfirm}
 					>
-						{confirming
-							? 'Confirming…'
-							: `Book ${formatSlotTime(pickedSlot)}`}
+						{confirming ? 'Confirming…' : `Book ${formatSlotTime(pickedSlot)}`}
 					</button>
 				{/if}
 

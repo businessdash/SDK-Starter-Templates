@@ -24,7 +24,14 @@
  */
 import type { StorefrontProductDetail } from "@businessdash/sdk/contracts";
 
-import { define, h, patch, postJson, readJson, upgradeProperty } from "./bd-dom";
+import {
+	define,
+	h,
+	patch,
+	postJson,
+	readJson,
+	upgradeProperty,
+} from "./bd-dom";
 import {
 	chosenOptions,
 	compareList,
@@ -57,22 +64,38 @@ function storeHref(el: Element): string {
 export function starRating(rating: number): HTMLElement {
 	return h(
 		"span",
-		{ "aria-label": `${rating.toFixed(1)} out of 5`, class: "stars", role: "img" },
+		{
+			"aria-label": `${rating.toFixed(1)} out of 5`,
+			class: "stars",
+			role: "img",
+		},
 		[1, 2, 3, 4, 5].map((i) => {
 			const on = rating >= i;
 			const half = !on && rating >= i - 0.5;
-			return h("span", { class: `stars__star${on ? " stars__star--on" : ""}${half ? " stars__star--half" : ""}` }, "★");
+			return h(
+				"span",
+				{
+					class: `stars__star${on ? " stars__star--on" : ""}${half ? " stars__star--half" : ""}`,
+				},
+				"★",
+			);
 		}),
 	);
 }
 
 /** Runs `act` for clicks on `[data-act]` inside `root`, not inside a nested bd- element. */
-function onAct(root: HTMLElement, act: (name: string, target: HTMLElement, event: Event) => void): () => void {
+function onAct(
+	root: HTMLElement,
+	act: (name: string, target: HTMLElement, event: Event) => void,
+): () => void {
 	const listener = (event: Event) => {
-		const target = (event.target as Element | null)?.closest<HTMLElement>("[data-act]");
+		const target = (event.target as Element | null)?.closest<HTMLElement>(
+			"[data-act]",
+		);
 		if (!target) return;
 		let owner: Element | null = target;
-		while (owner && !owner.localName.startsWith("bd-")) owner = owner.parentElement;
+		while (owner && !owner.localName.startsWith("bd-"))
+			owner = owner.parentElement;
 		if (owner !== root) return;
 		act(target.getAttribute("data-act") ?? "", target, event);
 	};
@@ -113,7 +136,9 @@ class SaveButtons extends HTMLElement {
 
 	get product(): SavedProduct | null {
 		try {
-			return JSON.parse(this.getAttribute("data-product") ?? "") as SavedProduct;
+			return JSON.parse(
+				this.getAttribute("data-product") ?? "",
+			) as SavedProduct;
 		} catch {
 			return null;
 		}
@@ -134,7 +159,9 @@ class SaveButtons extends HTMLElement {
 				h(
 					"button",
 					{
-						"aria-label": saved ? `Remove ${product.name} from your wishlist` : `Save ${product.name} to your wishlist`,
+						"aria-label": saved
+							? `Remove ${product.name} from your wishlist`
+							: `Save ${product.name} to your wishlist`,
 						"aria-pressed": String(saved),
 						class: `save-buttons__btn${saved ? " save-buttons__btn--on" : ""}`,
 						"data-act": "save",
@@ -146,7 +173,9 @@ class SaveButtons extends HTMLElement {
 				h(
 					"button",
 					{
-						"aria-label": comparing ? `Remove ${product.name} from compare` : `Compare ${product.name}`,
+						"aria-label": comparing
+							? `Remove ${product.name} from compare`
+							: `Compare ${product.name}`,
 						"aria-pressed": String(comparing),
 						class: `save-buttons__btn${comparing ? " save-buttons__btn--on" : ""}`,
 						"data-act": "compare",
@@ -171,7 +200,8 @@ class CompareBar extends HTMLElement {
 		this.#off = [
 			compareList.subscribe(() => this.render()),
 			onAct(this, (act, target) => {
-				if (act === "remove") compareList.remove(target.getAttribute("data-id") ?? "");
+				if (act === "remove")
+					compareList.remove(target.getAttribute("data-id") ?? "");
 				if (act === "clear") compareList.clear();
 			}),
 		];
@@ -184,7 +214,8 @@ class CompareBar extends HTMLElement {
 
 	render() {
 		const items = compareList.read();
-		const href = this.getAttribute("data-compare-href") ?? `${storeHref(this)}/compare`;
+		const href =
+			this.getAttribute("data-compare-href") ?? `${storeHref(this)}/compare`;
 		patch(
 			this,
 			items.length === 0
@@ -200,11 +231,21 @@ class CompareBar extends HTMLElement {
 									h(
 										"li",
 										null,
-										item.image && h("img", { alt: "", referrerpolicy: "no-referrer", src: item.image }),
+										item.image &&
+											h("img", {
+												alt: "",
+												referrerpolicy: "no-referrer",
+												src: item.image,
+											}),
 										h("span", null, item.name),
 										h(
 											"button",
-											{ "aria-label": `Remove ${item.name} from compare`, "data-act": "remove", "data-id": item.id, type: "button" },
+											{
+												"aria-label": `Remove ${item.name} from compare`,
+												"data-act": "remove",
+												"data-id": item.id,
+												type: "button",
+											},
 											"×",
 										),
 									),
@@ -213,7 +254,15 @@ class CompareBar extends HTMLElement {
 							h(
 								"div",
 								{ class: "compare-bar__actions" },
-								h("button", { class: "bd-btn bd-btn--ghost", "data-act": "clear", type: "button" }, "Clear"),
+								h(
+									"button",
+									{
+										class: "bd-btn bd-btn--ghost",
+										"data-act": "clear",
+										type: "button",
+									},
+									"Clear",
+								),
 								h(
 									"a",
 									{
@@ -221,7 +270,9 @@ class CompareBar extends HTMLElement {
 										class: "bd-btn",
 										href: `${href}?ids=${items.map((i) => i.id).join(",")}`,
 									},
-									items.length < 2 ? "Pick one more to compare" : `Compare ${items.length}`,
+									items.length < 2
+										? "Pick one more to compare"
+										: `Compare ${items.length}`,
 								),
 							),
 						),
@@ -233,7 +284,11 @@ class CompareBar extends HTMLElement {
 // ── Product rails ───────────────────────────────────────────────────
 
 /** A row of small product cards: related products, recently viewed. */
-function productRail(title: string, products: SavedProduct[], store: string): HTMLElement | null {
+function productRail(
+	title: string,
+	products: SavedProduct[],
+	store: string,
+): HTMLElement | null {
 	if (products.length === 0) return null;
 	return h(
 		"section",
@@ -248,12 +303,28 @@ function productRail(title: string, products: SavedProduct[], store: string): HT
 					null,
 					h(
 						"a",
-						{ class: "bd-card product-rail__card", href: `${store}/${encodeURIComponent(product.id)}` },
+						{
+							class: "bd-card product-rail__card",
+							href: `${store}/${encodeURIComponent(product.id)}`,
+						},
 						product.image
-							? h("img", { alt: "", loading: "lazy", referrerpolicy: "no-referrer", src: product.image })
-							: h("span", { "aria-hidden": "true", class: "product-rail__noimg" }),
+							? h("img", {
+									alt: "",
+									loading: "lazy",
+									referrerpolicy: "no-referrer",
+									src: product.image,
+								})
+							: h("span", {
+									"aria-hidden": "true",
+									class: "product-rail__noimg",
+								}),
 						h("span", { class: "product-rail__name" }, product.name),
-						product.priceCents != null && h("span", { class: "product-rail__price" }, formatCents(product.priceCents)),
+						product.priceCents != null &&
+							h(
+								"span",
+								{ class: "product-rail__price" },
+								formatCents(product.priceCents),
+							),
 					),
 				),
 			),
@@ -278,13 +349,32 @@ type AddResult = { ok: true; itemCount: number } | { ok: false; error: string };
 /** POSTs a cart line as JSON; the answer carries `itemCount` (or `ok: false` and `error`). */
 async function addToCart(
 	url: string,
-	input: { productId: string; variantId?: string; quantity: number; options?: Record<string, string> },
+	input: {
+		productId: string;
+		variantId?: string;
+		quantity: number;
+		options?: Record<string, string>;
+	},
 ): Promise<AddResult> {
-	const { status, data } = await postJson<"ok" | "itemCount" | "error">(url, input);
-	if (status >= 200 && status < 300 && data.ok !== false && typeof data.itemCount === "number") {
+	const { status, data } = await postJson<"ok" | "itemCount" | "error">(
+		url,
+		input,
+	);
+	if (
+		status >= 200 &&
+		status < 300 &&
+		data.ok !== false &&
+		typeof data.itemCount === "number"
+	) {
 		return { ok: true, itemCount: data.itemCount };
 	}
-	return { ok: false, error: typeof data.error === "string" ? data.error : "Couldn't add that to your cart. Try again." };
+	return {
+		ok: false,
+		error:
+			typeof data.error === "string"
+				? data.error
+				: "Couldn't add that to your cart. Try again.",
+	};
 }
 
 function addUrl(el: Element): string {
@@ -309,8 +399,10 @@ function enable(el: Element | null, on: boolean): void {
 
 /** Marks a choice button chosen or not: aria-pressed, and choice__value--on for bd-shop.css. */
 function press(button: Element, on: boolean): void {
-	if (button.getAttribute("aria-pressed") !== String(on)) button.setAttribute("aria-pressed", String(on));
-	if (button.classList.contains("choice__value--on") !== on) button.classList.toggle("choice__value--on", on);
+	if (button.getAttribute("aria-pressed") !== String(on))
+		button.setAttribute("aria-pressed", String(on));
+	if (button.classList.contains("choice__value--on") !== on)
+		button.classList.toggle("choice__value--on", on);
 }
 
 /**
@@ -326,24 +418,33 @@ class Gallery extends HTMLElement {
 
 	connectedCallback() {
 		const onClick = (event: Event) => {
-			const target = (event.target as Element | null)?.closest<HTMLElement>("[data-bd-photo],[data-bd-step]");
+			const target = (event.target as Element | null)?.closest<HTMLElement>(
+				"[data-bd-photo],[data-bd-step]",
+			);
 			const set = target?.closest<HTMLElement>("[data-bd-photos-for]");
 			if (!target || !set || !this.contains(set)) return;
 			const thumbs = set.querySelectorAll("[data-bd-photo]");
 			const count = Math.max(thumbs.length, 1);
 			const index = target.hasAttribute("data-bd-photo")
 				? Number(target.getAttribute("data-bd-photo")) || 0
-				: (this.#current(set) + Number(target.getAttribute("data-bd-step")) + count) % count;
+				: (this.#current(set) +
+						Number(target.getAttribute("data-bd-step")) +
+						count) %
+					count;
 			this.#showPhoto(set, index);
 		};
 		const onVariant = (event: Event) => {
-			const { productId, variantId } = (event as CustomEvent<VariantChange>).detail;
+			const { productId, variantId } = (event as CustomEvent<VariantChange>)
+				.detail;
 			const mine = this.getAttribute("data-product-id");
 			if (mine && mine !== productId) return;
-			const sets = [...this.querySelectorAll<HTMLElement>("[data-bd-photos-for]")];
+			const sets = [
+				...this.querySelectorAll<HTMLElement>("[data-bd-photos-for]"),
+			];
 			const chosen =
-				sets.find((set) => set.getAttribute("data-bd-photos-for") === variantId) ??
-				sets.find((set) => set.getAttribute("data-bd-photos-for") === "");
+				sets.find(
+					(set) => set.getAttribute("data-bd-photos-for") === variantId,
+				) ?? sets.find((set) => set.getAttribute("data-bd-photos-for") === "");
 			for (const set of sets) set.hidden = set !== chosen;
 			if (chosen) this.#showPhoto(chosen, 0);
 		};
@@ -360,7 +461,9 @@ class Gallery extends HTMLElement {
 	}
 
 	#current(set: HTMLElement): number {
-		const i = [...set.querySelectorAll("[data-bd-photo]")].findIndex((t) => t.getAttribute("aria-current") === "true");
+		const i = [...set.querySelectorAll("[data-bd-photo]")].findIndex(
+			(t) => t.getAttribute("aria-current") === "true",
+		);
 		return Math.max(i, 0);
 	}
 
@@ -435,7 +538,8 @@ class ProductForm extends HTMLElement {
 			const target = (event.target as Element | null)?.closest<HTMLElement>(
 				"[data-bd-variant],[data-bd-value],[data-bd-qty],[data-bd-add]",
 			);
-			if (target && this.contains(target) && !target.closest("bd-save-buttons")) void this.#act(target);
+			if (target && this.contains(target) && !target.closest("bd-save-buttons"))
+				void this.#act(target);
 		};
 		this.addEventListener("click", onClick);
 		this.#off = () => this.removeEventListener("click", onClick);
@@ -456,15 +560,22 @@ class ProductForm extends HTMLElement {
 			this.#variantId = variant;
 			this.#chosen = {};
 			document.dispatchEvent(
-				new CustomEvent<VariantChange>(VARIANT_EVENT, { detail: { productId: view.id, variantId: variant } }),
+				new CustomEvent<VariantChange>(VARIANT_EVENT, {
+					detail: { productId: view.id, variantId: variant },
+				}),
 			);
 		} else if (value !== null) {
-			const group = target.closest("[data-bd-group]")?.getAttribute("data-bd-group") ?? "";
+			const group =
+				target.closest("[data-bd-group]")?.getAttribute("data-bd-group") ?? "";
 			this.#chosen = { ...this.#chosen, [group]: value };
 		} else if (step !== null) {
-			this.#quantity = Math.min(999, Math.max(1, this.#quantity + (Number(step) || 0)));
+			this.#quantity = Math.min(
+				999,
+				Math.max(1, this.#quantity + (Number(step) || 0)),
+			);
 		} else {
-			if (this.#busy || !priceFor(view, this.#variantId, this.#chosen).ready) return;
+			if (this.#busy || !priceFor(view, this.#variantId, this.#chosen).ready)
+				return;
 			this.#busy = true;
 			this.#message = null;
 			this.#update();
@@ -488,12 +599,14 @@ class ProductForm extends HTMLElement {
 	#update() {
 		const view = this.#view;
 		if (!view) return;
-		const all = (selector: string) => this.querySelectorAll<HTMLElement>(selector);
+		const all = (selector: string) =>
+			this.querySelectorAll<HTMLElement>(selector);
 		const one = (selector: string) => this.querySelector<HTMLElement>(selector);
 		const price = priceFor(view, this.#variantId, this.#chosen);
 		const quantity = this.#quantity;
 
-		for (const button of all("[data-bd-variant]")) press(button, button.getAttribute("data-bd-variant") === this.#variantId);
+		for (const button of all("[data-bd-variant]"))
+			press(button, button.getAttribute("data-bd-variant") === this.#variantId);
 		// A variant's price shows on its button while the chosen one has no options.
 		const plain = optionGroupsFor(view, this.#variantId).length === 0;
 		for (const small of all("[data-bd-variant-price]")) show(small, plain);
@@ -501,9 +614,12 @@ class ProductForm extends HTMLElement {
 			const only = group.getAttribute("data-bd-for-variant");
 			show(group, only === null || only === this.#variantId);
 			const chosen = this.#chosen[group.getAttribute("data-bd-group") ?? ""];
-			for (const button of group.querySelectorAll("[data-bd-value]")) press(button, button.getAttribute("data-bd-value") === chosen);
+			for (const button of group.querySelectorAll("[data-bd-value]"))
+				press(button, button.getAttribute("data-bd-value") === chosen);
 			const picked = group.querySelector<HTMLElement>("[data-bd-picked]");
-			const name = chosen ? (view.optionValues.find((v) => v.id === chosen)?.value ?? "") : "";
+			const name = chosen
+				? (view.optionValues.find((v) => v.id === chosen)?.value ?? "")
+				: "";
 			setText(picked, name ? ` ${name}` : "");
 			show(picked, Boolean(name));
 		}
@@ -512,9 +628,22 @@ class ProductForm extends HTMLElement {
 		if (priceBox) {
 			const amount = priceBox.querySelector<HTMLElement>("[data-bd-amount]");
 			const each = priceBox.querySelector<HTMLElement>("[data-bd-each]");
-			setText(amount, price.amount != null ? formatDollars(price.amount * quantity) : "Sold out");
-			show(priceBox.querySelector("[data-bd-from]"), price.amount != null && price.from);
-			setText(each, price.amount != null && quantity > 1 ? ` (${formatDollars(price.amount)} each)` : "");
+			setText(
+				amount,
+				price.amount != null
+					? formatDollars(price.amount * quantity)
+					: "Sold out",
+			);
+			show(
+				priceBox.querySelector("[data-bd-from]"),
+				price.amount != null && price.from,
+			);
+			setText(
+				each,
+				price.amount != null && quantity > 1
+					? ` (${formatDollars(price.amount)} each)`
+					: "",
+			);
 			show(each, price.amount != null && quantity > 1);
 		}
 
@@ -526,26 +655,48 @@ class ProductForm extends HTMLElement {
 		setText(one("[data-bd-qty-value]"), String(quantity));
 		for (const button of all("[data-bd-qty]")) {
 			const down = Number(button.getAttribute("data-bd-qty")) < 0;
-			enable(button, down ? quantity > 1 : price.stock == null || quantity < price.stock);
+			enable(
+				button,
+				down ? quantity > 1 : price.stock == null || quantity < price.stock,
+			);
 		}
 
 		const add = one("[data-bd-add]");
 		enable(add, !this.#busy && price.ready);
-		setText(add, price.amount === null ? "Sold out" : !price.ready ? "Choose options" : this.#busy ? "Adding…" : "Add to cart");
+		setText(
+			add,
+			price.amount === null
+				? "Sold out"
+				: !price.ready
+					? "Choose options"
+					: this.#busy
+						? "Adding…"
+						: "Add to cart",
+		);
 
 		const notice = one("[data-bd-notice]");
 		if (notice) {
 			const message = this.#message;
 			show(notice, Boolean(message));
 			const error = message?.kind === "error";
-			if (notice.classList.contains("product-detail__msg--err") !== error) notice.classList.toggle("product-detail__msg--err", error);
-			setText(notice.querySelector("[data-bd-notice-text]"), message?.text ?? "");
-			show(notice.querySelector("[data-bd-notice-link]"), message?.kind === "ok");
+			if (notice.classList.contains("product-detail__msg--err") !== error)
+				notice.classList.toggle("product-detail__msg--err", error);
+			setText(
+				notice.querySelector("[data-bd-notice-text]"),
+				message?.text ?? "",
+			);
+			show(
+				notice.querySelector("[data-bd-notice-link]"),
+				message?.kind === "ok",
+			);
 		}
 
-		const summary = JSON.stringify(productSummary(view, this.#variantId, this.#chosen));
+		const summary = JSON.stringify(
+			productSummary(view, this.#variantId, this.#chosen),
+		);
 		for (const save of all("bd-save-buttons")) {
-			if (save.getAttribute("data-product") !== summary) save.setAttribute("data-product", summary);
+			if (save.getAttribute("data-product") !== summary)
+				save.setAttribute("data-product", summary);
 		}
 	}
 }
@@ -566,7 +717,12 @@ class ShareButton extends HTMLElement {
 				this.getAttribute("data-title") ?? document.title,
 			);
 			const note = this.querySelector<HTMLElement>("[data-bd-share-note]");
-			const text = result === "copied" ? "Link copied" : result === "failed" ? "Couldn't share" : "";
+			const text =
+				result === "copied"
+					? "Link copied"
+					: result === "failed"
+						? "Couldn't share"
+						: "";
 			if (!note || !text) return;
 			note.textContent = text;
 			note.hidden = false;
@@ -596,7 +752,9 @@ class AddonButton extends HTMLElement {
 
 	connectedCallback() {
 		const onClick = async (event: Event) => {
-			const button = (event.target as Element | null)?.closest<HTMLButtonElement>("[data-bd-add]");
+			const button = (
+				event.target as Element | null
+			)?.closest<HTMLButtonElement>("[data-bd-add]");
 			if (!button || !this.contains(button) || button.disabled) return;
 			const label = button.textContent;
 			button.disabled = true;
@@ -652,16 +810,26 @@ class RecentlyViewed extends HTMLElement {
 	#draw() {
 		let product: SavedProduct | null = null;
 		try {
-			product = JSON.parse(this.getAttribute("data-product") ?? "") as SavedProduct;
+			product = JSON.parse(
+				this.getAttribute("data-product") ?? "",
+			) as SavedProduct;
 		} catch {
 			product = null;
 		}
-		const recent = recentlyViewed.read().filter((item) => item.id !== product?.id);
+		const recent = recentlyViewed
+			.read()
+			.filter((item) => item.id !== product?.id);
 		if (product?.id && product.id !== this.#added) {
 			recentlyViewed.add(product);
 			this.#added = product.id;
 		}
-		patch(this, [productRail(this.getAttribute("data-title") ?? "Recently viewed", recent, storeHref(this))]);
+		patch(this, [
+			productRail(
+				this.getAttribute("data-title") ?? "Recently viewed",
+				recent,
+				storeHref(this),
+			),
+		]);
 	}
 }
 
@@ -675,7 +843,8 @@ class Wishlist extends HTMLElement {
 		this.#off = [
 			wishlist.subscribe(() => this.render()),
 			onAct(this, (act, target) => {
-				if (act === "remove") wishlist.remove(target.getAttribute("data-id") ?? "");
+				if (act === "remove")
+					wishlist.remove(target.getAttribute("data-id") ?? "");
 				if (act === "clear") wishlist.clear();
 			}),
 		];
@@ -699,7 +868,11 @@ class Wishlist extends HTMLElement {
 							"Nothing saved yet. Press ",
 							h("span", { "aria-hidden": "true" }, "♡"),
 							" Save on any product.",
-							h("p", null, h("a", { class: "bd-btn", href: store }, "Browse products")),
+							h(
+								"p",
+								null,
+								h("a", { class: "bd-btn", href: store }, "Browse products"),
+							),
 						),
 					]
 				: [
@@ -712,18 +885,55 @@ class Wishlist extends HTMLElement {
 									{ class: "bd-card wishlist__card" },
 									h(
 										"a",
-										{ class: "wishlist__link", href: `${store}/${encodeURIComponent(item.id)}` },
+										{
+											class: "wishlist__link",
+											href: `${store}/${encodeURIComponent(item.id)}`,
+										},
 										item.image
-											? h("img", { alt: "", loading: "lazy", referrerpolicy: "no-referrer", src: item.image })
-											: h("span", { "aria-hidden": "true", class: "wishlist__noimg" }),
+											? h("img", {
+													alt: "",
+													loading: "lazy",
+													referrerpolicy: "no-referrer",
+													src: item.image,
+												})
+											: h("span", {
+													"aria-hidden": "true",
+													class: "wishlist__noimg",
+												}),
 										h("span", { class: "wishlist__name" }, item.name),
-										item.priceCents != null && h("span", { class: "wishlist__price" }, formatCents(item.priceCents)),
+										item.priceCents != null &&
+											h(
+												"span",
+												{ class: "wishlist__price" },
+												formatCents(item.priceCents),
+											),
 									),
-									h("button", { class: "bd-btn bd-btn--ghost", "data-act": "remove", "data-id": item.id, type: "button" }, "Remove"),
+									h(
+										"button",
+										{
+											class: "bd-btn bd-btn--ghost",
+											"data-act": "remove",
+											"data-id": item.id,
+											type: "button",
+										},
+										"Remove",
+									),
 								),
 							),
 						),
-						h("p", { class: "wishlist__clear" }, h("button", { class: "bd-btn bd-btn--ghost", "data-act": "clear", type: "button" }, "Clear the wishlist")),
+						h(
+							"p",
+							{ class: "wishlist__clear" },
+							h(
+								"button",
+								{
+									class: "bd-btn bd-btn--ghost",
+									"data-act": "clear",
+									type: "button",
+								},
+								"Clear the wishlist",
+							),
+						),
 					],
 		);
 	}
@@ -787,8 +997,13 @@ class CompareTable extends HTMLElement {
 	}
 
 	#go(ids: string[]) {
-		const href = this.getAttribute("data-compare-href") ?? `${storeHref(this)}/compare`;
-		window.location.replace(ids.length > 0 ? `${href}?ids=${ids.map(encodeURIComponent).join(",")}` : href);
+		const href =
+			this.getAttribute("data-compare-href") ?? `${storeHref(this)}/compare`;
+		window.location.replace(
+			ids.length > 0
+				? `${href}?ids=${ids.map(encodeURIComponent).join(",")}`
+				: href,
+		);
 	}
 
 	render() {
@@ -805,7 +1020,11 @@ class CompareTable extends HTMLElement {
 					"Nothing to compare yet. Press ",
 					h("span", { "aria-hidden": "true" }, "⇄"),
 					" Compare on two or more products.",
-					h("p", null, h("a", { class: "bd-btn", href: store }, "Browse products")),
+					h(
+						"p",
+						null,
+						h("a", { class: "bd-btn", href: store }, "Browse products"),
+					),
 				),
 			]);
 			return;
@@ -824,7 +1043,8 @@ class CompareTable extends HTMLElement {
 			}
 		}
 		const productHref = (id: string) => `${store}/${encodeURIComponent(id)}`;
-		const cells = (cell: (entry: (typeof views)[number]) => Node | string) => views.map((entry) => h("td", null, cell(entry)));
+		const cells = (cell: (entry: (typeof views)[number]) => Node | string) =>
+			views.map((entry) => h("td", null, cell(entry)));
 		patch(this, [
 			h(
 				"div",
@@ -847,10 +1067,24 @@ class CompareTable extends HTMLElement {
 									h(
 										"a",
 										{ class: "compare__product", href: productHref(view.id) },
-										view.images[0] && h("img", { alt: "", referrerpolicy: "no-referrer", src: view.images[0] }),
+										view.images[0] &&
+											h("img", {
+												alt: "",
+												referrerpolicy: "no-referrer",
+												src: view.images[0],
+											}),
 										h("span", null, view.name),
 									),
-									h("button", { class: "compare__remove", "data-act": "remove", "data-id": view.id, type: "button" }, "Remove"),
+									h(
+										"button",
+										{
+											class: "compare__remove",
+											"data-act": "remove",
+											"data-id": view.id,
+											type: "button",
+										},
+										"Remove",
+									),
 								),
 							),
 						),
@@ -864,25 +1098,51 @@ class CompareTable extends HTMLElement {
 							h("th", { scope: "row" }, "Price"),
 							cells(({ view }) => {
 								const variant = defaultVariant(view);
-								return variant?.price != null ? formatDollars(variant.price) : "—";
+								return variant?.price != null
+									? formatDollars(variant.price)
+									: "—";
 							}),
 						),
 						h(
 							"tr",
 							null,
 							h("th", { scope: "row" }, "Rating"),
-							cells(({ rating }) => (rating ? `${rating.avg.toFixed(1)} ★ (${rating.count})` : "No reviews")),
+							cells(({ rating }) =>
+								rating
+									? `${rating.avg.toFixed(1)} ★ (${rating.count})`
+									: "No reviews",
+							),
 						),
-						h("tr", null, h("th", { scope: "row" }, "Category"), cells(({ view }) => view.categoryName ?? "—")),
-						h("tr", null, h("th", { scope: "row" }, "Options"), cells(({ view }) => view.variants.map((v) => v.name).join(", ") || "—")),
+						h(
+							"tr",
+							null,
+							h("th", { scope: "row" }, "Category"),
+							cells(({ view }) => view.categoryName ?? "—"),
+						),
+						h(
+							"tr",
+							null,
+							h("th", { scope: "row" }, "Options"),
+							cells(
+								({ view }) =>
+									view.variants.map((v) => v.name).join(", ") || "—",
+							),
+						),
 						rows.map((row) =>
 							h(
 								"tr",
 								null,
-								h("th", { scope: "row" }, `${row.label} `, h("small", null, row.group)),
+								h(
+									"th",
+									{ scope: "row" },
+									`${row.label} `,
+									h("small", null, row.group),
+								),
 								cells(
 									({ view }) =>
-										view.specs.find((g) => g.name === row.group)?.rows.find((r) => r.label === row.label)?.value ?? "—",
+										view.specs
+											.find((g) => g.name === row.group)
+											?.rows.find((r) => r.label === row.label)?.value ?? "—",
 								),
 							),
 						),
@@ -890,7 +1150,13 @@ class CompareTable extends HTMLElement {
 							"tr",
 							null,
 							h("td", null),
-							cells(({ view }) => h("a", { class: "bd-btn", href: productHref(view.id) }, "View product")),
+							cells(({ view }) =>
+								h(
+									"a",
+									{ class: "bd-btn", href: productHref(view.id) },
+									"View product",
+								),
+							),
 						),
 					),
 				),
@@ -906,7 +1172,8 @@ class SavedCount extends HTMLElement {
 	#off: (() => void) | null = null;
 
 	connectedCallback() {
-		const list = this.getAttribute("data-list") === "compare" ? compareList : wishlist;
+		const list =
+			this.getAttribute("data-list") === "compare" ? compareList : wishlist;
 		this.#off = list.subscribe(() => this.render());
 		this.render();
 	}
@@ -916,7 +1183,9 @@ class SavedCount extends HTMLElement {
 	}
 
 	render() {
-		const count = (this.getAttribute("data-list") === "compare" ? compareList : wishlist).read().length;
+		const count = (
+			this.getAttribute("data-list") === "compare" ? compareList : wishlist
+		).read().length;
 		patch(this, [count > 0 && h("span", { class: "store-nav__count" }, count)]);
 	}
 }
@@ -947,7 +1216,9 @@ class CartCount extends HTMLElement {
 	}
 
 	render() {
-		patch(this, [this.#count > 0 && h("span", { class: "store-nav__badge" }, this.#count)]);
+		patch(this, [
+			this.#count > 0 && h("span", { class: "store-nav__badge" }, this.#count),
+		]);
 	}
 }
 

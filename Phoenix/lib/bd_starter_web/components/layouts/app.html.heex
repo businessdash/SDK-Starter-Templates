@@ -4,8 +4,10 @@
 --%>
 <div :if={not BdStarter.Bd.configured?()} class="banner banner-setup">
   <strong>Not connected to BD.</strong>
-  Copy <code>.env.example</code> to <code>.env</code> and set
-  <code>BD_SITE_ID</code> + <code>BD_API_KEY</code>. Every section below is
+  Copy <code>.env.example</code>
+  to <code>.env</code>
+  and set <code>BD_SITE_ID</code>
+  + <code>BD_API_KEY</code>. Every section below is
   rendering its local fallback.
   <a href={"#{BdStarter.Bd.host()}/login?returnTo=/dashboard/settings/web-content"}>
     Open the setup wizard →

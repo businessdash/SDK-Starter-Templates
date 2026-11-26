@@ -1,8 +1,9 @@
 // [bd-file:blog]
 import { BlogIndex } from "../components/blog/BlogIndex";
 import { bd } from "../lib/bd";
-import { useSearchParams } from "../lib/router";
-import { ErrorBox, useApi } from "./ui";
+import { useSearchParams } from "../lib/route";
+import { ErrorBox } from "./ui";
+import { useApi } from "./use-api";
 
 /** Posts on a page. With a tag filter, more are read and filtered here. */
 const PAGE = 12;

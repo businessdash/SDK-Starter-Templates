@@ -7,9 +7,7 @@ use App\Bd\Client;
 /** Posts, categories, tags, threaded comments, reactions. */
 class Blog
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /** @return array<string, mixed> */
     public function listPosts(?int $limit = null, int|string|null $cursor = null, ?string $categoryId = null): array

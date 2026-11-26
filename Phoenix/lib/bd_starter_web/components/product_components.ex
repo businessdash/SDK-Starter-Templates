@@ -106,7 +106,8 @@ defmodule BdStarterWeb.ProductComponents do
       <a href={@store_href}>Store</a>
       <%= if @product.category_id do %>
         <span aria-hidden="true">/</span>
-        <a href={"#{@store_href}?category=#{URI.encode_www_form(@product.category_id)}"}>{@product.category_name || "Category"}</a>
+        <a href={"#{@store_href}?category=#{URI.encode_www_form(@product.category_id)}"}>{@product.category_name ||
+          "Category"}</a>
       <% end %>
       <span aria-hidden="true">/</span>
       <span aria-current="page">{@product.name}</span>
@@ -125,7 +126,11 @@ defmodule BdStarterWeb.ProductComponents do
   attr :variant_id, :string, required: true
 
   def product_gallery(assigns) do
-    shown = if Enum.any?(assigns.sets, &(&1.variant_id == assigns.variant_id)), do: assigns.variant_id, else: ""
+    shown =
+      if Enum.any?(assigns.sets, &(&1.variant_id == assigns.variant_id)),
+        do: assigns.variant_id,
+        else: ""
+
     assigns = assign(assigns, :shown, shown)
 
     ~H"""
@@ -147,8 +152,18 @@ defmodule BdStarterWeb.ProductComponents do
           />
           <div :if={set.photos == []} class="gallery__placeholder">No photo yet</div>
           <%= if length(set.photos) > 1 do %>
-            <button aria-label="Previous photo" class="gallery__step gallery__step--prev" data-bd-step="-1" type="button">‹</button>
-            <button aria-label="Next photo" class="gallery__step gallery__step--next" data-bd-step="1" type="button">›</button>
+            <button
+              aria-label="Previous photo"
+              class="gallery__step gallery__step--prev"
+              data-bd-step="-1"
+              type="button"
+            >‹</button>
+            <button
+              aria-label="Next photo"
+              class="gallery__step gallery__step--next"
+              data-bd-step="1"
+              type="button"
+            >›</button>
           <% end %>
         </div>
         <div :if={length(set.photos) > 1} class="gallery__thumbs">
@@ -172,13 +187,17 @@ defmodule BdStarterWeb.ProductComponents do
 
   def product_title(assigns) do
     reviews = assigns.reviews || %{}
-    assigns = assign(assigns, count: reviews["totalCount"] || 0, average: (reviews["avgRating"] || 0) / 1)
+
+    assigns =
+      assign(assigns, count: reviews["totalCount"] || 0, average: (reviews["avgRating"] || 0) / 1)
 
     ~H"""
     <div>
       <p :if={@product.category_name} class="product-detail__eyebrow">{@product.category_name}</p>
       <h1>{@product.name}</h1>
-      <a :if={@count > 0} class="product-detail__rating" href="#reviews"><.stars rating={@average} /><span>{one_decimal(@average)} · {@count} reviews</span></a>
+      <a :if={@count > 0} class="product-detail__rating" href="#reviews"><.stars rating={@average} /><span>{one_decimal(
+        @average
+      )} · {@count} reviews</span></a>
     </div>
     """
   end
@@ -195,7 +214,12 @@ defmodule BdStarterWeb.ProductComponents do
   def product_price(assigns) do
     ~H"""
     <p class="product-detail__price" data-bd-price>
-      <span class="product-detail__from" data-bd-from hidden={!(@price.amount && @price.from)}>From</span> <span data-bd-amount>{if @price.amount, do: amount(@price.amount * @quantity), else: "Sold out"}</span><span class="product-detail__each" data-bd-each hidden={!(@price.amount && @quantity > 1)}>{if @price.amount && @quantity > 1, do: " (#{amount(@price.amount)} each)"}</span>
+      <span class="product-detail__from" data-bd-from hidden={!(@price.amount && @price.from)}>From</span>
+      <span data-bd-amount>{if @price.amount, do: amount(@price.amount * @quantity), else: "Sold out"}</span><span
+        class="product-detail__each"
+        data-bd-each
+        hidden={!(@price.amount && @quantity > 1)}
+      >{if @price.amount && @quantity > 1, do: " (#{amount(@price.amount)} each)"}</span>
     </p>
     """
   end
@@ -221,7 +245,7 @@ defmodule BdStarterWeb.ProductComponents do
           data-bd-variant={v.id}
           disabled={!v.available}
           type="button"
-        >{v.name}<small :if={v.price} data-bd-variant-price hidden={!@show_prices}> {amount(v.price)}</small></button>
+        >{v.name}<small :if={v.price} data-bd-variant-price hidden={!@show_prices}>{amount(v.price)}</small></button>
       </div>
     </fieldset>
     """
@@ -237,8 +261,15 @@ defmodule BdStarterWeb.ProductComponents do
 
   def option_picker(assigns) do
     ~H"""
-    <fieldset class="choice" data-bd-for-variant={@group.variant_id} data-bd-group={@group.id} hidden={@hidden}>
-      <legend class="bd-label">{@group.title}<span class="choice__picked" data-bd-picked hidden></span></legend>
+    <fieldset
+      class="choice"
+      data-bd-for-variant={@group.variant_id}
+      data-bd-group={@group.id}
+      hidden={@hidden}
+    >
+      <legend class="bd-label">
+        {@group.title}<span class="choice__picked" data-bd-picked hidden></span>
+      </legend>
       <div class="choice__values">
         <button
           :for={value <- @group.values}
@@ -258,10 +289,13 @@ defmodule BdStarterWeb.ProductComponents do
   attr :stock, :any, default: nil
 
   def stock_note(assigns) do
-    assigns = assign(assigns, :low, is_number(assigns.stock) and assigns.stock > 0 and assigns.stock <= 5)
+    assigns =
+      assign(assigns, :low, is_number(assigns.stock) and assigns.stock > 0 and assigns.stock <= 5)
 
     ~H"""
-    <p class="product-detail__stock" data-bd-stock hidden={!@low}>{if @low, do: "Only #{whole(@stock)} left"}</p>
+    <p class="product-detail__stock" data-bd-stock hidden={!@low}>
+      {if @low, do: "Only #{whole(@stock)} left"}
+    </p>
     """
   end
 
@@ -274,7 +308,12 @@ defmodule BdStarterWeb.ProductComponents do
     <div aria-label="Quantity" class="qty" role="group">
       <button aria-label="One fewer" data-bd-qty="-1" disabled={@quantity <= 1} type="button">−</button>
       <span aria-live="polite" data-bd-qty-value>{@quantity}</span>
-      <button aria-label="One more" data-bd-qty="1" disabled={is_number(@max) and @quantity >= @max} type="button">+</button>
+      <button
+        aria-label="One more"
+        data-bd-qty="1"
+        disabled={is_number(@max) and @quantity >= @max}
+        type="button"
+      >+</button>
     </div>
     """
   end
@@ -285,10 +324,10 @@ defmodule BdStarterWeb.ProductComponents do
   def add_to_cart_button(assigns) do
     ~H"""
     <button class="bd-btn buy__add" data-bd-add disabled={!@price.ready} type="button">{cond do
-        is_nil(@price.amount) -> "Sold out"
-        not @price.ready -> "Choose options"
-        true -> "Add to cart"
-      end}</button>
+      is_nil(@price.amount) -> "Sold out"
+      not @price.ready -> "Choose options"
+      true -> "Add to cart"
+    end}</button>
     """
   end
 
@@ -297,7 +336,13 @@ defmodule BdStarterWeb.ProductComponents do
 
   def cart_notice(assigns) do
     ~H"""
-    <div class="product-detail__msg" data-bd-notice hidden role="status"><span data-bd-notice-text></span><a class="bd-btn bd-btn--ghost" data-bd-notice-link href={@cart_href}>View cart</a></div>
+    <div class="product-detail__msg" data-bd-notice hidden role="status">
+      <span data-bd-notice-text></span><a
+        class="bd-btn bd-btn--ghost"
+        data-bd-notice-link
+        href={@cart_href}
+      >View cart</a>
+    </div>
     """
   end
 
@@ -415,12 +460,22 @@ defmodule BdStarterWeb.ProductComponents do
     <section class="product-section" id="reviews">
       <h2 class="product-section__title">Reviews</h2>
       <%= if @items != [] do %>
-        <p class="reviews__summary"><.stars rating={@average} /><strong>{one_decimal(@average)} out of 5</strong><span>from {@total} reviews</span></p>
+        <p class="reviews__summary">
+          <.stars rating={@average} /><strong>{one_decimal(@average)} out of 5</strong><span>from {@total} reviews</span>
+        </p>
         <div class="review-list">
           <article :for={review <- @items} class="review">
-            <div class="review__head"><.stars rating={review["rating"] || 0} /><span class="review__name">{review["reviewerName"] || "Verified buyer"}</span><span class="review__date">{Shop.review_date(review["createdAt"])}</span></div>
+            <div class="review__head">
+              <.stars rating={review["rating"] || 0} /><span class="review__name">{review[
+                "reviewerName"
+              ] || "Verified buyer"}</span><span class="review__date">{Shop.review_date(
+                review["createdAt"]
+              )}</span>
+            </div>
             <p :if={review["title"]} class="review__title">{review["title"]}</p>
-            <p :if={review["content"] || review["body"]} class="review__body">{review["content"] || review["body"]}</p>
+            <p :if={review["content"] || review["body"]} class="review__body">
+              {review["content"] || review["body"]}
+            </p>
           </article>
         </div>
         <a :if={@more_href} class="bd-btn bd-btn--ghost reviews__more" href={@more_href}>Show more reviews</a>
@@ -442,7 +497,19 @@ defmodule BdStarterWeb.ProductComponents do
       <h2 class="product-rail__title">{@title}</h2>
       <ul class="product-rail__row">
         <li :for={product <- @products}>
-          <a class="bd-card product-rail__card" href={"#{@store_href}/#{URI.encode(product.id, &URI.char_unreserved?/1)}"}><img :if={product.image} alt="" loading="lazy" referrerpolicy="no-referrer" src={product.image} /><span :if={!product.image} aria-hidden="true" class="product-rail__noimg"></span><span class="product-rail__name">{product.name}</span><span :if={product.price_cents} class="product-rail__price">{cents(product.price_cents)}</span></a>
+          <a
+            class="bd-card product-rail__card"
+            href={"#{@store_href}/#{URI.encode(product.id, &URI.char_unreserved?/1)}"}
+          ><img
+            :if={product.image}
+            alt=""
+            loading="lazy"
+            referrerpolicy="no-referrer"
+            src={product.image}
+          /><span :if={!product.image} aria-hidden="true" class="product-rail__noimg"></span><span class="product-rail__name">{product.name}</span><span
+            :if={product.price_cents}
+            class="product-rail__price"
+          >{cents(product.price_cents)}</span></a>
         </li>
       </ul>
     </section>
@@ -455,7 +522,8 @@ defmodule BdStarterWeb.ProductComponents do
 
   def recently_viewed(assigns) do
     ~H"""
-    <bd-recently-viewed data-product={Jason.encode!(@product)} data-store-href={@store_href}></bd-recently-viewed>
+    <bd-recently-viewed data-product={Jason.encode!(@product)} data-store-href={@store_href}>
+    </bd-recently-viewed>
     """
   end
 

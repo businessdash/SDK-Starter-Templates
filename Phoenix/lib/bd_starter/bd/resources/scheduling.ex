@@ -92,18 +92,25 @@ defmodule BdStarter.Bd.Resources.Scheduling do
   `actor_user_id` records WHO moved it, which is what lets a customer's history
   say "they rescheduled" rather than leaving an unexplained change.
   """
-  def reschedule_as_staff(client, site_id, booking_id, new_start_at, reason \\ nil, actor_user_id \\ nil),
-    do:
-      Client.post(
+  def reschedule_as_staff(
         client,
-        path(site_id, "bookings/#{enc(booking_id)}/manage"),
-        compact(%{
-          "action" => "reschedule",
-          "newStartAt" => new_start_at,
-          "reason" => reason,
-          "actorUserId" => actor_user_id
-        })
-      )
+        site_id,
+        booking_id,
+        new_start_at,
+        reason \\ nil,
+        actor_user_id \\ nil
+      ),
+      do:
+        Client.post(
+          client,
+          path(site_id, "bookings/#{enc(booking_id)}/manage"),
+          compact(%{
+            "action" => "reschedule",
+            "newStartAt" => new_start_at,
+            "reason" => reason,
+            "actorUserId" => actor_user_id
+          })
+        )
 
   @doc "Cancel a booking as STAFF. Notifies the invitee and every host."
   def cancel_as_staff(client, site_id, booking_id, reason \\ nil, actor_user_id \\ nil),

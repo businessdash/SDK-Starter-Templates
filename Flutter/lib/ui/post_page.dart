@@ -87,7 +87,8 @@ class _PostPageState extends State<PostPage> {
   Future<void> _toggleLike(BdClient client, String token) async {
     setState(() => _liking = true);
     try {
-      final likes = await client.togglePostLike(widget.slug, sessionToken: token);
+      final likes =
+          await client.togglePostLike(widget.slug, sessionToken: token);
       if (mounted) setState(() => _likes = likes);
     } on Exception {
       // The heart stays as it was.
@@ -100,7 +101,8 @@ class _PostPageState extends State<PostPage> {
     final content = _draft.text.trim();
     if (content.isEmpty) return;
     if (content.length > postCommentMax) {
-      setState(() => _note = (text: 'Comments are up to 5,000 characters.', ok: false));
+      setState(() =>
+          _note = (text: 'Comments are up to 5,000 characters.', ok: false));
       return;
     }
     setState(() {
@@ -108,17 +110,23 @@ class _PostPageState extends State<PostPage> {
       _note = null;
     });
     try {
-      final posted = await client.postComment(widget.slug, content, sessionToken: token);
+      final posted =
+          await client.postComment(widget.slug, content, sessionToken: token);
       _draft.clear();
       if (mounted) {
         setState(() => _note = (
-              text: posted.isApproved ? 'Comment posted.' : "Thanks! Your comment shows once it's approved.",
+              text: posted.isApproved
+                  ? 'Comment posted.'
+                  : "Thanks! Your comment shows once it's approved.",
               ok: true,
             ));
       }
       await _loadComments(client);
     } on Exception {
-      if (mounted) setState(() => _note = (text: "Couldn't post your comment. Try again.", ok: false));
+      if (mounted) {
+        setState(() => _note =
+            (text: "Couldn't post your comment. Try again.", ok: false));
+      }
     } finally {
       if (mounted) setState(() => _posting = false);
     }
@@ -132,7 +140,8 @@ class _PostPageState extends State<PostPage> {
     return Scaffold(
       appBar: AppBar(title: Text(detail?.post.title ?? 'Blog')),
       body: switch ((client, detail, _error)) {
-        (null, _, _) => const Center(child: Text("The blog isn't connected yet.")),
+        (null, _, _) =>
+          const Center(child: Text("The blog isn't connected yet.")),
         (final client?, final detail?, _) => _post(context, client, detail),
         (_, null, final error?) => Center(
             child: Padding(
@@ -159,7 +168,9 @@ class _PostPageState extends State<PostPage> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
       children: [
-        Semantics(header: true, child: Text(post.title, style: theme.textTheme.headlineSmall)),
+        Semantics(
+            header: true,
+            child: Text(post.title, style: theme.textTheme.headlineSmall)),
         const SizedBox(height: 8),
         PostMeta(post: post),
         if (post.imageUrl?.isNotEmpty ?? false) ...[
@@ -173,7 +184,10 @@ class _PostPageState extends State<PostPage> {
           PostBody(blocks: _blocks),
         if (PostCta.linkFor(post) != null) ...[
           const SizedBox(height: 16),
-          PostCta(post: post, onOpen: (link) => launchUrl(link, mode: LaunchMode.externalApplication)),
+          PostCta(
+              post: post,
+              onOpen: (link) =>
+                  launchUrl(link, mode: LaunchMode.externalApplication)),
         ],
         if (post.tags.isNotEmpty) ...[
           const SizedBox(height: 16),

@@ -16,7 +16,11 @@
     <link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.97/bd-forms.css" />
     <link phx-track-static rel="stylesheet" href={~p"/forms.css"} />
     <%!-- The store's, the blog's and the reviews' pages: their styles, and the elements that draw them. --%>
-    <link :if={assigns[:store_nav] || assigns[:blog] || assigns[:reviews_page]} rel="stylesheet" href={~p"/bd-pages.css"} />
+    <link
+      :if={assigns[:store_nav] || assigns[:blog] || assigns[:reviews_page]}
+      rel="stylesheet"
+      href={~p"/bd-pages.css"}
+    />
     <link :if={assigns[:store_nav]} rel="stylesheet" href={~p"/bd-shop.css"} />
     <link :if={assigns[:blog]} rel="stylesheet" href={~p"/bd-blog.css"} />
     <link :if={assigns[:reviews_page]} rel="stylesheet" href={~p"/bd-reviews.css"} />

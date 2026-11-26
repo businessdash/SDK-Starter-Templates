@@ -12,20 +12,36 @@ import { SaveButtons } from "./SaveButtons";
  * Sale), name, stars, price ("From" when options change it, the old price
  * on sale), Low stock, and ♡ / ⇄ to save it or pick it to compare.
  */
-export function ProductCard({ product: p, storeHref = "/store" }: { product: StorefrontProductCard; storeHref?: string }) {
+export function ProductCard({
+	product: p,
+	storeHref = "/store",
+}: {
+	product: StorefrontProductCard;
+	storeHref?: string;
+}) {
 	return (
 		<div class="bd-card product-card">
 			<Link class="product-card__link" href={`${storeHref}/${p.id}`}>
 				<div class="product-card__media">
 					{p.coverImage ? (
-						<img alt={p.name} class="product-card__img" loading="lazy" referrerPolicy="no-referrer" src={p.coverImage} />
+						<img
+							width={800}
+							height={600}
+							alt={p.name}
+							class="product-card__img"
+							loading="lazy"
+							referrerPolicy="no-referrer"
+							src={p.coverImage}
+						/>
 					) : (
 						<div class="product-card__noimg">No image</div>
 					)}
 					<div class="product-card__badges">
 						{p.isBestSeller ? <span class="bd-badge">Best seller</span> : null}
 						{p.isNew ? <span class="bd-badge">New</span> : null}
-						{p.isOnSale ? <span class="bd-badge product-card__badge--sale">Sale</span> : null}
+						{p.isOnSale ? (
+							<span class="bd-badge product-card__badge--sale">Sale</span>
+						) : null}
 					</div>
 				</div>
 				<div class="product-card__body">
@@ -43,16 +59,25 @@ export function ProductCard({ product: p, storeHref = "/store" }: { product: Sto
 								: "View details"}
 						</span>
 						{p.isOnSale && p.comparePriceCents != null ? (
-							<span class="product-card__compare">{formatMoney(p.comparePriceCents, "usd")}</span>
+							<span class="product-card__compare">
+								{formatMoney(p.comparePriceCents, "usd")}
+							</span>
 						) : null}
 					</div>
-					{p.isLowStock ? <span class="product-card__lowstock">Low stock</span> : null}
+					{p.isLowStock ? (
+						<span class="product-card__lowstock">Low stock</span>
+					) : null}
 				</div>
 			</Link>
 			<div class="product-card__save">
 				<SaveButtons
 					compact
-					product={{ id: p.id, name: p.name, image: p.coverImage ?? null, priceCents: p.cheapestPriceCents ?? null }}
+					product={{
+						id: p.id,
+						name: p.name,
+						image: p.coverImage ?? null,
+						priceCents: p.cheapestPriceCents ?? null,
+					}}
 				/>
 			</div>
 		</div>

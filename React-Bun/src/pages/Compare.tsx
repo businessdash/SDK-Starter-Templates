@@ -4,8 +4,8 @@ import type { StorefrontProductDetail } from "@businessdash/sdk/contracts";
 import { StoreNav } from "../components/StoreNav";
 import { type CompareColumn, CompareTable } from "../components/shop/CompareTable";
 import { bd } from "../lib/bd";
-import { useRoute, useSearchParams } from "../lib/router";
-import { useApi } from "./ui";
+import { useRoute, useSearchParams } from "../lib/route";
+import { useApi } from "./use-api";
 
 /** As many as the compare bar lets a visitor pick. */
 const MOST = 4;

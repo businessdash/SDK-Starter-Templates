@@ -1,9 +1,8 @@
 // [bd-file:store]
 import { createFileRoute, Link } from "@tanstack/solid-router";
 import { Match, Show, Switch } from "solid-js";
-
-import { ProductDetail } from "../components/bd/shop/ProductDetail";
 import { StoreNav } from "../components/bd/StoreNav";
+import { ProductDetail } from "../components/bd/shop/ProductDetail";
 import { getCartCount, getProductPage } from "../lib/bd-shop-fns";
 
 /**

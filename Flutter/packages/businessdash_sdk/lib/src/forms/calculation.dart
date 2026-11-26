@@ -15,7 +15,8 @@ class BdCalcOutcome {
 
 /// The result of running a business function.
 class BdFunctionRun {
-  const BdFunctionRun({required this.ok, required this.outputs, required this.issues});
+  const BdFunctionRun(
+      {required this.ok, required this.outputs, required this.issues});
 
   final bool ok;
   final Map<String, BdJson> outputs;
@@ -43,13 +44,18 @@ abstract final class BdCalculation {
   }) {
     final bindings = config.inputMap ?? const <BdBinding>[];
     if (config.mode == 'function') {
-      final def = config.functionId == null ? null : functionsById[config.functionId];
+      final def =
+          config.functionId == null ? null : functionsById[config.functionId];
       if (def == null) {
-        return const BdCalcOutcome(ok: false, error: 'Referenced function not found.');
+        return const BdCalcOutcome(
+            ok: false, error: 'Referenced function not found.');
       }
-      final raw = <String, BdJson?>{for (final b in bindings) b.variable: resolve(b.fieldId)};
+      final raw = <String, BdJson?>{
+        for (final b in bindings) b.variable: resolve(b.fieldId)
+      };
       final run = runFunction(def, raw, userFunctions: userFunctions);
-      final key = config.outputKey ?? (def.outputs.isEmpty ? null : def.outputs.first.key);
+      final key = config.outputKey ??
+          (def.outputs.isEmpty ? null : def.outputs.first.key);
       return BdCalcOutcome(
         ok: run.ok,
         value: key == null ? null : run.outputs[key],
@@ -58,13 +64,16 @@ abstract final class BdCalculation {
       );
     }
     final formula = config.formula == null ? '' : BdJS.trim(config.formula!);
-    if (formula.isEmpty) return const BdCalcOutcome(ok: false, error: 'No formula.');
+    if (formula.isEmpty) {
+      return const BdCalcOutcome(ok: false, error: 'No formula.');
+    }
     final vars = <String, BdJson?>{
       for (final b in bindings) b.variable: formulaValue(resolve(b.fieldId)),
     };
     return switch (BdFormula.run(formula, vars, userFunctions)) {
       BdFormulaOk(:final result) => BdCalcOutcome(ok: true, value: result),
-      BdFormulaError(:final message) => BdCalcOutcome(ok: false, error: message),
+      BdFormulaError(:final message) =>
+        BdCalcOutcome(ok: false, error: message),
     };
   }
 
@@ -73,7 +82,8 @@ abstract final class BdCalculation {
     if (value == null || value.isNull) return '';
     final decimals = display?.decimals;
     final body = switch (value) {
-      BdNum(:final value) when decimals != null && value.isFinite => BdJS.toFixed(value, decimals),
+      BdNum(:final value) when decimals != null && value.isFinite =>
+        BdJS.toFixed(value, decimals),
       BdObj() || BdArr() => value.toJsonString(sortKeys: true),
       _ => BdJS.string(value),
     };
@@ -94,12 +104,18 @@ abstract final class BdCalculation {
         return n.isNaN ? 'not a number' : BdNum(n);
       case 'boolean':
         if (value is BdBool) return value;
-        if (value == const BdStr('true') || value == const BdNum(1)) return const BdBool(true);
-        if (value == const BdStr('false') || value == const BdNum(0)) return const BdBool(false);
+        if (value == const BdStr('true') || value == const BdNum(1)) {
+          return const BdBool(true);
+        }
+        if (value == const BdStr('false') || value == const BdNum(0)) {
+          return const BdBool(false);
+        }
         return 'not a boolean';
       case 'date':
         final s = BdJS.string(value);
-        return _isoDate.hasMatch(s) && BdDates.parseInstant(s) != null ? BdStr(s) : 'not a date';
+        return _isoDate.hasMatch(s) && BdDates.parseInstant(s) != null
+            ? BdStr(s)
+            : 'not a date';
       default:
         return value is BdStr ? value : BdStr(BdJS.string(value));
     }
@@ -111,7 +127,8 @@ abstract final class BdCalculation {
         'text' => value.stringValue != null,
         'boolean' => value.boolValue != null,
         'object' => value.objectValue != null,
-        'date' => value.stringValue != null && _isoDate.hasMatch(value.stringValue!),
+        'date' =>
+          value.stringValue != null && _isoDate.hasMatch(value.stringValue!),
         _ => false,
       };
 

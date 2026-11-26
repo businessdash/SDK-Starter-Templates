@@ -1,6 +1,6 @@
 // [bd-file:store,subscriptions]
 // [bd:store]
-import type { CartSnapshot } from "@businessdash/sdk/contracts";
+import type { CartSnapshot } from '@businessdash/sdk/contracts';
 
 /**
  * Browser-side cart helpers. These ONLY call this app's own
@@ -9,25 +9,20 @@ import type { CartSnapshot } from "@businessdash/sdk/contracts";
  * resolves to the new `CartSnapshot` (or an error message).
  */
 
-export type CartCallResult =
-	| { ok: true; snapshot: CartSnapshot }
-	| { ok: false; error: string };
+export type CartCallResult = { ok: true; snapshot: CartSnapshot } | { ok: false; error: string };
 
-async function send(
-	input: string,
-	init: RequestInit,
-): Promise<CartCallResult> {
+async function send(input: string, init: RequestInit): Promise<CartCallResult> {
 	try {
 		const res = await fetch(input, init);
 		const body = (await res.json().catch(() => null)) as CartCallResult | null;
-		if (body && typeof body === "object" && "ok" in body) return body;
+		if (body && typeof body === 'object' && 'ok' in body) return body;
 		return { ok: false, error: `Request failed (${res.status}).` };
 	} catch (err) {
-		return { ok: false, error: err instanceof Error ? err.message : "Network error." };
+		return { ok: false, error: err instanceof Error ? err.message : 'Network error.' };
 	}
 }
 
-const JSON_HEADERS = { "Content-Type": "application/json" };
+const JSON_HEADERS = { 'Content-Type': 'application/json' };
 
 export function addToCart(input: {
 	productId: string;
@@ -36,44 +31,41 @@ export function addToCart(input: {
 	/** The options chosen on the product page ({ Size: "M" }). */
 	options?: Record<string, string>;
 }): Promise<CartCallResult> {
-	return send("/api/bd/cart/items", {
-		method: "POST",
+	return send('/api/bd/cart/items', {
+		method: 'POST',
 		headers: JSON_HEADERS,
-		body: JSON.stringify(input),
+		body: JSON.stringify(input)
 	});
 }
 
-export function updateCartItem(
-	itemId: string,
-	quantity: number,
-): Promise<CartCallResult> {
+export function updateCartItem(itemId: string, quantity: number): Promise<CartCallResult> {
 	return send(`/api/bd/cart/items/${encodeURIComponent(itemId)}`, {
-		method: "PATCH",
+		method: 'PATCH',
 		headers: JSON_HEADERS,
-		body: JSON.stringify({ quantity }),
+		body: JSON.stringify({ quantity })
 	});
 }
 
 export function removeCartItem(itemId: string): Promise<CartCallResult> {
 	return send(`/api/bd/cart/items/${encodeURIComponent(itemId)}`, {
-		method: "DELETE",
+		method: 'DELETE'
 	});
 }
 
 export function applyCoupon(code: string): Promise<CartCallResult> {
-	return send("/api/bd/cart/coupon", {
-		method: "POST",
+	return send('/api/bd/cart/coupon', {
+		method: 'POST',
 		headers: JSON_HEADERS,
-		body: JSON.stringify({ code }),
+		body: JSON.stringify({ code })
 	});
 }
 
 export function removeCoupon(): Promise<CartCallResult> {
-	return send("/api/bd/cart/coupon", { method: "DELETE" });
+	return send('/api/bd/cart/coupon', { method: 'DELETE' });
 }
 
 export function clearCart(): Promise<CartCallResult> {
-	return send("/api/bd/cart/clear", { method: "POST" });
+	return send('/api/bd/cart/clear', { method: 'POST' });
 }
 
 /** Start Stripe checkout; resolves to the hosted URL to navigate to. */
@@ -81,26 +73,24 @@ export async function startCheckout(): Promise<
 	{ ok: true; url: string } | { ok: false; error: string }
 > {
 	try {
-		const res = await fetch("/api/bd/checkout/start", { method: "POST" });
+		const res = await fetch('/api/bd/checkout/start', { method: 'POST' });
 		const body = (await res.json().catch(() => null)) as
-			| { ok: true; url: string }
-			| { ok: false; error: string }
-			| null;
-		if (body && "ok" in body) return body;
+			{ ok: true; url: string } | { ok: false; error: string } | null;
+		if (body && 'ok' in body) return body;
 		return { ok: false, error: `Checkout failed (${res.status}).` };
 	} catch (err) {
-		return { ok: false, error: err instanceof Error ? err.message : "Network error." };
+		return { ok: false, error: err instanceof Error ? err.message : 'Network error.' };
 	}
 }
 
 // [/bd:store]
 
 /** Format a dollar amount (cart `unitPrice`/`subtotal`, variant `price`). */
-export function formatDollars(amount: number, currency = "USD"): string {
+export function formatDollars(amount: number, currency = 'USD'): string {
 	try {
-		return new Intl.NumberFormat("en-US", {
-			style: "currency",
-			currency: currency.toUpperCase(),
+		return new Intl.NumberFormat('en-US', {
+			style: 'currency',
+			currency: currency.toUpperCase()
 		}).format(amount);
 	} catch {
 		return `$${amount.toFixed(2)}`;
@@ -108,6 +98,6 @@ export function formatDollars(amount: number, currency = "USD"): string {
 }
 
 /** Format integer cents (subscription `amountCents`, checkout totals). */
-export function formatCents(amountCents: number, currency = "USD"): string {
+export function formatCents(amountCents: number, currency = 'USD'): string {
 	return formatDollars(amountCents / 100, currency);
 }

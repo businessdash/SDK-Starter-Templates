@@ -28,7 +28,10 @@ defmodule BdStarterWeb.BlogComponents do
     <nav :if={@categories != [] or @tags != []} aria-label="Blog topics" class="blog-filters">
       <ul :if={@categories != []}>
         <li>
-          <a aria-current={if is_nil(@category), do: "true"} href={filter_href(@category, @tag, "category", nil)}>All</a>
+          <a
+            aria-current={if is_nil(@category), do: "true"}
+            href={filter_href(@category, @tag, "category", nil)}
+          >All</a>
         </li>
         <li :for={item <- @categories}>
           <a
@@ -91,7 +94,12 @@ defmodule BdStarterWeb.BlogComponents do
   def post_meta(assigns) do
     ~H"""
     <p class="post__meta">
-      <img :if={@post["authorAvatarUrl"]} alt="" referrerpolicy="no-referrer" src={@post["authorAvatarUrl"]} />
+      <img
+        :if={@post["authorAvatarUrl"]}
+        alt=""
+        referrerpolicy="no-referrer"
+        src={@post["authorAvatarUrl"]}
+      />
       <span :if={@post["authorName"]}>{@post["authorName"]}</span>
       <span>{PostHtml.date(@post["publishedAt"])}</span>
       <span>· {@minutes} min read</span>

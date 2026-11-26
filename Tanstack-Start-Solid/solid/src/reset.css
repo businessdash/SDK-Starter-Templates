@@ -101,7 +101,10 @@
 			monospace
 		);
 		font-feature-settings: var(--default-mono-font-feature-settings, normal);
-		font-variation-settings: var(--default-mono-font-variation-settings, normal);
+		font-variation-settings: var(
+			--default-mono-font-variation-settings,
+			normal
+		);
 		font-size: 1em;
 	}
 
@@ -199,7 +202,8 @@
 		opacity: 1;
 	}
 
-	@supports (not (-webkit-appearance: -apple-pay-button)) or (contain-intrinsic-size: 1px) {
+	@supports (not (-webkit-appearance: -apple-pay-button)) or
+		(contain-intrinsic-size: 1px) {
 		::placeholder {
 			color: currentcolor;
 		}
@@ -264,6 +268,7 @@
 	}
 
 	[hidden]:where(:not([hidden="until-found"])) {
+		/* biome-ignore lint/complexity/noImportantStyles: hidden has to beat any display a class gives the element */
 		display: none !important;
 	}
 }

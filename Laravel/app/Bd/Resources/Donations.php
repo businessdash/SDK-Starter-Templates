@@ -17,9 +17,7 @@ use App\Bd\Client;
  */
 class Donations
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /**
      * The giving page. Check `unavailable` (null when gifts can be taken)
@@ -46,7 +44,7 @@ class Donations
      * URL isn't allowed.
      *
      * @param  array<string, mixed>  $input
-     * @return array<string, mixed>  url, frequency, amountCents, coveredFeeCents, totalAmountCents, currency
+     * @return array<string, mixed> url, frequency, amountCents, coveredFeeCents, totalAmountCents, currency
      */
     public function startCheckout(array $input): array
     {

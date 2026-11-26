@@ -57,7 +57,11 @@ defmodule BdStarter.Forms.Units do
 
   def format(value, unit, category) do
     tidy = fn n -> n |> Js.to_fixed(4) |> Js.parse_number() |> Js.number_string() end
-    base = if category.affine or not contains?(category, unit), do: nil, else: to_base(value, unit, category)
+
+    base =
+      if category.affine or not contains?(category, unit),
+        do: nil,
+        else: to_base(value, unit, category)
 
     if base == nil do
       tidy.(value) <> " " <> unit

@@ -36,7 +36,10 @@ defmodule BdStarter.Forms.Js do
   def string(v) when is_binary(v), do: v
 
   def string(v) when is_list(v),
-    do: Enum.map_join(v, ",", fn item -> if item in [nil, :undefined], do: "", else: string(item) end)
+    do:
+      Enum.map_join(v, ",", fn item ->
+        if item in [nil, :undefined], do: "", else: string(item)
+      end)
 
   def string(_), do: "[object Object]"
 
@@ -113,14 +116,17 @@ defmodule BdStarter.Forms.Js do
         [i] -> {i, ""}
       end
 
-    text = "#{if int == "", do: "0", else: int}.#{if frac == "", do: "0", else: frac}e#{List.first(exp) || "0"}"
+    text =
+      "#{if int == "", do: "0", else: int}.#{if frac == "", do: "0", else: frac}e#{List.first(exp) || "0"}"
 
     try do
       sign * :erlang.binary_to_float(text)
     rescue
       ArgumentError ->
         # Only an exponent past the float range gets here.
-        if all_zero?(int <> frac), do: sign * 0.0, else: if(sign > 0, do: :infinity, else: :neg_infinity)
+        if all_zero?(int <> frac),
+          do: sign * 0.0,
+          else: if(sign > 0, do: :infinity, else: :neg_infinity)
     end
   end
 
@@ -152,7 +158,12 @@ defmodule BdStarter.Forms.Js do
 
       true ->
         e = point - 1
-        mantissa = if k == 1, do: digits, else: binary_part(digits, 0, 1) <> "." <> binary_part(digits, 1, k - 1)
+
+        mantissa =
+          if k == 1,
+            do: digits,
+            else: binary_part(digits, 0, 1) <> "." <> binary_part(digits, 1, k - 1)
+
         mantissa <> "e" <> if(e < 0, do: "-", else: "+") <> Integer.to_string(abs(e))
     end
   end
@@ -301,17 +312,40 @@ defmodule BdStarter.Forms.Js do
     b = f(b)
 
     cond do
-      b == :nan -> :nan
-      b == 0 -> 1.0
-      a == :nan -> :nan
-      b == :infinity -> pow_inf(a, :pos)
-      b == :neg_infinity -> pow_inf(a, :neg)
-      a == :infinity -> if b > 0, do: :infinity, else: 0.0
-      a == :neg_infinity -> if b > 0, do: if(odd_integer?(b), do: :neg_infinity, else: :infinity), else: if(odd_integer?(b), do: -0.0, else: 0.0)
-      a == 0 and b > 0 -> if odd_integer?(b), do: a, else: 0.0
-      a == 0 -> if odd_integer?(b) and sign(a) < 0, do: :neg_infinity, else: :infinity
-      a < 0 and not integer?(b) -> :nan
-      true -> pow_finite(a, b)
+      b == :nan ->
+        :nan
+
+      b == 0 ->
+        1.0
+
+      a == :nan ->
+        :nan
+
+      b == :infinity ->
+        pow_inf(a, :pos)
+
+      b == :neg_infinity ->
+        pow_inf(a, :neg)
+
+      a == :infinity ->
+        if b > 0, do: :infinity, else: 0.0
+
+      a == :neg_infinity ->
+        if b > 0,
+          do: if(odd_integer?(b), do: :neg_infinity, else: :infinity),
+          else: if(odd_integer?(b), do: -0.0, else: 0.0)
+
+      a == 0 and b > 0 ->
+        if odd_integer?(b), do: a, else: 0.0
+
+      a == 0 ->
+        if odd_integer?(b) and sign(a) < 0, do: :neg_infinity, else: :infinity
+
+      a < 0 and not integer?(b) ->
+        :nan
+
+      true ->
+        pow_finite(a, b)
     end
   end
 
@@ -416,10 +450,22 @@ defmodule BdStarter.Forms.Js do
 
   @doc "`Math.max` / `Math.min` over a list (NaN wins; empty gives ∓Infinity)."
   def max_of([]), do: :neg_infinity
-  def max_of(xs), do: if(Enum.member?(xs, :nan), do: :nan, else: Enum.reduce(xs, fn x, acc -> if gt(x, acc), do: f(x), else: acc end) |> f())
+
+  def max_of(xs),
+    do:
+      if(Enum.member?(xs, :nan),
+        do: :nan,
+        else: Enum.reduce(xs, fn x, acc -> if gt(x, acc), do: f(x), else: acc end) |> f()
+      )
 
   def min_of([]), do: :infinity
-  def min_of(xs), do: if(Enum.member?(xs, :nan), do: :nan, else: Enum.reduce(xs, fn x, acc -> if lt(x, acc), do: f(x), else: acc end) |> f())
+
+  def min_of(xs),
+    do:
+      if(Enum.member?(xs, :nan),
+        do: :nan,
+        else: Enum.reduce(xs, fn x, acc -> if lt(x, acc), do: f(x), else: acc end) |> f()
+      )
 
   @doc "`Math.sqrt`."
   def sqrt(:nan), do: :nan
@@ -433,7 +479,8 @@ defmodule BdStarter.Forms.Js do
   # ── Strings ───────────────────────────────────────────────────────────────
 
   @doc "`String.prototype.trim`."
-  def trim(s), do: Regex.replace(Re.get("^[" <> @whitespace <> "]+|[" <> @whitespace <> "]+$", "u"), s, "")
+  def trim(s),
+    do: Regex.replace(Re.get("^[" <> @whitespace <> "]+|[" <> @whitespace <> "]+$", "u"), s, "")
 
   def whitespace?(char), do: Regex.match?(Re.get("^[" <> @whitespace <> "]\\z", "u"), char)
 
@@ -453,10 +500,18 @@ defmodule BdStarter.Forms.Js do
 
     clamp = fn v ->
       cond do
-        v == :nan -> 0
-        v == :infinity -> len
-        v == :neg_infinity -> 0
-        true -> t = Kernel.trunc(trunc(v)); if t < 0, do: max(len + t, 0), else: min(t, len)
+        v == :nan ->
+          0
+
+        v == :infinity ->
+          len
+
+        v == :neg_infinity ->
+          0
+
+        true ->
+          t = Kernel.trunc(trunc(v))
+          if t < 0, do: max(len + t, 0), else: min(t, len)
       end
     end
 

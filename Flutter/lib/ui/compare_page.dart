@@ -25,7 +25,8 @@ class _ComparePageState extends State<ComparePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     final client = BdScope.of(context).client;
-    final ids = AppScope.of(context).compare.items.map((item) => item.id).toList();
+    final ids =
+        AppScope.of(context).compare.items.map((item) => item.id).toList();
     final key = '${identityHashCode(client)}:${ids.join(',')}';
     if (key == _loadedFor) return;
     _loadedFor = key;
@@ -38,7 +39,9 @@ class _ComparePageState extends State<ComparePage> {
       try {
         final (view, reviews) = await (
           client.productDetail(id),
-          client.productReviews(id, limit: 1).then<ProductReviewPage?>((page) => page, onError: (Object _) => null),
+          client.productReviews(id, limit: 1).then<ProductReviewPage?>(
+              (page) => page,
+              onError: (Object _) => null),
         ).wait;
         return (view: view, reviews: reviews);
       } on Exception {
@@ -60,7 +63,8 @@ class _ComparePageState extends State<ComparePage> {
                 mainAxisSize: MainAxisSize.min,
                 spacing: 6,
                 children: [
-                  Text('Nothing to compare', style: theme.textTheme.titleMedium),
+                  Text('Nothing to compare',
+                      style: theme.textTheme.titleMedium),
                   const Text('Tap ⇄ on up to four products.'),
                 ],
               ),
@@ -68,12 +72,17 @@ class _ComparePageState extends State<ComparePage> {
           : FutureBuilder<List<_Column>>(
               future: _columns,
               builder: (context, snapshot) {
-                if (_columns == null) return const Center(child: Text('Not connected to BD.'));
+                if (_columns == null) {
+                  return const Center(child: Text('Not connected to BD.'));
+                }
                 if (snapshot.connectionState != ConnectionState.done) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 final columns = snapshot.data ?? const <_Column>[];
-                if (columns.isEmpty) return const Center(child: Text("Couldn't load these products."));
+                if (columns.isEmpty) {
+                  return const Center(
+                      child: Text("Couldn't load these products."));
+                }
                 return ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
@@ -82,7 +91,9 @@ class _ComparePageState extends State<ComparePage> {
                       child: _table(context, columns, compare),
                     ),
                     const SizedBox(height: 16),
-                    OutlinedButton(onPressed: compare.clear, child: const Text('Clear compare')),
+                    OutlinedButton(
+                        onPressed: compare.clear,
+                        child: const Text('Clear compare')),
                   ],
                 );
               },
@@ -90,7 +101,8 @@ class _ComparePageState extends State<ComparePage> {
     );
   }
 
-  Widget _table(BuildContext context, List<_Column> columns, SavedList compare) {
+  Widget _table(
+      BuildContext context, List<_Column> columns, SavedList compare) {
     final theme = Theme.of(context);
     String price(_Column column) {
       final amount = column.view.defaultVariant?.price;
@@ -126,10 +138,14 @@ class _ComparePageState extends State<ComparePage> {
       ('Price', price),
       ('Rating', rating),
       ('Category', (column) => column.view.categoryName ?? '—'),
-      ('Options', (column) {
-        final names = column.view.variants.map((variant) => variant.name).join(', ');
-        return names.isEmpty ? '—' : names;
-      }),
+      (
+        'Options',
+        (column) {
+          final names =
+              column.view.variants.map((variant) => variant.name).join(', ');
+          return names.isEmpty ? '—' : names;
+        }
+      ),
       for (final label in labels) (label, (column) => spec(column, label)),
     ];
 
@@ -138,7 +154,9 @@ class _ComparePageState extends State<ComparePage> {
     return Table(
       defaultColumnWidth: const FixedColumnWidth(width),
       columnWidths: const {0: FixedColumnWidth(96)},
-      border: TableBorder(horizontalInside: BorderSide(color: theme.colorScheme.outlineVariant)),
+      border: TableBorder(
+          horizontalInside:
+              BorderSide(color: theme.colorScheme.outlineVariant)),
       children: [
         TableRow(
           children: [
@@ -154,12 +172,19 @@ class _ComparePageState extends State<ComparePage> {
                       onTap: () => openProduct(context, column.view.id),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: SizedBox.square(dimension: width - 12, child: Photo(column.view.images.firstOrNull)),
+                        child: SizedBox.square(
+                            dimension: width - 12,
+                            child: Photo(column.view.images.firstOrNull)),
                       ),
                     ),
-                    Text(column.view.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.titleSmall),
+                    Text(column.view.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleSmall),
                     TextButton(
-                      style: TextButton.styleFrom(padding: EdgeInsets.zero, visualDensity: VisualDensity.compact),
+                      style: TextButton.styleFrom(
+                          padding: EdgeInsets.zero,
+                          visualDensity: VisualDensity.compact),
                       onPressed: () => compare.remove(column.view.id),
                       child: const Text('Remove'),
                     ),
@@ -171,7 +196,9 @@ class _ComparePageState extends State<ComparePage> {
         for (final (label, value) in rows)
           TableRow(
             children: [
-              Padding(padding: const EdgeInsets.symmetric(vertical: 10), child: Text(label, style: muted)),
+              Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Text(label, style: muted)),
               for (final column in columns)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(4, 10, 8, 10),

@@ -3,7 +3,8 @@ import { useState } from "react";
 import { BdForm } from "@businessdash/sdk/react";
 
 import { bd } from "../lib/bd";
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { ErrorBox, PageHead } from "./ui";
+import { useApi } from "./use-api";
 
 /**
  * `/todos` — the relational custom-collections demo. Two collections declared

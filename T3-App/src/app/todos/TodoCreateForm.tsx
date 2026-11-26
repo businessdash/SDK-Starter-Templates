@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
-import { useRouter } from "next/navigation";
-
-import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
 import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
+import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
+import { useRouter } from "next/navigation";
+import { useMemo } from "react";
 
 import { api } from "@/trpc/react";
 
@@ -52,11 +51,11 @@ export function TodoCreateForm({
 		<div className="bd-card">
 			<h2 className="bd-section__title">Add a todo</h2>
 			<BdForm
-				slug={slug}
-				schema={schema}
 				client={client}
-				submitLabel="Add todo"
 				onSuccess={() => router.refresh()}
+				schema={schema}
+				slug={slug}
+				submitLabel="Add todo"
 				successFallback={() => (
 					<p>
 						Added. <span className="bd-badge">Saved to your custom DB</span>

@@ -5,7 +5,8 @@ import 'package:businessdash_forms/src/icons.dart';
 import 'package:businessdash_forms/src/logic.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-BdTextState at(String text, int start, [int? end]) => (text: text, start: start, end: end ?? start);
+BdTextState at(String text, int start, [int? end]) =>
+    (text: text, start: start, end: end ?? start);
 
 void main() {
   group("rich text: the editor's markup and the HTML BD keeps", () {
@@ -29,7 +30,8 @@ void main() {
     });
 
     test('typed markup is escaped, not injected', () {
-      expect(markupToHtml('<script>x</script> & 2*3*4'), '<p>&lt;script&gt;x&lt;/script&gt; &amp; 2*3*4</p>');
+      expect(markupToHtml('<script>x</script> & 2*3*4'),
+          '<p>&lt;script&gt;x&lt;/script&gt; &amp; 2*3*4</p>');
     });
 
     test('stored HTML round-trips through the editor', () {
@@ -49,7 +51,8 @@ void main() {
 
     test('pressing a format button again turns it off', () {
       expect(wrapSelection(at('a ****', 4), '**'), at('a ', 2));
-      expect(wrapSelection(at('make **bold**', 11), '**'), at('make **bold**', 13));
+      expect(wrapSelection(at('make **bold**', 11), '**'),
+          at('make **bold**', 13));
       expect(wrapSelection(at('**bold**', 6), '*').text, '**bold****');
       expect(wrapSelection(at('x **y**', 2), '**'), at('x ******y**', 4));
     });
@@ -71,7 +74,12 @@ void main() {
         '<a href="javascript:alert(1)">bad</a></p><ul><li>one</li><li>two</li></ul>',
       );
       expect(spansText(spans), 'Hi there & visit bad\n\n• one\n• two');
-      expect([for (final s in spans) if (s.link != null) (s.text, s.link)], [('visit', 'https://bd.test')]);
+      expect([
+        for (final s in spans)
+          if (s.link != null) (s.text, s.link)
+      ], [
+        ('visit', 'https://bd.test')
+      ]);
       expect(spans.any((s) => s.bold && s.text == 'there'), isTrue);
     });
 
@@ -88,7 +96,8 @@ void main() {
 
     test('entities decode', () {
       expect(
-        decodeEntities('&ldquo;Fish&rdquo; &amp; chips &mdash; 5 &gt; 3 &#169; &#x1F600;'),
+        decodeEntities(
+            '&ldquo;Fish&rdquo; &amp; chips &mdash; 5 &gt; 3 &#169; &#x1F600;'),
         '“Fish” & chips — 5 > 3 © 😀',
       );
       expect(decodeEntities('&unknown; &#xZZ;'), '&unknown; &#xZZ;');
@@ -201,7 +210,11 @@ void main() {
     });
 
     test('a broken path is dropped, not thrown', () {
-      expect(BdSvg.parse('<path d="M1 1 Q"/><circle cx="1" cy="1" r="1"/>').parts.length, 1);
+      expect(
+          BdSvg.parse('<path d="M1 1 Q"/><circle cx="1" cy="1" r="1"/>')
+              .parts
+              .length,
+          1);
     });
   });
 }

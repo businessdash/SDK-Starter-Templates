@@ -1,8 +1,9 @@
 import { bd } from "../lib/bd";
 import type { Loose } from "../lib/bd";
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { ErrorBox, PageHead } from "./ui";
+import { useApi } from "./use-api";
 
-function normalize(updates: Loose | null | undefined): Record<string, any>[] {
+function normalize(updates: Loose | null | undefined): Loose[] {
 	if (!updates) return [];
 	if (Array.isArray(updates)) return updates;
 	if (Array.isArray(updates.items)) return updates.items;
@@ -10,7 +11,7 @@ function normalize(updates: Loose | null | undefined): Record<string, any>[] {
 	return [];
 }
 
-function cap(s: any): string {
+function cap(s: unknown): string {
 	const str = String(s);
 	return str.charAt(0).toUpperCase() + str.slice(1);
 }

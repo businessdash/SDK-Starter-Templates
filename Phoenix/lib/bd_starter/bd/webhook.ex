@@ -29,7 +29,8 @@ defmodule BdStarter.Bd.Webhook do
 
     with {:secret, s} when is_binary(s) and s != "" <- {:secret, secret},
          {:sig, {:ok, t, v1}} <- {:sig, parse_signature(signature_header)},
-         {:fresh, true} <- {:fresh, abs(System.system_time(:second) - t) <= @replay_window_seconds},
+         {:fresh, true} <-
+           {:fresh, abs(System.system_time(:second) - t) <= @replay_window_seconds},
          {:match, true} <- {:match, matches?(t, raw_body, v1, s)},
          {:json, {:ok, payload}} <- {:json, Jason.decode(raw_body)},
          {:shape, true} <- {:shape, valid_shape?(payload)} do
@@ -45,7 +46,9 @@ defmodule BdStarter.Bd.Webhook do
   end
 
   @doc "The cache tags a verified payload names."
-  def tags(%{"tags" => tags}) when is_list(tags), do: Enum.filter(tags, &(is_binary(&1) and &1 != ""))
+  def tags(%{"tags" => tags}) when is_list(tags),
+    do: Enum.filter(tags, &(is_binary(&1) and &1 != ""))
+
   def tags(_), do: []
 
   defp matches?(t, raw_body, v1, secret) do

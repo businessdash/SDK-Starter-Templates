@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 /**
  * Dismissable "not connected yet" banner. The template renders all its content
@@ -23,14 +23,17 @@ const BASE_URL =
 
 const DISMISS_KEY = "bd-sdk-setup-banner-dismissed";
 
-export function SdkSetupBanner() {
-	const [hidden, setHidden] = useState(true);
+function dismissedBefore(): boolean {
+	try {
+		return localStorage.getItem(DISMISS_KEY) === "1";
+	} catch {
+		return false;
+	}
+}
 
-	useEffect(() => {
-		if (SITE_ID && PK) return; // configured — nothing to show
-		if (localStorage.getItem(DISMISS_KEY) === "1") return;
-		setHidden(false);
-	}, []);
+export function SdkSetupBanner() {
+	// Configured, or dismissed before: nothing to show.
+	const [hidden, setHidden] = useState(() => Boolean(SITE_ID && PK) || dismissedBefore());
 
 	if (hidden) return null;
 

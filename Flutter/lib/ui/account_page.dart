@@ -19,7 +19,8 @@ const bdCallbackScheme = 'bdstarter';
 /// business has switched on — WorkOS underneath, through BD's
 /// `auth/customer/*` routes, with the publishable key.
 class AccountPage extends StatefulWidget {
-  const AccountPage({super.key, required this.host, required this.publishableKey});
+  const AccountPage(
+      {super.key, required this.host, required this.publishableKey});
 
   final String host;
   final String publishableKey;
@@ -31,16 +32,21 @@ class AccountPage extends StatefulWidget {
 class _AccountPageState extends State<AccountPage> {
   late final BdSignInBackend? _backend = widget.publishableKey.isEmpty
       ? null
-      : BdBusinessDashSignInBackend(publishableKey: widget.publishableKey, host: Uri.parse(widget.host));
+      : BdBusinessDashSignInBackend(
+          publishableKey: widget.publishableKey, host: Uri.parse(widget.host));
 
   // Account calls belong to the business the key is for, not to a site, so
   // this client needs no site id.
   late final BdClient? _client = widget.publishableKey.isEmpty
       ? null
-      : BdClient(host: Uri.parse(widget.host), publishableKey: widget.publishableKey, siteId: '');
+      : BdClient(
+          host: Uri.parse(widget.host),
+          publishableKey: widget.publishableKey,
+          siteId: '');
   bool _deleting = false;
 
-  static const _deleteFailed = "Your account couldn't be deleted just now. Please try again in a minute.";
+  static const _deleteFailed =
+      "Your account couldn't be deleted just now. Please try again in a minute.";
 
   /// Asks, then deletes the customer's account with this business and signs
   /// them out here.
@@ -53,10 +59,13 @@ class _AccountPageState extends State<AccountPage> {
           "Your profile, saved settings and cart are deleted and you're signed out. This can't be undone.",
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+            style: TextButton.styleFrom(
+                foregroundColor: Theme.of(context).colorScheme.error),
             child: const Text('Delete account'),
           ),
         ],
@@ -64,7 +73,9 @@ class _AccountPageState extends State<AccountPage> {
     );
     final client = _client;
     final token = session.sessionToken;
-    if (confirmed != true || !mounted || client == null || token == null) return;
+    if (confirmed != true || !mounted || client == null || token == null) {
+      return;
+    }
 
     setState(() => _deleting = true);
     String? problem;
@@ -74,7 +85,9 @@ class _AccountPageState extends State<AccountPage> {
       signedOut = true;
     } on BdHttpException catch (error) {
       signedOut = error.status == 401;
-      problem = signedOut ? 'Your sign-in has expired. Sign in again, then delete your account.' : _deleteFailed;
+      problem = signedOut
+          ? 'Your sign-in has expired. Sign in again, then delete your account.'
+          : _deleteFailed;
     } on Exception {
       problem = _deleteFailed;
     }
@@ -82,7 +95,8 @@ class _AccountPageState extends State<AccountPage> {
     setState(() => _deleting = false);
     if (signedOut) AppScope.read(context).session = null;
     if (problem != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(problem)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(problem)));
     }
   }
 
@@ -90,7 +104,8 @@ class _AccountPageState extends State<AccountPage> {
   /// back on [scheme] with the result.
   Future<Uri> _authenticate(Uri url, String scheme) async {
     try {
-      return Uri.parse(await FlutterWebAuth2.authenticate(url: url.toString(), callbackUrlScheme: scheme));
+      return Uri.parse(await FlutterWebAuth2.authenticate(
+          url: url.toString(), callbackUrlScheme: scheme));
     } on PlatformException catch (error) {
       if (error.code == 'CANCELED') throw const BdSignInCancelled();
       rethrow;
@@ -112,7 +127,8 @@ class _AccountPageState extends State<AccountPage> {
         (null, _) => const Center(
             child: Padding(
               padding: EdgeInsets.all(24),
-              child: Text('Pass --dart-define=BD_PK to sign in.', textAlign: TextAlign.center),
+              child: Text('Pass --dart-define=BD_PK to sign in.',
+                  textAlign: TextAlign.center),
             ),
           ),
         (final backend?, null) => BdSignIn(
@@ -136,7 +152,8 @@ class _AccountPageState extends State<AccountPage> {
                 // Google Play and the App Store require it in the app, not on a website.
                 TextButton(
                   onPressed: _deleting ? null : () => _confirmDelete(session),
-                  style: TextButton.styleFrom(foregroundColor: Theme.of(context).colorScheme.error),
+                  style: TextButton.styleFrom(
+                      foregroundColor: Theme.of(context).colorScheme.error),
                   child: const Text('Delete account'),
                 ),
                 Text(

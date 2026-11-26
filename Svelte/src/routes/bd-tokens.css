@@ -47,9 +47,9 @@
 		linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
 
 	/* Type system */
-	--sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+	--sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--heading: var(--sans);
-	--mono: ui-monospace, "SF Mono", Consolas, monospace;
+	--mono: ui-monospace, 'SF Mono', Consolas, monospace;
 
 	font: 16px/1.55 var(--sans);
 	letter-spacing: 0.005em;
@@ -117,7 +117,9 @@
 		color: var(--link);
 		text-decoration: none;
 		border-bottom: 1px solid transparent;
-		transition: border-color 0.15s ease, color 0.15s ease;
+		transition:
+			border-color 0.15s ease,
+			color 0.15s ease;
 	}
 
 	a:hover {
@@ -492,7 +494,7 @@
 	color: var(--accent);
 }
 
-.slot-button[aria-pressed="true"] {
+.slot-button[aria-pressed='true'] {
 	background: var(--accent);
 	border-color: var(--accent);
 	color: white;

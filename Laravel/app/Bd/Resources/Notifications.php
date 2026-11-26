@@ -39,8 +39,7 @@ class Notifications
         private readonly Client $client,
         private readonly string $sessionToken,
         private readonly ?string $organizationId = null,
-    ) {
-    }
+    ) {}
 
     /**
      * This org's preference matrix, plus the category and channel definitions

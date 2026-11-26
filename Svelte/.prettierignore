@@ -8,3 +8,12 @@ bun.lockb
 # Miscellaneous
 /static/
 /drizzle/
+
+# Markdown: the CLI's `<!-- [bd-line:…] -->` markers end table rows, and
+# Prettier would add a cell border after them.
+*.md
+
+# Written by inlang when it opens the project; git ignores them too.
+/project.inlang/.lix/
+/project.inlang/.meta.json
+/project.inlang/README.md

@@ -18,8 +18,7 @@ import { getLegalPage } from "../lib/bd-server-fns";
  */
 export const Route = createFileRoute("/$")({
 	component: CatchAll,
-	loader: ({ params }) =>
-		getLegalPage({ data: { slug: params._splat ?? "" } }),
+	loader: ({ params }) => getLegalPage({ data: { slug: params._splat ?? "" } }),
 	head: ({ loaderData }) => ({
 		meta: [{ title: loaderData?.found ? loaderData.title : "Page not found" }],
 	}),

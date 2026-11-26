@@ -27,7 +27,7 @@ const average = computed(() => props.summary.average?.toFixed(1) ?? null);
 				<li
 					v-for="row in summary.histogram"
 					:key="row.stars"
-					:aria-label="`${row.stars} stars: ${row.count}`"
+					:aria-label="`${row.stars} ${row.stars === 1 ? 'star' : 'stars'}: ${row.count}`"
 				>
 					<span>{{ row.stars }} ★</span>
 					<span class="reviews-bars__track"

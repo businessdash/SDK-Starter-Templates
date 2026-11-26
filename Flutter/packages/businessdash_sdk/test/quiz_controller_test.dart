@@ -15,7 +15,8 @@ class TestClock {
 BdFormField field(Map<String, Object?> json) => BdFormField.fromJson(json);
 
 final capital = field({
-  'id': 'q_capital', 'type': 'radio', 'label': 'Capital of France?', 'required': true, //
+  'id': 'q_capital', 'type': 'radio', 'label': 'Capital of France?',
+  'required': true, //
   'options': ['Paris', 'Lyon', 'Nice'],
   'quizOptionIds': ['o_paris', 'o_lyon', 'o_nice'],
   'quizAnswerKey': {
@@ -35,11 +36,15 @@ final ocean = field({
 final essay = field({
   'id': 'q_essay', 'type': 'textarea', 'label': 'Explain photosynthesis.', //
   'quizAnswerKey': {
-    'answer': {'text': 'Plants turn light into energy.', 'validate_with_ai': true},
+    'answer': {
+      'text': 'Plants turn light into energy.',
+      'validate_with_ai': true
+    },
   },
 });
 
-BdQuizQuestionResult result(String fieldId, BdQuizQuestionStatus status) => BdQuizQuestionResult(
+BdQuizQuestionResult result(String fieldId, BdQuizQuestionStatus status) =>
+    BdQuizQuestionResult(
       fieldId: fieldId,
       label: 'Q',
       status: status,
@@ -70,7 +75,9 @@ void main() {
     test('a local immediate run locks, checks and finishes', () async {
       final clock = TestClock();
       final quiz = BdQuizController(
-        BdQuizOptions(fields: [capital, ocean], feedbackMode: BdQuizFeedbackMode.immediate),
+        BdQuizOptions(
+            fields: [capital, ocean],
+            feedbackMode: BdQuizFeedbackMode.immediate),
         clock: clock.now,
       );
       addTearDown(quiz.dispose);
@@ -79,13 +86,15 @@ void main() {
 
       // Required: checking an empty answer shows the error.
       await quiz.advance();
-      expect(quiz.screen.questions.first.error, 'Capital of France? is required.');
+      expect(
+          quiz.screen.questions.first.error, 'Capital of France? is required.');
 
       quiz.choose('q_capital', 'Paris');
       await quiz.advance();
       expect(quiz.screen.phase, BdQuizPhase.feedback);
       expect(quiz.screen.feedback?.badge.label, 'Correct');
-      expect(quiz.screen.questions[0].choices?.first.state, BdQuizChoiceState.correct);
+      expect(quiz.screen.questions[0].choices?.first.state,
+          BdQuizChoiceState.correct);
       // A locked answer can't change.
       quiz.choose('q_capital', 'Lyon');
       expect(quiz.state.answers['q_capital'], const BdStr('Paris'));
@@ -107,7 +116,9 @@ void main() {
 
     test('a countdown submits on its own and keeps the answers', () async {
       final clock = TestClock();
-      final quiz = BdQuizController(BdQuizOptions(fields: [capital, ocean], timeLimitMinutes: 1), clock: clock.now);
+      final quiz = BdQuizController(
+          BdQuizOptions(fields: [capital, ocean], timeLimitMinutes: 1),
+          clock: clock.now);
       addTearDown(quiz.dispose);
       expect(quiz.screen.phase, BdQuizPhase.ready);
       expect(quiz.screen.ready!.body, startsWith('You have 1 minute.'));
@@ -126,14 +137,19 @@ void main() {
       expect(quiz.state.timeUp, isTrue);
       final r = quiz.screen.done! as BdQuizResults;
       expect(r.timing, 'Time limit reached in 1:01');
-      expect(quiz.state.completion?.results.first.status, BdQuizQuestionStatus.correct);
-      expect(quiz.state.completion?.results.last.status, BdQuizQuestionStatus.incorrect);
+      expect(quiz.state.completion?.results.first.status,
+          BdQuizQuestionStatus.correct);
+      expect(quiz.state.completion?.results.last.status,
+          BdQuizQuestionStatus.incorrect);
     });
 
     test('open answers match alternatives, or wait for AI', () {
       final score = BdQuizScoring.score(
         [ocean, essay],
-        {'q_ocean': const BdStr('<b>Pacific</b>'), 'q_essay': const BdStr('Light makes sugar.')},
+        {
+          'q_ocean': const BdStr('<b>Pacific</b>'),
+          'q_essay': const BdStr('Light makes sugar.')
+        },
         80,
       );
       expect(score.results[0].status, BdQuizQuestionStatus.correct);
@@ -152,7 +168,9 @@ void main() {
         backend: BdQuizBackend(
           start: () async {
             log.add('start');
-            return const BdQuizStartInfo(startedAt: BdStr('2026-01-01T00:00:00.000Z'), serverNow: 1767225600000);
+            return const BdQuizStartInfo(
+                startedAt: BdStr('2026-01-01T00:00:00.000Z'),
+                serverNow: 1767225600000);
           },
           saveDraft: (_) async => log.add('draft'),
           lockAnswer: (id, _) async {
@@ -179,7 +197,10 @@ void main() {
       expect(log.first, 'start');
       expect(log, contains('draft'));
       expect(log.last, 'submit');
-      expect(lastAnswers, {'q_capital': const BdStr('Lyon'), 'q_ocean': const BdStr('Atlantic')});
+      expect(lastAnswers, {
+        'q_capital': const BdStr('Lyon'),
+        'q_ocean': const BdStr('Atlantic')
+      });
       expect(lastIds, ['q_capital', 'q_ocean']);
       // Not a local run: no retake.
       expect(quiz.screen.actions, isEmpty);
@@ -187,9 +208,14 @@ void main() {
 
     test("BD's errors show BD's words, others the quiz's", () async {
       final quiz = BdQuizController(
-        BdQuizOptions(fields: [capital], feedbackMode: BdQuizFeedbackMode.immediate, local: false),
+        BdQuizOptions(
+            fields: [capital],
+            feedbackMode: BdQuizFeedbackMode.immediate,
+            local: false),
         backend: BdQuizBackend(
-          lockAnswer: (_, __) async => throw const BdFormsException('That answer is already locked.', status: 409),
+          lockAnswer: (_, __) async => throw const BdFormsException(
+              'That answer is already locked.',
+              status: 409),
           submit: (_, __) async => completion(),
         ),
       );
@@ -200,9 +226,13 @@ void main() {
       expect(quiz.state.pending, isNull);
 
       final offline = BdQuizController(
-        BdQuizOptions(fields: [capital], feedbackMode: BdQuizFeedbackMode.immediate, local: false),
+        BdQuizOptions(
+            fields: [capital],
+            feedbackMode: BdQuizFeedbackMode.immediate,
+            local: false),
         backend: BdQuizBackend(
-          lockAnswer: (_, __) async => throw const BdFormsException('Could not reach BD: offline'),
+          lockAnswer: (_, __) async =>
+              throw const BdFormsException('Could not reach BD: offline'),
           submit: (_, __) async => completion(),
         ),
       );
@@ -215,7 +245,12 @@ void main() {
     test('a practice run is timed here and can be retaken', () async {
       final clock = TestClock();
       final quiz = BdQuizController(
-        BdQuizOptions(fields: [capital, ocean], showTimer: true, shuffleQuestions: true, local: true, canRestart: true),
+        BdQuizOptions(
+            fields: [capital, ocean],
+            showTimer: true,
+            shuffleQuestions: true,
+            local: true,
+            canRestart: true),
         backend: BdQuizBackend(submit: (_, ids) async {
           expect(ids.toSet(), {'q_capital', 'q_ocean'});
           return completion();
@@ -244,14 +279,18 @@ void main() {
 
     test("I don't know: only on optional multiple choice", () async {
       final optional = field({
-        'id': 'q_primes', 'type': 'checkbox', 'label': 'Primes?', 'options': ['4', '7'], //
+        'id': 'q_primes', 'type': 'checkbox', 'label': 'Primes?',
+        'options': ['4', '7'], //
         'quizOptionIds': ['o4', 'o7'],
         'quizAnswerKey': {
           'answer': {'option_id': 'o7'},
         },
       });
       final quiz = BdQuizController(
-        BdQuizOptions(fields: [capital, optional], feedbackMode: BdQuizFeedbackMode.immediate, allowDontKnow: true),
+        BdQuizOptions(
+            fields: [capital, optional],
+            feedbackMode: BdQuizFeedbackMode.immediate,
+            allowDontKnow: true),
       );
       addTearDown(quiz.dispose);
       expect(quiz.screen.questions[0].dontKnow, isNull); // required
@@ -270,22 +309,26 @@ void main() {
       final plain = BdQuizConfig(BdQuizOptions(fields: [capital]), 's');
       expect(plain.questions[0].options, ['Paris', 'Lyon', 'Nice']);
       final kept = field({
-        'id': 'q_kept', 'type': 'radio', 'label': 'Kept', 'options': ['A', 'B', 'C', 'D', 'E'], //
+        'id': 'q_kept', 'type': 'radio', 'label': 'Kept',
+        'options': ['A', 'B', 'C', 'D', 'E'], //
         'quizKeepChoiceOrder': true,
         'quizOptionIds': ['a', 'b', 'c', 'd', 'e'],
         'quizAnswerKey': {
           'answer': {'option_id': 'a'},
         },
       });
-      final shuffled = BdQuizConfig(BdQuizOptions(fields: [kept], shuffleChoices: true), 's');
+      final shuffled = BdQuizConfig(
+          BdQuizOptions(fields: [kept], shuffleChoices: true), 's');
       expect(shuffled.questions[0].options, ['A', 'B', 'C', 'D', 'E']);
     });
   });
 
   group('BdQuizzes', () {
     test('refuses a secret key', () {
-      expect(() => BdQuizzes.packageApi(publishableKey: 'bd_3ZxQf9'), throwsArgumentError);
-      expect(() => BdQuizzes.packageApi(publishableKey: 'sk_live_oops'), throwsArgumentError);
+      expect(() => BdQuizzes.packageApi(publishableKey: 'bd_3ZxQf9'),
+          throwsArgumentError);
+      expect(() => BdQuizzes.packageApi(publishableKey: 'sk_live_oops'),
+          throwsArgumentError);
     });
 
     test('sends the key, the session and the Package API paths', () async {
@@ -298,28 +341,44 @@ void main() {
           seen.add(request);
           final headers = {'content-type': 'application/json'};
           return switch (request.url.toString()) {
-            'https://bd.test/api/package/v1/quizzes/invitations/tok%2F1/lock' => http.Response(
+            'https://bd.test/api/package/v1/quizzes/invitations/tok%2F1/lock' =>
+              http.Response(
                 jsonEncode({
-                  'result': {'fieldId': 'q', 'label': 'Q', 'status': 'correct', 'pointsPossible': 1, 'pointsEarned': 1},
+                  'result': {
+                    'fieldId': 'q',
+                    'label': 'Q',
+                    'status': 'correct',
+                    'pointsPossible': 1,
+                    'pointsEarned': 1
+                  },
                 }),
                 200,
                 headers: headers,
               ),
-            'https://bd.test/api/package/v1/quizzes/capitals/score' => http.Response(
+            'https://bd.test/api/package/v1/quizzes/capitals/score' =>
+              http.Response(
                 jsonEncode({
-                  'status': 'scored', 'results': [], 'pointsEarned': 0, 'pointsPossible': 0, //
-                  'scorePercent': 0, 'provisionalScorePercent': 0, 'passed': false,
+                  'status': 'scored', 'results': [], 'pointsEarned': 0,
+                  'pointsPossible': 0, //
+                  'scorePercent': 0, 'provisionalScorePercent': 0,
+                  'passed': false,
                 }),
                 200,
                 headers: headers,
               ),
-            _ => http.Response(jsonEncode({'error': 'not_found', 'message': "This quiz invitation isn't valid."}), 404,
+            _ => http.Response(
+                jsonEncode({
+                  'error': 'not_found',
+                  'message': "This quiz invitation isn't valid."
+                }),
+                404,
                 headers: headers),
           };
         }),
       );
       // A token is one path segment, slashes and all (encodeURIComponent).
-      final locked = await quizzes.lockInvitationAnswer('tok/1', 'q', const BdStr('Paris'));
+      final locked = await quizzes.lockInvitationAnswer(
+          'tok/1', 'q', const BdStr('Paris'));
       expect(locked.status, BdQuizQuestionStatus.correct);
 
       final request = seen.first;
@@ -335,7 +394,8 @@ void main() {
         quizzes.invitation('missing'),
         throwsA(isA<BdFormsException>()
             .having((e) => e.status, 'status', 404)
-            .having((e) => e.message, 'message', "This quiz invitation isn't valid.")),
+            .having((e) => e.message, 'message',
+                "This quiz invitation isn't valid.")),
       );
 
       // Signed out: no session header.
@@ -351,20 +411,37 @@ void main() {
         host: 'https://bd.test',
         httpClient: MockClient((_) async => http.Response(
               jsonEncode({
-                'id': 'inv_1', 'quizId': 'qz', 'name': 'Capitals', 'description': '', 'passingScore': 70, //
-                'feedbackMode': 'immediate', 'showScore': true, 'resultsRequireAccount': true, 'resultsUnlocked': false,
-                'requireAuthentication': false, 'authenticationStatus': 'not_required', 'recipientEmailHint': '',
-                'showTimer': false, 'timeLimitMinutes': 5, 'startedAt': null, 'deadlineAt': null, 'serverNow': 1767225600000,
-                'timedOut': false, 'questionFieldIds': ['q_capital'], 'status': 'opened', 'expired': false, 'active': true,
+                'id': 'inv_1', 'quizId': 'qz', 'name': 'Capitals',
+                'description': '', 'passingScore': 70, //
+                'feedbackMode': 'immediate', 'showScore': true,
+                'resultsRequireAccount': true, 'resultsUnlocked': false,
+                'requireAuthentication': false,
+                'authenticationStatus': 'not_required',
+                'recipientEmailHint': '',
+                'showTimer': false, 'timeLimitMinutes': 5, 'startedAt': null,
+                'deadlineAt': null, 'serverNow': 1767225600000,
+                'timedOut': false, 'questionFieldIds': ['q_capital'],
+                'status': 'opened', 'expired': false, 'active': true,
                 'settings': {
                   'quiz': {'shuffleChoices': true, 'allowDontKnow': true},
                 },
                 'fields': [
-                  {'id': 'q_capital', 'type': 'radio', 'label': 'Capital?', 'options': ['Paris', 'Lyon']},
+                  {
+                    'id': 'q_capital',
+                    'type': 'radio',
+                    'label': 'Capital?',
+                    'options': ['Paris', 'Lyon']
+                  },
                 ],
                 'lockedAnswers': {'q_capital': 'Paris'},
                 'lockedResults': [
-                  {'fieldId': 'q_capital', 'label': 'Capital?', 'status': 'correct', 'pointsPossible': 1, 'pointsEarned': 1},
+                  {
+                    'fieldId': 'q_capital',
+                    'label': 'Capital?',
+                    'status': 'correct',
+                    'pointsPossible': 1,
+                    'pointsEarned': 1
+                  },
                 ],
                 'attempt': null,
               }),

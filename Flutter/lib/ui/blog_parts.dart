@@ -100,7 +100,8 @@ class PostCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 20),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
-        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => PostPage(slug: post.slug))),
+        onTap: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(builder: (_) => PostPage(slug: post.slug))),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           spacing: 6,
@@ -108,13 +109,19 @@ class PostCard extends StatelessWidget {
             if (post.imageUrl?.isNotEmpty ?? false)
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: AspectRatio(aspectRatio: 16 / 9, child: Photo(post.imageUrl)),
+                child: AspectRatio(
+                    aspectRatio: 16 / 9, child: Photo(post.imageUrl)),
               ),
             if (post.isPinned)
-              Text('Pinned', style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.primary)),
+              Text('Pinned',
+                  style: theme.textTheme.labelSmall
+                      ?.copyWith(color: theme.colorScheme.primary)),
             Text(post.title, style: theme.textTheme.titleMedium),
-            if (post.excerpt?.isNotEmpty ?? false) Text(post.excerpt!, maxLines: 3, overflow: TextOverflow.ellipsis),
-            Text('${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read', style: muted),
+            if (post.excerpt?.isNotEmpty ?? false)
+              Text(post.excerpt!, maxLines: 3, overflow: TextOverflow.ellipsis),
+            Text(
+                '${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read',
+                style: muted),
           ],
         ),
       ),
@@ -142,8 +149,11 @@ class PostMeta extends StatelessWidget {
             backgroundImage: NetworkImage(post.authorAvatarUrl!),
             onBackgroundImageError: (_, _) {},
           ),
-        if (post.authorName?.isNotEmpty ?? false) Text(post.authorName!, style: theme.textTheme.labelLarge),
-        Text('${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read', style: muted),
+        if (post.authorName?.isNotEmpty ?? false)
+          Text(post.authorName!, style: theme.textTheme.labelLarge),
+        Text(
+            '${PostHtml.date(post.publishedAt)} · ${PostHtml.readingMinutes(post.content)} min read',
+            style: muted),
       ],
     );
   }
@@ -171,12 +181,18 @@ class InfoBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) => DecoratedBox(
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withValues(alpha: 0.5),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Padding(
           padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, spacing: 10, children: children),
+          child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: 10,
+              children: children),
         ),
       );
 }
@@ -189,8 +205,10 @@ class MembersOnly extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => InfoBox(children: [
-        Text('This post is for members.', style: Theme.of(context).textTheme.titleMedium),
-        FilledButton(onPressed: onSignIn, child: const Text('Sign in to read it')),
+        Text('This post is for members.',
+            style: Theme.of(context).textTheme.titleMedium),
+        FilledButton(
+            onPressed: onSignIn, child: const Text('Sign in to read it')),
       ]);
 }
 
@@ -209,7 +227,10 @@ class PostCta extends StatelessWidget {
     final href = post.ctaHref;
     final uri = href == null ? null : Uri.tryParse(href.trim());
     if (uri == null) return null;
-    if ((uri.scheme == 'https' || uri.scheme == 'http') && uri.host.isNotEmpty) return uri;
+    if ((uri.scheme == 'https' || uri.scheme == 'http') &&
+        uri.host.isNotEmpty) {
+      return uri;
+    }
     if (uri.scheme == 'mailto' && uri.path.isNotEmpty) return uri;
     return null;
   }
@@ -234,7 +255,8 @@ class PostTags extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Text(tags.map((tag) => '#$tag').join('  '), style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor));
+    return Text(tags.map((tag) => '#$tag').join('  '),
+        style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor));
   }
 }
 
@@ -275,7 +297,8 @@ class LikeButton extends StatelessWidget {
             icon: const Icon(Icons.favorite_border),
             label: const Text('Sign in to like'),
           ),
-        Text('$count ${count == 1 ? 'like' : 'likes'}', style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
+        Text('$count ${count == 1 ? 'like' : 'likes'}',
+            style: theme.textTheme.bodySmall?.copyWith(color: theme.hintColor)),
       ],
     );
   }
@@ -301,6 +324,7 @@ class PostComments extends StatelessWidget {
   final bool signedIn;
   final TextEditingController draft;
   final bool posting;
+
   /// After posting: what happened, and whether it went well.
   final String? note;
   final bool noteOk;
@@ -316,7 +340,8 @@ class PostComments extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(comments.isNotEmpty ? 'Comments (${comments.length})' : 'Comments', style: theme.textTheme.titleMedium),
+        Text(comments.isNotEmpty ? 'Comments (${comments.length})' : 'Comments',
+            style: theme.textTheme.titleMedium),
         const SizedBox(height: 12),
         if (signedIn) ...[
           TextField(
@@ -325,7 +350,8 @@ class PostComments extends StatelessWidget {
             maxLines: 6,
             maxLength: postCommentMax,
             onChanged: onDraftChanged,
-            decoration: const InputDecoration(hintText: 'Add a comment', border: OutlineInputBorder()),
+            decoration: const InputDecoration(
+                hintText: 'Add a comment', border: OutlineInputBorder()),
           ),
           Align(
             alignment: Alignment.centerLeft,
@@ -337,12 +363,17 @@ class PostComments extends StatelessWidget {
         ] else
           Align(
             alignment: Alignment.centerLeft,
-            child: OutlinedButton(onPressed: onSignIn, child: const Text('Sign in to comment')),
+            child: OutlinedButton(
+                onPressed: onSignIn, child: const Text('Sign in to comment')),
           ),
         if (note != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
-            child: Text(note, style: TextStyle(color: noteOk ? Colors.green.shade700 : theme.colorScheme.error)),
+            child: Text(note,
+                style: TextStyle(
+                    color: noteOk
+                        ? Colors.green.shade700
+                        : theme.colorScheme.error)),
           ),
         for (final comment in comments) CommentTile(comment: comment),
       ],
@@ -365,7 +396,9 @@ class CommentTile extends StatelessWidget {
           children: [
             Text(
               [
-                (comment.authorName?.isNotEmpty ?? false) ? comment.authorName! : 'Reader',
+                (comment.authorName?.isNotEmpty ?? false)
+                    ? comment.authorName!
+                    : 'Reader',
                 PostHtml.date(comment.createdAt),
               ].where((part) => part.isNotEmpty).join(' · '),
               style: Theme.of(context).textTheme.labelLarge,

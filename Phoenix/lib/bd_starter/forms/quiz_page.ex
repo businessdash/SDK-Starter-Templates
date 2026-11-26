@@ -17,11 +17,18 @@ defmodule BdStarter.Forms.QuizPage do
     estimated = Json.num(page["estimatedMinutes"])
     limit = Json.num(page["timeLimitMinutes"])
 
-    if(estimated != nil and estimated != 0, do: [QuizWords.fill(w.about_minutes, minutes: Js.string(estimated))], else: []) ++
-      if(limit != nil and limit != 0, do: [QuizWords.fill(w.minute_limit, minutes: Js.string(limit))], else: [])
+    if(estimated != nil and estimated != 0,
+      do: [QuizWords.fill(w.about_minutes, minutes: Js.string(estimated))],
+      else: []
+    ) ++
+      if(limit != nil and limit != 0,
+        do: [QuizWords.fill(w.minute_limit, minutes: Js.string(limit))],
+        else: []
+      )
   end
 
-  defp gate(kind, body), do: %{header: nil, gate: %{kind: kind, title: nil, body: body, action: nil}}
+  defp gate(kind, body),
+    do: %{header: nil, gate: %{kind: kind, title: nil, body: body, action: nil}}
 
   @doc "An invitation's page; nil (BD found none) is the invalid gate."
   def invitation(invitation, w \\ %QuizWords{}, sign_in_href \\ nil, switch_account_href \\ nil)
@@ -40,9 +47,17 @@ defmodule BdStarter.Forms.QuizPage do
         recipient = Json.str(invitation["recipientName"])
 
         facts =
-          if(recipient not in [nil, ""], do: [QuizWords.fill(w.for_recipient, name: recipient)], else: []) ++
+          if(recipient not in [nil, ""],
+            do: [QuizWords.fill(w.for_recipient, name: recipient)],
+            else: []
+          ) ++
             minutes_facts(w, invitation) ++
-            [if(invitation["requireAuthentication"] == true, do: w.authenticated_response, else: w.one_response)]
+            [
+              if(invitation["requireAuthentication"] == true,
+                do: w.authenticated_response,
+                else: w.one_response
+              )
+            ]
 
         description = Json.str(invitation["description"]) || ""
 
@@ -62,7 +77,10 @@ defmodule BdStarter.Forms.QuizPage do
               gate: %{
                 kind: if(sign_in, do: "signIn", else: "switchAccount"),
                 title: if(sign_in, do: w.sign_in_title, else: w.switch_account_title),
-                body: QuizWords.fill(w.account_body, email: Json.str(invitation["recipientEmailHint"]) || ""),
+                body:
+                  QuizWords.fill(w.account_body,
+                    email: Json.str(invitation["recipientEmailHint"]) || ""
+                  ),
                 action: %{
                   id: if(sign_in, do: "signIn", else: "switchAccount"),
                   label: if(sign_in, do: w.sign_in_action, else: w.switch_account_action),

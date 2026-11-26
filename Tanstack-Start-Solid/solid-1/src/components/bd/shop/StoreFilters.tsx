@@ -50,7 +50,9 @@ function useStoreFilters() {
 
 /** Whether any filter is on (the sort doesn't count). */
 export function hasFilters(s: StoreSearch): boolean {
-	return Boolean(s.q || s.category || s.rating || s.min != null || s.max != null);
+	return Boolean(
+		s.q || s.category || s.rating || s.min != null || s.max != null,
+	);
 }
 
 /** Search products (?q). */
@@ -189,7 +191,9 @@ export function RatingFilter() {
 								<button
 									aria-pressed={active() ? "true" : "false"}
 									class={`store-facet__item store-facet__rating${active() ? " store-facet__item--active" : ""}`}
-									onClick={() => setFilters({ rating: active() ? undefined : r })}
+									onClick={() =>
+										setFilters({ rating: active() ? undefined : r })
+									}
 									type="button"
 								>
 									<ShopStars rating={r} />

@@ -1,3 +1,4 @@
+import { type QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 import {
 	createRootRouteWithContext,
 	HeadContent,
@@ -5,7 +6,6 @@ import {
 	Scripts,
 } from "@tanstack/solid-router";
 import { TanStackRouterDevtools } from "@tanstack/solid-router-devtools";
-import { type QueryClient, QueryClientProvider } from "@tanstack/solid-query";
 
 import "@fontsource/inter/400.css";
 // Styles for <BdForm> (file upload, multi-step progress header, choice chips).
@@ -15,21 +15,19 @@ import "@businessdash/sdk/bd-forms.css";
 import { initBdAnalytics } from "@businessdash/sdk/analytics-core";
 import { onCleanup, onMount, Suspense } from "solid-js";
 import { HydrationScript } from "solid-js/web";
-
-import Header from "../components/Header";
-import { SdkSetupBanner } from "../components/bd/SdkSetupBanner";
-
-import styleCss from "../styles.css?url";
-// [bd:store]
-// The shop's styles: store grid, product page, wishlist, compare.
-import shopCss from "../bd-shop.css?url";
-// [/bd:store]
 // [bd:blog]
 // The blog's styles: post list, post body, likes and comments.
 import blogCss from "../bd-blog.css?url";
 // [/bd:blog]
 // The reviews page's styles: the rating, the filter, the reviews, writing one.
 import reviewsCss from "../bd-reviews.css?url";
+// [bd:store]
+// The shop's styles: store grid, product page, wishlist, compare.
+import shopCss from "../bd-shop.css?url";
+// [/bd:store]
+import { SdkSetupBanner } from "../components/bd/SdkSetupBanner";
+import Header from "../components/Header";
+import styleCss from "../styles.css?url";
 import tailwindCss from "../tailwind.css?url"; // [bd-line:tailwind]
 
 /** What src/router.tsx puts in every route's context. */

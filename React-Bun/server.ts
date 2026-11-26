@@ -1015,18 +1015,32 @@ async function serveProductFeedRedirect(): Promise<Response> {
 }
 // [/bd:store]
 
+/** A string field of loosely typed JSON, or undefined. */
+function textOf(value: unknown, key: string): string | undefined {
+	if (!value || typeof value !== "object") return undefined;
+	const field = (value as Record<string, unknown>)[key];
+	return typeof field === "string" && field ? field : undefined;
+}
+
 async function siteJsonLd(origin: string): Promise<string> {
 	if (!bd) return "";
+	const client = bd;
 	try {
-		// biome-ignore lint: bundle shape is an untyped passthrough at 0.9.5
-		const bundle = (await cached("bundle:home:en", ["bd:marketing"], () =>
-			bd.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
-		)) as Record<string, any>;
-		const company = (bundle?.company as any)?.profile ?? {};
-		const info = (bundle?.sections as any)?.companyInfo?.data ?? (bundle?.sections as any)?.companyInfo ?? {};
-		const name: string = company.name ?? info.name ?? "BD Starter Site";
+		const bundle = await cached("bundle:home:en", ["bd:marketing"], () =>
+			client.marketing.getPageBundle({ pageKey: "home", locale: "en" }),
+		);
+		const profile = bundle.company?.profile ?? null;
+		const section = bundle.sections.companyInfo;
+		// The company-info section's own fields, for a site with no profile yet.
+		const info = section?.ok ? section.data : undefined;
+		const name = textOf(profile, "name") ?? textOf(info, "name") ?? "BD Starter Site";
 		return renderJsonLdToHtml([
-			localBusiness({ siteUrl: origin, name, telephone: company.phone ?? info.phone, email: company.email ?? info.email }),
+			localBusiness({
+				siteUrl: origin,
+				name,
+				telephone: profile?.phone ?? textOf(info, "phone"),
+				email: profile?.supportEmail ?? textOf(profile, "email") ?? textOf(info, "email"),
+			}),
 			website({ siteUrl: origin, name }),
 		]);
 	} catch {

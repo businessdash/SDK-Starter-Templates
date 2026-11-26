@@ -11,7 +11,8 @@ import 'style.dart';
 /// primitives; this turns it into paths once and caches them, so it draws
 /// like any icon and takes [color].
 class BdIcon extends StatefulWidget {
-  const BdIcon(this.name, {super.key, this.size = 20, this.color, this.baseUrl});
+  const BdIcon(this.name,
+      {super.key, this.size = 20, this.color, this.baseUrl});
 
   final String name;
   final double size;
@@ -62,10 +63,13 @@ class _BdIconState extends State<BdIcon> {
 
   @override
   Widget build(BuildContext context) {
-    final color = widget.color ?? IconTheme.of(context).color ?? const Color(0xFF000000);
+    final color =
+        widget.color ?? IconTheme.of(context).color ?? const Color(0xFF000000);
     return SizedBox.square(
       dimension: widget.size,
-      child: _icon == null ? null : CustomPaint(painter: BdSvgPainter(_icon!, color)),
+      child: _icon == null
+          ? null
+          : CustomPaint(painter: BdSvgPainter(_icon!, color)),
     );
   }
 }
@@ -80,8 +84,11 @@ class BdGlyph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = this.color ?? IconTheme.of(context).color ?? const Color(0xFF000000);
-    return SizedBox.square(dimension: size, child: CustomPaint(painter: BdSvgPainter(icon, color)));
+    final color =
+        this.color ?? IconTheme.of(context).color ?? const Color(0xFF000000);
+    return SizedBox.square(
+        dimension: size,
+        child: CustomPaint(painter: BdSvgPainter(icon, color)));
   }
 }
 
@@ -94,7 +101,8 @@ abstract final class BdGlyphs {
     '<rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/>'
     '<path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>',
   );
-  static final card = BdSvg.parse('<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>');
+  static final card = BdSvg.parse(
+      '<rect width="20" height="14" x="2" y="5" rx="2"/><line x1="2" x2="22" y1="10" y2="10"/>');
   static final tag = BdSvg.parse(
     '<path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704'
     'a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/>',
@@ -138,13 +146,15 @@ class BdSvgPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(BdSvgPainter old) => old.icon != icon || old.color != color;
+  bool shouldRepaint(BdSvgPainter old) =>
+      old.icon != icon || old.color != color;
 }
 
 /// Just enough SVG for Lucide: circle, ellipse, line, path, polygon,
 /// polyline and rect, in a 24×24 box.
 abstract final class BdSvg {
-  static final _element = RegExp(r'<(circle|ellipse|line|path|polygon|polyline|rect)\b([^>]*?)/?>');
+  static final _element =
+      RegExp(r'<(circle|ellipse|line|path|polygon|polyline|rect)\b([^>]*?)/?>');
   static final _attribute = RegExp(r'([a-zA-Z][\w:-]*)\s*=\s*"([^"]*)"');
   static final _number = RegExp(r'[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?');
 
@@ -162,10 +172,15 @@ abstract final class BdSvg {
             path = null;
           }
         case 'circle':
-          path = Path()..addOval(Rect.fromCircle(center: Offset(n('cx'), n('cy')), radius: n('r')));
+          path = Path()
+            ..addOval(Rect.fromCircle(
+                center: Offset(n('cx'), n('cy')), radius: n('r')));
         case 'ellipse':
           path = Path()
-            ..addOval(Rect.fromCenter(center: Offset(n('cx'), n('cy')), width: 2 * n('rx'), height: 2 * n('ry')));
+            ..addOval(Rect.fromCenter(
+                center: Offset(n('cx'), n('cy')),
+                width: 2 * n('rx'),
+                height: 2 * n('ry')));
         case 'line':
           path = Path()
             ..moveTo(n('x1'), n('y1'))
@@ -183,7 +198,10 @@ abstract final class BdSvg {
               ),
             );
         case 'polygon' || 'polyline':
-          final nums = [for (final x in _number.allMatches(a['points'] ?? '')) double.parse(x[0]!)];
+          final nums = [
+            for (final x in _number.allMatches(a['points'] ?? ''))
+              double.parse(x[0]!)
+          ];
           final p = Path();
           for (var i = 0; i + 1 < nums.length; i += 2) {
             if (i == 0) {
@@ -247,8 +265,10 @@ abstract final class BdSvg {
           cx = x2;
           cy = y2;
         case 'S':
-          final x1 = (last == 'C' || last == 'S') && cx != null ? 2 * x - cx : x;
-          final y1 = (last == 'C' || last == 'S') && cy != null ? 2 * y - cy : y;
+          final x1 =
+              (last == 'C' || last == 'S') && cx != null ? 2 * x - cx : x;
+          final y1 =
+              (last == 'C' || last == 'S') && cy != null ? 2 * y - cy : y;
           final x2 = ox + s.number(), y2 = oy + s.number();
           x = ox + s.number();
           y = oy + s.number();
@@ -263,8 +283,10 @@ abstract final class BdSvg {
           cx = x1;
           cy = y1;
         case 'T':
-          final x1 = (last == 'Q' || last == 'T') && cx != null ? 2 * x - cx : x;
-          final y1 = (last == 'Q' || last == 'T') && cy != null ? 2 * y - cy : y;
+          final x1 =
+              (last == 'Q' || last == 'T') && cx != null ? 2 * x - cx : x;
+          final y1 =
+              (last == 'Q' || last == 'T') && cy != null ? 2 * y - cy : y;
           x = ox + s.number();
           y = oy + s.number();
           p.quadraticBezierTo(x1, y1, x, y);
@@ -366,9 +388,14 @@ abstract final class BdIconStore {
     if (_icons[key] case final icon?) return Future.value(icon);
     return _inFlight.putIfAbsent(key, () async {
       try {
-        final res = await client.get(Uri.parse('$base/api/icons/$name.svg')).timeout(const Duration(seconds: 15));
-        if (res.statusCode != 200 || res.bodyBytes.length > 256 * 1024) return null;
-        final icon = BdSvg.parse(utf8.decode(res.bodyBytes, allowMalformed: true));
+        final res = await client
+            .get(Uri.parse('$base/api/icons/$name.svg'))
+            .timeout(const Duration(seconds: 15));
+        if (res.statusCode != 200 || res.bodyBytes.length > 256 * 1024) {
+          return null;
+        }
+        final icon =
+            BdSvg.parse(utf8.decode(res.bodyBytes, allowMalformed: true));
         if (icon.isEmpty) return null;
         _icons[key] = icon;
         return icon;
@@ -384,11 +411,18 @@ abstract final class BdIconStore {
   static Future<List<String>> allNames(String base) async {
     if (_names[base] case final names?) return names;
     try {
-      final res = await client.get(Uri.parse('$base/api/icons')).timeout(const Duration(seconds: 15));
+      final res = await client
+          .get(Uri.parse('$base/api/icons'))
+          .timeout(const Duration(seconds: 15));
       if (res.statusCode != 200) return const [];
       final body = jsonDecode(utf8.decode(res.bodyBytes));
       final icons = body is Map ? body['icons'] : null;
-      final list = icons is List ? [for (final n in icons) if (n is String) n] : <String>[];
+      final list = icons is List
+          ? [
+              for (final n in icons)
+                if (n is String) n
+            ]
+          : <String>[];
       if (list.isNotEmpty) _names[base] = list;
       return list;
     } catch (_) {

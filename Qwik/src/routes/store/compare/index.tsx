@@ -49,7 +49,9 @@ export const useComparePage = routeLoader$(async ({ cookie, query }) => {
 	]);
 	return {
 		ids,
-		columns: columns.filter((column): column is CompareColumn => column !== null),
+		columns: columns.filter(
+			(column): column is CompareColumn => column !== null,
+		),
 		cartCount: cart?.itemCount ?? 0,
 		signedIn: !!session,
 	};

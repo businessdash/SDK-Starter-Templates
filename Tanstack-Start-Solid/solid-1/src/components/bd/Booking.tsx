@@ -153,9 +153,7 @@ export function Booking(props: { eventTypes: EventType[] }) {
 							<div class="bd-label">Next available slots</div>
 							<Show
 								when={slots() !== null}
-								fallback={
-									<div class="bd-loading">Computing availability…</div>
-								}
+								fallback={<div class="bd-loading">Computing availability…</div>}
 							>
 								<Show
 									when={(slots() ?? []).length > 0}

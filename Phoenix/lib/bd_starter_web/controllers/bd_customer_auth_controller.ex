@@ -55,7 +55,12 @@ defmodule BdStarterWeb.BdCustomerAuthController do
         problem(conn, 405, "method_not_allowed", "Use #{method} for customer/#{path}.")
 
       method == "POST" and not json?(conn) ->
-        problem(conn, 415, "unsupported_media_type", "Send JSON (Content-Type: application/json).")
+        problem(
+          conn,
+          415,
+          "unsupported_media_type",
+          "Send JSON (Content-Type: application/json)."
+        )
 
       # Plug.Parsers puts a top-level JSON array under "_json".
       method == "POST" and Map.has_key?(conn.body_params, "_json") ->
@@ -115,7 +120,10 @@ defmodule BdStarterWeb.BdCustomerAuthController do
         land(conn, return_to, %{
           "bd_oauth_error" => "failed",
           "bd_oauth_message" =>
-            message(result, "That sign-in isn't available just now. Try again, or use your email.")
+            message(
+              result,
+              "That sign-in isn't available just now. Try again, or use your email."
+            )
         })
     end
   end
@@ -136,7 +144,8 @@ defmodule BdStarterWeb.BdCustomerAuthController do
       %{"bd_oauth_error" => failed} when is_binary(failed) and failed != "" ->
         land(conn, return_to, %{
           "bd_oauth_error" => if(failed == "cancelled", do: "cancelled", else: "failed"),
-          "bd_oauth_message" => present(params["bd_oauth_message"]) || "Sign-in didn't finish. Try again."
+          "bd_oauth_message" =>
+            present(params["bd_oauth_message"]) || "Sign-in didn't finish. Try again."
         })
 
       %{"bd_oauth_code" => code}
@@ -159,7 +168,8 @@ defmodule BdStarterWeb.BdCustomerAuthController do
       _ ->
         land(conn, return_to, %{
           "bd_oauth_error" => "failed",
-          "bd_oauth_message" => "That sign-in took too long, or started in another browser. Try again."
+          "bd_oauth_message" =>
+            "That sign-in took too long, or started in another browser. Try again."
         })
     end
   end
@@ -172,8 +182,11 @@ defmodule BdStarterWeb.BdCustomerAuthController do
   # BD_SITE_ORIGIN, else this request's own origin.
   defp origin(conn, client) do
     case Client.site_origin(client) do
-      "" -> URI.to_string(%URI{scheme: Atom.to_string(conn.scheme), host: conn.host, port: conn.port})
-      configured -> configured
+      "" ->
+        URI.to_string(%URI{scheme: Atom.to_string(conn.scheme), host: conn.host, port: conn.port})
+
+      configured ->
+        configured
     end
   end
 

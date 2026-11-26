@@ -78,14 +78,20 @@ defmodule BdStarterWeb.BlogController do
             signedIn: signed_in
           },
           comments: %{comments: Bd.post_comments_fresh(slug), signedIn: signed_in},
-          sign_in_href: ~p"/my-account?#{[next: "/blog/" <> URI.encode(slug, &URI.char_unreserved?/1)]}"
+          sign_in_href:
+            ~p"/my-account?#{[next: "/blog/" <> URI.encode(slug, &URI.char_unreserved?/1)]}"
         )
 
       _ ->
         # A 404, so the page isn't indexed; a link back still shows.
         conn
         |> put_status(if(Bd.configured?(), do: 404, else: 200))
-        |> render(:show, page_title: "Post not found", main_class: "bd-page", blog: :list, post: nil)
+        |> render(:show,
+          page_title: "Post not found",
+          main_class: "bd-page",
+          blog: :list,
+          post: nil
+        )
     end
   end
 
@@ -95,7 +101,10 @@ defmodule BdStarterWeb.BlogController do
          {:ok, token} <- signed_in(conn, "Sign in to like posts.") do
       case Bd.toggle_like(slug, token) do
         %{} = result ->
-          reply(conn, 200, %{liked: result["liked"] == true, likesCount: result["likesCount"] || 0})
+          reply(conn, 200, %{
+            liked: result["liked"] == true,
+            likesCount: result["likesCount"] || 0
+          })
 
         _ ->
           reply(conn, 502, %{error: "Couldn't save your like. Try again."})

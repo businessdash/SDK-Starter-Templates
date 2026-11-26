@@ -9,7 +9,13 @@ defmodule BdStarter.Forms.SubmitResult do
   alias BdStarter.Forms.{Json, Messages}
 
   # issues: [%{"fieldId", "label", "reason", "message"}]
-  defstruct ok: false, status: 0, submission_id: nil, dry_run: false, reason: nil, message: "", issues: []
+  defstruct ok: false,
+            status: 0,
+            submission_id: nil,
+            dry_run: false,
+            reason: nil,
+            message: "",
+            issues: []
 
   def success(status \\ 201, submission_id \\ nil, dry_run \\ false),
     do: %__MODULE__{ok: true, status: status, submission_id: submission_id, dry_run: dry_run}
@@ -44,15 +50,34 @@ defmodule BdStarter.Forms.SubmitResult do
 
     reason =
       cond do
-        status == 401 -> "unauthorized"
-        status == 403 -> "forbidden"
-        status == 402 and gate == "payment_required" -> "payment_required"
-        status == 402 and gate == "service_suspended" -> "service_suspended"
-        status == 402 -> "plan_required"
-        status == 429 -> "rate_limited"
-        status == 404 -> "not_found"
-        status in [400, 422] -> if code == "validation_failed" or issues != [], do: "validation_failed", else: "invalid_request"
-        true -> "server_error"
+        status == 401 ->
+          "unauthorized"
+
+        status == 403 ->
+          "forbidden"
+
+        status == 402 and gate == "payment_required" ->
+          "payment_required"
+
+        status == 402 and gate == "service_suspended" ->
+          "service_suspended"
+
+        status == 402 ->
+          "plan_required"
+
+        status == 429 ->
+          "rate_limited"
+
+        status == 404 ->
+          "not_found"
+
+        status in [400, 422] ->
+          if code == "validation_failed" or issues != [],
+            do: "validation_failed",
+            else: "invalid_request"
+
+        true ->
+          "server_error"
       end
 
     failure(status, reason, message, issues)

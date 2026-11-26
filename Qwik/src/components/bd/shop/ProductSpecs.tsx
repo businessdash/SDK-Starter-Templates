@@ -2,7 +2,13 @@
 import type { SpecGroup } from "../../../lib/shop/shop";
 
 /** Details: the feature list, then a table per spec group. */
-export function ProductSpecs({ features, specs }: { features: string[]; specs: SpecGroup[] }) {
+export function ProductSpecs({
+	features,
+	specs,
+}: {
+	features: string[];
+	specs: SpecGroup[];
+}) {
 	if (features.length === 0 && specs.length === 0) return null;
 	return (
 		<section class="product-section" id="specs">

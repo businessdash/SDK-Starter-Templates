@@ -23,7 +23,8 @@ defmodule BdStarter.Forms.Calculation do
     bindings = Json.list(config["inputMap"]) || []
 
     if config["mode"] == "function" do
-      definition = if is_binary(config["functionId"]), do: Map.get(functions_by_id, config["functionId"])
+      definition =
+        if is_binary(config["functionId"]), do: Map.get(functions_by_id, config["functionId"])
 
       if definition == nil do
         %{ok: false, value: nil, outputs: nil, error: "Referenced function not found."}
@@ -46,7 +47,8 @@ defmodule BdStarter.Forms.Calculation do
       if formula == "" do
         %{ok: false, value: nil, outputs: nil, error: "No formula."}
       else
-        vars = Map.new(bindings, fn b -> {b["variable"], formula_value(resolve.(b["fieldId"]))} end)
+        vars =
+          Map.new(bindings, fn b -> {b["variable"], formula_value(resolve.(b["fieldId"]))} end)
 
         case Formula.run(formula, vars, user_functions) do
           {:ok, value} -> %{ok: true, value: value, outputs: nil, error: nil}
@@ -65,9 +67,14 @@ defmodule BdStarter.Forms.Calculation do
 
     body =
       cond do
-        Json.number?(value) and decimals != nil and Js.finite?(value) -> Js.to_fixed(value, Kernel.trunc(decimals))
-        is_list(value) or Json.object?(value) -> Json.encode!(value)
-        true -> Js.string(value)
+        Json.number?(value) and decimals != nil and Js.finite?(value) ->
+          Js.to_fixed(value, Kernel.trunc(decimals))
+
+        is_list(value) or Json.object?(value) ->
+          Json.encode!(value)
+
+        true ->
+          Js.string(value)
       end
 
     (display["prefix"] || "") <> body <> (display["suffix"] || "")
@@ -76,7 +83,9 @@ defmodule BdStarter.Forms.Calculation do
   defp iso_date?(s), do: Regex.match?(~r/^\d{4}-\d{2}-\d{2}([T ].*)?$/s, s)
 
   defp coerce(value, "any"), do: {:ok, value}
-  defp coerce(value, "object"), do: if(Json.object?(value), do: {:ok, value}, else: {:error, "expected an object"})
+
+  defp coerce(value, "object"),
+    do: if(Json.object?(value), do: {:ok, value}, else: {:error, "expected an object"})
 
   defp coerce(value, "number") do
     case Json.num(value) || Js.number(value) do
@@ -121,9 +130,15 @@ defmodule BdStarter.Forms.Calculation do
         value = Map.get(raw, key)
 
         cond do
-          Json.blank?(value) and input["default"] != nil -> {Map.put(vars, key, input["default"]), issues}
-          Json.blank?(value) and input["required"] == true -> {vars, issues ++ ["input/#{key}: required value is missing"]}
-          Json.blank?(value) -> {vars, issues}
+          Json.blank?(value) and input["default"] != nil ->
+            {Map.put(vars, key, input["default"]), issues}
+
+          Json.blank?(value) and input["required"] == true ->
+            {vars, issues ++ ["input/#{key}: required value is missing"]}
+
+          Json.blank?(value) ->
+            {vars, issues}
+
           true ->
             case coerce(value, to_string(input["type"])) do
               {:ok, v} -> {Map.put(vars, key, v), issues}
@@ -133,12 +148,16 @@ defmodule BdStarter.Forms.Calculation do
       end)
 
     {_, outputs, issues} =
-      Enum.reduce(Json.list(definition["outputs"]) || [], {vars, %{}, issues}, fn out, {vars, outputs, issues} ->
+      Enum.reduce(Json.list(definition["outputs"]) || [], {vars, %{}, issues}, fn out,
+                                                                                  {vars, outputs,
+                                                                                   issues} ->
         key = out["key"]
 
         fallback = fn reason ->
           if out["fallback"] != nil,
-            do: {Map.put(vars, key, out["fallback"]), Map.put(outputs, key, out["fallback"]), issues},
+            do:
+              {Map.put(vars, key, out["fallback"]), Map.put(outputs, key, out["fallback"]),
+               issues},
             else: {vars, outputs, issues ++ ["output/#{key}: #{reason}"]}
         end
 

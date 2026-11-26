@@ -48,9 +48,16 @@ defmodule BdStarterWeb.FormComponents do
       hidden={!FormController.visible?(@v.c, @field, @entries)}
       id={"group-#{@v.form_id}-#{@prefix}#{@field.id}"}
     >
-      <div :if={Field.bool(@field, "showGroupLabel") == true and @field.label != ""} class="bd-group__label">{@field.label}</div>
+      <div
+        :if={Field.bool(@field, "showGroupLabel") == true and @field.label != ""}
+        class="bd-group__label"
+      >
+        {@field.label}
+      </div>
       <.tree v={@v} fields={@shown} prefix={@prefix} entries={@entries} />
-      <div :if={@rest != []} hidden><.tree v={@v} fields={@rest} prefix={@prefix} entries={@entries} /></div>
+      <div :if={@rest != []} hidden>
+        <.tree v={@v} fields={@rest} prefix={@prefix} entries={@entries} />
+      </div>
     </div>
     """
   end
@@ -71,20 +78,30 @@ defmodule BdStarterWeb.FormComponents do
       assign(assigns,
         left: Enum.at(kids, 0),
         right: Enum.at(kids, 1),
-        error: Map.get(assigns.v.errors, FieldPath.key(FieldPath.new(assigns.field.id, assigns.entries)))
+        error:
+          Map.get(
+            assigns.v.errors,
+            FieldPath.key(FieldPath.new(assigns.field.id, assigns.entries))
+          )
       )
 
     ~H"""
     <div class={["bd-or", @error && "bd-or--error"]}>
-      <div :if={@field.label != ""} class="bd-or__label">{@field.label}<span class="bd-or__hint"> Fill at least one side</span></div>
+      <div :if={@field.label != ""} class="bd-or__label">
+        {@field.label}<span class="bd-or__hint"> Fill at least one side</span>
+      </div>
       <div class="bd-or__grid">
         <div class="bd-or__side">
-          <div class="bd-or__side-label">{Field.config(@field, "orConditionConfig", "leftLabel") || "Option A"}</div>
+          <div class="bd-or__side-label">
+            {Field.config(@field, "orConditionConfig", "leftLabel") || "Option A"}
+          </div>
           <.tree :if={@left} v={@v} fields={[@left]} prefix={@prefix} entries={@entries} />
         </div>
         <div class="bd-or__divider"><span class="bd-or__badge">OR</span></div>
         <div class="bd-or__side">
-          <div class="bd-or__side-label">{Field.config(@field, "orConditionConfig", "rightLabel") || "Option B"}</div>
+          <div class="bd-or__side-label">
+            {Field.config(@field, "orConditionConfig", "rightLabel") || "Option B"}
+          </div>
           <.tree :if={@right} v={@v} fields={[@right]} prefix={@prefix} entries={@entries} />
         </div>
       </div>
@@ -144,14 +161,27 @@ defmodule BdStarterWeb.FormComponents do
 
     ~H"""
     <div
-      class={["bd-field", "bd-field--#{@field.type}", @field.required && "bd-field--required", @error && "bd-field--error"]}
+      class={[
+        "bd-field",
+        "bd-field--#{@field.type}",
+        @field.required && "bd-field--required",
+        @error && "bd-field--error"
+      ]}
       data-field-id={@field.id}
       data-bd-field={FormView.css_key(@field)}
       data-bd-type={@field.type}
     >
       <%= if @shows_label do %>
-        <label :if={@single} class="bd-field__label" id={@label_id} for={@input_id}>{@field.label}<span :if={@field.required} class="bd-field__required" aria-hidden="true"> *</span></label>
-        <span :if={!@single} class="bd-field__label" id={@label_id}>{@field.label}<span :if={@field.required} class="bd-field__required" aria-hidden="true"> *</span></span>
+        <label :if={@single} class="bd-field__label" id={@label_id} for={@input_id}>{@field.label}<span
+          :if={@field.required}
+          class="bd-field__required"
+          aria-hidden="true"
+        > *</span></label>
+        <span :if={!@single} class="bd-field__label" id={@label_id}>{@field.label}<span
+          :if={@field.required}
+          class="bd-field__required"
+          aria-hidden="true"
+        > *</span></span>
       <% end %>
       <.control {assigns} />
       <p :if={@error} class="bd-field__error" id={@error_id}>{@error}</p>
@@ -162,14 +192,21 @@ defmodule BdStarterWeb.FormComponents do
 
   # ── A field's control ─────────────────────────────────────────────────────
 
-  defp control(%{field: %Field{type: "title"}} = assigns), do: ~H|<h2 class="bd-field__title">{@field.label}</h2>|
-  defp control(%{field: %Field{type: "subtitle"}} = assigns), do: ~H|<h3 class="bd-field__subtitle">{@field.label}</h3>|
-  defp control(%{field: %Field{type: "separator"}} = assigns), do: ~H|<hr class="bd-field__separator" />|
+  defp control(%{field: %Field{type: "title"}} = assigns),
+    do: ~H|<h2 class="bd-field__title">{@field.label}</h2>|
+
+  defp control(%{field: %Field{type: "subtitle"}} = assigns),
+    do: ~H|<h3 class="bd-field__subtitle">{@field.label}</h3>|
+
+  defp control(%{field: %Field{type: "separator"}} = assigns),
+    do: ~H|<hr class="bd-field__separator" />|
 
   defp control(%{field: %Field{type: t}} = assigns) when t in ["richtext", "body_text"] do
     ~H"""
     <%!-- BD publishes `content` already sanitized. --%>
-    <div :if={Field.str(@field, "content")} class="bd-field__richtext bd-prose">{Phoenix.HTML.raw(Field.str(@field, "content"))}</div>
+    <div :if={Field.str(@field, "content")} class="bd-field__richtext bd-prose">
+      {Phoenix.HTML.raw(Field.str(@field, "content"))}
+    </div>
     """
   end
 
@@ -202,9 +239,21 @@ defmodule BdStarterWeb.FormComponents do
 
   defp control(%{field: %Field{type: "select"}} = assigns) do
     ~H"""
-    <select class="bd-select" id={@input_id} name={@name} aria-describedby={@described_by} aria-invalid={@invalid}>
+    <select
+      class="bd-select"
+      id={@input_id}
+      name={@name}
+      aria-describedby={@described_by}
+      aria-invalid={@invalid}
+    >
       <option value="">{Field.str(@field, "placeholder") || "Select…"}</option>
-      <option :for={option <- Field.options(@field) || []} value={option} selected={FormView.str(@value) == option}>{option}</option>
+      <option
+        :for={option <- Field.options(@field) || []}
+        value={option}
+        selected={FormView.str(@value) == option}
+      >
+        {option}
+      </option>
     </select>
     """
   end
@@ -215,7 +264,11 @@ defmodule BdStarterWeb.FormComponents do
     assigns =
       assign(assigns,
         radio: radio,
-        picked: if(radio, do: [FormView.str(assigns.value)], else: Enum.map(Json.list(assigns.value) || [], &FormView.str/1))
+        picked:
+          if(radio,
+            do: [FormView.str(assigns.value)],
+            else: Enum.map(Json.list(assigns.value) || [], &FormView.str/1)
+          )
       )
 
     ~H"""
@@ -250,15 +303,38 @@ defmodule BdStarterWeb.FormComponents do
     ~H"""
     <label class="bd-boolean" for={@input_id}>
       <input type="hidden" name={@name} value="false" />
-      <input class="bd-switch" type="checkbox" id={@input_id} name={@name} value="true" checked={@value == true} aria-describedby={@described_by} aria-invalid={@invalid} />
-      <span class="bd-boolean__label">{Field.str(@field, "placeholder") || if(@field.label == "", do: "Yes", else: @field.label)}<span :if={@field.required or Field.must_be_true?(@field)} class="bd-field__required" aria-hidden="true"> *</span></span>
+      <input
+        class="bd-switch"
+        type="checkbox"
+        id={@input_id}
+        name={@name}
+        value="true"
+        checked={@value == true}
+        aria-describedby={@described_by}
+        aria-invalid={@invalid}
+      />
+      <span class="bd-boolean__label">{Field.str(@field, "placeholder") ||
+        if(@field.label == "", do: "Yes", else: @field.label)}<span
+        :if={@field.required or Field.must_be_true?(@field)}
+        class="bd-field__required"
+        aria-hidden="true"
+      > *</span></span>
     </label>
     """
   end
 
   defp control(%{field: %Field{type: "date"}} = assigns) do
     ~H"""
-    <input class="bd-input" type="date" id={@input_id} name={@name} value={FormView.str(@value)} aria-describedby={@described_by} aria-invalid={@invalid} phx-debounce="blur" />
+    <input
+      class="bd-input"
+      type="date"
+      id={@input_id}
+      name={@name}
+      value={FormView.str(@value)}
+      aria-describedby={@described_by}
+      aria-invalid={@invalid}
+      phx-debounce="blur"
+    />
     """
   end
 
@@ -280,18 +356,26 @@ defmodule BdStarterWeb.FormComponents do
   end
 
   defp control(%{field: %Field{type: "phone"}} = assigns) do
-    assigns = assign(assigns, intl: Field.config(assigns.field, "phoneConfig", "international") == true)
+    assigns =
+      assign(assigns, intl: Field.config(assigns.field, "phoneConfig", "international") == true)
 
     ~H"""
     <div class="bd-phone">
-      <span :if={Field.config(@field, "phoneConfig", "showFlags") == true} class="bd-phone__flag" aria-hidden="true">🇺🇸</span>
+      <span
+        :if={Field.config(@field, "phoneConfig", "showFlags") == true}
+        class="bd-phone__flag"
+        aria-hidden="true"
+      >🇺🇸</span>
       <input
         class="bd-input"
         type="tel"
         id={@input_id}
         name={@name}
         value={FormView.str(@value)}
-        placeholder={Field.str(@field, "placeholder") || if(@intl, do: "+1 (555) 000-0000", else: "(555) 000-0000")}
+        placeholder={
+          Field.str(@field, "placeholder") ||
+            if(@intl, do: "+1 (555) 000-0000", else: "(555) 000-0000")
+        }
         autocomplete={FormView.autocomplete(@field)}
         aria-describedby={@described_by}
         aria-invalid={@invalid}
@@ -310,11 +394,12 @@ defmodule BdStarterWeb.FormComponents do
     assigns =
       assign(assigns,
         decimals: decimals,
-        min: cond do
-          min != nil -> FormView.number(min)
-          Field.bool(f, "allowNegative") == false -> "0"
-          true -> nil
-        end,
+        min:
+          cond do
+            min != nil -> FormView.number(min)
+            Field.bool(f, "allowNegative") == false -> "0"
+            true -> nil
+          end,
         max: if(max != nil, do: FormView.number(max))
       )
 
@@ -342,7 +427,11 @@ defmodule BdStarterWeb.FormComponents do
 
     ~H"""
     <div class="bd-slider-wrap">
-      <div class="bd-slider__scale"><span>{@s.fmt.(@s.lo)}</span><output class="bd-slider__value" for={@input_id}>{@s.fmt.(@s.current)}</output><span>{@s.fmt.(@s.hi)}</span></div>
+      <div class="bd-slider__scale">
+        <span>{@s.fmt.(@s.lo)}</span><output class="bd-slider__value" for={@input_id}>{@s.fmt.(
+          @s.current
+        )}</output><span>{@s.fmt.(@s.hi)}</span>
+      </div>
       <input
         class="bd-slider"
         type="range"
@@ -362,25 +451,57 @@ defmodule BdStarterWeb.FormComponents do
   defp control(%{field: %Field{type: "star_rating"}} = assigns) do
     assigns =
       assign(assigns,
-        most: Kernel.trunc(Json.num(Field.config(assigns.field, "starRatingConfig", "maxStars")) || 5.0),
+        most:
+          Kernel.trunc(
+            Json.num(Field.config(assigns.field, "starRatingConfig", "maxStars")) || 5.0
+          ),
         current: Kernel.trunc(Json.num(assigns.value) || 0.0)
       )
 
     ~H"""
-    <div class="bd-stars" role="radiogroup" id={@input_id} aria-describedby={@described_by} aria-invalid={@invalid} aria-labelledby={@labelled_by}>
+    <div
+      class="bd-stars"
+      role="radiogroup"
+      id={@input_id}
+      aria-describedby={@described_by}
+      aria-invalid={@invalid}
+      aria-labelledby={@labelled_by}
+    >
       <label :for={i <- 0..(@most - 1)//1} class={["bd-star", i < @current && "bd-star--filled"]}>
-        <input class="bd-visually-hidden" type="radio" name={@name} value={i + 1} checked={@current == i + 1} /><span aria-hidden="true">★</span><span class="bd-visually-hidden">{i + 1} star{if i == 0, do: "", else: "s"}</span>
+        <input
+          class="bd-visually-hidden"
+          type="radio"
+          name={@name}
+          value={i + 1}
+          checked={@current == i + 1}
+        /><span aria-hidden="true">★</span><span class="bd-visually-hidden">{i + 1} star{if i == 0,
+          do: "",
+          else: "s"}</span>
       </label>
     </div>
     """
   end
 
   defp control(%{field: %Field{type: "happiness_rating"}} = assigns) do
-    assigns = assign(assigns, current: if(Json.number?(assigns.value), do: Kernel.trunc(assigns.value), else: -1))
+    assigns =
+      assign(assigns,
+        current: if(Json.number?(assigns.value), do: Kernel.trunc(assigns.value), else: -1)
+      )
 
     ~H"""
-    <div class="bd-happiness" role="radiogroup" id={@input_id} aria-describedby={@described_by} aria-invalid={@invalid} aria-labelledby={@labelled_by}>
-      <label :for={{{face, name}, i} <- Enum.with_index(FormView.faces())} class={["bd-happiness__face", i == @current && "bd-happiness__face--active"]} title={name}>
+    <div
+      class="bd-happiness"
+      role="radiogroup"
+      id={@input_id}
+      aria-describedby={@described_by}
+      aria-invalid={@invalid}
+      aria-labelledby={@labelled_by}
+    >
+      <label
+        :for={{{face, name}, i} <- Enum.with_index(FormView.faces())}
+        class={["bd-happiness__face", i == @current && "bd-happiness__face--active"]}
+        title={name}
+      >
         <input class="bd-visually-hidden" type="radio" name={@name} value={i} checked={@current == i} /><span aria-hidden="true">{face}</span><span class="bd-visually-hidden">{name}</span>
       </label>
     </div>
@@ -389,14 +510,27 @@ defmodule BdStarterWeb.FormComponents do
 
   defp control(%{field: %Field{type: "color_picker"}} = assigns) do
     ~H"""
-    <div class="bd-colors" role="radiogroup" id={@input_id} aria-describedby={@described_by} aria-invalid={@invalid} aria-labelledby={@labelled_by}>
+    <div
+      class="bd-colors"
+      role="radiogroup"
+      id={@input_id}
+      aria-describedby={@described_by}
+      aria-invalid={@invalid}
+      aria-labelledby={@labelled_by}
+    >
       <label
         :for={color <- Field.options(@field) || []}
         class={["bd-color", FormView.str(@value) == color && "bd-color--selected"]}
         style={"background-color:#{color}"}
         title={color}
       >
-        <input class="bd-visually-hidden" type="radio" name={@name} value={color} checked={FormView.str(@value) == color} /><span class="bd-visually-hidden">{color}</span>
+        <input
+          class="bd-visually-hidden"
+          type="radio"
+          name={@name}
+          value={color}
+          checked={FormView.str(@value) == color}
+        /><span class="bd-visually-hidden">{color}</span>
       </label>
     </div>
     """
@@ -408,11 +542,22 @@ defmodule BdStarterWeb.FormComponents do
     assigns =
       assign(assigns,
         multi: multi,
-        picked: if(multi, do: Enum.map(Json.list(assigns.value) || [], &FormView.str/1), else: [FormView.str(assigns.value)])
+        picked:
+          if(multi,
+            do: Enum.map(Json.list(assigns.value) || [], &FormView.str/1),
+            else: [FormView.str(assigns.value)]
+          )
       )
 
     ~H"""
-    <div class="bd-cards" role={if @multi, do: "group", else: "radiogroup"} id={@input_id} aria-describedby={@described_by} aria-invalid={@invalid} aria-labelledby={@labelled_by}>
+    <div
+      class="bd-cards"
+      role={if @multi, do: "group", else: "radiogroup"}
+      id={@input_id}
+      aria-describedby={@described_by}
+      aria-invalid={@invalid}
+      aria-labelledby={@labelled_by}
+    >
       <input :if={@multi} type="hidden" name={@name <> "[]"} value="" />
       <label
         :for={{card, i} <- Enum.with_index(Field.cards(@field))}
@@ -449,9 +594,21 @@ defmodule BdStarterWeb.FormComponents do
 
       _ ->
         ~H"""
-        <select class="bd-select" id={@input_id} name={@name} aria-describedby={@described_by} aria-invalid={@invalid}>
+        <select
+          class="bd-select"
+          id={@input_id}
+          name={@name}
+          aria-describedby={@described_by}
+          aria-invalid={@invalid}
+        >
           <option value="">{Field.str(@field, "placeholder") || "Select time"}</option>
-          <option :for={{time, label} <- FormView.times(@field)} value={time} selected={FormView.str(@value) == time}>{label}</option>
+          <option
+            :for={{time, label} <- FormView.times(@field)}
+            value={time}
+            selected={FormView.str(@value) == time}
+          >
+            {label}
+          </option>
         </select>
         """
     end
@@ -460,7 +617,10 @@ defmodule BdStarterWeb.FormComponents do
   defp control(%{field: %Field{type: "name"}} = assigns) do
     ~H"""
     <div class="bd-name" role="group" id={@input_id} aria-labelledby={@labelled_by}>
-      <label :for={{part, label, token, hint, full} <- FormView.name_parts(@field)} class={["bd-name__field", full && "bd-name__field--full"]}>
+      <label
+        :for={{part, label, token, hint, full} <- FormView.name_parts(@field)}
+        class={["bd-name__field", full && "bd-name__field--full"]}
+      >
         <span class="bd-name__label">{label}</span><input
           class="bd-input"
           id={FormView.dom_id(@v.form_id, @key, part)}
@@ -473,7 +633,10 @@ defmodule BdStarterWeb.FormComponents do
           phx-debounce="blur"
         />
       </label>
-      <label :if={Field.config(@field, "nameConfig", "nicknames") == true} class="bd-name__field bd-name__field--full">
+      <label
+        :if={Field.config(@field, "nameConfig", "nicknames") == true}
+        class="bd-name__field bd-name__field--full"
+      >
         <span class="bd-name__label">Nicknames</span><input
           class="bd-input"
           name={FormView.input_name(@key, "nicknames")}
@@ -500,7 +663,10 @@ defmodule BdStarterWeb.FormComponents do
 
     ~H"""
     <div class="bd-address" role="group" id={@input_id} aria-labelledby={@labelled_by}>
-      <label :for={{part, label, token, full} <- @parts} class={["bd-address__field", full && "bd-address__field--full"]}>
+      <label
+        :for={{part, label, token, full} <- @parts}
+        class={["bd-address__field", full && "bd-address__field--full"]}
+      >
         <span class="bd-address__label">{label}</span><input
           class="bd-input"
           id={FormView.dom_id(@v.form_id, @key, part)}
@@ -580,7 +746,12 @@ defmodule BdStarterWeb.FormComponents do
     assigns = assign(assigns, display: display, shown: Calculation.format(assigns.value, display))
 
     ~H"""
-    <output :if={Json.get(@display, "show") != false} class="bd-calc" id={@input_id} aria-live="polite">{if @shown == "", do: "—", else: @shown}</output>
+    <output
+      :if={Json.get(@display, "show") != false}
+      class="bd-calc"
+      id={@input_id}
+      aria-live="polite"
+    >{if @shown == "", do: "—", else: @shown}</output>
     """
   end
 
@@ -596,12 +767,33 @@ defmodule BdStarterWeb.FormComponents do
 
     ~H"""
     <div :if={@cs.message} class="bd-field__collection" data-status={@cs.status}>
-      <p class="bd-field__collection-status" role={if @cs.status == "empty", do: "status", else: "alert"}>{@cs.message}</p>
+      <p
+        class="bd-field__collection-status"
+        role={if @cs.status == "empty", do: "status", else: "alert"}
+      >
+        {@cs.message}
+      </p>
     </div>
-    <div :if={!@cs.message and @cs.status == "select"} class="bd-field__collection" data-status="ready">
-      <select class="bd-select bd-field__collection-select" id={@input_id} name={@name} aria-describedby={@described_by} aria-invalid={@invalid}>
+    <div
+      :if={!@cs.message and @cs.status == "select"}
+      class="bd-field__collection"
+      data-status="ready"
+    >
+      <select
+        class="bd-select bd-field__collection-select"
+        id={@input_id}
+        name={@name}
+        aria-describedby={@described_by}
+        aria-invalid={@invalid}
+      >
         <option value="">{Field.str(@field, "placeholder") || "Choose…"}</option>
-        <option :for={option <- @cs.options} value={option.value} selected={FormView.str(@value) == option.value}>{option.label}</option>
+        <option
+          :for={option <- @cs.options}
+          value={option.value}
+          selected={FormView.str(@value) == option.value}
+        >
+          {option.label}
+        </option>
       </select>
     </div>
     <div :if={!@cs.message and @cs.status == "list"} class="bd-field__collection" data-status="ready">
@@ -639,7 +831,11 @@ defmodule BdStarterWeb.FormComponents do
     ~H"""
     <div role="group" aria-labelledby={@labelled_by}>
       <div class="bd-repeater">
-        <fieldset :for={row <- 0..(@r.count - 1)//1} class="bd-repeater__row" id={"entry-#{@v.form_id}-#{@key}-#{row}"}>
+        <fieldset
+          :for={row <- 0..(@r.count - 1)//1}
+          class="bd-repeater__row"
+          id={"entry-#{@v.form_id}-#{@key}-#{row}"}
+        >
           <legend class="bd-repeater__legend">{@r.item} {row + 1}</legend>
           <.tree
             v={@v}
@@ -659,7 +855,13 @@ defmodule BdStarterWeb.FormComponents do
             Remove {Js.lower(@r.item)} {row + 1}
           </button>
         </fieldset>
-        <button :if={@r.count < @r.most} class="bd-btn bd-btn--ghost bd-repeater__add" type="button" phx-click="add-row" phx-value-path={encode_path(@path)}>
+        <button
+          :if={@r.count < @r.most}
+          class="bd-btn bd-btn--ghost bd-repeater__add"
+          type="button"
+          phx-click="add-row"
+          phx-value-path={encode_path(@path)}
+        >
           {@r.add}
         </button>
       </div>
@@ -687,7 +889,12 @@ defmodule BdStarterWeb.FormComponents do
     <div class="bd-file" role="group" id={@input_id} aria-labelledby={@labelled_by}>
       <%= if @remaining > 0 and @upload do %>
         <label class="bd-file__trigger" for={@upload.ref}>
-          <span id={"#{@input_id}-text"}>{if @list == [], do: "Choose a file", else: "Add another"}{if @most > 1, do: " (up to #{@remaining} more)", else: ""}</span>
+          <span id={"#{@input_id}-text"}>{if @list == [], do: "Choose a file", else: "Add another"}{if @most >
+                                                                                                         1,
+                                                                                                       do:
+                                                                                                         " (up to #{@remaining} more)",
+                                                                                                       else:
+                                                                                                         ""}</span>
           <span :if={Enum.any?(@upload.entries, &(!&1.done?))} class="bd-file__uploading"> · uploading…</span>
           <.live_file_input
             upload={@upload}
@@ -698,11 +905,15 @@ defmodule BdStarterWeb.FormComponents do
           />
         </label>
       <% else %>
-        <p :if={@remaining == 0} class="bd-field__help">That's the most files this takes ({@most}).</p>
+        <p :if={@remaining == 0} class="bd-field__help">
+          That's the most files this takes ({@most}).
+        </p>
       <% end %>
       <ul :if={@list != []} class="bd-file__list">
         <li :for={{file, i} <- Enum.with_index(@list)} class="bd-file__item">
-          <span class="bd-file__name">{Json.str(Json.get(file, "name")) || "file"}</span><span class="bd-file__size">{FormView.kilobytes(file)} KB{if Json.get(file, "pending") == true, do: " · sends with the form", else: ""}</span><button
+          <span class="bd-file__name">{Json.str(Json.get(file, "name")) || "file"}</span><span class="bd-file__size">{FormView.kilobytes(
+            file
+          )} KB{if Json.get(file, "pending") == true, do: " · sends with the form", else: ""}</span><button
             class="bd-file__remove"
             type="button"
             phx-click="remove-file"
@@ -719,7 +930,9 @@ defmodule BdStarterWeb.FormComponents do
   defp control(assigns) do
     if FormView.unsupported?(assigns.field) do
       ~H"""
-      <p class="bd-field__unsupported">{if @field.label == "", do: "This field", else: @field.label} can't be filled in on this page yet.</p>
+      <p class="bd-field__unsupported">
+        {if @field.label == "", do: "This field", else: @field.label} can't be filled in on this page yet.
+      </p>
       """
     else
       ~H"""
@@ -768,7 +981,8 @@ defmodule BdStarterWeb.FormComponents do
   @doc "A path back from the page, checked: nil when it isn't one."
   def decode_path(raw) when is_binary(raw) do
     with {:ok, [id, entries]} when is_binary(id) and is_list(entries) <- Jason.decode(raw),
-         true <- Enum.all?(entries, &match?([r, i] when is_binary(r) and is_integer(i) and i >= 0, &1)) do
+         true <-
+           Enum.all?(entries, &match?([r, i] when is_binary(r) and is_integer(i) and i >= 0, &1)) do
       FieldPath.new(id, Enum.map(entries, fn [r, i] -> {r, i} end))
     else
       _ -> nil

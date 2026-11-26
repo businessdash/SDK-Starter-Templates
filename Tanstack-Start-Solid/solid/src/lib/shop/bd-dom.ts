@@ -6,10 +6,17 @@
  */
 
 export type Child = Node | string | number | null | undefined | false | Child[];
-export type Attrs = Record<string, string | number | boolean | null | undefined>;
+export type Attrs = Record<
+	string,
+	string | number | boolean | null | undefined
+>;
 
 /** An element. `true` sets an empty attribute; false and null leave it out. */
-export function h(tag: string, attrs: Attrs | null, ...children: Child[]): HTMLElement {
+export function h(
+	tag: string,
+	attrs: Attrs | null,
+	...children: Child[]
+): HTMLElement {
 	const el = document.createElement(tag);
 	for (const [name, value] of Object.entries(attrs ?? {})) {
 		if (value === false || value === null || value === undefined) continue;
@@ -23,7 +30,12 @@ function append(parent: Node, children: Child[]): void {
 	for (const child of children) {
 		if (child === null || child === undefined || child === false) continue;
 		if (Array.isArray(child)) append(parent, child);
-		else parent.appendChild(typeof child === "object" ? child : document.createTextNode(String(child)));
+		else
+			parent.appendChild(
+				typeof child === "object"
+					? child
+					: document.createTextNode(String(child)),
+			);
 	}
 }
 
@@ -56,9 +68,11 @@ function patchNode(from: Node, to: Node): void {
 	}
 	const a = from as Element;
 	const b = to as Element;
-	for (const attr of [...a.attributes]) if (!b.hasAttribute(attr.name)) a.removeAttribute(attr.name);
+	for (const attr of [...a.attributes])
+		if (!b.hasAttribute(attr.name)) a.removeAttribute(attr.name);
 	for (const attr of [...b.attributes]) {
-		if (a.getAttribute(attr.name) !== attr.value) a.setAttribute(attr.name, attr.value);
+		if (a.getAttribute(attr.name) !== attr.value)
+			a.setAttribute(attr.name, attr.value);
 	}
 	// Another bd- element draws its own inside; only its attributes are ours.
 	if (a.localName.startsWith("bd-")) return;
@@ -71,7 +85,7 @@ function patchNode(from: Node, to: Node): void {
  * through the setter.
  */
 export function upgradeProperty(el: HTMLElement, name: string): void {
-	if (!Object.prototype.hasOwnProperty.call(el, name)) return;
+	if (!Object.hasOwn(el, name)) return;
 	const record = el as unknown as Record<string, unknown>;
 	const value = record[name];
 	delete record[name];
@@ -97,14 +111,30 @@ export function readJson<T>(el: Element): T | null {
 export type Fields<K extends string> = { readonly [P in K]?: unknown };
 
 /** POST JSON; the reply's status and the fields `K` of its JSON. */
-export async function postJson<K extends string>(url: string, body: unknown): Promise<{ status: number; data: Fields<K> }> {
-	const headers: Record<string, string> = { "Content-Type": "application/json", Accept: "application/json" };
-	const csrf = document.querySelector('meta[name="csrf-token"]')?.getAttribute("content");
+export async function postJson<K extends string>(
+	url: string,
+	body: unknown,
+): Promise<{ status: number; data: Fields<K> }> {
+	const headers: Record<string, string> = {
+		"Content-Type": "application/json",
+		Accept: "application/json",
+	};
+	const csrf = document
+		.querySelector('meta[name="csrf-token"]')
+		?.getAttribute("content");
 	if (csrf) headers["X-CSRF-Token"] = csrf;
 	try {
-		const res = await fetch(url, { method: "POST", headers, body: JSON.stringify(body), credentials: "same-origin" });
+		const res = await fetch(url, {
+			method: "POST",
+			headers,
+			body: JSON.stringify(body),
+			credentials: "same-origin",
+		});
 		const data: unknown = await res.json().catch(() => null);
-		return { status: res.status, data: data && typeof data === "object" ? (data as Fields<K>) : {} };
+		return {
+			status: res.status,
+			data: data && typeof data === "object" ? (data as Fields<K>) : {},
+		};
 	} catch {
 		return { status: 0, data: {} };
 	}

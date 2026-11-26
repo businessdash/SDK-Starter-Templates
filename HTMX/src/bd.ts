@@ -60,10 +60,15 @@ export function getBd(): BdClient | null {
 	return cached;
 }
 
+/**
+ * What the page's analytics script gets. Its key is the publishable token
+ * (`BD_PK`, `pk_…`), the one key made for browsers; the secret BD_API_KEY
+ * never leaves this server. No token: analytics stays off.
+ */
 export const ANALYTICS_PUBLIC = {
 	siteId: siteId ?? null,
 	baseUrl: packageBase,
-	apiKey: apiKey ?? null,
+	apiKey: process.env["BD_PK"] || null,
 };
 
 /**

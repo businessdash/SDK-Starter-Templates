@@ -245,20 +245,103 @@ class BdFormStrings {
       'November',
       'December',
     ],
-    this.happinessNames = const ['Very unhappy', 'Unhappy', 'Neutral', 'Happy', 'Very happy'],
+    this.happinessNames = const [
+      'Very unhappy',
+      'Unhappy',
+      'Neutral',
+      'Happy',
+      'Very happy'
+    ],
     this.messages = BdFormMessages.message,
   });
 
-  final String next, back, submit, sending, successTitle, successMessage, submitAnother, errorNotice;
-  final String loading, loadFailed, retry, stepOf, select, search, noResults, useCustom, done, clear, cancel;
-  final String addAnother, entry, removeEntry, fillOneSide, or, yesNo, addDate, addTime, start, end, date, time;
-  final String selectTime, month, year, namePrefix, firstName, middleName, lastName, nameSuffix, nicknames;
-  final String nicknamesPlaceholder, addressLine1, addressLine2, city, state, selectState, zip, customColor;
-  final String hexColor, chooseFiles, choosePhotos, uploadsOnSubmit, upload, pasteURL, removeFile, addTag;
-  final String removeTag, asap, preferredDays, preferredTimes, schedulingNotes, loadingTimes, noOpenTimes;
-  final String loadingOptions, calculatedOnSubmit, cardOnFile, deposit, addCard, cardSaved, searchIcons, view;
-  final String hour, hours, ratingOf, increase, decrease, couponApplied, exitTitle, exitMessage, exitLeave;
-  final String exitStay, bold, italic, strikethrough, bulletList, numberedList, filePickerMissing;
+  final String next,
+      back,
+      submit,
+      sending,
+      successTitle,
+      successMessage,
+      submitAnother,
+      errorNotice;
+  final String loading,
+      loadFailed,
+      retry,
+      stepOf,
+      select,
+      search,
+      noResults,
+      useCustom,
+      done,
+      clear,
+      cancel;
+  final String addAnother,
+      entry,
+      removeEntry,
+      fillOneSide,
+      or,
+      yesNo,
+      addDate,
+      addTime,
+      start,
+      end,
+      date,
+      time;
+  final String selectTime,
+      month,
+      year,
+      namePrefix,
+      firstName,
+      middleName,
+      lastName,
+      nameSuffix,
+      nicknames;
+  final String nicknamesPlaceholder,
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      selectState,
+      zip,
+      customColor;
+  final String hexColor,
+      chooseFiles,
+      choosePhotos,
+      uploadsOnSubmit,
+      upload,
+      pasteURL,
+      removeFile,
+      addTag;
+  final String removeTag,
+      asap,
+      preferredDays,
+      preferredTimes,
+      schedulingNotes,
+      loadingTimes,
+      noOpenTimes;
+  final String loadingOptions,
+      calculatedOnSubmit,
+      cardOnFile,
+      deposit,
+      addCard,
+      cardSaved,
+      searchIcons,
+      view;
+  final String hour,
+      hours,
+      ratingOf,
+      increase,
+      decrease,
+      couponApplied,
+      exitTitle,
+      exitMessage,
+      exitLeave;
+  final String exitStay,
+      bold,
+      italic,
+      strikethrough,
+      bulletList,
+      numberedList,
+      filePickerMissing;
   final Map<String, String> dayNames;
   final Map<String, String> timeWindowNames;
 
@@ -272,14 +355,16 @@ class BdFormStrings {
   /// Fills each `{}` in [template] with the next of [args].
   String format(String template, List<Object> args) {
     var i = 0;
-    return template.replaceAllMapped('{}', (_) => i < args.length ? '${args[i++]}' : '');
+    return template.replaceAllMapped(
+        '{}', (_) => i < args.length ? '${args[i++]}' : '');
   }
 }
 
 /// What the app's file picker is asked for.
 @immutable
 class BdFileRequest {
-  const BdFileRequest({required this.kind, required this.multiple, required this.allowedTypes});
+  const BdFileRequest(
+      {required this.kind, required this.multiple, required this.allowedTypes});
 
   /// `files` (any document) or `images` (the photo library).
   final String kind;
@@ -293,7 +378,8 @@ class BdFileRequest {
 /// Opens the app's document or photo picker. Return `[]` when the visitor
 /// cancels. Wire it to `file_picker` / `image_picker` (see the starter's
 /// form page), or any picker that gives back bytes.
-typedef BdFilePicker = Future<List<BdPickedFile>> Function(BdFileRequest request);
+typedef BdFilePicker = Future<List<BdPickedFile>> Function(
+    BdFileRequest request);
 
 /// Opens a link the visitor tapped (choice cards' "View", links in rich
 /// text). Wire it to `url_launcher`. Without one, links aren't tappable.
@@ -331,7 +417,8 @@ class BdFieldContext {
 
 /// Draws one field. The field's label, help and error are still drawn
 /// around it.
-typedef BdFieldRenderer = Widget Function(BuildContext context, BdFieldContext field);
+typedef BdFieldRenderer = Widget Function(
+    BuildContext context, BdFieldContext field);
 
 /// Replace how an element type, or one specific field, is drawn.
 ///
@@ -342,7 +429,9 @@ typedef BdFieldRenderer = Widget Function(BuildContext context, BdFieldContext f
 /// ```
 @immutable
 class BdFieldRenderers {
-  const BdFieldRenderers() : _byType = const {}, _byField = const {};
+  const BdFieldRenderers()
+      : _byType = const {},
+        _byField = const {};
 
   const BdFieldRenderers._(this._byType, this._byField);
 
@@ -358,7 +447,9 @@ class BdFieldRenderers {
       BdFieldRenderers._(_byType, {..._byField, idOrKey: render});
 
   BdFieldRenderer? rendererFor(BdFormField field) =>
-      _byField[field.id] ?? (field.key == null ? null : _byField[field.key]) ?? _byType[field.type];
+      _byField[field.id] ??
+      (field.key == null ? null : _byField[field.key]) ??
+      _byType[field.type];
 }
 
 const bdDefaultHost = 'https://businessdash.us';
@@ -440,7 +531,8 @@ class BdFormScope extends InheritedWidget {
 class BdInCard extends InheritedWidget {
   const BdInCard({super.key, required super.child});
 
-  static bool of(BuildContext context) => context.dependOnInheritedWidgetOfExactType<BdInCard>() != null;
+  static bool of(BuildContext context) =>
+      context.dependOnInheritedWidgetOfExactType<BdInCard>() != null;
 
   @override
   bool updateShouldNotify(BdInCard oldWidget) => false;
@@ -453,7 +545,8 @@ class BdColors {
   factory BdColors.of(BuildContext context) {
     final scope = BdFormScope.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return BdColors._(scheme, scope.style.errorColor ?? scheme.error, scope.cupertino, context);
+    return BdColors._(scheme, scope.style.errorColor ?? scheme.error,
+        scope.cupertino, context);
   }
 
   final ColorScheme scheme;
@@ -464,23 +557,35 @@ class BdColors {
   Color get primary => scheme.primary;
   Color get onPrimary => scheme.onPrimary;
   Color get onSurface => scheme.onSurface;
-  Color get muted => cupertino ? CupertinoColors.secondaryLabel.resolveFrom(context) : scheme.onSurfaceVariant;
-  Color get outline => cupertino ? CupertinoColors.separator.resolveFrom(context) : scheme.outline;
-  Color get outlineVariant => cupertino ? CupertinoColors.separator.resolveFrom(context) : scheme.outlineVariant;
+  Color get muted => cupertino
+      ? CupertinoColors.secondaryLabel.resolveFrom(context)
+      : scheme.onSurfaceVariant;
+  Color get outline => cupertino
+      ? CupertinoColors.separator.resolveFrom(context)
+      : scheme.outline;
+  Color get outlineVariant => cupertino
+      ? CupertinoColors.separator.resolveFrom(context)
+      : scheme.outlineVariant;
 
   /// A grouped row or card.
-  Color get card =>
-      cupertino ? CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context) : scheme.surfaceContainerLow;
+  Color get card => cupertino
+      ? CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context)
+      : scheme.surfaceContainerLow;
 
   /// A card inside a card.
-  Color get innerCard =>
-      cupertino ? CupertinoColors.tertiarySystemGroupedBackground.resolveFrom(context) : scheme.surfaceContainer;
+  Color get innerCard => cupertino
+      ? CupertinoColors.tertiarySystemGroupedBackground.resolveFrom(context)
+      : scheme.surfaceContainer;
 
   /// Unselected chips, swatches, tiles.
-  Color get fill => cupertino ? CupertinoColors.tertiarySystemFill.resolveFrom(context) : scheme.surfaceContainerHighest;
+  Color get fill => cupertino
+      ? CupertinoColors.tertiarySystemFill.resolveFrom(context)
+      : scheme.surfaceContainerHighest;
 
   /// A text field's background on iOS.
-  Color get field => cupertino ? CupertinoColors.tertiarySystemFill.resolveFrom(context) : Colors.transparent;
+  Color get field => cupertino
+      ? CupertinoColors.tertiarySystemFill.resolveFrom(context)
+      : Colors.transparent;
 }
 
 /// A picked file's bytes, as an image provider for a preview.
@@ -493,5 +598,6 @@ extension BdNonEmpty on String? {
 
 extension BdDisplayText on BdJson? {
   /// `String(value)` for display, empty for null.
-  String get displayText => this == null || this!.isNull ? '' : BdJS.string(this);
+  String get displayText =>
+      this == null || this!.isNull ? '' : BdJS.string(this);
 }

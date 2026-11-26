@@ -1,9 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
 
 import { BdForm, type BdFormsClient } from "@businessdash/sdk/react";
-import type { FormSchema, FormSubmitResult } from "@businessdash/sdk";
+import { useMemo } from "react";
 
 import { api } from "@/trpc/react";
 
@@ -59,16 +59,13 @@ export function ContactForm({
 		<section className="bd-section bd-section--narrow" id="contact">
 			<div className="bd-card contact">
 				<BdForm
-					slug={slug}
-					schema={schema}
 					client={client}
+					schema={schema}
+					slug={slug}
 					submitLabel="Send message"
 					successFallback={() => (
 						<div>
-							<span
-								className="bd-badge"
-								style={{ alignSelf: "flex-start" }}
-							>
+							<span className="bd-badge" style={{ alignSelf: "flex-start" }}>
 								Received
 							</span>
 							<h2 className="bd-section__title">Got it.</h2>

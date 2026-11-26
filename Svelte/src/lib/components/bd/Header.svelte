@@ -24,9 +24,7 @@
 				`/my-account` reads the session server-side and shows the sign-in
 				screen when signed out, so the header links stay simple.
 			-->
-			<a class="bd-btn bd-btn--ghost app-header__signin" href="/my-account">
-				Sign in
-			</a>
+			<a class="bd-btn bd-btn--ghost app-header__signin" href="/my-account"> Sign in </a>
 			<a class="bd-btn app-header__account-btn" href="/my-account">My account</a>
 		</div>
 	</div>

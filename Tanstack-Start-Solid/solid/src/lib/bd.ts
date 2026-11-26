@@ -24,8 +24,7 @@ export function getBd(): BdClient | null {
 	// SITE_ID + base URL aren't secret; the canonical vars are the VITE_
 	// twins (the browser needs them too). Fall back to the legacy server-only
 	// names so already-deployed apps keep working.
-	const siteId =
-		process.env.VITE_BD_SITE_ID ?? process.env.BD_SITE_ID;
+	const siteId = process.env.VITE_BD_SITE_ID ?? process.env.BD_SITE_ID;
 	const baseUrl =
 		process.env.VITE_BD_PACKAGE_API_BASE_URL ??
 		process.env.BD_PACKAGE_API_BASE_URL;
@@ -49,8 +48,7 @@ export function bdRawConfig(): {
 	baseUrl: string;
 } | null {
 	const apiKey = process.env.BD_API_KEY;
-	const siteId =
-		process.env.VITE_BD_SITE_ID ?? process.env.BD_SITE_ID;
+	const siteId = process.env.VITE_BD_SITE_ID ?? process.env.BD_SITE_ID;
 	const rawBaseUrl =
 		process.env.VITE_BD_PACKAGE_API_BASE_URL ??
 		process.env.BD_PACKAGE_API_BASE_URL;

@@ -44,13 +44,17 @@ defmodule BdStarter.Bd.Seo do
     |> maybe(title, fn v -> {:title, [], v} end)
     |> maybe(description, &meta("name", "description", &1))
     |> keywords(seo["keywords"])
-    |> then(&[meta("name", "robots", if(no_index, do: "noindex, nofollow", else: "index, follow")) | &1])
+    |> then(
+      &[meta("name", "robots", if(no_index, do: "noindex, nofollow", else: "index, follow")) | &1]
+    )
     |> maybe(og_title, &meta("property", "og:title", &1))
     |> maybe(og_description, &meta("property", "og:description", &1))
     |> maybe(og_image, &meta("property", "og:image", &1))
     |> maybe(canonical, &meta("property", "og:url", &1))
     |> then(&[meta("property", "og:type", "website") | &1])
-    |> then(&[meta("name", "twitter:card", text(seo["twitterCard"]) || "summary_large_image") | &1])
+    |> then(
+      &[meta("name", "twitter:card", text(seo["twitterCard"]) || "summary_large_image") | &1]
+    )
     |> maybe(og_title, &meta("name", "twitter:title", &1))
     |> maybe(og_description, &meta("name", "twitter:description", &1))
     |> maybe(og_image, &meta("name", "twitter:image", &1))

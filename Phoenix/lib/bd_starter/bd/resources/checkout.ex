@@ -14,7 +14,12 @@ defmodule BdStarter.Bd.Resources.Checkout do
   end
 
   def get(client, token, session_id) do
-    Client.get(client, "checkout/#{URI.encode(session_id, &URI.char_unreserved?/1)}", [], headers(token))
+    Client.get(
+      client,
+      "checkout/#{URI.encode(session_id, &URI.char_unreserved?/1)}",
+      [],
+      headers(token)
+    )
   end
 
   defp headers(nil), do: []

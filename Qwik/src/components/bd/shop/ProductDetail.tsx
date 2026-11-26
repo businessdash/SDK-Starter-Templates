@@ -70,7 +70,8 @@ export function ProductDetail({
 		id: rp.id,
 		name: rp.name,
 		image: rp.coverImageUrl,
-		priceCents: rp.minPriceDollars != null ? Math.round(rp.minPriceDollars * 100) : null,
+		priceCents:
+			rp.minPriceDollars != null ? Math.round(rp.minPriceDollars * 100) : null,
 	}));
 
 	return (
@@ -78,17 +79,27 @@ export function ProductDetail({
 			<ProductBreadcrumbs product={view} storeHref={storeHref} />
 
 			<div class="product-detail">
-				<ProductGallery name={view.name} productId={view.id} sets={photoSets(view)} variantId={variantId} />
+				<ProductGallery
+					name={view.name}
+					productId={view.id}
+					sets={photoSets(view)}
+					variantId={variantId}
+				/>
 
 				<div class="product-detail__info bd-card">
 					<ProductTitle product={view} reviews={reviews} />
 					<bd-product-form data-add-url={addUrl} data-cart-href={cartHref}>
 						<script
-							dangerouslySetInnerHTML={JSON.stringify({ product }).replace(/</g, "\\u003c")}
+							dangerouslySetInnerHTML={JSON.stringify({ product }).replace(
+								/</g,
+								"\\u003c",
+							)}
 							type="application/json"
 						/>
 						<ProductPrice price={price} />
-						{view.description ? <p class="product-detail__desc">{view.description}</p> : null}
+						{view.description ? (
+							<p class="product-detail__desc">{view.description}</p>
+						) : null}
 						<VariantPicker
 							selected={variantId}
 							showPrices={optionGroupsFor(view, variantId).length === 0}
@@ -97,7 +108,9 @@ export function ProductDetail({
 						{allOptionGroups(view).map((group) => (
 							<OptionPicker
 								group={group}
-								hidden={group.variantId !== null && group.variantId !== variantId}
+								hidden={
+									group.variantId !== null && group.variantId !== variantId
+								}
 								key={`${group.variantId ?? ""}:${group.id}`}
 							/>
 						))}
@@ -121,7 +134,11 @@ export function ProductDetail({
 			<ProductSpecs features={view.features} specs={view.specs} />
 			<ProductAddons addUrl={addUrl} addons={addons} />
 			<ProductReviews moreHref={moreReviewsHref} reviews={reviews} />
-			<ProductRail products={relatedCards} storeHref={storeHref} title="You may also like" />
+			<ProductRail
+				products={relatedCards}
+				storeHref={storeHref}
+				title="You may also like"
+			/>
 			<RecentlyViewed product={summary} storeHref={storeHref} />
 			<CompareBar storeHref={storeHref} />
 		</Fragment>

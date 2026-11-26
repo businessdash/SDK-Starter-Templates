@@ -465,14 +465,23 @@ defmodule BdStarterWeb.SignInLive do
       <form class="bd-sign-in__form" novalidate phx-change="change" phx-submit="submit">
         <fieldset class="bd-sign-in__fieldset">
           <div class="bd-sign-in__header">
-            <img :if={@options.logo_url} class="bd-sign-in__logo" src={@options.logo_url} alt="" onerror="this.hidden=true" />
+            <img
+              :if={@options.logo_url}
+              class="bd-sign-in__logo"
+              src={@options.logo_url}
+              alt=""
+              onerror="this.hidden=true"
+            />
             <h2 class="bd-sign-in__title">{@t.title}</h2>
             <p :if={@t.subtitle} class="bd-sign-in__subtitle">{@t.subtitle}</p>
           </div>
           <div class="bd-sign-in__body">
             <div class="bd-sign-in__body">
               <div :for={row <- rows(@shown)} class={length(row) > 1 && "bd-sign-in__row"}>
-                <div :for={f <- row} class={["bd-sign-in__field", @errors[f] && "bd-sign-in__field--error"]}>
+                <div
+                  :for={f <- row}
+                  class={["bd-sign-in__field", @errors[f] && "bd-sign-in__field--error"]}
+                >
                   <input
                     class={["bd-sign-in__input", f == "code" && "bd-sign-in__input--code"]}
                     id={"bd-sign-in-" <> f}
@@ -489,23 +498,48 @@ defmodule BdStarterWeb.SignInLive do
                     phx-blur="blur"
                     phx-value-field={f}
                   />
-                  <p class="bd-sign-in__error" id={"bd-sign-in-" <> f <> "-error"} aria-live="polite" hidden={!@errors[f]}>{@errors[f]}</p>
+                  <p
+                    class="bd-sign-in__error"
+                    id={"bd-sign-in-" <> f <> "-error"}
+                    aria-live="polite"
+                    hidden={!@errors[f]}
+                  >
+                    {@errors[f]}
+                  </p>
                 </div>
               </div>
               <p :if={@t.hint} class="bd-sign-in__hint">{@t.hint}</p>
             </div>
-            <p class="bd-sign-in__problem" id="bd-sign-in-problem" role="alert" hidden={!@problem}>{@problem}</p>
-            <p class="bd-sign-in__notice" id="bd-sign-in-notice" role="status" hidden={!@notice}>{@notice}</p>
+            <p class="bd-sign-in__problem" id="bd-sign-in-problem" role="alert" hidden={!@problem}>
+              {@problem}
+            </p>
+            <p class="bd-sign-in__notice" id="bd-sign-in-notice" role="status" hidden={!@notice}>
+              {@notice}
+            </p>
             <button type="submit" class="bd-sign-in__primary">
-              <span class="bd-sign-in__label">{@t.primary}</span><span class="bd-sign-in__spinner" aria-hidden="true"></span>
+              <span class="bd-sign-in__label">{@t.primary}</span><span
+                class="bd-sign-in__spinner"
+                aria-hidden="true"
+              ></span>
             </button>
           </div>
           <div :if={@t.links != []} class="bd-sign-in__links">
-            <button :for={{to, label} <- @t.links} type="button" class="bd-sign-in__link" phx-click="go" phx-value-to={to} name="go" value={to}>
+            <button
+              :for={{to, label} <- @t.links}
+              type="button"
+              class="bd-sign-in__link"
+              phx-click="go"
+              phx-value-to={to}
+              name="go"
+              value={to}
+            >
               {label}
             </button>
           </div>
-          <div :if={@step in [:signIn, :createAccount] and @options.oauth != []} class="bd-sign-in__providers">
+          <div
+            :if={@step in [:signIn, :createAccount] and @options.oauth != []}
+            class="bd-sign-in__providers"
+          >
             <div class="bd-sign-in__divider">{Core.word(:or)}</div>
             <a
               :for={id <- @options.oauth}

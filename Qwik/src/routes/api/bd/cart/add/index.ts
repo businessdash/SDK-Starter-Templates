@@ -31,7 +31,10 @@ export const onPost: RequestHandler = async ({ request, cookie, json }) => {
 		json(400, { ok: false, error: "Choose a product." });
 		return;
 	}
-	const quantity = Math.max(1, Math.min(99, Math.floor(Number(body?.quantity) || 1)));
+	const quantity = Math.max(
+		1,
+		Math.min(99, Math.floor(Number(body?.quantity) || 1)),
+	);
 	const options =
 		body?.options && typeof body.options === "object"
 			? Object.fromEntries(
@@ -44,11 +47,16 @@ export const onPost: RequestHandler = async ({ request, cookie, json }) => {
 		const cart = await bd.cart.forVisitor(ensureVisitorToken(cookie)).addItem({
 			productId,
 			quantity,
-			...(typeof body?.variantId === "string" && body.variantId ? { variantId: body.variantId } : {}),
+			...(typeof body?.variantId === "string" && body.variantId
+				? { variantId: body.variantId }
+				: {}),
 			...(Object.keys(options).length > 0 ? { options } : {}),
 		});
 		json(200, { ok: true, itemCount: cart.itemCount });
 	} catch {
-		json(502, { ok: false, error: "Couldn't add that to your cart. Try again." });
+		json(502, {
+			ok: false,
+			error: "Couldn't add that to your cart. Try again.",
+		});
 	}
 };

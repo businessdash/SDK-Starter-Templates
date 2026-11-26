@@ -40,7 +40,9 @@ export function RatingSummary(props: {
 				<ul class="reviews-bars">
 					<For each={props.summary.histogram}>
 						{(row) => (
-							<li aria-label={`${row.stars} stars: ${row.count}`}>
+							<li
+								aria-label={`${row.stars} ${row.stars === 1 ? "star" : "stars"}: ${row.count}`}
+							>
 								<span>{row.stars} ★</span>
 								<span class="reviews-bars__track">
 									<span

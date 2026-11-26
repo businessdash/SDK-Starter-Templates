@@ -43,10 +43,7 @@ export default function Header() {
 					<details class="site-header-demos">
 						<summary class="nav-link site-header-demos-toggle">Demos</summary>
 						<div class="site-header-demos-menu">
-							<a
-								href="/demo/tanstack-query"
-								class="site-header-demo-link"
-							>
+							<a href="/demo/tanstack-query" class="site-header-demo-link">
 								TanStack Query
 							</a>
 						</div>

@@ -18,16 +18,25 @@ export function ProductGallery({
 	/** The variant chosen when the page opens. */
 	variantId: string;
 }) {
-	const shown = sets.some((set) => set.variantId === variantId) ? variantId : "";
+	const shown = sets.some((set) => set.variantId === variantId)
+		? variantId
+		: "";
 	return (
 		<bd-gallery data-product-id={productId} key={productId}>
 			{sets.map((set) => {
 				const hidden = set.variantId !== shown;
 				return (
-					<div class="gallery" data-bd-photos-for={set.variantId} hidden={hidden} key={set.variantId}>
+					<div
+						class="gallery"
+						data-bd-photos-for={set.variantId}
+						hidden={hidden}
+						key={set.variantId}
+					>
 						<div class="gallery__main">
 							{set.photos[0] ? (
 								<img
+									width={1200}
+									height={1200}
 									alt={name}
 									data-bd-main=""
 									loading={hidden ? "lazy" : undefined}
@@ -47,7 +56,12 @@ export function ProductGallery({
 									>
 										‹
 									</button>
-									<button aria-label="Next photo" class="gallery__step gallery__step--next" data-bd-step="1" type="button">
+									<button
+										aria-label="Next photo"
+										class="gallery__step gallery__step--next"
+										data-bd-step="1"
+										type="button"
+									>
 										›
 									</button>
 								</>
@@ -64,7 +78,14 @@ export function ProductGallery({
 										key={src}
 										type="button"
 									>
-										<img alt="" loading="lazy" referrerPolicy="no-referrer" src={src} />
+										<img
+											width={160}
+											height={160}
+											alt=""
+											loading="lazy"
+											referrerPolicy="no-referrer"
+											src={src}
+										/>
 									</button>
 								))}
 							</div>

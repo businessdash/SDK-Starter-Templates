@@ -18,11 +18,15 @@
 	const review = $derived(form?.review as ReviewState | undefined);
 	const user = $derived(data.session?.user);
 	const work = $derived(data.work);
-	const start = $derived(page.url.searchParams.get('start') === 'create' ? 'createAccount' : 'signIn');
+	const start = $derived(
+		page.url.searchParams.get('start') === 'create' ? 'createAccount' : 'signIn'
+	);
 	// Where sign-in returns to: a path on this site, or the account page.
 	const next = $derived.by(() => {
 		const raw = page.url.searchParams.get('next') ?? '';
-		return raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\') ? raw : '/my-account';
+		return raw.startsWith('/') && !raw.startsWith('//') && !raw.startsWith('/\\')
+			? raw
+			: '/my-account';
 	});
 	// [bd:subscriptions]
 	const planChange = $derived(form?.planChange as PlanChangeState | undefined);
@@ -54,8 +58,7 @@
 <main class="bd-section bd-section--narrow">
 	{#if !data.configured}
 		<div class="bd-empty">
-			Customer accounts aren't configured. Set the BD API key and base URL to enable
-			sign-in.
+			Customer accounts aren't configured. Set the BD API key and base URL to enable sign-in.
 		</div>
 	{:else if !data.session}
 		<!--
@@ -68,7 +71,9 @@
 				<BdSignIn
 					{start}
 					redirectTo={next}
-					brand={{ tagline: 'Sign in to view your jobs, quotes and invoices, and to leave a review.' }}
+					brand={{
+						tagline: 'Sign in to view your jobs, quotes and invoices, and to leave a review.'
+					}}
 				/>
 			{/key}
 		</div>
@@ -131,7 +136,9 @@
 					<p class="account-note">Yours for good. Nothing renews.</p>
 				{:else if cancelPending}
 					<p class="account-note">
-						It won't renew. You keep everything{accessUntil ? ` until ${formatDate(accessUntil)}` : ''}.
+						It won't renew. You keep everything{accessUntil
+							? ` until ${formatDate(accessUntil)}`
+							: ''}.
 					</p>
 					<form method="POST" action="?/resumePlan" use:enhance>
 						<button class="bd-btn" type="submit">Keep my plan</button>

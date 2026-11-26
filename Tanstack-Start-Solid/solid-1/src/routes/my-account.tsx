@@ -1,11 +1,12 @@
 import { BdSignIn } from "@businessdash/sdk/solid";
 import { createFileRoute } from "@tanstack/solid-router";
 import { createSignal, Show } from "solid-js";
-
-import { getMyAccount, submitCustomerReview } from "../lib/bd-server-fns";
-// [bd:subscriptions]
-import { changePlan, type MyAccountData } from "../lib/bd-server-fns";
-// [/bd:subscriptions]
+import {
+	changePlan, // [bd-line:subscriptions]
+	getMyAccount,
+	type MyAccountData, // [bd-line:subscriptions]
+	submitCustomerReview,
+} from "../lib/bd-server-fns";
 
 /** Where sign-in returns to: a path on this site. */
 function safeNext(raw: unknown): string | undefined {
@@ -69,7 +70,9 @@ function MyAccount() {
 						fallback={
 							<div class="bd-card" style="padding: 2rem 1.25rem;">
 								<BdSignIn
-									start={search().start === "create" ? "createAccount" : "signIn"}
+									start={
+										search().start === "create" ? "createAccount" : "signIn"
+									}
 									redirectTo={search().next ?? "/my-account"}
 									brand={{
 										tagline: "Sign in to view your jobs, quotes, and invoices.",
@@ -97,10 +100,7 @@ function MyAccount() {
 										</div>
 									</Show>
 								</div>
-								<a
-									class="bd-btn bd-btn--ghost"
-									href="/api/bd-auth/sign-out"
-								>
+								<a class="bd-btn bd-btn--ghost" href="/api/bd-auth/sign-out">
 									Sign out
 								</a>
 							</div>
@@ -115,7 +115,10 @@ function MyAccount() {
 						<ReviewForm />
 
 						<p style="margin-top: 2rem; font-size: 0.875rem;">
-							<a href="/api/bd-auth/delete-account" style="color: var(--text-muted);">
+							<a
+								href="/api/bd-auth/delete-account"
+								style="color: var(--text-muted);"
+							>
 								Delete my account
 							</a>
 						</p>
@@ -331,12 +334,16 @@ function PlanCard(props: { plan: MyAccountData["plan"] }) {
 			>
 				<div style="font-weight: 700; color: var(--title);">
 					{props.plan?.plan?.name ?? "Subscription"}{" "}
-					<span class="bd-badge">{cancelPending() ? "Cancelled" : "Active"}</span>
+					<span class="bd-badge">
+						{cancelPending() ? "Cancelled" : "Active"}
+					</span>
 				</div>
 				<Show
 					when={props.plan?.type !== "lifetime"}
 					fallback={
-						<p style="color: var(--text-muted);">Yours for good. Nothing renews.</p>
+						<p style="color: var(--text-muted);">
+							Yours for good. Nothing renews.
+						</p>
 					}
 				>
 					<p style="color: var(--text-muted);">

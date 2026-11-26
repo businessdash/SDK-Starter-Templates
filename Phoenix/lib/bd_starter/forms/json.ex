@@ -18,7 +18,10 @@ defmodule BdStarter.Forms.Json do
   @doc "Integers become floats, all the way down."
   def normalize(v) when is_integer(v), do: v * 1.0
   def normalize(v) when is_list(v), do: Enum.map(v, &normalize/1)
-  def normalize(v) when is_map(v) and not is_struct(v), do: Map.new(v, fn {k, x} -> {to_string(k), normalize(x)} end)
+
+  def normalize(v) when is_map(v) and not is_struct(v),
+    do: Map.new(v, fn {k, x} -> {to_string(k), normalize(x)} end)
+
   def normalize(v), do: v
 
   @doc """
@@ -37,7 +40,10 @@ defmodule BdStarter.Forms.Json do
   def wire(v) when is_list(v), do: Enum.map(v, &wire/1)
 
   def wire(v) when is_map(v) and not is_struct(v),
-    do: v |> Enum.reject(fn {_, x} -> x == :undefined end) |> Map.new(fn {k, x} -> {to_string(k), wire(x)} end)
+    do:
+      v
+      |> Enum.reject(fn {_, x} -> x == :undefined end)
+      |> Map.new(fn {k, x} -> {to_string(k), wire(x)} end)
 
   def wire(v), do: v
 

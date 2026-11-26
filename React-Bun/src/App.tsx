@@ -22,7 +22,8 @@ import { Header } from "./components/Header";
 import { Hero } from "./components/Hero";
 import { SdkSetupBanner } from "./components/SdkSetupBanner";
 import { Services } from "./components/Services";
-import { RouterProvider, useRoute } from "./lib/router";
+import { RouterProvider } from "./lib/router";
+import { useRoute } from "./lib/route";
 // [bd:blog]
 import { BlogPage } from "./pages/BlogPage";
 import { BlogPostPage } from "./pages/BlogPostPage";

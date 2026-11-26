@@ -46,19 +46,34 @@ export const REVIEW_PAGE_SIZE = 10;
 /** The longest review BD takes. */
 export const REVIEW_MAX_LENGTH = 5000;
 
-const PLATFORMS: Record<string, string> = { google: "Google", yelp: "Yelp", housecall_pro: "Housecall Pro" };
+const PLATFORMS: Record<string, string> = {
+	google: "Google",
+	yelp: "Yelp",
+	housecall_pro: "Housecall Pro",
+};
 
 /** The average, the count and the breakdown; empty stars count 0. */
-export function summarizeReviews(totals: BundleReviewTotals | null | undefined, fallbackTotal = 0): ReviewSummary {
+export function summarizeReviews(
+	totals: BundleReviewTotals | null | undefined,
+	fallbackTotal = 0,
+): ReviewSummary {
 	const byStars = new Map<number, number>();
 	for (const row of totals?.counts ?? []) {
-		if (Number.isInteger(row.rating) && row.rating >= 1 && row.rating <= 5 && row.count > 0) {
+		if (
+			Number.isInteger(row.rating) &&
+			row.rating >= 1 &&
+			row.rating <= 5 &&
+			row.count > 0
+		) {
 			byStars.set(row.rating, (byStars.get(row.rating) ?? 0) + row.count);
 		}
 	}
 	const counted = [...byStars.values()].reduce((sum, n) => sum + n, 0);
 	const total = totals?.totalCount ?? (counted || fallbackTotal);
-	const average = typeof totals?.rating === "number" && Number.isFinite(totals.rating) ? totals.rating : null;
+	const average =
+		typeof totals?.rating === "number" && Number.isFinite(totals.rating)
+			? totals.rating
+			: null;
 	return {
 		average,
 		total,
@@ -81,11 +96,18 @@ export function sourceLabel(source: string | null | undefined): string {
 
 /** A `source` query value BD accepts, or undefined. */
 export function reviewSourceParam(value: unknown): ReviewSource | undefined {
-	return value === "google" || value === "yelp" || value === "housecall_pro" || value === "other" ? value : undefined;
+	return value === "google" ||
+		value === "yelp" ||
+		value === "housecall_pro" ||
+		value === "other"
+		? value
+		: undefined;
 }
 
 /** The platforms among some reviews, in the order first seen. */
-export function sourcesIn(reviews: readonly { source: string }[]): ReviewSource[] {
+export function sourcesIn(
+	reviews: readonly { source: string }[],
+): ReviewSource[] {
 	const seen: ReviewSource[] = [];
 	for (const review of reviews) {
 		const source = reviewSourceParam(review.source);
@@ -95,11 +117,16 @@ export function sourcesIn(reviews: readonly { source: string }[]): ReviewSource[
 }
 
 /** The review on its own site; web links only. */
-export function reviewLink(review: { reviewUrl: string | null; source: string }): string | null {
+export function reviewLink(review: {
+	reviewUrl: string | null;
+	source: string;
+}): string | null {
 	if (!review.reviewUrl || !platformName(review.source)) return null;
 	try {
 		const url = new URL(review.reviewUrl);
-		return url.protocol === "https:" || url.protocol === "http:" ? url.href : null;
+		return url.protocol === "https:" || url.protocol === "http:"
+			? url.href
+			: null;
 	} catch {
 		return null;
 	}
@@ -110,7 +137,9 @@ export function safeImage(url: string | null | undefined): string | null {
 	if (!url) return null;
 	try {
 		const parsed = new URL(url);
-		return parsed.protocol === "https:" || parsed.protocol === "http:" ? parsed.href : null;
+		return parsed.protocol === "https:" || parsed.protocol === "http:"
+			? parsed.href
+			: null;
 	} catch {
 		return null;
 	}
@@ -121,7 +150,9 @@ export function reviewerName(review: { reviewerName?: string | null }): string {
 }
 
 /** The first letter of the name, for an avatar with no photo. */
-export function reviewerInitial(review: { reviewerName?: string | null }): string {
+export function reviewerInitial(review: {
+	reviewerName?: string | null;
+}): string {
 	return reviewerName(review).charAt(0).toUpperCase();
 }
 
@@ -135,21 +166,37 @@ export function reviewStars(rating: number): string {
 export function formatReviewDate(iso: string | null | undefined): string {
 	const date = iso ? new Date(iso) : null;
 	return date && !Number.isNaN(date.getTime())
-		? date.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric", timeZone: "UTC" })
+		? date.toLocaleDateString("en-US", {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+				timeZone: "UTC",
+			})
 		: "";
 }
 
 /** A written review, checked: the fields BD takes, or why it can't go. */
-export function checkReview(input: { rating?: unknown; title?: unknown; body?: unknown }):
+export function checkReview(input: {
+	rating?: unknown;
+	title?: unknown;
+	body?: unknown;
+}):
 	| { ok: true; review: { rating: number; title?: string; body: string } }
 	| { ok: false; error: string } {
 	const rating = Number(input.rating);
-	if (!Number.isInteger(rating) || rating < 1 || rating > 5) return { ok: false, error: "Choose a rating from 1 to 5 stars." };
+	if (!Number.isInteger(rating) || rating < 1 || rating > 5)
+		return { ok: false, error: "Choose a rating from 1 to 5 stars." };
 	const body = typeof input.body === "string" ? input.body.trim() : "";
-	if (!body) return { ok: false, error: "Write a few words about your experience." };
-	if (body.length > REVIEW_MAX_LENGTH) return { ok: false, error: "Reviews are up to 5,000 characters." };
-	const title = typeof input.title === "string" ? input.title.trim().slice(0, 200) : "";
-	return { ok: true, review: title ? { rating, title, body } : { rating, body } };
+	if (!body)
+		return { ok: false, error: "Write a few words about your experience." };
+	if (body.length > REVIEW_MAX_LENGTH)
+		return { ok: false, error: "Reviews are up to 5,000 characters." };
+	const title =
+		typeof input.title === "string" ? input.title.trim().slice(0, 200) : "";
+	return {
+		ok: true,
+		review: title ? { rating, title, body } : { rating, body },
+	};
 }
 
 /** What a customer sees once their review is in. */

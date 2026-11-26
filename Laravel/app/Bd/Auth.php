@@ -29,8 +29,7 @@ class Auth
     public function __construct(
         private readonly Client $client,
         private readonly ?string $callbackUrl = null,
-    ) {
-    }
+    ) {}
 
     public static function fromConfig(?Client $client = null): ?self
     {

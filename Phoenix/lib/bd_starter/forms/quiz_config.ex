@@ -34,14 +34,18 @@ defmodule BdStarter.Forms.QuizConfig do
       questions: QuizArrange.questions(options, seed, local),
       feedback_mode: options.feedback_mode,
       passing_score:
-        if(is_float(options.passing_score), do: options.passing_score, else: QuizScoring.default_passing_grade()),
+        if(is_float(options.passing_score),
+          do: options.passing_score,
+          else: QuizScoring.default_passing_grade()
+        ),
       timer_enabled: options.show_timer or limit != nil,
       time_limit_minutes: limit,
       show_score: options.show_score,
       results_locked: options.results_locked,
       sign_in_href: options.sign_in_href,
       allow_dont_know: options.allow_dont_know,
-      layout: if(options.feedback_mode == "end" and options.layout == "all", do: "all", else: "single"),
+      layout:
+        if(options.feedback_mode == "end" and options.layout == "all", do: "all", else: "single"),
       can_restart: options.can_restart || false,
       words: options.words
     }

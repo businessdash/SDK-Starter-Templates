@@ -61,7 +61,7 @@ function formatDate(iso: string): string {
 				<div class="bd-grid-3">
 					{firstPage.map((r) => (
 						<article class="bd-card review-teaser">
-							<div class="review-teaser__stars" aria-label={`${r.rating} stars`}>
+							<div class="review-teaser__stars" aria-label={`${r.rating} ${r.rating === 1 ? "star" : "stars"}`}>
 								{stars(r.rating)}
 							</div>
 							<p class="review-teaser__text">{r.description}</p>

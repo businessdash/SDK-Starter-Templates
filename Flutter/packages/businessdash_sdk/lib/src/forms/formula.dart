@@ -111,7 +111,8 @@ abstract final class BdFormula {
   /// Business functions as formula functions, keyed by upper-cased slug.
   /// Each one evaluates its first output. A function whose formula doesn't
   /// parse is left out rather than failing the form.
-  static Map<String, BdUserFunction> userFunctions(Map<String, BdBusinessFunction> defs) {
+  static Map<String, BdUserFunction> userFunctions(
+      Map<String, BdBusinessFunction> defs) {
     final out = <String, BdUserFunction>{};
     for (final MapEntry(key: name, value: def) in defs.entries) {
       if (def.outputs.isEmpty) continue;
@@ -128,10 +129,25 @@ abstract final class BdFormula {
   // ── Tokenizer ──────────────────────────────────────────────────────────
 
   static const _multiOps = {'<=', '>=', '<>', '==', '!=', '&&', '||'};
-  static const _singleOps = {'+', '-', '*', '/', '%', '^', '&', '<', '>', '=', '!'};
+  static const _singleOps = {
+    '+',
+    '-',
+    '*',
+    '/',
+    '%',
+    '^',
+    '&',
+    '<',
+    '>',
+    '=',
+    '!'
+  };
 
   static bool _isDigit(String? c) =>
-      c != null && c.length == 1 && c.codeUnitAt(0) >= 0x30 && c.codeUnitAt(0) <= 0x39;
+      c != null &&
+      c.length == 1 &&
+      c.codeUnitAt(0) >= 0x30 &&
+      c.codeUnitAt(0) <= 0x39;
 
   static bool _isIdentStart(String c) {
     final u = c.codeUnitAt(0);
@@ -233,7 +249,9 @@ abstract final class BdFormula {
   static double _toNum(BdJson v) => switch (v) {
         BdNum(:final value) => value,
         BdBool(:final value) => value ? 1 : 0,
-        BdObj() || BdArr() => throw _Failure('Cannot use an object as a number.'),
+        BdObj() ||
+        BdArr() =>
+          throw _Failure('Cannot use an object as a number.'),
         BdNull() => 0,
         BdStr(:final value) => () {
             final n = BdJS.parseNumber(value);
@@ -245,9 +263,12 @@ abstract final class BdFormula {
   static bool _toBool(BdJson v) => switch (v) {
         BdBool(:final value) => value,
         BdNum(:final value) => value != 0,
-        BdObj() || BdArr() => throw _Failure('Cannot use an object as a boolean.'),
+        BdObj() ||
+        BdArr() =>
+          throw _Failure('Cannot use an object as a boolean.'),
         BdNull() => false,
-        BdStr(:final value) => value.isNotEmpty && value.toLowerCase() != 'false',
+        BdStr(:final value) =>
+          value.isNotEmpty && value.toLowerCase() != 'false',
       };
 
   static String _toStr(BdJson v) => switch (v) {
@@ -275,7 +296,9 @@ abstract final class BdFormula {
     final r = math.log(x) / math.ln10;
     if (!r.isFinite) return r;
     final rounded = r.roundToDouble();
-    return (rounded - r).abs() < 1e-9 && math.pow(10, rounded) == x ? rounded : r;
+    return (rounded - r).abs() < 1e-9 && math.pow(10, rounded) == x
+        ? rounded
+        : r;
   }
 
   /// `String.prototype.slice` over UTF-16 units (a Dart String's own units).
@@ -284,7 +307,8 @@ abstract final class BdFormula {
     int clamp(double v) {
       if (v.isNaN) return 0;
       final t = v.truncateToDouble();
-      final r = v < 0 ? (t == 0 ? 0.0 : math.max(len + t, 0.0)) : math.min(t, len);
+      final r =
+          v < 0 ? (t == 0 ? 0.0 : math.max(len + t, 0.0)) : math.min(t, len);
       return r.toInt();
     }
 
@@ -293,7 +317,8 @@ abstract final class BdFormula {
     return from < to ? s.substring(from, to) : '';
   }
 
-  static int _parseDate(BdJson v) => BdDates.parse(v) ?? (throw _Failure('Invalid date.'));
+  static int _parseDate(BdJson v) =>
+      BdDates.parse(v) ?? (throw _Failure('Invalid date.'));
 
   static double _monthsBetween(int s, int e) {
     final a = BdDates.utcParts(s);
@@ -366,7 +391,8 @@ abstract final class BdFormula {
   static Map<int, String> get _folds => _slugFold ??= {
         for (final pair in data.slugFold.split(','))
           if (pair.indexOf(':') case final colon when colon > 0)
-            int.parse(pair.substring(0, colon), radix: 16): pair.substring(colon + 1),
+            int.parse(pair.substring(0, colon), radix: 16):
+                pair.substring(colon + 1),
       };
 
   /// NFKD, combining marks dropped, lower-cased, runs of anything else as
@@ -379,14 +405,21 @@ abstract final class BdFormula {
       final fold = folds[rune];
       out.write(fold ?? BdJS.toLowerCase(String.fromCharCode(rune)));
     }
-    return out.toString().replaceAll(RegExp('[^a-z0-9]+'), '-').replaceAll(RegExp(r'^-+|-+$'), '');
+    return out
+        .toString()
+        .replaceAll(RegExp('[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
   }
 
-  static double _haversine(double lat1, double lng1, double lat2, double lng2, bool miles) {
+  static double _haversine(
+      double lat1, double lng1, double lat2, double lng2, bool miles) {
     double rad(double d) => d * math.pi / 180;
     final dLat = rad(lat2 - lat1);
     final dLng = rad(lng2 - lng1);
-    final a = math.pow(math.sin(dLat / 2), 2) + math.cos(rad(lat1)) * math.cos(rad(lat2)) * math.pow(math.sin(dLng / 2), 2);
+    final a = math.pow(math.sin(dLat / 2), 2) +
+        math.cos(rad(lat1)) *
+            math.cos(rad(lat2)) *
+            math.pow(math.sin(dLng / 2), 2);
     final km = 2 * 6371 * math.asin(math.min(1.0, math.sqrt(a)));
     return miles ? km * 0.621371 : km;
   }
@@ -395,15 +428,20 @@ abstract final class BdFormula {
 
   static List<double> _nums(List<BdJson> a) => [for (final x in a) _toNum(x)];
 
-  static double _jsMin(List<double> xs) =>
-      xs.any((x) => x.isNaN) ? double.nan : xs.fold(double.infinity, (m, x) => x < m || (x == 0 && m == 0 && x.isNegative) ? x : m);
+  static double _jsMin(List<double> xs) => xs.any((x) => x.isNaN)
+      ? double.nan
+      : xs.fold(double.infinity,
+          (m, x) => x < m || (x == 0 && m == 0 && x.isNegative) ? x : m);
 
-  static double _jsMax(List<double> xs) =>
-      xs.any((x) => x.isNaN) ? double.nan : xs.fold(double.negativeInfinity, (m, x) => x > m || (x == 0 && m == 0 && !x.isNegative) ? x : m);
+  static double _jsMax(List<double> xs) => xs.any((x) => x.isNaN)
+      ? double.nan
+      : xs.fold(double.negativeInfinity,
+          (m, x) => x > m || (x == 0 && m == 0 && !x.isNegative) ? x : m);
 
   static BdJson _num(double x) => BdNum(x);
 
-  static BdJson _roundTo(List<BdJson> a, double digitsDefault, double Function(double) op) {
+  static BdJson _roundTo(
+      List<BdJson> a, double digitsDefault, double Function(double) op) {
     final f = _jsPow(10, a.length > 1 ? _toNum(a[1]) : digitsDefault);
     return _num(op(_toNum(a[0]) * f) / f);
   }
@@ -412,11 +450,13 @@ abstract final class BdFormula {
 
   static final Map<String, _FnDef> _functions = {
     'SUM': _FnDef(1, null, (a) => _num(_sum(_nums(a)))),
-    'PRODUCT': _FnDef(1, null, (a) => _num(_nums(a).fold(1.0, (p, x) => p * x))),
+    'PRODUCT':
+        _FnDef(1, null, (a) => _num(_nums(a).fold(1.0, (p, x) => p * x))),
     'ABS': _FnDef(1, 1, (a) => _num(_toNum(a[0]).abs())),
     'ROUND': _FnDef(1, 2, (a) => _roundTo(a, 0, _jsRound)),
     'ROUNDUP': _FnDef(1, 2, (a) => _roundTo(a, 0, (x) => x.ceilToDouble())),
-    'ROUNDDOWN': _FnDef(1, 2, (a) => _roundTo(a, 0, (x) => x.truncateToDouble())),
+    'ROUNDDOWN':
+        _FnDef(1, 2, (a) => _roundTo(a, 0, (x) => x.truncateToDouble())),
     'CEILING': _FnDef(1, 1, (a) => _num(_toNum(a[0]).ceilToDouble())),
     'FLOOR': _FnDef(1, 1, (a) => _num(_toNum(a[0]).floorToDouble())),
     'INT': _FnDef(1, 1, (a) => _num(_toNum(a[0]).truncateToDouble())),
@@ -442,14 +482,27 @@ abstract final class BdFormula {
     'COUNT': _FnDef(1, null, (a) {
       var count = 0;
       for (final x in a) {
-        if (x is BdNum || (x is BdStr && BdJS.trim(x.value).isNotEmpty && !BdJS.parseNumber(x.value).isNaN)) {
+        if (x is BdNum ||
+            (x is BdStr &&
+                BdJS.trim(x.value).isNotEmpty &&
+                !BdJS.parseNumber(x.value).isNaN)) {
           count++;
         }
       }
       return _num(count.toDouble());
     }),
-    'COUNTA': _FnDef(1, null, (a) => _num(a.where((x) => x != const BdStr('') && !x.isNull).length.toDouble())),
-    'IF': _FnDef(2, 3, (a) => _toBool(a[0]) ? a[1] : (a.length > 2 ? a[2] : const BdBool(false))),
+    'COUNTA': _FnDef(
+        1,
+        null,
+        (a) => _num(a
+            .where((x) => x != const BdStr('') && !x.isNull)
+            .length
+            .toDouble())),
+    'IF': _FnDef(
+        2,
+        3,
+        (a) =>
+            _toBool(a[0]) ? a[1] : (a.length > 2 ? a[2] : const BdBool(false))),
     'AND': _FnDef(1, null, (a) => BdBool(a.every(_toBool))),
     'OR': _FnDef(1, null, (a) => BdBool(a.any(_toBool))),
     'NOT': _FnDef(1, 1, (a) => BdBool(!_toBool(a[0]))),
@@ -464,7 +517,9 @@ abstract final class BdFormula {
     }),
     'CHOOSE': _FnDef(2, null, (a) {
       final idx = _toNum(a[0]).truncateToDouble();
-      if (!(idx >= 0 && idx < a.length)) throw _Failure('CHOOSE index out of range.');
+      if (!(idx >= 0 && idx < a.length)) {
+        throw _Failure('CHOOSE index out of range.');
+      }
       return a[idx.toInt()];
     }),
     'SWITCH': _FnDef(3, null, (a) {
@@ -483,10 +538,12 @@ abstract final class BdFormula {
       final text = _toStr(a[0]);
       final rest = a.sublist(1);
       if (rest.length.isOdd) {
-        throw _Failure('SUBSTITUTE needs find/replace in pairs — it got an odd number of arguments after the text.');
+        throw _Failure(
+            'SUBSTITUTE needs find/replace in pairs — it got an odd number of arguments after the text.');
       }
       final pairs = [
-        for (var i = 0; i < rest.length; i += 2) (_toStr(rest[i]), _toStr(rest[i + 1])),
+        for (var i = 0; i < rest.length; i += 2)
+          (_toStr(rest[i]), _toStr(rest[i + 1])),
       ];
       return BdStr(_substituteAll(text, pairs));
     }),
@@ -506,16 +563,21 @@ abstract final class BdFormula {
       return BdStr(_jsSlice(text, start, start + _toNum(a[2])));
     }),
     'FILETYPE': _FnDef(1, 1, (a) => BdStr(_fileType(_toStr(a[0])))),
-    'TODAY': _FnDef(0, 0, (_) => BdStr(BdDates.ymd(DateTime.now().millisecondsSinceEpoch))),
-    'YEAR': _FnDef(1, 1, (a) => _num(BdDates.utcParts(_parseDate(a[0])).year.toDouble())),
-    'MONTH': _FnDef(1, 1, (a) => _num(BdDates.utcParts(_parseDate(a[0])).month.toDouble())),
-    'DAY': _FnDef(1, 1, (a) => _num(BdDates.utcParts(_parseDate(a[0])).day.toDouble())),
+    'TODAY': _FnDef(
+        0, 0, (_) => BdStr(BdDates.ymd(DateTime.now().millisecondsSinceEpoch))),
+    'YEAR': _FnDef(
+        1, 1, (a) => _num(BdDates.utcParts(_parseDate(a[0])).year.toDouble())),
+    'MONTH': _FnDef(
+        1, 1, (a) => _num(BdDates.utcParts(_parseDate(a[0])).month.toDouble())),
+    'DAY': _FnDef(
+        1, 1, (a) => _num(BdDates.utcParts(_parseDate(a[0])).day.toDouble())),
     'DAYS': _FnDef(2, 2, (a) {
       final end = _parseDate(a[0]);
       final start = _parseDate(a[1]);
       return _num(_jsRound((end - start) / 86400000));
     }),
-    'NOW': _FnDef(0, 0, (_) => BdStr(BdDates.isoString(DateTime.now().millisecondsSinceEpoch))),
+    'NOW': _FnDef(0, 0,
+        (_) => BdStr(BdDates.isoString(DateTime.now().millisecondsSinceEpoch))),
     'MINUTES': _FnDef(2, 2, (a) {
       final s = _parseDate(a[0]);
       final e = _parseDate(a[1]);
@@ -532,8 +594,10 @@ abstract final class BdFormula {
       final e = _parseDate(a[1]);
       return _num(((e - s) / 604800000).truncateToDouble());
     }),
-    'MONTHS': _FnDef(2, 2, (a) => _num(_monthsBetween(_parseDate(a[0]), _parseDate(a[1])))),
-    'YEARS': _FnDef(2, 2, (a) => _num(_yearsBetween(_parseDate(a[0]), _parseDate(a[1])))),
+    'MONTHS': _FnDef(
+        2, 2, (a) => _num(_monthsBetween(_parseDate(a[0]), _parseDate(a[1])))),
+    'YEARS': _FnDef(
+        2, 2, (a) => _num(_yearsBetween(_parseDate(a[0]), _parseDate(a[1])))),
     'DATEDIFF': _FnDef(3, 3, (a) {
       final unit = _toStr(a[0]).toLowerCase();
       final s = _parseDate(a[1]);
@@ -551,7 +615,8 @@ abstract final class BdFormula {
     }),
     'DISTANCE': _FnDef(4, 5, (a) {
       final miles = a.length > 4 && _toStr(a[4]).toLowerCase() == 'mi';
-      return _num(_haversine(_toNum(a[0]), _toNum(a[1]), _toNum(a[2]), _toNum(a[3]), miles));
+      return _num(_haversine(
+          _toNum(a[0]), _toNum(a[1]), _toNum(a[2]), _toNum(a[3]), miles));
     }),
   };
 
@@ -562,15 +627,20 @@ abstract final class BdFormula {
         _StrNode(:final v) => BdStr(v),
         _BoolNode(:final v) => BdBool(v),
         _VarNode(:final name) => switch (ctx.vars[name]) {
-            null || BdNull() => throw _Failure('Variable "$name" has no value.'),
+            null ||
+            BdNull() =>
+              throw _Failure('Variable "$name" has no value.'),
             final v => v,
           },
         _MemberNode(:final obj, :final key) => switch (_eval(obj, ctx)) {
             BdObj(:final fields) => switch (fields[key]) {
-                null || BdNull() => throw _Failure('Field "$key" has no value.'),
+                null ||
+                BdNull() =>
+                  throw _Failure('Field "$key" has no value.'),
                 final v => v,
               },
-            _ => throw _Failure('Cannot read field "$key" of a non-object value.'),
+            _ =>
+              throw _Failure('Cannot read field "$key" of a non-object value.'),
           },
         _UnaryNode(:final op, :final arg) => op == 'NOT'
             ? BdBool(!_toBool(_eval(arg, ctx)))
@@ -578,7 +648,8 @@ abstract final class BdFormula {
                 final x = _toNum(_eval(arg, ctx));
                 return BdNum(op == '-' ? -x : x);
               }(),
-        _BinaryNode(:final op, :final l, :final r) => _evalBinary(op, l, r, ctx),
+        _BinaryNode(:final op, :final l, :final r) =>
+          _evalBinary(op, l, r, ctx),
         _CallNode() => _evalCall(node, ctx),
       };
 
@@ -587,13 +658,16 @@ abstract final class BdFormula {
     final def = _functions[name];
     if (def != null) {
       final args = [for (final a in node.args) _eval(a, ctx)];
-      if (args.length < def.min || (def.max != null && args.length > def.max!)) {
+      if (args.length < def.min ||
+          (def.max != null && args.length > def.max!)) {
         throw _Failure('$name got the wrong number of arguments.');
       }
       return def.fn(args);
     }
     final user = ctx.fns[name] ?? (throw _Failure('Unknown function "$name".'));
-    if (ctx.stack.contains(name)) throw _Failure('Circular function reference: "$name".');
+    if (ctx.stack.contains(name)) {
+      throw _Failure('Circular function reference: "$name".');
+    }
     if (node.args.length != user._params.length) {
       throw _Failure('$name expects ${user._params.length} argument(s).');
     }
@@ -819,7 +893,9 @@ class _Parser {
     var left = parseConcat();
     while (true) {
       final t = peek();
-      if (t == null || t.kind != _K.op || !_comparisonOps.contains(t.text)) break;
+      if (t == null || t.kind != _K.op || !_comparisonOps.contains(t.text)) {
+        break;
+      }
       next();
       left = _BinaryNode(t.text, left, parseConcat());
     }

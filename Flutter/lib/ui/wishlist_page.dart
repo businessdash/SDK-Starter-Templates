@@ -24,8 +24,10 @@ class WishlistPage extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   spacing: 6,
                   children: [
-                    Text('Your wishlist is empty', style: theme.textTheme.titleMedium),
-                    const Text('Tap ♡ on a product to save it here.', textAlign: TextAlign.center),
+                    Text('Your wishlist is empty',
+                        style: theme.textTheme.titleMedium),
+                    const Text('Tap ♡ on a product to save it here.',
+                        textAlign: TextAlign.center),
                   ],
                 ),
               ),
@@ -39,11 +41,16 @@ class WishlistPage extends StatelessWidget {
                 return ListTile(
                   leading: ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: SizedBox.square(dimension: 56, child: Photo(item.image)),
+                    child: SizedBox.square(
+                        dimension: 56, child: Photo(item.image)),
                   ),
                   title: Text(item.name.isEmpty ? 'Untitled' : item.name),
-                  subtitle: item.priceCents == null ? null : Text(Money.cents(item.priceCents)),
-                  trailing: TextButton(onPressed: () => wishlist.remove(item.id), child: const Text('Remove')),
+                  subtitle: item.priceCents == null
+                      ? null
+                      : Text(Money.cents(item.priceCents)),
+                  trailing: TextButton(
+                      onPressed: () => wishlist.remove(item.id),
+                      child: const Text('Remove')),
                   onTap: () => openProduct(context, item.id),
                 );
               },

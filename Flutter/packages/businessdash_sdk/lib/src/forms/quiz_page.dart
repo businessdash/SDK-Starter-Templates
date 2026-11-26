@@ -30,14 +30,23 @@ abstract interface class BdQuizInvitationPageInfo implements BdQuizPageInfo {
 }
 
 class BdQuizPageHeader {
-  const BdQuizPageHeader({required this.eyebrow, required this.title, this.description, required this.facts});
+  const BdQuizPageHeader(
+      {required this.eyebrow,
+      required this.title,
+      this.description,
+      required this.facts});
 
   final String eyebrow;
   final String title;
   final String? description;
   final List<String> facts;
 
-  Map<String, Object?> toJson() => {'eyebrow': eyebrow, 'title': title, 'description': description, 'facts': facts};
+  Map<String, Object?> toJson() => {
+        'eyebrow': eyebrow,
+        'title': title,
+        'description': description,
+        'facts': facts
+      };
 }
 
 enum BdQuizGateKind {
@@ -59,18 +68,25 @@ class BdQuizGateAction {
   final String label;
   final String? href;
 
-  Map<String, Object?> toJson() => {'id': id.wire, 'label': label, 'href': href};
+  Map<String, Object?> toJson() =>
+      {'id': id.wire, 'label': label, 'href': href};
 }
 
 class BdQuizGate {
-  const BdQuizGate({required this.kind, this.title, required this.body, this.action});
+  const BdQuizGate(
+      {required this.kind, this.title, required this.body, this.action});
 
   final BdQuizGateKind kind;
   final String? title;
   final String body;
   final BdQuizGateAction? action;
 
-  Map<String, Object?> toJson() => {'kind': kind.wire, 'title': title, 'body': body, 'action': action?.toJson()};
+  Map<String, Object?> toJson() => {
+        'kind': kind.wire,
+        'title': title,
+        'body': body,
+        'action': action?.toJson()
+      };
 }
 
 class BdQuizPage {
@@ -83,7 +99,8 @@ class BdQuizPage {
 
   BdQuizPage withoutHeader() => BdQuizPage(gate: gate);
 
-  Map<String, Object?> toJson() => {'header': header?.toJson(), 'gate': gate?.toJson()};
+  Map<String, Object?> toJson() =>
+      {'header': header?.toJson(), 'gate': gate?.toJson()};
 
   static List<String> _minutesFacts(BdQuizWords w, BdQuizPageInfo page) => [
         if (page.estimatedMinutes case final m? when m != 0)
@@ -102,23 +119,32 @@ class BdQuizPage {
     String? switchAccountHref,
   }) {
     final w = words;
-    BdQuizPage gate(BdQuizGateKind kind, String body) => BdQuizPage(gate: BdQuizGate(kind: kind, body: body));
+    BdQuizPage gate(BdQuizGateKind kind, String body) =>
+        BdQuizPage(gate: BdQuizGate(kind: kind, body: body));
     if (invitation == null) return gate(BdQuizGateKind.invalid, w.invalid);
     if (invitation.expired) return gate(BdQuizGateKind.expired, w.expired);
-    if (!invitation.active && invitation.status != 'completed') return gate(BdQuizGateKind.closed, w.closed);
+    if (!invitation.active && invitation.status != 'completed') {
+      return gate(BdQuizGateKind.closed, w.closed);
+    }
     final facts = [
-      if (invitation.recipientName case final name? when name.isNotEmpty) BdQuizWords.fill(w.forRecipient, {'name': name}),
+      if (invitation.recipientName case final name? when name.isNotEmpty)
+        BdQuizWords.fill(w.forRecipient, {'name': name}),
       ..._minutesFacts(w, invitation),
-      invitation.requireAuthentication ? w.authenticatedResponse : w.oneResponse,
+      invitation.requireAuthentication
+          ? w.authenticatedResponse
+          : w.oneResponse,
     ];
     final header = BdQuizPageHeader(
       eyebrow: w.eyebrow,
       title: invitation.name,
-      description: invitation.description.isEmpty ? null : invitation.description,
+      description:
+          invitation.description.isEmpty ? null : invitation.description,
       facts: facts,
     );
     final status = invitation.authenticationStatus;
-    if (status != 'required' && status != 'mismatch') return BdQuizPage(header: header);
+    if (status != 'required' && status != 'mismatch') {
+      return BdQuizPage(header: header);
+    }
     final signIn = status == 'required';
     final kind = signIn ? BdQuizGateKind.signIn : BdQuizGateKind.switchAccount;
     return BdQuizPage(
@@ -126,7 +152,8 @@ class BdQuizPage {
       gate: BdQuizGate(
         kind: kind,
         title: signIn ? w.signInTitle : w.switchAccountTitle,
-        body: BdQuizWords.fill(w.accountBody, {'email': invitation.recipientEmailHint}),
+        body: BdQuizWords.fill(
+            w.accountBody, {'email': invitation.recipientEmailHint}),
         action: BdQuizGateAction(
           id: kind,
           label: signIn ? w.signInAction : w.switchAccountAction,
@@ -137,11 +164,14 @@ class BdQuizPage {
   }
 
   /// A practice quiz's page.
-  static BdQuizPage practice(BdQuizPageInfo practice, {BdQuizWords words = const BdQuizWords()}) => BdQuizPage(
+  static BdQuizPage practice(BdQuizPageInfo practice,
+          {BdQuizWords words = const BdQuizWords()}) =>
+      BdQuizPage(
         header: BdQuizPageHeader(
           eyebrow: words.practiceEyebrow,
           title: practice.name,
-          description: practice.description.isEmpty ? null : practice.description,
+          description:
+              practice.description.isEmpty ? null : practice.description,
           facts: [..._minutesFacts(words, practice), words.practiceNote],
         ),
       );

@@ -25,19 +25,26 @@ class PostBody extends StatelessWidget {
           switch (block) {
             PostHeading(:final level, text: final runs) => Semantics(
                 header: true,
-                child: _Runs(runs, style: switch (level) {
-                  1 => text.headlineSmall,
-                  2 => text.titleLarge,
-                  3 => text.titleMedium,
-                  _ => text.titleSmall,
-                }),
+                child: _Runs(runs,
+                    style: switch (level) {
+                      1 => text.headlineSmall,
+                      2 => text.titleLarge,
+                      3 => text.titleMedium,
+                      _ => text.titleSmall,
+                    }),
               ),
-            PostParagraph(text: final runs) => _Runs(runs, style: text.bodyLarge),
+            PostParagraph(text: final runs) =>
+              _Runs(runs, style: text.bodyLarge),
             PostQuote(text: final runs) => DecoratedBox(
-                decoration: BoxDecoration(border: Border(left: BorderSide(color: theme.colorScheme.primary, width: 3))),
+                decoration: BoxDecoration(
+                    border: Border(
+                        left: BorderSide(
+                            color: theme.colorScheme.primary, width: 3))),
                 child: Padding(
                   padding: const EdgeInsets.only(left: 12),
-                  child: _Runs(runs, style: text.bodyLarge?.copyWith(fontStyle: FontStyle.italic)),
+                  child: _Runs(runs,
+                      style: text.bodyLarge
+                          ?.copyWith(fontStyle: FontStyle.italic)),
                 ),
               ),
             PostList(:final items) => Column(
@@ -50,8 +57,11 @@ class PostBody extends StatelessWidget {
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          SizedBox(width: 24, child: Text(item.marker, style: text.bodyLarge)),
-                          Expanded(child: _Runs(item.text, style: text.bodyLarge)),
+                          SizedBox(
+                              width: 24,
+                              child: Text(item.marker, style: text.bodyLarge)),
+                          Expanded(
+                              child: _Runs(item.text, style: text.bodyLarge)),
                         ],
                       ),
                     ),
@@ -65,7 +75,9 @@ class PostBody extends StatelessWidget {
                 child: SingleChildScrollView(
                   scrollDirection: Axis.horizontal,
                   padding: const EdgeInsets.all(12),
-                  child: Text(code, style: const TextStyle(fontFamily: 'monospace', fontSize: 13)),
+                  child: Text(code,
+                      style: const TextStyle(
+                          fontFamily: 'monospace', fontSize: 13)),
                 ),
               ),
             PostImage(:final url, :final alt) => ClipRRect(
@@ -78,23 +90,27 @@ class PostBody extends StatelessWidget {
                   errorBuilder: (_, _, _) => const SizedBox.shrink(),
                 ),
               ),
-            PostCaption(text: final runs) =>
-              _Runs(runs, style: text.bodySmall?.copyWith(color: muted), align: TextAlign.center),
+            PostCaption(text: final runs) => _Runs(runs,
+                style: text.bodySmall?.copyWith(color: muted),
+                align: TextAlign.center),
             PostTable(:final rows) => SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Table(
                   defaultColumnWidth: const IntrinsicColumnWidth(),
-                  border: TableBorder.all(color: theme.colorScheme.outlineVariant),
+                  border:
+                      TableBorder.all(color: theme.colorScheme.outlineVariant),
                   children: [
                     for (final row in rows)
                       TableRow(
                         children: [
                           for (final cell in row.cells)
                             Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 6),
                               child: _Runs(cell,
                                   style: row.isHeader
-                                      ? text.bodyMedium?.copyWith(fontWeight: FontWeight.w700)
+                                      ? text.bodyMedium?.copyWith(
+                                          fontWeight: FontWeight.w700)
                                       : text.bodyMedium),
                             ),
                         ],
@@ -140,7 +156,8 @@ class _RunsState extends State<_Runs> {
 
   TapGestureRecognizer _open(String link) {
     final tap = TapGestureRecognizer()
-      ..onTap = () => launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
+      ..onTap = () =>
+          launchUrl(Uri.parse(link), mode: LaunchMode.externalApplication);
     _taps.add(tap);
     return tap;
   }

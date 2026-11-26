@@ -1,9 +1,10 @@
 // [bd-file:store]
 import { useState } from "react";
-import { bd, dollars } from "../lib/bd";
+import { bd } from "../lib/bd";
 import type { Loose } from "../lib/bd";
 import { Link } from "../lib/router";
-import { ErrorBox, PageHead, useApi } from "./ui";
+import { ErrorBox, PageHead } from "./ui";
+import { useApi } from "./use-api";
 import { StoreNav } from "../components/StoreNav";
 import { CartActions } from "../components/shop/CartActions";
 import { CartLine } from "../components/shop/CartLine";
@@ -45,16 +46,16 @@ function CartBody() {
 			</main>
 		);
 
-	const items: Record<string, any>[] = view?.items ?? [];
+	const items: Loose[] = view?.items ?? [];
 	const currency: string = view?.currency ?? "USD";
 
 	const checkout = async () => {
 		setCheckoutMsg("Starting checkout…");
 		try {
 			const { url } = await bd.checkout.start({ origin: window.location.origin });
-			window.location.href = url;
-		} catch (e: any) {
-			setCheckoutMsg(`Couldn't start checkout: ${e?.message ?? e}`);
+			window.location.assign(url);
+		} catch (e) {
+			setCheckoutMsg(`Couldn't start checkout: ${e instanceof Error ? e.message : String(e)}`);
 		}
 	};
 
@@ -64,8 +65,8 @@ function CartBody() {
 		try {
 			setCart(await bd.cart.applyCoupon(code));
 			setCouponMsg("");
-		} catch (e: any) {
-			setCouponMsg(e?.message ?? "Invalid code");
+		} catch (e) {
+			setCouponMsg(e instanceof Error ? e.message : "Invalid code");
 		}
 	};
 

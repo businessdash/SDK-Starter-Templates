@@ -24,9 +24,9 @@ export function SignInScreen({
 }) {
 	return (
 		<BdSignIn
-			start={start}
-			redirectTo={redirectTo}
 			brand={{ tagline: "Sign in to see your jobs, quotes, and invoices." }}
+			redirectTo={redirectTo}
+			start={start}
 		/>
 	);
 }

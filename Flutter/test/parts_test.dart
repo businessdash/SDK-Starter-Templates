@@ -47,10 +47,14 @@ class _MyProductPageState extends State<MyProductPage> {
           OptionPicker(
             group: group,
             selected: _chosen[group.id],
-            onSelect: (id) => setState(() => _chosen = {..._chosen, group.id: id}),
+            onSelect: (id) =>
+                setState(() => _chosen = {..._chosen, group.id: id}),
           ),
         Row(children: [
-          QuantityStepper(quantity: _quantity, max: price.stock ?? 99, onChanged: (n) => setState(() => _quantity = n)),
+          QuantityStepper(
+              quantity: _quantity,
+              max: price.stock ?? 99,
+              onChanged: (n) => setState(() => _quantity = n)),
           Expanded(
             child: AddToCartButton(
               price: price,
@@ -85,7 +89,13 @@ void main() {
     'crossVariants': [
       // With options, the option chosen sets the price.
       {'id': 'l', 'crossVariantTitleId': 't1', 'value': 'L', 'price': 135},
-      {'id': 's', 'crossVariantTitleId': 't1', 'value': 'S', 'price': 130, 'stock': 3},
+      {
+        'id': 's',
+        'crossVariantTitleId': 't1',
+        'value': 'S',
+        'price': 130,
+        'stock': 3
+      },
     ],
     'specifications': {
       'features': ['Seam-sealed'],
@@ -100,14 +110,17 @@ void main() {
     },
   });
 
-  testWidgets('a product page of your own: style, size, quantity and add to cart', (tester) async {
+  testWidgets(
+      'a product page of your own: style, size, quantity and add to cart',
+      (tester) async {
     await tester.pumpWidget(_app(MyProductPage(view: shell)));
 
     expect(find.text('Jackets'), findsOneWidget);
     expect(find.text('Trail Shell'), findsOneWidget);
     // Opens on the first style that can be bought, its sizes smallest first.
     expect(find.text('Style: Storm'), findsOneWidget);
-    expect(tester.getTopLeft(find.text('S')).dx, lessThan(tester.getTopLeft(find.text('L')).dx));
+    expect(tester.getTopLeft(find.text('S')).dx,
+        lessThan(tester.getTopLeft(find.text('L')).dx));
     expect(find.text('Choose options'), findsOneWidget);
 
     await tester.tap(find.text('S'));
@@ -127,7 +140,8 @@ void main() {
     expect(find.text('Regular'), findsOneWidget);
   });
 
-  testWidgets('the store, blog and reviews parts stand on their own', (tester) async {
+  testWidgets('the store, blog and reviews parts stand on their own',
+      (tester) async {
     final post = BlogPost.fromJson({
       'id': 'b1',
       'slug': 'first-5k-plan',
@@ -154,7 +168,12 @@ void main() {
           Text('Tag: ${tag ?? 'none'}'),
           PostTags(tags: post.tags),
           PostCta(post: post, onOpen: (_) {}),
-          LikeButton(signedIn: false, liked: false, count: 2, onToggle: () {}, onSignIn: () {}),
+          LikeButton(
+              signedIn: false,
+              liked: false,
+              count: 2,
+              onToggle: () {},
+              onSignIn: () {}),
           ReviewSourceFilter(
             sources: const ['google', 'yelp'],
             selected: source,
@@ -167,7 +186,8 @@ void main() {
             selected: category,
             onSelect: (next) => setState(() => category = next),
           ),
-          StoreResultsBar(count: 1, filterCount: 1, sort: 'price-asc', onFilters: () {}),
+          StoreResultsBar(
+              count: 1, filterCount: 1, sort: 'price-asc', onFilters: () {}),
         ],
       ),
     )));

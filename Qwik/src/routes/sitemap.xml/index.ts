@@ -39,8 +39,7 @@ export const onGet: RequestHandler = async ({ send, url, env }) => {
 	const xml = client
 		? await buildSitemap({
 				client,
-				siteId:
-					env.get("PUBLIC_BD_SITE_ID") ?? env.get("BD_SITE_ID") ?? "",
+				siteId: env.get("PUBLIC_BD_SITE_ID") ?? env.get("BD_SITE_ID") ?? "",
 				baseUrl,
 				staticPaths: STATIC_PATHS,
 				routes: {

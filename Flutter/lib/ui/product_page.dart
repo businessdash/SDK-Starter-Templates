@@ -95,7 +95,8 @@ class _ProductPageState extends State<ProductPage> {
     if (client == null) return;
     setState(() => _loadingReviews = true);
     try {
-      final page = await client.productReviews(widget.productId, limit: _reviewLimit);
+      final page =
+          await client.productReviews(widget.productId, limit: _reviewLimit);
       if (mounted) setState(() => _reviews = page);
     } on Exception {
       // The reviews already shown stay.
@@ -126,10 +127,15 @@ class _ProductPageState extends State<ProductPage> {
       if (!mounted) return;
       messenger.showSnackBar(SnackBar(
         content: Text('Added ${view.name} to your cart.'),
-        action: SnackBarAction(label: 'View cart', onPressed: () => app.showTab(context, AppTab.cart)),
+        action: SnackBarAction(
+            label: 'View cart',
+            onPressed: () => app.showTab(context, AppTab.cart)),
       ));
     } on Exception catch (error) {
-      if (mounted) setState(() => _message = bdProblem(error, "Couldn't add it to your cart. Try again."));
+      if (mounted) {
+        setState(() => _message =
+            bdProblem(error, "Couldn't add it to your cart. Try again."));
+      }
     } finally {
       if (mounted) setState(() => _adding = false);
     }
@@ -141,11 +147,14 @@ class _ProductPageState extends State<ProductPage> {
     if (client == null) return;
     final app = AppScope.read(context);
     try {
-      final cart = await client.cartAdd(scope.visitorToken, productId: addon.addonProductId, variantId: addon.firstVariantId);
+      final cart = await client.cartAdd(scope.visitorToken,
+          productId: addon.addonProductId, variantId: addon.firstVariantId);
       app.noteCart(cart);
       if (mounted) setState(() => _addedAddons.add(addon.id));
     } on Exception {
-      if (mounted) setState(() => _message = "Couldn't add ${addon.name}. Try again.");
+      if (mounted) {
+        setState(() => _message = "Couldn't add ${addon.name}. Try again.");
+      }
     }
   }
 
@@ -161,8 +170,10 @@ class _ProductPageState extends State<ProductPage> {
               tooltip: 'Copy link',
               icon: const Icon(Icons.link),
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: '$bdSiteUrl/store/${Uri.encodeComponent(view.id)}'));
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Link copied.')));
+                Clipboard.setData(ClipboardData(
+                    text: '$bdSiteUrl/store/${Uri.encodeComponent(view.id)}'));
+                ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Link copied.')));
               },
             ),
         ],
@@ -176,7 +187,8 @@ class _ProductPageState extends State<ProductPage> {
               child: Text(
                 _client == null
                     ? 'Not connected to BD.'
-                    : (_error is BdHttpException && (_error as BdHttpException).status == 404)
+                    : (_error is BdHttpException &&
+                            (_error as BdHttpException).status == 404)
                         ? 'Product not found.'
                         : "Couldn't load this product.",
                 textAlign: TextAlign.center,
@@ -190,8 +202,12 @@ class _ProductPageState extends State<ProductPage> {
   Widget _page(BuildContext context, ProductView view) {
     final app = AppScope.of(context);
     final variantId = _variantId;
-    final groups = variantId == null ? const <OptionGroup>[] : view.optionGroups(variantId);
-    final price = variantId == null ? const ProductPrice(from: false, ready: false) : view.price(variantId, _chosen);
+    final groups = variantId == null
+        ? const <OptionGroup>[]
+        : view.optionGroups(variantId);
+    final price = variantId == null
+        ? const ProductPrice(from: false, ready: false)
+        : view.price(variantId, _chosen);
     final gallery = variantId == null ? view.images : view.gallery(variantId);
     final stock = price.stock;
     final maxQuantity = stock == null ? 99 : stock.clamp(1, 99);
@@ -199,9 +215,12 @@ class _ProductPageState extends State<ProductPage> {
       id: view.id,
       name: view.name,
       image: view.images.firstOrNull,
-      priceCents: view.defaultVariant?.price == null ? null : (view.defaultVariant!.price! * 100).round(),
+      priceCents: view.defaultVariant?.price == null
+          ? null
+          : (view.defaultVariant!.price! * 100).round(),
     );
-    final recent = app.recentlyViewed.items.where((item) => item.id != view.id).toList();
+    final recent =
+        app.recentlyViewed.items.where((item) => item.id != view.id).toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -247,7 +266,9 @@ class _ProductPageState extends State<ProductPage> {
                 price: price,
                 adding: _adding,
                 hasOptions: groups.isNotEmpty,
-                onPressed: variantId == null ? null : () => _addToCart(view, variantId),
+                onPressed: variantId == null
+                    ? null
+                    : () => _addToCart(view, variantId),
               ),
             ),
           ],
@@ -275,11 +296,14 @@ class _ProductPageState extends State<ProductPage> {
                 id: item.id,
                 name: item.name,
                 image: item.coverImageUrl,
-                priceCents: item.minPriceDollars == null ? null : (item.minPriceDollars! * 100).round(),
+                priceCents: item.minPriceDollars == null
+                    ? null
+                    : (item.minPriceDollars! * 100).round(),
               ),
           ],
         ),
-        if (_related.isNotEmpty && recent.isNotEmpty) const SizedBox(height: 24),
+        if (_related.isNotEmpty && recent.isNotEmpty)
+          const SizedBox(height: 24),
         ProductRail(title: 'Recently viewed', products: recent),
       ],
     );

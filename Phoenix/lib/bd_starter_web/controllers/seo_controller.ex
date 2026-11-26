@@ -17,7 +17,8 @@ defmodule BdStarterWeb.SeoController do
   """
 
   def sitemap(conn, _params) do
-    empty = ~s(<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>)
+    empty =
+      ~s(<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"></urlset>)
 
     conn
     |> put_resp_content_type("application/xml")
@@ -81,7 +82,10 @@ defmodule BdStarterWeb.SeoController do
   end
 
   defp host, do: String.trim_trailing(Application.get_env(:bd_starter, :bd_host, ""), "/")
-  defp origin, do: String.trim_trailing(Application.get_env(:bd_starter, :bd_site_origin, ""), "/")
+
+  defp origin,
+    do: String.trim_trailing(Application.get_env(:bd_starter, :bd_site_origin, ""), "/")
+
   defp site_id, do: Application.get_env(:bd_starter, :bd_site_id)
   defp api_key, do: Application.get_env(:bd_starter, :bd_api_key)
 end

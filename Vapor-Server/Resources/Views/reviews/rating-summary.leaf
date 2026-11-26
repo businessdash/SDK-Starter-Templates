@@ -11,7 +11,7 @@
     </div>
     <ul class="reviews-bars">
       #for(bar in bars):
-        <li aria-label="#(bar.stars) stars: #(bar.count)">
+        <li aria-label="#(bar.stars) #if(bar.stars == 1):star: #else:stars: #endif#(bar.count)">
           <span>#(bar.stars) ★</span>
           <span class="reviews-bars__track"><span class="reviews-bars__fill" style="#(bar.width)"></span></span>
           <span>#(bar.count)</span>

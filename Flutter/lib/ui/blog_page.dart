@@ -61,12 +61,17 @@ class _BlogTabState extends State<BlogTab> {
       _failed = false;
     });
     try {
-      final page = await client.blogPage(limit: tag != null ? 50 : _pageSize, categoryId: _categoryId);
+      final page = await client.blogPage(
+          limit: tag != null ? 50 : _pageSize, categoryId: _categoryId);
       if (!mounted || ticket != _ticket) return;
-      final matched = page.items.where((post) => tag == null || post.tags.contains(tag));
+      final matched =
+          page.items.where((post) => tag == null || post.tags.contains(tag));
       setState(() {
         // Pinned first; the rest keep their order.
-        _posts = [...matched.where((post) => post.isPinned), ...matched.where((post) => !post.isPinned)];
+        _posts = [
+          ...matched.where((post) => post.isPinned),
+          ...matched.where((post) => !post.isPinned)
+        ];
         _cursor = tag != null ? null : page.nextCursor;
       });
     } on Exception {
@@ -81,11 +86,15 @@ class _BlogTabState extends State<BlogTab> {
     if (client == null || posts == null || cursor == null) return;
     setState(() => _loadingMore = true);
     try {
-      final page = await client.blogPage(limit: _pageSize, cursor: cursor, categoryId: _categoryId);
+      final page = await client.blogPage(
+          limit: _pageSize, cursor: cursor, categoryId: _categoryId);
       if (!mounted) return;
       final shown = posts.map((post) => post.id).toSet();
       setState(() {
-        _posts = [...posts, ...page.items.where((post) => !shown.contains(post.id))];
+        _posts = [
+          ...posts,
+          ...page.items.where((post) => !shown.contains(post.id))
+        ];
         _cursor = page.nextCursor;
       });
     } on Exception {
@@ -98,7 +107,8 @@ class _BlogTabState extends State<BlogTab> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final active = _categories.where((category) => category.id == _categoryId).firstOrNull;
+    final active =
+        _categories.where((category) => category.id == _categoryId).firstOrNull;
     final posts = _posts;
     final filtered = _categoryId != null || _tag != null;
     return Scaffold(
@@ -125,14 +135,20 @@ class _BlogTabState extends State<BlogTab> {
                 if (active?.description?.isNotEmpty ?? false)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(active!.description!, style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor)),
+                    child: Text(active!.description!,
+                        style: theme.textTheme.bodyMedium
+                            ?.copyWith(color: theme.hintColor)),
                   ),
                 if (_failed)
-                  const EmptyNote("The blog isn't available right now. Please check back soon.")
+                  const EmptyNote(
+                      "The blog isn't available right now. Please check back soon.")
                 else if (posts == null)
-                  const Padding(padding: EdgeInsets.all(32), child: Center(child: CircularProgressIndicator()))
+                  const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(child: CircularProgressIndicator()))
                 else if (posts.isEmpty)
-                  EmptyNote('No posts here yet', detail: filtered ? 'Try another topic.' : null)
+                  EmptyNote('No posts here yet',
+                      detail: filtered ? 'Try another topic.' : null)
                 else ...[
                   for (final post in posts) PostCard(post: post),
                   if (_cursor != null)

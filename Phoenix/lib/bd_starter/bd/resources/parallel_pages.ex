@@ -15,7 +15,12 @@ defmodule BdStarter.Bd.Resources.ParallelPages do
     do: Client.get(client, Client.site_path(client, "parallel-pages/#{enc(key)}/variants"))
 
   def render(client, key, params),
-    do: Client.get(client, Client.site_path(client, "parallel-pages/#{enc(key)}/render"), Map.to_list(params))
+    do:
+      Client.get(
+        client,
+        Client.site_path(client, "parallel-pages/#{enc(key)}/render"),
+        Map.to_list(params)
+      )
 
   defp enc(v), do: URI.encode(to_string(v), &URI.char_unreserved?/1)
 end

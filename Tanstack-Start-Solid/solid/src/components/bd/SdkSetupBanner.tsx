@@ -16,8 +16,9 @@ import { createSignal, onSettled, Show } from "solid-js";
 // Inlined at build time. When unset, the site is running unconfigured.
 const SITE_ID = (import.meta.env.VITE_BD_SITE_ID ??
 	import.meta.env.VITE_BD_SITE_ID) as string | undefined;
-const PK = (import.meta.env.VITE_BD_PK ??
-	import.meta.env.VITE_BD_PUBLIC_KEY) as string | undefined;
+const PK = (import.meta.env.VITE_BD_PK ?? import.meta.env.VITE_BD_PUBLIC_KEY) as
+	| string
+	| undefined;
 const BASE_URL =
 	((import.meta.env.VITE_BD_PACKAGE_API_BASE_URL ??
 		import.meta.env.VITE_BD_PACKAGE_API_BASE_URL) as string | undefined) ??

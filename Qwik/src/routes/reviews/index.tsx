@@ -29,7 +29,10 @@ export const useReviews = routeLoader$(async ({ url, cookie }) => {
 		totals: bd
 			? bd.marketing
 					.getPageBundle({ pageKey: "home", locale: "en" })
-					.then((bundle) => (bundle as { reviews?: BundleReviewTotals | null }).reviews)
+					.then(
+						(bundle) =>
+							(bundle as { reviews?: BundleReviewTotals | null }).reviews,
+					)
 			: Promise.resolve(null),
 		signedIn: session.then((s) => s !== null),
 	});
@@ -60,8 +63,8 @@ export default component$(() => {
 
 				{!data.configured ? (
 					<div class="bd-empty">
-						Reviews aren't connected yet. Set BD_API_KEY and BD_SITE_ID, and your
-						rating and reviews appear here.
+						Reviews aren't connected yet. Set BD_API_KEY and BD_SITE_ID, and
+						your rating and reviews appear here.
 					</div>
 				) : (
 					<>
@@ -101,5 +104,10 @@ export default component$(() => {
 
 export const head: DocumentHead = {
 	title: "Reviews — Your Business",
-	meta: [{ name: "description", content: "What customers say: the rating and every review." }],
+	meta: [
+		{
+			name: "description",
+			content: "What customers say: the rating and every review.",
+		},
+	],
 };

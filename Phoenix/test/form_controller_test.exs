@@ -1,7 +1,16 @@
 defmodule BdStarter.FormControllerTest do
   use ExUnit.Case, async: true
 
-  alias BdStarter.Forms.{FieldPath, FormController, FormsError, Json, PickedFile, Rules, Schema, SubmitResult}
+  alias BdStarter.Forms.{
+    FieldPath,
+    FormController,
+    FormsError,
+    Json,
+    PickedFile,
+    Rules,
+    Schema,
+    SubmitResult
+  }
 
   defmodule MockBackend do
     @moduledoc "A backend that records what it was sent and answers from a script."
@@ -12,7 +21,16 @@ defmodule BdStarter.FormControllerTest do
     defstruct [:fields, :settings, :agent]
 
     def new(fields, settings \\ %{}) do
-      {:ok, agent} = Agent.start_link(fn -> %{submissions: [], uploads: [], fail_uploads: false, answer: {201, %{"submissionId" => "sub_1"}}} end)
+      {:ok, agent} =
+        Agent.start_link(fn ->
+          %{
+            submissions: [],
+            uploads: [],
+            fail_uploads: false,
+            answer: {201, %{"submissionId" => "sub_1"}}
+          }
+        end)
+
       %__MODULE__{fields: fields, settings: settings, agent: agent}
     end
 
@@ -22,7 +40,15 @@ defmodule BdStarter.FormControllerTest do
 
     @impl true
     def schema(b, _form) do
-      Schema.from_json(Json.normalize(%{"id" => "form_1", "slug" => "contact", "name" => "Contact", "fields" => b.fields, "settings" => b.settings}))
+      Schema.from_json(
+        Json.normalize(%{
+          "id" => "form_1",
+          "slug" => "contact",
+          "name" => "Contact",
+          "fields" => b.fields,
+          "settings" => b.settings
+        })
+      )
     end
 
     @impl true
@@ -59,13 +85,23 @@ defmodule BdStarter.FormControllerTest do
   end
 
   defp controller(b), do: FormController.new(MockBackend.schema(b, "contact"), b)
-  defp file(name, type, size \\ 10), do: %PickedFile{name: name, mime_type: type, size: size, path: "/dev/null"}
-  defp set(c, id, value), do: FormController.set_value(c, Json.normalize(value), FieldPath.new(id))
+
+  defp file(name, type, size \\ 10),
+    do: %PickedFile{name: name, mime_type: type, size: size, path: "/dev/null"}
+
+  defp set(c, id, value),
+    do: FormController.set_value(c, Json.normalize(value), FieldPath.new(id))
 
   test "loads and submits with output keys" do
     b =
       MockBackend.new([
-        %{"id" => "f1", "type" => "text", "label" => "Your name", "required" => true, "key" => "full_name"},
+        %{
+          "id" => "f1",
+          "type" => "text",
+          "label" => "Your name",
+          "required" => true,
+          "key" => "full_name"
+        },
         %{"id" => "f2", "type" => "email", "label" => "Email", "required" => true},
         %{"id" => "t", "type" => "title", "label" => "Hello"}
       ])
@@ -96,7 +132,13 @@ defmodule BdStarter.FormControllerTest do
   end
 
   test "blur shows format but not required until attempted" do
-    c = controller(MockBackend.new([%{"id" => "email", "type" => "email", "label" => "Email", "required" => true}]))
+    c =
+      controller(
+        MockBackend.new([
+          %{"id" => "email", "type" => "email", "label" => "Email", "required" => true}
+        ])
+      )
+
     c = FormController.validate(c, FieldPath.new("email"))
     refute Map.has_key?(c.errors, "email"), "an untouched required field stays quiet on blur"
     c = c |> set("email", "bad") |> FormController.validate(FieldPath.new("email"))
@@ -108,7 +150,14 @@ defmodule BdStarter.FormControllerTest do
   test "business email rule" do
     c =
       controller(
-        MockBackend.new([%{"id" => "email", "type" => "email", "label" => "Work email", "emailConfig" => %{"businessOnly" => true}}])
+        MockBackend.new([
+          %{
+            "id" => "email",
+            "type" => "email",
+            "label" => "Work email",
+            "emailConfig" => %{"businessOnly" => true}
+          }
+        ])
       )
 
     c = c |> set("email", "someone@gmail.com") |> FormController.validate(FieldPath.new("email"))
@@ -119,13 +168,21 @@ defmodule BdStarter.FormControllerTest do
     b =
       MockBackend.new(
         [
-          %{"id" => "kind", "type" => "radio", "label" => "Kind", "required" => true, "options" => ["Home", "Business"]},
+          %{
+            "id" => "kind",
+            "type" => "radio",
+            "label" => "Kind",
+            "required" => true,
+            "options" => ["Home", "Business"]
+          },
           %{
             "id" => "biz",
             "type" => "condition_block",
             "label" => "",
             "conditionRule" => %{"fieldId" => "kind", "operator" => "eq", "value" => "Business"},
-            "children" => [%{"id" => "company", "type" => "text", "label" => "Company", "required" => true}]
+            "children" => [
+              %{"id" => "company", "type" => "text", "label" => "Company", "required" => true}
+            ]
           },
           %{"id" => "notes", "type" => "textarea", "label" => "Notes"}
         ],
@@ -160,7 +217,12 @@ defmodule BdStarter.FormControllerTest do
           "populatorConfig" => %{"maxInstances" => 3},
           "children" => [
             %{"id" => "kname", "type" => "text", "label" => "Name", "required" => true},
-            %{"id" => "kage", "type" => "number", "label" => "Age", "validation" => %{"min" => 0, "max" => 17}}
+            %{
+              "id" => "kage",
+              "type" => "number",
+              "label" => "Age",
+              "validation" => %{"min" => 0, "max" => 17}
+            }
           ]
         }
       ])
@@ -196,7 +258,10 @@ defmodule BdStarter.FormControllerTest do
             "label" => "Total",
             "calculationConfig" => %{
               "formula" => "q * p",
-              "inputMap" => [%{"variable" => "q", "fieldId" => "qty"}, %{"variable" => "p", "fieldId" => "price"}]
+              "inputMap" => [
+                %{"variable" => "q", "fieldId" => "qty"},
+                %{"variable" => "p", "fieldId" => "price"}
+              ]
             }
           }
         ])
@@ -211,11 +276,20 @@ defmodule BdStarter.FormControllerTest do
   test "files upload on submit and swap placeholders" do
     b =
       MockBackend.new([
-        %{"id" => "docs", "type" => "file_upload", "label" => "Docs", "fileConfig" => %{"maxFiles" => 2, "allowedTypes" => ["application/pdf"]}}
+        %{
+          "id" => "docs",
+          "type" => "file_upload",
+          "label" => "Docs",
+          "fileConfig" => %{"maxFiles" => 2, "allowedTypes" => ["application/pdf"]}
+        }
       ])
 
     {taken, c} =
-      FormController.add_files(controller(b), [{"p1", file("a.pdf", "application/pdf")}, {"p2", file("b.png", "image/png")}], FieldPath.new("docs"))
+      FormController.add_files(
+        controller(b),
+        [{"p1", file("a.pdf", "application/pdf")}, {"p2", file("b.png", "image/png")}],
+        FieldPath.new("docs")
+      )
 
     assert taken == ["p1"]
     assert length(c.values["docs"]) == 1, "the png isn't an allowed type"
@@ -229,7 +303,14 @@ defmodule BdStarter.FormControllerTest do
   test "failed upload keeps the form open" do
     b = MockBackend.new([%{"id" => "docs", "type" => "file_upload", "label" => "Docs"}])
     MockBackend.put(b, :fail_uploads, true)
-    {_, c} = FormController.add_files(controller(b), [{"x", file("x.txt", "text/plain", 1)}], FieldPath.new("docs"))
+
+    {_, c} =
+      FormController.add_files(
+        controller(b),
+        [{"x", file("x.txt", "text/plain", 1)}],
+        FieldPath.new("docs")
+      )
+
     {r, c} = FormController.submit(c)
     refute r.ok
     assert r.reason == "network_error"
@@ -244,7 +325,12 @@ defmodule BdStarter.FormControllerTest do
     MockBackend.put(
       b,
       :answer,
-      {422, %{"error" => "validation_failed", "message" => "Bad", "issues" => [%{"id" => "promo", "label" => "Code", "reason" => "regex"}]}}
+      {422,
+       %{
+         "error" => "validation_failed",
+         "message" => "Bad",
+         "issues" => [%{"id" => "promo", "label" => "Code", "reason" => "regex"}]
+       }}
     )
 
     {r, c} = b |> controller() |> set("f1", "x") |> FormController.submit()
@@ -275,8 +361,15 @@ defmodule BdStarter.FormControllerTest do
             "id" => "vip",
             "type" => "condition_block",
             "label" => "",
-            "conditionRule" => %{"fieldId" => "plan", "operator" => "eq", "value" => "premium", "matchField" => "tier"},
-            "children" => [%{"id" => "concierge", "type" => "text", "label" => "Concierge", "required" => true}]
+            "conditionRule" => %{
+              "fieldId" => "plan",
+              "operator" => "eq",
+              "value" => "premium",
+              "matchField" => "tier"
+            },
+            "children" => [
+              %{"id" => "concierge", "type" => "text", "label" => "Concierge", "required" => true}
+            ]
           }
         ])
       )
@@ -291,20 +384,42 @@ defmodule BdStarter.FormControllerTest do
   end
 
   test "date range order" do
-    c = controller(MockBackend.new([%{"id" => "trip", "type" => "date_range", "label" => "Trip"}]))
-    c = c |> set("trip", %{"start" => "2026-12-10", "end" => "2026-12-01"}) |> FormController.validate(FieldPath.new("trip"))
+    c =
+      controller(MockBackend.new([%{"id" => "trip", "type" => "date_range", "label" => "Trip"}]))
+
+    c =
+      c
+      |> set("trip", %{"start" => "2026-12-10", "end" => "2026-12-01"})
+      |> FormController.validate(FieldPath.new("trip"))
+
     assert c.errors["trip"] == "The end must come after the start."
   end
 
   test "custom messages" do
-    c = controller(MockBackend.new([%{"id" => "n", "type" => "text", "label" => "Nom", "required" => true}]))
-    c = %{c | messages: fn reason, label, _ -> if reason == "required", do: "#{label} est obligatoire.", else: reason end}
+    c =
+      controller(
+        MockBackend.new([%{"id" => "n", "type" => "text", "label" => "Nom", "required" => true}])
+      )
+
+    c = %{
+      c
+      | messages: fn reason, label, _ ->
+          if reason == "required", do: "#{label} est obligatoire.", else: reason
+        end
+    }
+
     {_, c} = FormController.submit(c)
     assert c.errors["n"] == "Nom est obligatoire."
   end
 
   test "seed applies defaults" do
-    c = controller(MockBackend.new([%{"id" => "n", "type" => "text", "label" => "N", "defaultValue" => "hi"}]))
+    c =
+      controller(
+        MockBackend.new([
+          %{"id" => "n", "type" => "text", "label" => "N", "defaultValue" => "hi"}
+        ])
+      )
+
     assert c.values["n"] == "hi"
   end
 

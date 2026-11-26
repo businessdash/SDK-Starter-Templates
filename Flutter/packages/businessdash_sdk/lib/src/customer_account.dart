@@ -26,6 +26,7 @@ extension BdCustomerAccount on BdClient {
   /// expired: sign in again, then delete.
   Future<AccountDeleted> deleteAccount(String sessionToken) async =>
       AccountDeleted.fromJson(
-        await post('auth/customer/delete-account', headers: {'x-bd-session': sessionToken}),
+        await post('auth/customer/delete-account',
+            headers: {'x-bd-session': sessionToken}),
       );
 }

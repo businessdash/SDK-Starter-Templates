@@ -102,10 +102,13 @@ export default function Index() {
 	return (
 		<>
 			{/* Server-rendered JSON-LD (localBusiness + website) for crawlers. */}
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{ __html: jsonLd }}
-			/>
+			{jsonLd.map((json) => (
+				<script
+					key={json}
+					type="application/ld+json"
+					dangerouslySetInnerHTML={{ __html: json }}
+				/>
+			))}
 			<NewsBanner message={bannerMessage} />
 			<header className="header">
 				<a className="brand" href="#hero">

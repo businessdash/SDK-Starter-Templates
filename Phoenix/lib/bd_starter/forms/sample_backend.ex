@@ -14,7 +14,12 @@ defmodule BdStarter.Forms.SampleBackend do
 
   @impl true
   def schema(_b, _form) do
-    schema = :bd_starter |> Application.app_dir("priv/forms/demo-form.json") |> File.read!() |> Json.decode!() |> Schema.from_json()
+    schema =
+      :bd_starter
+      |> Application.app_dir("priv/forms/demo-form.json")
+      |> File.read!()
+      |> Json.decode!()
+      |> Schema.from_json()
 
     %{
       schema

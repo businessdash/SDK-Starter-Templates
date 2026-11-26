@@ -31,8 +31,7 @@ class Scheduling
     public function __construct(
         private readonly Client $client,
         private readonly string $siteId,
-    ) {
-    }
+    ) {}
 
     private function path(string $suffix): string
     {

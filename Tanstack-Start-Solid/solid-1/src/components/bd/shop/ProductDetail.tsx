@@ -101,7 +101,9 @@ export function ProductDetail(props: {
 							{(group) => (
 								<OptionPicker
 									group={group}
-									hidden={group.variantId !== null && group.variantId !== variantId}
+									hidden={
+										group.variantId !== null && group.variantId !== variantId
+									}
 								/>
 							)}
 						</For>

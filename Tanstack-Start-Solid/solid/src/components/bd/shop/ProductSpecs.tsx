@@ -4,7 +4,10 @@ import { For, Show } from "solid-js";
 import type { SpecGroup } from "../../../lib/shop/shop";
 
 /** Details: the feature list, then a table per spec group. */
-export function ProductSpecs(props: { features: string[]; specs: SpecGroup[] }) {
+export function ProductSpecs(props: {
+	features: string[];
+	specs: SpecGroup[];
+}) {
 	return (
 		<Show when={props.features.length > 0 || props.specs.length > 0}>
 			<section class="product-section" id="specs">

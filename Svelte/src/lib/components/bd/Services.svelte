@@ -20,9 +20,7 @@
 	<div class="bd-section__lead">
 		<span class="bd-section__eyebrow">What we do</span>
 		<h2 class="bd-section__title">Services</h2>
-		<p class="bd-section__sub">
-			Clear scope, clear price. Add-ons quoted before any work starts.
-		</p>
+		<p class="bd-section__sub">Clear scope, clear price. Add-ons quoted before any work starts.</p>
 	</div>
 	<div class="bd-grid-3">
 		{#each services as service (service.id)}

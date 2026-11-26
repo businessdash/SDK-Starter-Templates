@@ -1,19 +1,16 @@
 import type { CustomerJobSummary } from "@businessdash/sdk/contracts";
 import type { Metadata } from "next";
-
+import { changePlanAction } from "@/app/_actions/plans"; // [bd-line:subscriptions]
 import { SignOutLink } from "@/app/_components/bd/AuthButtons";
-import { SignInScreen } from "@/app/_components/bd/SignInScreen";
 import { BdFooter } from "@/app/_components/bd/Footer";
 import { ReviewForm } from "@/app/_components/bd/ReviewForm";
+import { SignInScreen } from "@/app/_components/bd/SignInScreen";
 import {
 	getCustomerSession,
+	getCustomerSubscription, // [bd-line:subscriptions]
 	getCustomerWork,
 	isCustomerPortalConfigured,
 } from "@/server/lib/bd-portal";
-// [bd:subscriptions]
-import { changePlanAction } from "@/app/_actions/plans";
-import { getCustomerSubscription } from "@/server/lib/bd-portal";
-// [/bd:subscriptions]
 
 export const metadata: Metadata = {
 	title: "My Account",
@@ -110,8 +107,8 @@ export default async function MyAccountPage({
 
 				{!configured ? (
 					<div className="bd-empty">
-						Accounts aren&apos;t available right now — set the BD API key
-						and base URL to enable customer sign-in.
+						Accounts aren&apos;t available right now — set the BD API key and
+						base URL to enable customer sign-in.
 					</div>
 				) : !session ? (
 					<div className="bd-card account__signedout">
@@ -213,7 +210,9 @@ async function PlanSection({ result }: { result?: string }) {
 							</span>
 						</div>
 						{plan.type === "lifetime" ? (
-							<p className="account-job__meta">Yours for good. Nothing renews.</p>
+							<p className="account-job__meta">
+								Yours for good. Nothing renews.
+							</p>
 						) : (
 							<>
 								<p className="account-job__meta">
@@ -230,7 +229,9 @@ async function PlanSection({ result }: { result?: string }) {
 										value={cancelPending ? "resume" : "cancel"}
 									/>
 									<button
-										className={cancelPending ? "bd-btn" : "bd-btn bd-btn--ghost"}
+										className={
+											cancelPending ? "bd-btn" : "bd-btn bd-btn--ghost"
+										}
 										type="submit"
 									>
 										{cancelPending ? "Keep my plan" : "Cancel plan"}

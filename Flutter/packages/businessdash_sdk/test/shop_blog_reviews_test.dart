@@ -14,7 +14,8 @@ import 'package:test/test.dart';
     siteId: 'site-123',
     httpClient: MockClient((request) async {
       requests.add(request);
-      return http.Response(jsonEncode(body), 200, headers: {'content-type': 'application/json'});
+      return http.Response(jsonEncode(body), 200,
+          headers: {'content-type': 'application/json'});
     }),
   );
   return (client: client, requests: requests);
@@ -24,13 +25,15 @@ void main() {
   group('post HTML', () {
     // Post HTML in, and what the web starters' safePostHtml gives back; every
     // BD starter checks its port against the same cases.
-    final cases = (jsonDecode(File('test/fixtures/post-html-parity.json').readAsStringSync())
-            as Map<String, dynamic>)['cases'] as List;
+    final cases = (jsonDecode(
+            File('test/fixtures/post-html-parity.json').readAsStringSync())
+        as Map<String, dynamic>)['cases'] as List;
 
     test('cleans the same as every other starter', () {
       expect(cases.length, greaterThanOrEqualTo(20));
       for (final entry in cases.cast<Map<String, dynamic>>()) {
-        expect(PostHtml.safe(entry['input'] as String), entry['output'], reason: entry['input'] as String);
+        expect(PostHtml.safe(entry['input'] as String), entry['output'],
+            reason: entry['input'] as String);
       }
     });
 
@@ -52,12 +55,14 @@ void main() {
 
       final body = (blocks[1] as PostParagraph).text;
       expect(plainText(body), 'Run easy & read this bad ours');
-      expect(body.map((run) => run.link).whereType<String>(), ['https://example.com/x']);
+      expect(body.map((run) => run.link).whereType<String>(),
+          ['https://example.com/x']);
       expect(body.any((run) => run.bold && run.text == 'easy'), isTrue);
 
       final list = (blocks[2] as PostList).items;
       expect(list.map((item) => item.marker), ['•', '◦', '', '•']);
-      expect(list.map((item) => plainText(item.text)), ['Monday', '20 min', 'then rest', 'Friday']);
+      expect(list.map((item) => plainText(item.text)),
+          ['Monday', '20 min', 'then rest', 'Friday']);
       expect(list.map((item) => item.depth), [0, 1, 0, 0]);
 
       expect((blocks[3] as PostList).items.first.marker, '3.');
@@ -73,14 +78,19 @@ void main() {
         '<table><thead><tr><th>Size</th><th>Drop</th></tr></thead><tbody><tr><td>S</td><td>8 mm</td></tr></tbody></table>'
         '<p><a href="tel:+15551234567">Call</a> or <a href="mailto:hi@example.com">write</a></p>',
       );
-      expect(blocks.map((block) => block.runtimeType), [PostImage, PostCaption, PostTable, PostParagraph]);
+      expect(blocks.map((block) => block.runtimeType),
+          [PostImage, PostCaption, PostTable, PostParagraph]);
       final rows = (blocks[2] as PostTable).rows;
       expect(rows.map((row) => row.isHeader), [true, false]);
       expect(rows.map((row) => row.cells.map(plainText).toList()), [
         ['Size', 'Drop'],
         ['S', '8 mm'],
       ]);
-      expect((blocks[3] as PostParagraph).text.map((run) => run.link).whereType<String>(),
+      expect(
+          (blocks[3] as PostParagraph)
+              .text
+              .map((run) => run.link)
+              .whereType<String>(),
           ['tel:+15551234567', 'mailto:hi@example.com']);
     });
 
@@ -105,20 +115,27 @@ void main() {
        "specifications":{"features":["Light"],"groups":[{"name":"Fit","rows":[{"label":"Drop","value":"8 mm"},{"label":"","value":"x"}]}]}}
     ''') as Map<String, dynamic>);
 
-    test('opens on the first style that can be bought, with its own photos', () {
+    test('opens on the first style that can be bought, with its own photos',
+        () {
       expect(shoe.defaultVariant?.id, 'v2');
       expect(shoe.gallery('v2'), ['black.jpg']);
       expect(shoe.gallery('v1'), ['a.jpg', 'b.jpg']);
       expect(shoe.categoryName, 'Shoes');
       expect(shoe.features, ['Light']);
       expect(shoe.specs.single.name, 'Fit');
-      expect(shoe.specs.single.rows, [const SpecRow(label: 'Drop', value: '8 mm')]);
+      expect(shoe.specs.single.rows,
+          [const SpecRow(label: 'Drop', value: '8 mm')]);
     });
 
-    test("sizes go smallest first; the price is 'from' until every group is chosen", () {
-      expect(shoe.optionGroups('v2').first.values.map((value) => value.value), ['S', 'M', 'L']);
-      expect(shoe.price('v2', {}), const ProductPrice(amount: 120, from: true, ready: false));
-      expect(shoe.price('v2', {'t1': 'o3'}), const ProductPrice(amount: 125, from: false, stock: 3, ready: true));
+    test(
+        "sizes go smallest first; the price is 'from' until every group is chosen",
+        () {
+      expect(shoe.optionGroups('v2').first.values.map((value) => value.value),
+          ['S', 'M', 'L']);
+      expect(shoe.price('v2', {}),
+          const ProductPrice(amount: 120, from: true, ready: false));
+      expect(shoe.price('v2', {'t1': 'o3'}),
+          const ProductPrice(amount: 125, from: false, stock: 3, ready: true));
       expect(shoe.chosenOptions('v2', {'t1': 'o3'}), {'Size': 'L'});
       expect(shoe.price('v2', {'t1': 'o2'}).ready, isFalse);
       expect(shoe.price('v1', {}).amount, isNull);
@@ -145,43 +162,62 @@ void main() {
     });
 
     test('links out over http(s) only, and only for a platform', () {
-      Review review(String source, String url) =>
-          Review.fromJson({'id': 'r', 'rating': 5, 'source': source, 'reviewUrl': url});
+      Review review(String source, String url) => Review.fromJson(
+          {'id': 'r', 'rating': 5, 'source': source, 'reviewUrl': url});
       expect(Reviews.link(review('google', 'javascript:alert(1)')), isNull);
       expect(Reviews.link(review('other', 'https://example.com/r')), isNull);
-      expect(Reviews.link(review('yelp', 'https://yelp.com/r/1')), 'https://yelp.com/r/1');
-      expect(Reviews.sourcesIn([review('yelp', ''), review('google', ''), review('yelp', '')]), ['yelp', 'google']);
+      expect(Reviews.link(review('yelp', 'https://yelp.com/r/1')),
+          'https://yelp.com/r/1');
+      expect(
+          Reviews.sourcesIn(
+              [review('yelp', ''), review('google', ''), review('yelp', '')]),
+          ['yelp', 'google']);
     });
 
     test('a review needs stars and words; its title is cut at 200', () {
-      expect(Reviews.check(rating: 0, body: 'Great').error, 'Choose a rating from 1 to 5 stars.');
+      expect(Reviews.check(rating: 0, body: 'Great').error,
+          'Choose a rating from 1 to 5 stars.');
       expect(Reviews.check(rating: 5, body: '  ').isOk, isFalse);
       expect(Reviews.check(rating: 5, body: 'x' * 5001).isOk, isFalse);
       final long = Reviews.check(rating: 5, title: 'x' * 250, body: 'Great');
       expect(long.review?.title?.length, 200);
-      expect(Reviews.check(rating: 4, body: 'Great').review?.toJson(), {'rating': 4, 'body': 'Great'});
+      expect(Reviews.check(rating: 4, body: 'Great').review?.toJson(),
+          {'rating': 4, 'body': 'Great'});
     });
 
     test('stars, names and dates', () {
       expect(Reviews.stars(4.4), '★★★★☆');
-      expect(Reviews.reviewerInitial(Review.fromJson({'id': 'r', 'rating': 5, 'reviewerName': ' priya'})), 'P');
-      expect(Reviews.reviewerName(Review.fromJson({'id': 'r', 'rating': 5})), 'Anonymous');
+      expect(
+          Reviews.reviewerInitial(Review.fromJson(
+              {'id': 'r', 'rating': 5, 'reviewerName': ' priya'})),
+          'P');
+      expect(Reviews.reviewerName(Review.fromJson({'id': 'r', 'rating': 5})),
+          'Anonymous');
       expect(Reviews.date('2026-11-20T23:30:00Z'), 'Nov 20, 2026');
     });
   });
 
   group('requests and shapes', () {
-    test('the grid carries category counts by categoryId and the price range in dollars', () async {
+    test(
+        'the grid carries category counts by categoryId and the price range in dollars',
+        () async {
       final s = stub({
         'items': [
-          {'id': 'p1', 'name': 'Trainer', 'isNew': true, 'hasMultipleVariants': true, 'cheapestPriceCents': 12000},
+          {
+            'id': 'p1',
+            'name': 'Trainer',
+            'isNew': true,
+            'hasMultipleVariants': true,
+            'cheapestPriceCents': 12000
+          },
         ],
         'categoryCounts': [
           {'categoryId': 'c1', 'count': 2},
         ],
         'priceRange': {'minDollars': 18, 'maxDollars': 125},
       });
-      final grid = await s.client.productListing(search: 'trail', minPriceCents: 2000, minRating: 4);
+      final grid = await s.client
+          .productListing(search: 'trail', minPriceCents: 2000, minRating: 4);
       expect(grid.categoryCounts, {'c1': 2});
       expect(grid.maxDollars, 125);
       expect(grid.items.single.isNew, isTrue);
@@ -192,15 +228,25 @@ void main() {
       expect(query.containsKey('maxPriceCents'), isFalse);
     });
 
-    test('a cart line is productName, variantTitle and productImage; options go out', () async {
+    test(
+        'a cart line is productName, variantTitle and productImage; options go out',
+        () async {
       final s = stub({
         'items': [
-          {'id': 'l1', 'productName': 'Trainer', 'variantTitle': 'Onyx · Size 42', 'productImage': 'a.jpg', 'quantity': 2, 'subtotal': 240},
+          {
+            'id': 'l1',
+            'productName': 'Trainer',
+            'variantTitle': 'Onyx · Size 42',
+            'productImage': 'a.jpg',
+            'quantity': 2,
+            'subtotal': 240
+          },
         ],
         'subtotal': 240,
         'itemCount': 2,
       });
-      final cart = await s.client.cartAdd('v-1', productId: 'p1', variantId: 'v2', options: {'Size': '42'});
+      final cart = await s.client.cartAdd('v-1',
+          productId: 'p1', variantId: 'v2', options: {'Size': '42'});
       expect(cart.items.single.name, 'Trainer');
       expect(cart.items.single.variantTitle, 'Onyx · Size 42');
       expect(cart.units, 2);
@@ -237,20 +283,36 @@ void main() {
 
     test('a post arrives wrapped, and a members-only one says so', () async {
       final s = stub({
-        'post': {'id': 'b1', 'slug': 'plan', 'title': 'Plan', 'content': '', 'isPinned': true, 'tags': ['training']},
+        'post': {
+          'id': 'b1',
+          'slug': 'plan',
+          'title': 'Plan',
+          'content': '',
+          'isPinned': true,
+          'tags': ['training']
+        },
         'access': 'paywall',
       });
       final detail = await s.client.blogPost('plan');
       expect(detail.isPaywalled, isTrue);
       expect(detail.post.isPinned, isTrue);
       expect(detail.post.tags, ['training']);
-      expect(s.requests.single.headers.containsKey('X-BD-Session-Token'), isFalse);
+      expect(
+          s.requests.single.headers.containsKey('X-BD-Session-Token'), isFalse);
     });
 
-    test('review pages filter by platform; a written review goes to the portal', () async {
+    test('review pages filter by platform; a written review goes to the portal',
+        () async {
       final s = stub({
         'items': [
-          {'id': 'r1', 'rating': 5, 'source': 'yelp', 'text': 'Great', 'photos': ['p.jpg'], 'timeCreated': '2026-11-20T00:00:00Z'},
+          {
+            'id': 'r1',
+            'rating': 5,
+            'source': 'yelp',
+            'text': 'Great',
+            'photos': ['p.jpg'],
+            'timeCreated': '2026-11-20T00:00:00Z'
+          },
         ],
         'nextOffset': 10,
         'totalCount': 14,
@@ -261,10 +323,14 @@ void main() {
       expect(s.requests.single.url.queryParameters['source'], 'yelp');
 
       final portal = stub({'id': 'r9', 'status': 'pending'});
-      await portal.client.portal('tok').submitReview(const ReviewInput(rating: 4, body: 'Good'));
-      expect(portal.requests.single.url.path, endsWith('customer-portal/reviews'));
+      await portal.client
+          .portal('tok')
+          .submitReview(const ReviewInput(rating: 4, body: 'Good'));
+      expect(
+          portal.requests.single.url.path, endsWith('customer-portal/reviews'));
       expect(portal.requests.single.headers['X-BD-Session-Token'], 'tok');
-      expect(jsonDecode(portal.requests.single.body), {'rating': 4, 'body': 'Good'});
+      expect(jsonDecode(portal.requests.single.body),
+          {'rating': 4, 'body': 'Good'});
     });
   });
 }

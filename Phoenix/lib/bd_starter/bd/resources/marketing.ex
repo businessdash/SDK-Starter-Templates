@@ -10,7 +10,11 @@ defmodule BdStarter.Bd.Resources.Marketing do
   alias BdStarter.Bd.Client
 
   def page_bundle(client, page_key \\ "home", locale \\ nil),
-    do: Client.get(client, Client.site_path(client, "marketing/bundle"), pageKey: page_key, locale: locale)
+    do:
+      Client.get(client, Client.site_path(client, "marketing/bundle"),
+        pageKey: page_key,
+        locale: locale
+      )
 
   def published_schema(client),
     do: Client.get(client, Client.site_path(client, "marketing/published-schema"))

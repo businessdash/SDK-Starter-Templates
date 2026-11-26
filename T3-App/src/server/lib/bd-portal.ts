@@ -4,11 +4,9 @@ import { createBdApiClient, getTenantSession } from "@businessdash/sdk";
 import type {
 	CustomerReviewSubmitInput,
 	CustomerReviewSubmitResponse,
+	CustomerSubscriptionResponse, // [bd-line:subscriptions]
 	CustomerWorkBundle,
 } from "@businessdash/sdk/contracts";
-// [bd:subscriptions]
-import type { CustomerSubscriptionResponse } from "@businessdash/sdk/contracts";
-// [/bd:subscriptions]
 import { cookies } from "next/headers";
 
 import { env } from "@/env";

@@ -17,7 +17,10 @@ export function LikeButton(props: {
 		<div
 			innerHTML={elementHtml(
 				"bd-post-like",
-				{ "data-like-url": props.likeUrl, "data-sign-in-href": props.signInHref },
+				{
+					"data-like-url": props.likeUrl,
+					"data-sign-in-href": props.signInHref,
+				},
 				{ likes: props.likes, signedIn: props.signedIn },
 			)}
 		/>

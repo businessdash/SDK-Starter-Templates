@@ -921,7 +921,7 @@
 	display: flex;
 	gap: 0.5rem;
 }
-.compare-bar__actions a[aria-disabled='true'] {
+.compare-bar__actions a[aria-disabled="true"] {
 	pointer-events: none;
 	opacity: 0.55;
 }

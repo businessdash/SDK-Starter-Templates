@@ -137,7 +137,8 @@ fetch returns fresh data within seconds of a publish, no redeploy. Set
 │   ├── App.tsx               # Router: home sections + feature pages
 │   ├── lib/
 │   │   ├── bd.ts           # Browser-side typed fetcher (no key) + money/dollars
-│   │   └── router.tsx        # Tiny dependency-free client router
+│   │   ├── route.ts          # the router's state and hooks (useRoute, useSearchParams)
+│   │   └── router.tsx        # Tiny dependency-free client router (provider + Link)
 │   ├── components/
 │   │   ├── Header.tsx  Footer.tsx  Banner.tsx
 │   │   ├── Hero.tsx  About.tsx  Services.tsx  Gallery.tsx
@@ -165,7 +166,8 @@ fetch returns fresh data within seconds of a publish, no redeploy. Set
 <!-- [/bd:blog] -->
 │   ├── bd-reviews.css        # reviews page styles
 │   └── pages/
-│       ├── ui.tsx            # useApi hook + ErrorBox + PageHead
+│       ├── ui.tsx            # ErrorBox + PageHead
+│       ├── use-api.ts        # useApi: load data for a page
 <!-- [bd:store] -->
 │       ├── Store.tsx  Product.tsx  Wishlist.tsx  Compare.tsx  Cart.tsx
 <!-- [/bd:store] -->
@@ -200,7 +202,7 @@ The store is the same shop as the Business Dash demo: a product list with search
 | Cart | `CartLine`, `CouponForm`, `CartSummary`, `CartActions` |
 | Wishlist, compare | `WishlistView`, `CompareTable` |
 
-The product page's parts are in `src/components/shop/`; so are the store page's (`ProductCard`, `ProductGrid`, and `StoreFilters.tsx`: `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`) and the cart's, which take the cart calls as props.
+The product page's parts are in `src/components/shop/`; so are the store page's (`ProductCard`, `ProductGrid`, and `StoreFilters.tsx`: `StoreSearch`, `CategoryFilter`, `PriceFilter`, `RatingFilter`, `ClearFilters`, `SortSelect`, with the URL helpers they share in `store-filters.ts`) and the cart's, which take the cart calls as props.
 <!-- [/bd:store] -->
 
 <!-- [bd:blog] -->

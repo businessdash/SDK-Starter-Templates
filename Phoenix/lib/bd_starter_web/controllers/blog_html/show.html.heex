@@ -29,7 +29,15 @@
     <.post_body :if={not @paywalled} html={@html} />
     <.post_cta post={@post} />
     <.post_tags tags={@post["tags"] || []} />
-    <.like_button like_url={~p"/blog/#{@post["slug"]}/like"} likes={@likes} sign_in_href={@sign_in_href} />
+    <.like_button
+      like_url={~p"/blog/#{@post["slug"]}/like"}
+      likes={@likes}
+      sign_in_href={@sign_in_href}
+    />
   </article>
-  <.comments comment_url={~p"/blog/#{@post["slug"]}/comment"} comments={@comments} sign_in_href={@sign_in_href} />
+  <.comments
+    comment_url={~p"/blog/#{@post["slug"]}/comment"}
+    comments={@comments}
+    sign_in_href={@sign_in_href}
+  />
 <% end %>

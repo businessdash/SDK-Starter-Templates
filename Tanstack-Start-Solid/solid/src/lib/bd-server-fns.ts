@@ -17,45 +17,32 @@ import {
 	localBusiness,
 	website,
 } from "@businessdash/sdk";
-import { llmsTxtHandler } from "@businessdash/sdk/distribution";
-// [bd:store]
-import { productFeedUrl } from "@businessdash/sdk/distribution";
-// [/bd:store]
-import type { FormSchema as SdkFormSchema } from "@businessdash/sdk/forms";
-import { mcpHandler, mcpManifestHandler } from "@businessdash/sdk/mcp";
 import type {
+	CartSnapshot, // [bd-line:store]
 	CustomerReviewSubmitResponse,
+	CustomerSubscriptionResponse, // [bd-line:subscriptions]
 	CustomerWorkBundle,
+	StorefrontCategory, // [bd-line:store]
+	StorefrontProductCard, // [bd-line:store]
+	StorefrontSort, // [bd-line:store]
+	SubscriptionOffering, // [bd-line:subscriptions]
 } from "@businessdash/sdk/contracts";
-// [bd:store]
-import type {
-	CartSnapshot,
-	StorefrontCategory,
-	StorefrontProductCard,
-	StorefrontSort,
-} from "@businessdash/sdk/contracts";
-// [/bd:store]
-// [bd:subscriptions]
-import type {
-	CustomerSubscriptionResponse,
-	SubscriptionOffering,
-} from "@businessdash/sdk/contracts";
-// [/bd:subscriptions]
 import {
-	renderLegalPageHtml,
-	resolveLegalPage,
-} from "@businessdash/sdk/legal";
+	llmsTxtHandler,
+	productFeedUrl, // [bd-line:store]
+} from "@businessdash/sdk/distribution";
+import type { FormSchema as SdkFormSchema } from "@businessdash/sdk/forms";
+import { renderLegalPageHtml, resolveLegalPage } from "@businessdash/sdk/legal";
+import { mcpHandler, mcpManifestHandler } from "@businessdash/sdk/mcp";
+import { buildSitemap, minimalSitemapXml } from "@businessdash/sdk/sitemap";
+import { createServerFn, createServerOnlyFn } from "@tanstack/solid-start";
 import {
-	buildSitemap,
-	minimalSitemapXml,
-} from "@businessdash/sdk/sitemap";
-import { createServerFn } from "@tanstack/solid-start";
-import { createServerOnlyFn } from "@tanstack/solid-start";
-import { getCookie, getRequestHeader } from "@tanstack/solid-start/server";
-// [bd:store]
-import { setCookie } from "@tanstack/solid-start/server";
-// [/bd:store]
+	getCookie,
+	getRequestHeader,
+	setCookie, // [bd-line:store]
+} from "@tanstack/solid-start/server";
 
+import { TODO_FORM_SLUG } from "../../bd.data-model.config";
 import {
 	type BundleBanner,
 	type BundleUpdateItem,
@@ -69,7 +56,6 @@ import {
 } from "./bd";
 import { getDistributionConfig } from "./bd-distribution";
 import { listTodosWithImages, type TodosResult } from "./bd-todos";
-import { TODO_FORM_SLUG } from "../../bd.data-model.config";
 import { checkReview } from "./shop/reviews";
 import { loadReviewsPage, type ReviewsPageData } from "./shop/reviews-page";
 
@@ -383,7 +369,10 @@ export const confirmBooking = createServerFn({ method: "POST" })
 	});
 // [/bd:booking]
 
-export const submitContactForm = createServerFn({ method: "POST", strict: SDK_OUTPUT })
+export const submitContactForm = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { slug: string; values: Record<string, unknown> }) => data)
 	.handler(async ({ data }) => {
 		const bd = getBd();
@@ -525,20 +514,21 @@ function cartErr(err: unknown): Extract<CartResult, { ok: false }> {
 }
 
 /** Read the current cart, or null when unconfigured / no cart yet (no token). */
-export const getCart = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
-	async (): Promise<CartSnapshot | null> => {
-		const bd = getBd();
-		if (!bd) return null;
-		const token = readVisitorToken();
-		if (!token) return null;
-		try {
-			return await bd.cart.forVisitor(token).get();
-		} catch (err) {
-			devwarn("cart.get", err);
-			return null;
-		}
-	},
-);
+export const getCart = createServerFn({
+	method: "GET",
+	strict: SDK_OUTPUT,
+}).handler(async (): Promise<CartSnapshot | null> => {
+	const bd = getBd();
+	if (!bd) return null;
+	const token = readVisitorToken();
+	if (!token) return null;
+	try {
+		return await bd.cart.forVisitor(token).get();
+	} catch (err) {
+		devwarn("cart.get", err);
+		return null;
+	}
+});
 
 export const addToCart = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 	.validator(
@@ -549,20 +539,21 @@ export const addToCart = createServerFn({ method: "POST", strict: SDK_OUTPUT })
 		const bd = getBd();
 		if (!bd) return { ok: false, error: "Store isn't connected." };
 		try {
-			const snapshot = await bd.cart
-				.forVisitor(ensureVisitorToken())
-				.addItem({
-					productId: data.productId,
-					variantId: data.variantId,
-					quantity: data.quantity ?? 1,
-				});
+			const snapshot = await bd.cart.forVisitor(ensureVisitorToken()).addItem({
+				productId: data.productId,
+				variantId: data.variantId,
+				quantity: data.quantity ?? 1,
+			});
 			return { ok: true, snapshot };
 		} catch (err) {
 			return cartErr(err);
 		}
 	});
 
-export const updateCartItem = createServerFn({ method: "POST", strict: SDK_OUTPUT })
+export const updateCartItem = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { itemId: string; quantity: number }) => data)
 	.handler(async ({ data }): Promise<CartResult> => {
 		const bd = getBd();
@@ -577,7 +568,10 @@ export const updateCartItem = createServerFn({ method: "POST", strict: SDK_OUTPU
 		}
 	});
 
-export const removeCartItem = createServerFn({ method: "POST", strict: SDK_OUTPUT })
+export const removeCartItem = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { itemId: string }) => data)
 	.handler(async ({ data }): Promise<CartResult> => {
 		const bd = getBd();
@@ -592,7 +586,10 @@ export const removeCartItem = createServerFn({ method: "POST", strict: SDK_OUTPU
 		}
 	});
 
-export const applyCartCoupon = createServerFn({ method: "POST", strict: SDK_OUTPUT })
+export const applyCartCoupon = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { code: string }) => data)
 	.handler(async ({ data }): Promise<CartResult> => {
 		const bd = getBd();
@@ -607,38 +604,43 @@ export const applyCartCoupon = createServerFn({ method: "POST", strict: SDK_OUTP
 		}
 	});
 
-export const removeCartCoupon = createServerFn({ method: "POST", strict: SDK_OUTPUT }).handler(
-	async (): Promise<CartResult> => {
-		const bd = getBd();
-		if (!bd) return { ok: false, error: "Store isn't connected." };
-		try {
-			const snapshot = await bd.cart
-				.forVisitor(ensureVisitorToken())
-				.removeCoupon();
-			return { ok: true, snapshot };
-		} catch (err) {
-			return cartErr(err);
-		}
-	},
-);
+export const removeCartCoupon = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+}).handler(async (): Promise<CartResult> => {
+	const bd = getBd();
+	if (!bd) return { ok: false, error: "Store isn't connected." };
+	try {
+		const snapshot = await bd.cart
+			.forVisitor(ensureVisitorToken())
+			.removeCoupon();
+		return { ok: true, snapshot };
+	} catch (err) {
+		return cartErr(err);
+	}
+});
 
-export const clearCart = createServerFn({ method: "POST", strict: SDK_OUTPUT }).handler(
-	async (): Promise<CartResult> => {
-		const bd = getBd();
-		if (!bd) return { ok: false, error: "Store isn't connected." };
-		try {
-			const snapshot = await bd.cart.forVisitor(ensureVisitorToken()).clear();
-			return { ok: true, snapshot };
-		} catch (err) {
-			return cartErr(err);
-		}
-	},
-);
+export const clearCart = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+}).handler(async (): Promise<CartResult> => {
+	const bd = getBd();
+	if (!bd) return { ok: false, error: "Store isn't connected." };
+	try {
+		const snapshot = await bd.cart.forVisitor(ensureVisitorToken()).clear();
+		return { ok: true, snapshot };
+	} catch (err) {
+		return cartErr(err);
+	}
+});
 
 /** Start Stripe-hosted checkout for the visitor's cart; returns the URL to
  *  redirect to. `origin` is the browser's `window.location.origin` so the
  *  success/cancel URLs land back on this site. */
-export const startCheckout = createServerFn({ method: "POST", strict: SDK_OUTPUT })
+export const startCheckout = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { origin: string }) => data)
 	.handler(
 		async ({
@@ -859,50 +861,51 @@ export type MyAccountData = {
 
 /** Everything the /my-account loader needs: configured flag, the signed-in
  *  user (or null), and their work bundle (jobs / quotes / invoices). */
-export const getMyAccount = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
-	async (): Promise<MyAccountData> => {
-		const cfg = bdRawConfig();
-		const configured = cfg !== null;
-		const session = await readCustomerSession();
-		if (!session) {
-			return {
-				configured,
-				session: null,
-				work: null,
-				// [bd:subscriptions]
-				plan: null,
-				// [/bd:subscriptions]
-			};
-		}
-		let work: CustomerWorkBundle | null = null;
-		try {
-			work = await portalFor(session).getWork();
-		} catch (err) {
-			devwarn("customerPortal.getWork", err);
-		}
-		// [bd:subscriptions]
-		let plan: CustomerSubscriptionResponse["subscription"] = null;
-		try {
-			plan = (await portalFor(session).getSubscription()).subscription;
-		} catch (err) {
-			devwarn("customerPortal.getSubscription", err);
-		}
-		// [/bd:subscriptions]
+export const getMyAccount = createServerFn({
+	method: "GET",
+	strict: SDK_OUTPUT,
+}).handler(async (): Promise<MyAccountData> => {
+	const cfg = bdRawConfig();
+	const configured = cfg !== null;
+	const session = await readCustomerSession();
+	if (!session) {
 		return {
 			configured,
-			session: {
-				email: session.user.email,
-				firstName: session.user.firstName,
-				lastName: session.user.lastName,
-				role: session.role,
-			},
-			work,
+			session: null,
+			work: null,
 			// [bd:subscriptions]
-			plan,
+			plan: null,
 			// [/bd:subscriptions]
 		};
-	},
-);
+	}
+	let work: CustomerWorkBundle | null = null;
+	try {
+		work = await portalFor(session).getWork();
+	} catch (err) {
+		devwarn("customerPortal.getWork", err);
+	}
+	// [bd:subscriptions]
+	let plan: CustomerSubscriptionResponse["subscription"] = null;
+	try {
+		plan = (await portalFor(session).getSubscription()).subscription;
+	} catch (err) {
+		devwarn("customerPortal.getSubscription", err);
+	}
+	// [/bd:subscriptions]
+	return {
+		configured,
+		session: {
+			email: session.user.email,
+			firstName: session.user.firstName,
+			lastName: session.user.lastName,
+			role: session.role,
+		},
+		work,
+		// [bd:subscriptions]
+		plan,
+		// [/bd:subscriptions]
+	};
+});
 
 // [bd:subscriptions]
 export type PlanChangeResult =
@@ -927,7 +930,10 @@ export const changePlan = createServerFn({ method: "POST" })
 			};
 		} catch (err) {
 			devwarn("customerPortal.changePlan", err);
-			return { ok: false, error: "We couldn't change your plan. Please try again." };
+			return {
+				ok: false,
+				error: "We couldn't change your plan. Please try again.",
+			};
 		}
 	});
 // [/bd:subscriptions]
@@ -945,8 +951,7 @@ export const writeCustomerReview = createServerOnlyFn(
 	async (
 		input: Record<string, unknown>,
 	): Promise<
-		| { ok: true }
-		| { ok: false; status: 400 | 401 | 502 | 503; error: string }
+		{ ok: true } | { ok: false; status: 400 | 401 | 502 | 503; error: string }
 	> => {
 		if (!bdRawConfig()) {
 			return { ok: false, status: 503, error: "Reviews aren't connected yet." };
@@ -1040,7 +1045,10 @@ export type ParallelPageResult =
 	| { ok: false; reason: "unconfigured" | "suspended" | "notfound" };
 
 /** Render one (service, area) variant: resolved meta + body. */
-export const renderServiceAreaPage = createServerFn({ method: "GET", strict: SDK_OUTPUT })
+export const renderServiceAreaPage = createServerFn({
+	method: "GET",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { service: string; area: string }) => data)
 	.handler(async ({ data }): Promise<ParallelPageResult> => {
 		const bd = getBd();
@@ -1193,7 +1201,9 @@ const SITEMAP_STATIC_PATHS = [
  * indexing; a sitemap full of 404s costs trust in every URL in the file. The
  * customer portal and other token-gated paths are excluded automatically.
  */
-export async function buildSitemapResponse(request: Request): Promise<Response> {
+export async function buildSitemapResponse(
+	request: Request,
+): Promise<Response> {
 	const baseUrl = new URL(request.url).origin;
 	const bd = getBd();
 
@@ -1255,7 +1265,9 @@ export async function buildLlmsTxtResponse(): Promise<Response> {
 	return llmsTxtHandler(config)();
 }
 
-export async function buildMcpPostResponse(request: Request): Promise<Response> {
+export async function buildMcpPostResponse(
+	request: Request,
+): Promise<Response> {
 	const config = getDistributionConfig();
 	if (!config) {
 		return Response.json(
@@ -1278,7 +1290,8 @@ export async function buildMcpManifestResponse(
 	request: Request,
 ): Promise<Response> {
 	const config = getDistributionConfig();
-	if (!config) return Response.json({ error: "not_configured" }, { status: 404 });
+	if (!config)
+		return Response.json({ error: "not_configured" }, { status: 404 });
 	return mcpManifestHandler(config)(request);
 }
 
@@ -1309,22 +1322,26 @@ export type TodosData = {
 	formSlug: string;
 };
 
-export const getTodosData = createServerFn({ method: "GET", strict: SDK_OUTPUT }).handler(
-	async (): Promise<TodosData> => {
-		const bd = getBd();
-		const [result, formSchema] = await Promise.all([
-			listTodosWithImages(),
-			bd
-				? (bd.forms
-						.schema(TODO_FORM_SLUG)
-						.catch(() => null) as Promise<SdkFormSchema | null>)
-				: Promise.resolve(null),
-		]);
-		return { result, formSchema, formSlug: TODO_FORM_SLUG };
-	},
-);
+export const getTodosData = createServerFn({
+	method: "GET",
+	strict: SDK_OUTPUT,
+}).handler(async (): Promise<TodosData> => {
+	const bd = getBd();
+	const [result, formSchema] = await Promise.all([
+		listTodosWithImages(),
+		bd
+			? (bd.forms
+					.schema(TODO_FORM_SLUG)
+					.catch(() => null) as Promise<SdkFormSchema | null>)
+			: Promise.resolve(null),
+	]);
+	return { result, formSchema, formSlug: TODO_FORM_SLUG };
+});
 
-export const submitTodoForm = createServerFn({ method: "POST", strict: SDK_OUTPUT })
+export const submitTodoForm = createServerFn({
+	method: "POST",
+	strict: SDK_OUTPUT,
+})
 	.validator((data: { values: Record<string, unknown> }) => data)
 	.handler(async ({ data }) => {
 		const bd = getBd();

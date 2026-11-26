@@ -30,7 +30,10 @@ defmodule BdStarterWeb.FormPageController do
 
   def quiz(conn, params) do
     slug = params["slug"] || Forms.quiz_slug()
-    if slug == Forms.sample_quiz(), do: page(conn, "sample", ""), else: page(conn, "practice", slug)
+
+    if slug == Forms.sample_quiz(),
+      do: page(conn, "sample", ""),
+      else: page(conn, "practice", slug)
   end
 
   def invitation(conn, %{"token" => token}), do: page(conn, "invitation", token)
@@ -55,7 +58,12 @@ defmodule BdStarterWeb.FormPageController do
 
     conn =
       if source != "invitation" and remembered == nil,
-        do: put_resp_cookie(conn, @run_cookie, run, max_age: QuizRuns.ttl_seconds(), http_only: true, same_site: "Lax"),
+        do:
+          put_resp_cookie(conn, @run_cookie, run,
+            max_age: QuizRuns.ttl_seconds(),
+            http_only: true,
+            same_site: "Lax"
+          ),
         else: conn
 
     conn
@@ -63,7 +71,12 @@ defmodule BdStarterWeb.FormPageController do
     |> put_resp_header("cache-control", "no-store")
     |> render(:quiz,
       page_title: "Quiz",
-      session: %{"source" => source, "ref" => ref, "run" => run, "session_token" => session_token(conn)}
+      session: %{
+        "source" => source,
+        "ref" => ref,
+        "run" => run,
+        "session_token" => session_token(conn)
+      }
     )
   end
 

@@ -53,7 +53,8 @@ defmodule BdStarter.Forms.FormController do
 
     {by_id, by_slug} =
       Enum.reduce(schema.business_functions, {%{}, %{}}, fn definition, {by_id, by_slug} ->
-        {Map.put_new(by_id, definition["id"], definition), Map.put_new(by_slug, Js.upper(definition["slug"]), definition)}
+        {Map.put_new(by_id, definition["id"], definition),
+         Map.put_new(by_slug, Js.upper(definition["slug"]), definition)}
       end)
 
     c = %__MODULE__{
@@ -62,7 +63,9 @@ defmodule BdStarter.Forms.FormController do
       submit_options: submit_options,
       field_index: Rules.fields_by_id(schema.fields),
       field_rank:
-        ordered |> Enum.with_index() |> Enum.reduce(%{}, fn {f, i}, acc -> Map.put_new(acc, f.id, i) end),
+        ordered
+        |> Enum.with_index()
+        |> Enum.reduce(%{}, fn {f, i}, acc -> Map.put_new(acc, f.id, i) end),
       functions_by_id: by_id,
       user_functions: Formula.user_functions(by_slug),
       calc_fields: Enum.filter(ordered, &(&1.type == "calculation")) |> Enum.uniq_by(& &1.id)
@@ -82,7 +85,8 @@ defmodule BdStarter.Forms.FormController do
     end)
   end
 
-  def message(c, reason, label, field), do: (c.messages || (&Messages.message/3)).(reason, label, field)
+  def message(c, reason, label, field),
+    do: (c.messages || (&Messages.message/3)).(reason, label, field)
 
   # ── Schema ────────────────────────────────────────────────────────────────
 
@@ -130,13 +134,19 @@ defmodule BdStarter.Forms.FormController do
     end)
   end
 
-  defp write(value, %FieldPath{field_id: id, entries: entries}, root), do: write_at(root, entries, id, value)
+  defp write(value, %FieldPath{field_id: id, entries: entries}, root),
+    do: write_at(root, entries, id, value)
 
   defp write_at(scope, [], id, value), do: Map.put(scope, id, value)
 
   defp write_at(scope, [{repeater, index} | rest], id, value) do
     list = Json.list(Map.get(scope, repeater)) || []
-    list = if length(list) <= index, do: list ++ List.duplicate(%{}, index + 1 - length(list)), else: list
+
+    list =
+      if length(list) <= index,
+        do: list ++ List.duplicate(%{}, index + 1 - length(list)),
+        else: list
+
     entry = Json.obj(Enum.at(list, index)) || %{}
     Map.put(scope, repeater, List.replace_at(list, index, write_at(entry, rest, id, value)))
   end
@@ -148,7 +158,9 @@ defmodule BdStarter.Forms.FormController do
           values
 
         config ->
-          r = Calculation.compute(config, &Map.get(values, &1), c.functions_by_id, c.user_functions)
+          r =
+            Calculation.compute(config, &Map.get(values, &1), c.functions_by_id, c.user_functions)
+
           Map.put(values, f.id, if(r.ok, do: r.value, else: nil))
       end
     end)
@@ -167,7 +179,9 @@ defmodule BdStarter.Forms.FormController do
   def add_entry(c, %FieldPath{} = repeater) do
     with %Field{} = f <- field(c, repeater.field_id),
          list = entries(c, repeater),
-         true <- length(list) < Kernel.trunc(Json.num(Field.config(f, "populatorConfig", "maxInstances")) || 10.0) do
+         true <-
+           length(list) <
+             Kernel.trunc(Json.num(Field.config(f, "populatorConfig", "maxInstances")) || 10.0) do
       set_value(c, list ++ [%{}], repeater)
     else
       _ -> c
@@ -182,7 +196,10 @@ defmodule BdStarter.Forms.FormController do
     else
       # Errors are keyed by entry index; shifting entries invalidates them.
       prefix = FieldPath.key(repeater) <> "["
-      errors = c.errors |> Enum.reject(fn {key, _} -> String.starts_with?(key, prefix) end) |> Map.new()
+
+      errors =
+        c.errors |> Enum.reject(fn {key, _} -> String.starts_with?(key, prefix) end) |> Map.new()
+
       set_value(%{c | errors: errors}, List.delete_at(list, index), repeater)
     end
   end
@@ -193,7 +210,11 @@ defmodule BdStarter.Forms.FormController do
   def resolver(c, entries) do
     scope =
       if entries == [],
-        do: Rules.with_derived_field_values(fields(c), Rules.derive_reference_values(fields(c), c.values)),
+        do:
+          Rules.with_derived_field_values(
+            fields(c),
+            Rules.derive_reference_values(fields(c), c.values)
+          ),
         else: scope_values(c, entries)
 
     Rules.resolver(scope, match_resolver(c))
@@ -261,7 +282,9 @@ defmodule BdStarter.Forms.FormController do
       end)
 
     Enum.reduce(Rules.find_invalid_values(nodes, c.values, match), missing, fn bad, out ->
-      Map.put_new_lazy(out, bad.path, fn -> message(c, bad.reason, bad.label, field(c, bad.id)) end)
+      Map.put_new_lazy(out, bad.path, fn ->
+        message(c, bad.reason, bad.label, field(c, bad.id))
+      end)
     end)
   end
 
@@ -273,14 +296,19 @@ defmodule BdStarter.Forms.FormController do
 
       f ->
         value = Map.get(scope_values(c, path.entries), path.field_id)
-        reason = if Rules.pending_upload?(value), do: nil, else: Rules.validate_value(f, value) || Rules.client_only_rule(f, value)
+
+        reason =
+          if Rules.pending_upload?(value),
+            do: nil,
+            else: Rules.validate_value(f, value) || Rules.client_only_rule(f, value)
 
         problem =
           cond do
             reason != nil ->
               message(c, reason, f.label, f)
 
-            c.has_attempted and (f.required or Field.must_be_true?(f)) and f.type not in Rules.static_or_layout() and
+            c.has_attempted and (f.required or Field.must_be_true?(f)) and
+              f.type not in Rules.static_or_layout() and
                 Rules.empty?(f, value) ->
               message(c, "required", f.label, f)
 
@@ -289,7 +317,15 @@ defmodule BdStarter.Forms.FormController do
           end
 
         key = FieldPath.key(path)
-        %{c | errors: if(problem == nil, do: Map.delete(c.errors, key), else: Map.put(c.errors, key, problem))}
+
+        %{
+          c
+          | errors:
+              if(problem == nil,
+                do: Map.delete(c.errors, key),
+                else: Map.put(c.errors, key, problem)
+              )
+        }
     end
   end
 
@@ -307,7 +343,9 @@ defmodule BdStarter.Forms.FormController do
         c.errors
         |> Enum.reject(fn {key, _} ->
           f = field(c, key |> String.split(".") |> List.last())
-          not Map.has_key?(current, key) and f != nil and f.type in ["or_condition", "multi_populator"]
+
+          not Map.has_key?(current, key) and f != nil and
+            f.type in ["or_condition", "multi_populator"]
         end)
         |> Map.new()
 
@@ -364,7 +402,10 @@ defmodule BdStarter.Forms.FormController do
         max_mb = Json.num(Field.config(f, "fileConfig", "maxSize"))
 
         {list, taken, problem, c} =
-          Enum.reduce_while(files, {Json.list(value(c, path)) || [], [], nil, c}, fn {id, file}, {list, taken, problem, c} ->
+          Enum.reduce_while(files, {Json.list(value(c, path)) || [], [], nil, c}, fn {id, file},
+                                                                                     {list, taken,
+                                                                                      problem,
+                                                                                      c} ->
             cond do
               length(list) >= max_files ->
                 {:halt, {list, taken, message(c, "max", f.label, f), c}}
@@ -379,7 +420,12 @@ defmodule BdStarter.Forms.FormController do
           end)
 
         c = set_value(c, list, path)
-        c = if problem != nil, do: %{c | errors: Map.put(c.errors, FieldPath.key(path), problem)}, else: c
+
+        c =
+          if problem != nil,
+            do: %{c | errors: Map.put(c.errors, FieldPath.key(path), problem)},
+            else: c
+
         {taken, c}
     end
   end
@@ -451,9 +497,15 @@ defmodule BdStarter.Forms.FormController do
     max_files = Rules.form_wide_max_files()
 
     file_fields =
-      c.field_index |> Map.values() |> Enum.filter(&(&1.type == "file_upload")) |> Enum.sort_by(&Map.get(c.field_rank, &1.id))
+      c.field_index
+      |> Map.values()
+      |> Enum.filter(&(&1.type == "file_upload"))
+      |> Enum.sort_by(&Map.get(c.field_rank, &1.id))
 
-    total = Enum.sum(Enum.map(file_fields, fn f -> length(Json.list(Map.get(c.values, f.id)) || []) end))
+    total =
+      Enum.sum(
+        Enum.map(file_fields, fn f -> length(Json.list(Map.get(c.values, f.id)) || []) end)
+      )
 
     cond do
       found != %{} ->
@@ -465,7 +517,12 @@ defmodule BdStarter.Forms.FormController do
             {f.id, "At most #{max_files} files in total."}
           end
 
-        fail(c, "client_validation_failed", "Please attach at most #{max_files} files in total.", errors)
+        fail(
+          c,
+          "client_validation_failed",
+          "Please attach at most #{max_files} files in total.",
+          errors
+        )
 
       c.backend == nil ->
         fail(c, "network_error", "This form has no backend to submit to.", %{})
@@ -476,7 +533,12 @@ defmodule BdStarter.Forms.FormController do
         c = %{c | values: values}
 
         if upload_errors != %{} do
-          fail(c, "network_error", "Some files couldn't be uploaded. Please try again.", upload_errors)
+          fail(
+            c,
+            "network_error",
+            "Some files couldn't be uploaded. Please try again.",
+            upload_errors
+          )
         else
           o = c.submit_options
 
@@ -559,7 +621,9 @@ defmodule BdStarter.Forms.FormController do
   def ordered_error_keys(c) do
     c.errors
     |> Map.keys()
-    |> Enum.sort_by(fn key -> {Map.get(c.field_rank, key |> String.split("[") |> hd(), :infinity), key} end)
+    |> Enum.sort_by(fn key ->
+      {Map.get(c.field_rank, key |> String.split("[") |> hd(), :infinity), key}
+    end)
   end
 
   defp resolve_uploads(c, scope, prefix) do
@@ -581,10 +645,16 @@ defmodule BdStarter.Forms.FormController do
               else
                 try do
                   stored = Backend.upload(c.backend, c.schema.slug, f.id, file)
-                  {done ++ [stored], errors, %{c | pending_files: Map.delete(c.pending_files, id)}}
+
+                  {done ++ [stored], errors,
+                   %{c | pending_files: Map.delete(c.pending_files, id)}}
                 rescue
                   e ->
-                    text = if is_struct(e, FormsError), do: Exception.message(e), else: "Couldn't upload #{file.name}."
+                    text =
+                      if is_struct(e, FormsError),
+                        do: Exception.message(e),
+                        else: "Couldn't upload #{file.name}."
+
                     {done ++ [item], Map.put(errors, prefix <> key, text), c}
                 end
               end

@@ -25,7 +25,18 @@ defmodule BdStarterWeb.FormLive do
   require Logger
 
   alias BdStarter.Forms
-  alias BdStarter.Forms.{Field, FieldPath, FormController, FormView, Json, PickedFile, SampleBackend, SubmitOptions}
+
+  alias BdStarter.Forms.{
+    Field,
+    FieldPath,
+    FormController,
+    FormView,
+    Json,
+    PickedFile,
+    SampleBackend,
+    SubmitOptions
+  }
+
   alias BdStarterWeb.FormComponents
 
   # The largest file the picker takes; a field's own limit is the engine's to enforce.
@@ -76,7 +87,12 @@ defmodule BdStarterWeb.FormLive do
     rescue
       e ->
         Logger.warning("[bd] form #{socket.assigns.slug} unavailable: #{Exception.message(e)}")
-        message = if is_struct(e, Forms.FormsError), do: Exception.message(e), else: "Could not load this form."
+
+        message =
+          if is_struct(e, Forms.FormsError),
+            do: Exception.message(e),
+            else: "Could not load this form."
+
         assign(socket, c: nil, unavailable: message, problems: %{}, notices: [])
     end
   end
@@ -124,8 +140,15 @@ defmodule BdStarterWeb.FormLive do
 
   def handle_event("add-row", %{"path" => raw}, socket) do
     case FormComponents.decode_path(raw) do
-      nil -> {:noreply, socket}
-      path -> {:noreply, socket |> assign(c: FormController.add_entry(socket.assigns.c, path)) |> recheck() |> allow_file_uploads()}
+      nil ->
+        {:noreply, socket}
+
+      path ->
+        {:noreply,
+         socket
+         |> assign(c: FormController.add_entry(socket.assigns.c, path))
+         |> recheck()
+         |> allow_file_uploads()}
     end
   end
 
@@ -134,7 +157,12 @@ defmodule BdStarterWeb.FormLive do
          {i, ""} <- Integer.parse(to_string(row)) do
       c = FormController.remove_entry(socket.assigns.c, i, path)
       prefix = FieldPath.key(path) <> "["
-      problems = socket.assigns.problems |> Enum.reject(fn {k, _} -> String.starts_with?(k, prefix) end) |> Map.new()
+
+      problems =
+        socket.assigns.problems
+        |> Enum.reject(fn {k, _} -> String.starts_with?(k, prefix) end)
+        |> Map.new()
+
       {:noreply, socket |> assign(c: c, problems: problems) |> recheck() |> allow_file_uploads()}
     else
       _ -> {:noreply, socket}
@@ -236,7 +264,11 @@ defmodule BdStarterWeb.FormLive do
 
         "multi_populator" ->
           count = FormView.repeater(f, FormController.value(c, path)).count
-          Enum.flat_map(0..(count - 1)//1, &file_paths(f.children || [], c, FieldPath.entry(path, &1)))
+
+          Enum.flat_map(
+            0..(count - 1)//1,
+            &file_paths(f.children || [], c, FieldPath.entry(path, &1))
+          )
 
         _ ->
           []
@@ -263,7 +295,11 @@ defmodule BdStarterWeb.FormLive do
 
       file = %PickedFile{
         name: entry.client_name,
-        mime_type: if(entry.client_type in [nil, ""], do: "application/octet-stream", else: entry.client_type),
+        mime_type:
+          if(entry.client_type in [nil, ""],
+            do: "application/octet-stream",
+            else: entry.client_type
+          ),
         size: entry.client_size,
         path: held
       }
@@ -303,18 +339,27 @@ defmodule BdStarterWeb.FormLive do
 
   defp path_for(socket, name) do
     c = socket.assigns.c
-    c |> FormController.fields() |> file_paths(c, []) |> Enum.find_value(fn {_, path} -> if FormView.upload_name(path) == name, do: path end)
+
+    c
+    |> FormController.fields()
+    |> file_paths(c, [])
+    |> Enum.find_value(fn {_, path} -> if FormView.upload_name(path) == name, do: path end)
   end
 
   # A file the picker itself refused (too large, too many): said once, then let go.
   defp take_refused_files(socket) do
-    configs = for {name, %Phoenix.LiveView.UploadConfig{} = config} <- socket.assigns[:uploads] || %{}, do: {name, config}
+    configs =
+      for {name, %Phoenix.LiveView.UploadConfig{} = config} <- socket.assigns[:uploads] || %{},
+          do: {name, config}
 
     Enum.reduce(configs, {[], socket}, fn {name, config}, acc ->
       Enum.reduce(config.entries, acc, fn entry, {messages, socket} ->
         case for({ref, error} <- config.errors, ref == entry.ref, do: error) do
-          [] -> {messages, socket}
-          [error | _] -> {messages ++ [refusal(error, entry)], cancel_upload(socket, name, entry.ref)}
+          [] ->
+            {messages, socket}
+
+          [error | _] ->
+            {messages ++ [refusal(error, entry)], cancel_upload(socket, name, entry.ref)}
         end
       end)
     end)
@@ -342,7 +387,12 @@ defmodule BdStarterWeb.FormLive do
 
     assigns =
       assign(assigns,
-        v: %{c: c, errors: assigns.problems, form_id: assigns.form_id, uploads: assigns[:uploads] || %{}},
+        v: %{
+          c: c,
+          errors: assigns.problems,
+          form_id: assigns.form_id,
+          uploads: assigns[:uploads] || %{}
+        },
         stepped: FormView.stepped?(c),
         labels: FormView.summary_labels(c, assigns.problems)
       )
@@ -353,7 +403,9 @@ defmodule BdStarterWeb.FormLive do
         <div class="bd-form" id={"bd-form-#{@form_id}"} data-bd-status="submitted">
           <div class="bd-form__success" role="status">
             <p class="bd-form__success-title">Thanks — we got it.</p>
-            <p :if={@sample} class="bd-form__success-note">This is the bundled sample, so nothing was sent.</p>
+            <p :if={@sample} class="bd-form__success-note">
+              This is the bundled sample, so nothing was sent.
+            </p>
             <button class="bd-btn bd-btn--ghost" type="button" phx-click="again">Fill it in again</button>
           </div>
         </div>
@@ -367,31 +419,54 @@ defmodule BdStarterWeb.FormLive do
           phx-submit="enter"
         >
           <img :if={@c.schema.org_icon} class="bd-form__org-icon" src={@c.schema.org_icon} alt="" />
-          <div :if={(@c.schema.title || "") != "" or (@c.schema.description || "") != ""} class="bd-form__header">
+          <div
+            :if={(@c.schema.title || "") != "" or (@c.schema.description || "") != ""}
+            class="bd-form__header"
+          >
             <h2 :if={(@c.schema.title || "") != ""} class="bd-form__title">{@c.schema.title}</h2>
-            <p :if={(@c.schema.description || "") != ""} class="bd-form__description">{@c.schema.description}</p>
+            <p :if={(@c.schema.description || "") != ""} class="bd-form__description">
+              {@c.schema.description}
+            </p>
           </div>
 
           <%= if @stepped and FormView.shows_progress?(@c) do %>
             <div :if={FormView.progress_bar?(@c)} class="bd-progress bd-progress--bar">
-              <span class="bd-progress__count">{FormController.current_step(@c) + 1} / {FormController.step_count(@c)}</span>
+              <span class="bd-progress__count">{FormController.current_step(@c) + 1} / {FormController.step_count(
+                @c
+              )}</span>
               <div class="bd-progress__track">
-                <div class="bd-progress__fill" style={"width:#{round(FormController.progress(@c) * 100)}%"}></div>
+                <div
+                  class="bd-progress__fill"
+                  style={"width:#{round(FormController.progress(@c) * 100)}%"}
+                >
+                </div>
               </div>
             </div>
             <div :if={!FormView.progress_bar?(@c)} class="bd-progress bd-progress--steps">
               <div class="bd-progress__steps">
                 <%= for i <- 0..(FormController.step_count(@c) - 1)//1, current = FormController.current_step(@c) do %>
-                  <div :if={i > 0} class={["bd-progress__line", i <= current && "bd-progress__line--done"]}></div>
+                  <div
+                    :if={i > 0}
+                    class={["bd-progress__line", i <= current && "bd-progress__line--done"]}
+                  >
+                  </div>
                   <button
-                    class={["bd-progress__step", i == current && "bd-progress__step--current", i < current && "bd-progress__step--done"]}
+                    class={[
+                      "bd-progress__step",
+                      i == current && "bd-progress__step--current",
+                      i < current && "bd-progress__step--done"
+                    ]}
                     type="button"
                     phx-click="step"
                     phx-value-index={i}
                     disabled={i >= current}
                     aria-current={if i == current, do: "step"}
                   >
-                    <span class={["bd-progress__dot", i == current && "bd-progress__dot--current", i < current && "bd-progress__dot--done"]}>{if i < current, do: "✓", else: i + 1}</span>
+                    <span class={[
+                      "bd-progress__dot",
+                      i == current && "bd-progress__dot--current",
+                      i < current && "bd-progress__dot--done"
+                    ]}>{if i < current, do: "✓", else: i + 1}</span>
                     <span class="bd-progress__title">{FormController.step_title(@c, i)}</span>
                   </button>
                 <% end %>
@@ -402,13 +477,20 @@ defmodule BdStarterWeb.FormLive do
           <div :for={notice <- @notices} class="bd-form__error" role="alert">{notice}</div>
 
           <div :if={@labels != []} class="bd-form__error-summary" role="alert">
-            <div class="bd-form__error-summary-title">Please complete the highlighted field{if length(@labels) == 1, do: "", else: "s"}.</div>
+            <div class="bd-form__error-summary-title">
+              Please complete the highlighted field{if length(@labels) == 1, do: "", else: "s"}.
+            </div>
             <div class="bd-form__error-summary-list">{Enum.join(@labels, ", ")}</div>
           </div>
 
           <%!-- Every step is in the page (the ones you're not on are hidden), so every box's value comes back with each change. --%>
           <%= if @stepped do %>
-            <div :for={{step, i} <- Enum.with_index(FormController.steps(@c))} class="bd-step" data-bd-step={i} hidden={i != FormController.current_step(@c)}>
+            <div
+              :for={{step, i} <- Enum.with_index(FormController.steps(@c))}
+              class="bd-step"
+              data-bd-step={i}
+              hidden={i != FormController.current_step(@c)}
+            >
               <FormComponents.tree v={@v} fields={step} flat={true} />
             </div>
           <% else %>
@@ -416,7 +498,13 @@ defmodule BdStarterWeb.FormLive do
           <% end %>
 
           <div class="bd-nav">
-            <button :if={@stepped} class="bd-btn bd-btn--ghost bd-btn--back" type="button" phx-click="back" disabled={FormController.first_step?(@c)}>Back</button>
+            <button
+              :if={@stepped}
+              class="bd-btn bd-btn--ghost bd-btn--back"
+              type="button"
+              phx-click="back"
+              disabled={FormController.first_step?(@c)}
+            >Back</button>
             <%= if @stepped and not FormController.last_step?(@c) do %>
               <button class="bd-btn bd-btn--next" type="submit">Next</button>
             <% else %>

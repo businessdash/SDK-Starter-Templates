@@ -29,24 +29,35 @@ enum BdQuizChoiceState {
 }
 
 class BdQuizChoice {
-  const BdQuizChoice({required this.letter, required this.label, required this.selected, required this.state});
+  const BdQuizChoice(
+      {required this.letter,
+      required this.label,
+      required this.selected,
+      required this.state});
 
   final String letter;
   final String label;
   final bool selected;
   final BdQuizChoiceState state;
 
-  Map<String, Object?> toJson() => {'letter': letter, 'label': label, 'selected': selected, 'state': state.wire};
+  Map<String, Object?> toJson() => {
+        'letter': letter,
+        'label': label,
+        'selected': selected,
+        'state': state.wire
+      };
 }
 
 class BdQuizDontKnowChoice {
-  const BdQuizDontKnowChoice({required this.label, required this.selected, required this.state});
+  const BdQuizDontKnowChoice(
+      {required this.label, required this.selected, required this.state});
 
   final String label;
   final bool selected;
   final BdQuizChoiceState state;
 
-  Map<String, Object?> toJson() => {'label': label, 'selected': selected, 'state': state.wire};
+  Map<String, Object?> toJson() =>
+      {'label': label, 'selected': selected, 'state': state.wire};
 }
 
 class BdQuizQuestion {
@@ -98,7 +109,8 @@ class BdQuizOptionNote {
   final String option;
   final String explanation;
 
-  Map<String, Object?> toJson() => {'option': option, 'explanation': explanation};
+  Map<String, Object?> toJson() =>
+      {'option': option, 'explanation': explanation};
 }
 
 class BdQuizBadge {
@@ -116,7 +128,8 @@ class BdQuizOtherOptions {
   final String label;
   final List<BdQuizOptionNote> items;
 
-  Map<String, Object?> toJson() => {'label': label, 'items': items.map((i) => i.toJson()).toList()};
+  Map<String, Object?> toJson() =>
+      {'label': label, 'items': items.map((i) => i.toJson()).toList()};
 }
 
 class BdQuizFeedback {
@@ -218,7 +231,12 @@ enum BdQuizActionId {
 }
 
 class BdQuizAction {
-  const BdQuizAction({required this.id, required this.label, required this.enabled, required this.primary, this.href});
+  const BdQuizAction(
+      {required this.id,
+      required this.label,
+      required this.enabled,
+      required this.primary,
+      this.href});
 
   final BdQuizActionId id;
   final String label;
@@ -226,7 +244,13 @@ class BdQuizAction {
   final bool primary;
   final String? href;
 
-  Map<String, Object?> toJson() => {'id': id.wire, 'label': label, 'enabled': enabled, 'primary': primary, 'href': href};
+  Map<String, Object?> toJson() => {
+        'id': id.wire,
+        'label': label,
+        'enabled': enabled,
+        'primary': primary,
+        'href': href
+      };
 }
 
 /// How a quiz ended, as shown.
@@ -273,38 +297,51 @@ class BdQuizResults extends BdQuizDone {
 }
 
 class BdQuizResultItem {
-  const BdQuizResultItem({required this.number, required this.label, required this.tone, required this.feedback});
+  const BdQuizResultItem(
+      {required this.number,
+      required this.label,
+      required this.tone,
+      required this.feedback});
 
   final int number;
   final String label;
   final BdQuizTone tone;
   final BdQuizFeedback feedback;
 
-  Map<String, Object?> toJson() => {'number': number, 'label': label, 'tone': tone.wire, 'feedback': feedback.toJson()};
+  Map<String, Object?> toJson() => {
+        'number': number,
+        'label': label,
+        'tone': tone.wire,
+        'feedback': feedback.toJson()
+      };
 }
 
 /// Interview mode: a thank-you, never a score.
 class BdQuizSubmitted extends BdQuizDone {
-  const BdQuizSubmitted({required this.eyebrow, required this.title, required this.body});
+  const BdQuizSubmitted(
+      {required this.eyebrow, required this.title, required this.body});
 
   final String eyebrow;
   final String title;
   final String body;
 
   @override
-  Map<String, Object?> toJson() => {'kind': 'submitted', 'eyebrow': eyebrow, 'title': title, 'body': body};
+  Map<String, Object?> toJson() =>
+      {'kind': 'submitted', 'eyebrow': eyebrow, 'title': title, 'body': body};
 }
 
 /// Results wait for the invited account.
 class BdQuizResultsLocked extends BdQuizDone {
-  const BdQuizResultsLocked({required this.eyebrow, required this.title, required this.body});
+  const BdQuizResultsLocked(
+      {required this.eyebrow, required this.title, required this.body});
 
   final String eyebrow;
   final String title;
   final String body;
 
   @override
-  Map<String, Object?> toJson() => {'kind': 'locked', 'eyebrow': eyebrow, 'title': title, 'body': body};
+  Map<String, Object?> toJson() =>
+      {'kind': 'locked', 'eyebrow': eyebrow, 'title': title, 'body': body};
 }
 
 enum BdQuizPhase {
@@ -320,7 +357,8 @@ enum BdQuizPhase {
 }
 
 class BdQuizReady {
-  const BdQuizReady({required this.icon, required this.title, required this.body});
+  const BdQuizReady(
+      {required this.icon, required this.title, required this.body});
 
   /// `hourglass` (a countdown) or `clock` (elapsed time).
   final String icon;
@@ -331,13 +369,15 @@ class BdQuizReady {
 }
 
 class BdQuizProgress {
-  const BdQuizProgress({required this.position, this.note, required this.percent});
+  const BdQuizProgress(
+      {required this.position, this.note, required this.percent});
 
   final String position;
   final String? note;
   final double percent;
 
-  Map<String, Object?> toJson() => {'position': position, 'note': note, 'percent': percent};
+  Map<String, Object?> toJson() =>
+      {'position': position, 'note': note, 'percent': percent};
 }
 
 class BdQuizScreen {

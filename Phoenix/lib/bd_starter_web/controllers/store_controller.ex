@@ -68,7 +68,8 @@ defmodule BdStarterWeb.StoreController do
       configured: Bd.configured?(),
       listing: listing,
       products: (listing && listing["items"]) || [],
-      counts: Map.new((listing && listing["categoryCounts"]) || [], &{&1["categoryId"], &1["count"]}),
+      counts:
+        Map.new((listing && listing["categoryCounts"]) || [], &{&1["categoryId"], &1["count"]}),
       price_range: listing && listing["priceRange"],
       categories: Bd.store_categories(),
       query: query,

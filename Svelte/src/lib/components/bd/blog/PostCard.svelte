@@ -40,25 +40,6 @@
 		overflow: hidden;
 		padding: 0;
 	}
-	@media (min-width: 900px) {
-		.post-card--lead {
-			grid-column: 1 / -1;
-		}
-		.post-card--lead .post-card__link {
-			display: grid;
-			grid-template-columns: 1.2fr 1fr;
-		}
-		.post-card--lead .post-card__body {
-			align-content: center;
-		}
-		.post-card--lead .post-card__img {
-			height: 100%;
-			aspect-ratio: auto;
-		}
-		.post-card--lead h2 {
-			font-size: 1.8rem;
-		}
-	}
 	.post-card__link {
 		display: flex;
 		flex-direction: column;
@@ -99,5 +80,25 @@
 		margin: 0;
 		color: var(--text-muted);
 		font-size: 0.85rem;
+	}
+	/* After the card's own rules: `.post-card--lead h2` and `.post-card h2` weigh the same, so the later one wins. */
+	@media (min-width: 900px) {
+		.post-card--lead {
+			grid-column: 1 / -1;
+		}
+		.post-card--lead .post-card__link {
+			display: grid;
+			grid-template-columns: 1.2fr 1fr;
+		}
+		.post-card--lead .post-card__body {
+			align-content: center;
+		}
+		.post-card--lead .post-card__img {
+			height: 100%;
+			aspect-ratio: auto;
+		}
+		.post-card--lead h2 {
+			font-size: 1.8rem;
+		}
 	}
 </style>

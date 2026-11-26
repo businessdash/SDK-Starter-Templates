@@ -53,7 +53,10 @@ export type OptionValue = {
 
 export type OptionGroup = { id: string; title: string; values: OptionValue[] };
 
-export type SpecGroup = { name: string; rows: { label: string; value: string }[] };
+export type SpecGroup = {
+	name: string;
+	rows: { label: string; value: string }[];
+};
 
 export type ProductView = {
 	id: string;
@@ -75,11 +78,17 @@ const text = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 const num = (v: unknown): number | null =>
 	typeof v === "number" && Number.isFinite(v) ? v : null;
 const records = <K extends string>(v: unknown): Fields<K>[] =>
-	Array.isArray(v) ? v.filter((x): x is Fields<K> => !!x && typeof x === "object") : [];
+	Array.isArray(v)
+		? v.filter((x): x is Fields<K> => !!x && typeof x === "object")
+		: [];
 
 /** Read the specifications column (`{ features, groups: [{ name, rows }] }`). */
-export function readSpecs(raw: unknown): { features: string[]; specs: SpecGroup[] } {
-	const obj: Fields<"features" | "groups"> = raw && typeof raw === "object" ? raw : {};
+export function readSpecs(raw: unknown): {
+	features: string[];
+	specs: SpecGroup[];
+} {
+	const obj: Fields<"features" | "groups"> =
+		raw && typeof raw === "object" ? raw : {};
 	const features = Array.isArray(obj.features)
 		? obj.features.map(text).filter(Boolean)
 		: [];
@@ -111,7 +120,9 @@ export function toProductView(product: object): ProductView {
 		| "specifications"
 	> = product;
 	const category: Fields<"name"> | null =
-		detail.category && typeof detail.category === "object" ? detail.category : null;
+		detail.category && typeof detail.category === "object"
+			? detail.category
+			: null;
 	const productImages = records<"url" | "order">(detail.productImages)
 		.map((image) => ({ url: text(image.url), order: num(image.order) ?? 0 }))
 		.filter((image) => image.url)
@@ -127,7 +138,9 @@ export function toProductView(product: object): ProductView {
 		categoryId: text(detail.categoryId) || null,
 		categoryName: category ? text(category.name) || null : null,
 		images: images.length > 0 ? images : productImages,
-		variants: records<"id" | "name" | "price" | "stock" | "isLive">(detail.variants).map((variant) => ({
+		variants: records<"id" | "name" | "price" | "stock" | "isLive">(
+			detail.variants,
+		).map((variant) => ({
 			id: text(variant.id),
 			name: text(variant.name) || "Default",
 			price: num(variant.price),
@@ -141,12 +154,16 @@ export function toProductView(product: object): ProductView {
 				order: num(image.order) ?? 0,
 			}))
 			.filter((image) => image.url),
-		optionTitles: records<"id" | "title" | "variantId">(detail.crossVariantTitles).map((title) => ({
+		optionTitles: records<"id" | "title" | "variantId">(
+			detail.crossVariantTitles,
+		).map((title) => ({
 			id: text(title.id),
 			title: text(title.title),
 			variantId: text(title.variantId) || null,
 		})),
-		optionValues: records<"id" | "crossVariantTitleId" | "value" | "price" | "stock" | "isLive">(detail.crossVariants).map((option) => ({
+		optionValues: records<
+			"id" | "crossVariantTitleId" | "value" | "price" | "stock" | "isLive"
+		>(detail.crossVariants).map((option) => ({
 			id: text(option.id),
 			titleId: text(option.crossVariantTitleId),
 			value: text(option.value),
@@ -172,11 +189,31 @@ export function galleryFor(view: ProductView, variantId: string): string[] {
 	return own.length > 0 ? own : view.images;
 }
 
-const SIZE_ORDER = ["XXS", "2XS", "XS", "S", "SM", "M", "MD", "L", "LG", "XL", "2XL", "XXL", "3XL", "4XL"];
+const SIZE_ORDER = [
+	"XXS",
+	"2XS",
+	"XS",
+	"S",
+	"SM",
+	"M",
+	"MD",
+	"L",
+	"LG",
+	"XL",
+	"2XL",
+	"XXL",
+	"3XL",
+	"4XL",
+];
 
 /** One option group's choices, sizes in size order. */
-function groupOf(view: ProductView, title: ProductView["optionTitles"][number]): OptionGroup {
-	const values = view.optionValues.filter((option) => option.titleId === title.id);
+function groupOf(
+	view: ProductView,
+	title: ProductView["optionTitles"][number],
+): OptionGroup {
+	const values = view.optionValues.filter(
+		(option) => option.titleId === title.id,
+	);
 	if (/^sizes?$/i.test(title.title)) {
 		const rank = (v: string) => {
 			const i = SIZE_ORDER.indexOf(v.toUpperCase());
@@ -188,9 +225,14 @@ function groupOf(view: ProductView, title: ProductView["optionTitles"][number]):
 }
 
 /** The option groups (Size, Colour…) that apply to a variant. */
-export function optionGroupsFor(view: ProductView, variantId: string): OptionGroup[] {
+export function optionGroupsFor(
+	view: ProductView,
+	variantId: string,
+): OptionGroup[] {
 	return view.optionTitles
-		.filter((title) => title.variantId === null || title.variantId === variantId)
+		.filter(
+			(title) => title.variantId === null || title.variantId === variantId,
+		)
 		.map((title) => groupOf(view, title))
 		.filter((group) => group.values.length > 0);
 }
@@ -200,7 +242,9 @@ export function optionGroupsFor(view: ProductView, variantId: string): OptionGro
  * A page drawn on the server draws them all; <bd-product-form> shows the
  * ones for the chosen variant.
  */
-export function allOptionGroups(view: ProductView): (OptionGroup & { variantId: string | null })[] {
+export function allOptionGroups(
+	view: ProductView,
+): (OptionGroup & { variantId: string | null })[] {
 	return view.optionTitles
 		.map((title) => ({ ...groupOf(view, title), variantId: title.variantId }))
 		.filter((group) => group.values.length > 0);
@@ -211,11 +255,18 @@ export function allOptionGroups(view: ProductView): (OptionGroup & { variantId: 
  * ""), then one per variant with photos of its own. <bd-gallery> shows the
  * chosen variant's set, or the product's.
  */
-export function photoSets(view: ProductView): { variantId: string; photos: string[] }[] {
-	const own = [...new Set(view.variantImages.map((image) => image.variantId))].filter(Boolean);
+export function photoSets(
+	view: ProductView,
+): { variantId: string; photos: string[] }[] {
+	const own = [
+		...new Set(view.variantImages.map((image) => image.variantId)),
+	].filter(Boolean);
 	return [
 		{ variantId: "", photos: view.images },
-		...own.map((variantId) => ({ variantId, photos: galleryFor(view, variantId) })),
+		...own.map((variantId) => ({
+			variantId,
+			photos: galleryFor(view, variantId),
+		})),
 	];
 }
 
@@ -244,7 +295,12 @@ export function priceFor(
 	}
 	const groups = optionGroupsFor(view, variantId);
 	if (groups.length === 0) {
-		return { amount: variant.price, from: false, stock: variant.stock, ready: true };
+		return {
+			amount: variant.price,
+			from: false,
+			stock: variant.stock,
+			ready: true,
+		};
 	}
 	const picks = groups.map((group) =>
 		group.values.find((value) => value.id === chosen[group.id]),
@@ -254,13 +310,20 @@ export function priceFor(
 			const open = group.values.filter((value) => value.available);
 			return open.length ? Math.min(...open.map((value) => value.price)) : 0;
 		});
-		return { amount: lowest.reduce((a, b) => a + b, 0), from: true, stock: null, ready: false };
+		return {
+			amount: lowest.reduce((a, b) => a + b, 0),
+			from: true,
+			stock: null,
+			ready: false,
+		};
 	}
 	if (picks.some((pick) => !pick?.available)) {
 		return { amount: null, from: false, stock: 0, ready: false };
 	}
 	const stocks = picks
-		.map((pick) => view.optionValues.find((v) => v.id === pick?.id)?.stock ?? null)
+		.map(
+			(pick) => view.optionValues.find((v) => v.id === pick?.id)?.stock ?? null,
+		)
 		.filter((stock): stock is number => stock !== null);
 	return {
 		amount: picks.reduce((sum, pick) => sum + (pick?.price ?? 0), 0),
@@ -304,7 +367,11 @@ export function productSummary(
 export function reviewDate(iso: string | null | undefined): string {
 	const date = iso ? new Date(iso) : null;
 	return date && !Number.isNaN(date.getTime())
-		? date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })
+		? date.toLocaleDateString(undefined, {
+				year: "numeric",
+				month: "short",
+				day: "numeric",
+			})
 		: "";
 }
 
@@ -376,7 +443,10 @@ export function createSavedList(key: string, limit: number): SavedList {
 	};
 	const write = (items: SavedProduct[]) => {
 		try {
-			globalThis.localStorage?.setItem(key, JSON.stringify(items.slice(0, limit)));
+			globalThis.localStorage?.setItem(
+				key,
+				JSON.stringify(items.slice(0, limit)),
+			);
 		} catch {
 			// Private mode or a full quota: the list just doesn't persist.
 		}
@@ -443,7 +513,8 @@ export async function shareLink(
 		return "copied";
 	} catch (error) {
 		// Closing the share sheet isn't a failure.
-		if (error instanceof DOMException && error.name === "AbortError") return "shared";
+		if (error instanceof DOMException && error.name === "AbortError")
+			return "shared";
 		return "failed";
 	}
 }

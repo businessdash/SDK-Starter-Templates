@@ -8,7 +8,9 @@
 --%>
 <link rel="stylesheet" href={~p"/bd-sign-in.css"} />
 <div class="signin-card">
-  {live_render(@conn, BdStarterWeb.SignInLive, session: %{"start" => @start, "problem" => @problem, "next" => @next})}
+  {live_render(@conn, BdStarterWeb.SignInLive,
+    session: %{"start" => @start, "problem" => @problem, "next" => @next}
+  )}
 </div>
 <script>
   // After LiveView's own focus restore, which runs once the update is applied.

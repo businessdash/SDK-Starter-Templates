@@ -39,7 +39,11 @@ defmodule BdStarter.Forms.Formula do
 
       with true <- Json.object?(first) and is_binary(first["formula"]),
            {:ok, ast} <- parse(first["formula"]) do
-        params = Enum.map(Json.list(definition["inputs"]) || [], fn input -> to_string(input["key"] || "") end)
+        params =
+          Enum.map(Json.list(definition["inputs"]) || [], fn input ->
+            to_string(input["key"] || "")
+          end)
+
         Map.put(acc, to_string(name), %{params: params, ast: ast})
       else
         _ -> acc
@@ -116,8 +120,8 @@ defmodule BdStarter.Forms.Formula do
   defp digit?(c) when is_binary(c), do: byte_size(c) == 1 and c >= "0" and c <= "9"
   defp digit?(_), do: false
 
-  defp ident_start?(c), do: byte_size(c) == 1 and (c =~ ~r/^[A-Za-z_]$/)
-  defp ident_part?(c), do: byte_size(c) == 1 and (c =~ ~r/^[A-Za-z0-9_]$/)
+  defp ident_start?(c), do: byte_size(c) == 1 and c =~ ~r/^[A-Za-z_]$/
+  defp ident_part?(c), do: byte_size(c) == 1 and c =~ ~r/^[A-Za-z0-9_]$/
 
   # ── Parser ────────────────────────────────────────────────────────────────
 
@@ -162,14 +166,14 @@ defmodule BdStarter.Forms.Formula do
     {ay, am, ad} = Dates.utc_parts(s)
     {by, bm, bd} = Dates.utc_parts(e)
     m = (by - ay) * 12 + (bm - am)
-    (if(bd < ad, do: m - 1, else: m)) * 1.0
+    if(bd < ad, do: m - 1, else: m) * 1.0
   end
 
   defp years_between(s, e) do
     {ay, am, ad} = Dates.utc_parts(s)
     {by, _, _} = Dates.utc_parts(e)
     y = by - ay
-    (if(ms(e) < Dates.utc(by, am, ad), do: y - 1, else: y)) * 1.0
+    if(ms(e) < Dates.utc(by, am, ad), do: y - 1, else: y) * 1.0
   end
 
   @file_types [
@@ -209,7 +213,11 @@ defmodule BdStarter.Forms.Formula do
       text
     else
       units = Js.to_utf16(text)
-      units |> substitute(0, byte_size(units), active, []) |> IO.iodata_to_binary() |> Js.from_utf16()
+
+      units
+      |> substitute(0, byte_size(units), active, [])
+      |> IO.iodata_to_binary()
+      |> Js.from_utf16()
     end
   end
 
@@ -243,7 +251,11 @@ defmodule BdStarter.Forms.Formula do
       rad = fn d -> d * :math.pi() / 180 end
       d_lat = rad.(lat2 - lat1)
       d_lng = rad.(lng2 - lng1)
-      a = :math.pow(:math.sin(d_lat / 2), 2) + :math.cos(rad.(lat1)) * :math.cos(rad.(lat2)) * :math.pow(:math.sin(d_lng / 2), 2)
+
+      a =
+        :math.pow(:math.sin(d_lat / 2), 2) +
+          :math.cos(rad.(lat1)) * :math.cos(rad.(lat2)) * :math.pow(:math.sin(d_lng / 2), 2)
+
       km = 2 * 6371 * :math.asin(min(1.0, :math.sqrt(a)))
       if miles, do: km * 0.621371, else: km
     else
@@ -336,12 +348,15 @@ defmodule BdStarter.Forms.Formula do
 
   defp builtin("SIGN", [x]) do
     case to_num(x) do
-      :nan -> :nan
-      n -> cond do
-        Js.gt(n, 0.0) -> 1.0
-        Js.lt(n, 0.0) -> -1.0
-        true -> n
-      end
+      :nan ->
+        :nan
+
+      n ->
+        cond do
+          Js.gt(n, 0.0) -> 1.0
+          Js.lt(n, 0.0) -> -1.0
+          true -> n
+        end
     end
   end
 
@@ -355,11 +370,17 @@ defmodule BdStarter.Forms.Formula do
   defp builtin("MEDIAN", a) do
     s = a |> nums() |> Enum.sort(&Js.le/2)
     m = div(length(s), 2)
-    if rem(length(s), 2) == 1, do: Enum.at(s, m), else: Js.divide(Js.add(Enum.at(s, m - 1), Enum.at(s, m)), 2.0)
+
+    if rem(length(s), 2) == 1,
+      do: Enum.at(s, m),
+      else: Js.divide(Js.add(Enum.at(s, m - 1), Enum.at(s, m)), 2.0)
   end
 
   defp builtin("COUNT", a),
-    do: Enum.count(a, fn x -> Json.number?(x) or (is_binary(x) and Js.trim(x) != "" and Js.parse_number(x) != :nan) end) * 1.0
+    do:
+      Enum.count(a, fn x ->
+        Json.number?(x) or (is_binary(x) and Js.trim(x) != "" and Js.parse_number(x) != :nan)
+      end) * 1.0
 
   defp builtin("COUNTA", a), do: Enum.count(a, &(&1 != "" and &1 != nil)) * 1.0
   defp builtin("IF", [c, y | rest]), do: if(to_bool(c), do: y, else: List.first(rest, false))
@@ -382,7 +403,10 @@ defmodule BdStarter.Forms.Formula do
 
   defp builtin("CHOOSE", a) do
     index = Js.trunc(to_num(hd(a)))
-    unless Js.ge(index, 0.0) and Js.lt(index, length(a) * 1.0), do: err("CHOOSE index out of range.")
+
+    unless Js.ge(index, 0.0) and Js.lt(index, length(a) * 1.0),
+      do: err("CHOOSE index out of range.")
+
     Enum.at(a, Kernel.trunc(index))
   end
 
@@ -408,7 +432,10 @@ defmodule BdStarter.Forms.Formula do
     text = to_str(text)
 
     if rem(length(rest), 2) != 0,
-      do: err("SUBSTITUTE needs find/replace in pairs — it got an odd number of arguments after the text.")
+      do:
+        err(
+          "SUBSTITUTE needs find/replace in pairs — it got an odd number of arguments after the text."
+        )
 
     pairs = rest |> Enum.chunk_every(2) |> Enum.map(fn [f, r] -> {to_str(f), to_str(r)} end)
     substitute_all(text, pairs)
@@ -508,7 +535,8 @@ defmodule BdStarter.Forms.Formula do
     end
   end
 
-  defp eval({:unary, "NOT", node}, vars, fns, stack), do: not to_bool(eval(node, vars, fns, stack))
+  defp eval({:unary, "NOT", node}, vars, fns, stack),
+    do: not to_bool(eval(node, vars, fns, stack))
 
   defp eval({:unary, op, node}, vars, fns, stack) do
     x = to_num(eval(node, vars, fns, stack))
@@ -521,7 +549,10 @@ defmodule BdStarter.Forms.Formula do
     case Map.fetch(@arity, name) do
       {:ok, {min, max}} ->
         args = Enum.map(arg_nodes, &eval(&1, vars, fns, stack))
-        if length(args) < min or (max != nil and length(args) > max), do: err("#{name} got the wrong number of arguments.")
+
+        if length(args) < min or (max != nil and length(args) > max),
+          do: err("#{name} got the wrong number of arguments.")
+
         builtin(name, args)
 
       :error ->

@@ -114,7 +114,9 @@ defmodule BdStarter.Forms.Rules do
         Enum.map(listed, fn c -> {to_string(c["operator"]), Json.str(c["value"]) || ""} end)
 
       _ ->
-        if is_binary(rule["operator"]), do: [{rule["operator"], Json.str(rule["value"]) || ""}], else: []
+        if is_binary(rule["operator"]),
+          do: [{rule["operator"], Json.str(rule["value"]) || ""}],
+          else: []
     end
   end
 
@@ -143,8 +145,9 @@ defmodule BdStarter.Forms.Rules do
     do: eval_condition(rule, fn r -> Map.get(data, Json.str(r["fieldId"]), :undefined) end)
 
   @doc "Only a condition block or a group can be hidden by a rule."
-  def node_visible?(%Field{type: type} = node, resolve) when type in ["condition_block", "input_group"],
-    do: eval_condition(Field.rule(node), resolve)
+  def node_visible?(%Field{type: type} = node, resolve)
+      when type in ["condition_block", "input_group"],
+      do: eval_condition(Field.rule(node), resolve)
 
   def node_visible?(_, _), do: true
 
@@ -261,11 +264,21 @@ defmodule BdStarter.Forms.Rules do
 
   defp validate("email", field, value) do
     cond do
-      not is_binary(value) -> "type"
-      len(value) > @max_string_len -> "max"
-      not Regex.match?(Re.get(@email, "u"), value) -> "format"
-      Field.config(field, "emailConfig", "businessOnly") == true and consumer_email_domain?(email_domain(value) || "") -> "business_email"
-      true -> nil
+      not is_binary(value) ->
+        "type"
+
+      len(value) > @max_string_len ->
+        "max"
+
+      not Regex.match?(Re.get(@email, "u"), value) ->
+        "format"
+
+      Field.config(field, "emailConfig", "businessOnly") == true and
+          consumer_email_domain?(email_domain(value) || "") ->
+        "business_email"
+
+      true ->
+        nil
     end
   end
 
@@ -273,14 +286,30 @@ defmodule BdStarter.Forms.Rules do
     u = Json.get(value, "url")
 
     cond do
-      not Json.object?(value) -> "type"
-      Json.blank?(u) -> nil
-      not is_binary(u) -> "type"
-      len(u) > @max_string_len -> "max"
-      not Regex.match?(Re.get(@url, "iu"), Js.trim(u)) -> "format"
-      Json.has?(value, "verified") and Json.get(value, "verified") not in ["unverified", "safe", "unsafe"] -> "options"
-      only_bounded_primitives?(value, @max_string_len) -> nil
-      true -> "type"
+      not Json.object?(value) ->
+        "type"
+
+      Json.blank?(u) ->
+        nil
+
+      not is_binary(u) ->
+        "type"
+
+      len(u) > @max_string_len ->
+        "max"
+
+      not Regex.match?(Re.get(@url, "iu"), Js.trim(u)) ->
+        "format"
+
+      Json.has?(value, "verified") and
+          Json.get(value, "verified") not in ["unverified", "safe", "unsafe"] ->
+        "options"
+
+      only_bounded_primitives?(value, @max_string_len) ->
+        nil
+
+      true ->
+        "type"
     end
   end
 
@@ -302,7 +331,9 @@ defmodule BdStarter.Forms.Rules do
           if byte_size(digits) in 7..15, do: nil, else: "format"
         else
           national =
-            if byte_size(digits) == 11 and String.starts_with?(digits, "1"), do: binary_part(digits, 1, 10), else: digits
+            if byte_size(digits) == 11 and String.starts_with?(digits, "1"),
+              do: binary_part(digits, 1, 10),
+              else: digits
 
           if byte_size(national) == 10, do: nil, else: "format"
         end
@@ -312,21 +343,43 @@ defmodule BdStarter.Forms.Rules do
   defp validate(type, field, value) when type in ["number", "slider", "stepper"] do
     n =
       cond do
-        Json.number?(value) -> Js.f(value)
-        is_binary(value) and Js.trim(value) != "" and Js.parse_number(value) != :nan -> Js.parse_number(value)
-        true -> :type
+        Json.number?(value) ->
+          Js.f(value)
+
+        is_binary(value) and Js.trim(value) != "" and Js.parse_number(value) != :nan ->
+          Js.parse_number(value)
+
+        true ->
+          :type
       end
 
-    min = Json.num(Field.config(field, "validation", "min")) || Json.num(Field.config(field, "sliderConfig", "min"))
-    max = Json.num(Field.config(field, "validation", "max")) || Json.num(Field.config(field, "sliderConfig", "max"))
+    min =
+      Json.num(Field.config(field, "validation", "min")) ||
+        Json.num(Field.config(field, "sliderConfig", "min"))
+
+    max =
+      Json.num(Field.config(field, "validation", "max")) ||
+        Json.num(Field.config(field, "sliderConfig", "max"))
 
     cond do
-      n == :type -> "type"
-      type == "number" and Field.bool(field, "allowDecimal") == false and not Js.integer?(n) and Js.finite?(n) -> "format"
-      type == "number" and Field.bool(field, "allowNegative") == false and Js.lt(n, 0.0) -> "min"
-      min != nil and Js.lt(n, min) -> "min"
-      max != nil and Js.gt(n, max) -> "max"
-      true -> nil
+      n == :type ->
+        "type"
+
+      type == "number" and Field.bool(field, "allowDecimal") == false and not Js.integer?(n) and
+          Js.finite?(n) ->
+        "format"
+
+      type == "number" and Field.bool(field, "allowNegative") == false and Js.lt(n, 0.0) ->
+        "min"
+
+      min != nil and Js.lt(n, min) ->
+        "min"
+
+      max != nil and Js.gt(n, max) ->
+        "max"
+
+      true ->
+        nil
     end
   end
 
@@ -364,10 +417,17 @@ defmodule BdStarter.Forms.Rules do
 
   defp validate("collection_select", field, value) do
     cond do
-      Field.multi?(field) -> string_list(value, fn s -> if len(s) > @max_string_len, do: "max" end)
-      not is_binary(value) -> "type"
-      len(value) > @max_string_len -> "max"
-      true -> nil
+      Field.multi?(field) ->
+        string_list(value, fn s -> if len(s) > @max_string_len, do: "max" end)
+
+      not is_binary(value) ->
+        "type"
+
+      len(value) > @max_string_len ->
+        "max"
+
+      true ->
+        nil
     end
   end
 
@@ -428,7 +488,9 @@ defmodule BdStarter.Forms.Rules do
   end
 
   defp validate("service_selector", field, value) do
-    offered = Enum.map(Json.list(Field.config(field, "serviceConfig", "options")) || [], & &1["id"])
+    offered =
+      Enum.map(Json.list(Field.config(field, "serviceConfig", "options")) || [], & &1["id"])
+
     string_list(value, fn s -> if offered != [] and s not in offered, do: "options" end)
   end
 
@@ -446,22 +508,44 @@ defmodule BdStarter.Forms.Rules do
 
   defp validate("file_upload", field, value) do
     max_files =
-      min(Kernel.trunc(Json.num(Field.config(field, "fileConfig", "maxFiles")) || @max_array_len * 1.0), @max_array_len)
+      min(
+        Kernel.trunc(
+          Json.num(Field.config(field, "fileConfig", "maxFiles")) || @max_array_len * 1.0
+        ),
+        @max_array_len
+      )
 
     cond do
-      not is_list(value) -> "type"
-      length(value) > max_files -> "max"
-      Enum.any?(value, fn item -> not Json.object?(item) or not only_bounded_primitives?(item, @max_file_field_len) end) -> "type"
-      true -> nil
+      not is_list(value) ->
+        "type"
+
+      length(value) > max_files ->
+        "max"
+
+      Enum.any?(value, fn item ->
+        not Json.object?(item) or not only_bounded_primitives?(item, @max_file_field_len)
+      end) ->
+        "type"
+
+      true ->
+        nil
     end
   end
 
   defp validate("currency", field, value) do
     cond do
-      not Json.number?(value) or value == :nan -> "type"
-      Field.config(field, "currencyConfig", "allowNegative") != true and Js.lt(value, 0.0) -> "format"
-      Field.config(field, "currencyConfig", "allowDecimal") == false and Js.finite?(value) and not Js.integer?(value) -> "format"
-      true -> nil
+      not Json.number?(value) or value == :nan ->
+        "type"
+
+      Field.config(field, "currencyConfig", "allowNegative") != true and Js.lt(value, 0.0) ->
+        "format"
+
+      Field.config(field, "currencyConfig", "allowDecimal") == false and Js.finite?(value) and
+          not Js.integer?(value) ->
+        "format"
+
+      true ->
+        nil
     end
   end
 
@@ -472,20 +556,39 @@ defmodule BdStarter.Forms.Rules do
     category = Units.category(Json.str(Field.config(field, "unitConfig", "category")))
 
     cond do
-      not Json.object?(value) -> "type"
-      Json.blank?(raw) -> nil
-      n == nil or n == :nan -> "type"
-      unit == nil -> "type"
-      category != nil and not Units.contains?(category, unit) -> "options"
-      Field.config(field, "unitConfig", "allowDecimal") == false and Js.finite?(n) and not Js.integer?(n) -> "format"
-      only_bounded_primitives?(value, @max_date_len) -> nil
-      true -> "type"
+      not Json.object?(value) ->
+        "type"
+
+      Json.blank?(raw) ->
+        nil
+
+      n == nil or n == :nan ->
+        "type"
+
+      unit == nil ->
+        "type"
+
+      category != nil and not Units.contains?(category, unit) ->
+        "options"
+
+      Field.config(field, "unitConfig", "allowDecimal") == false and Js.finite?(n) and
+          not Js.integer?(n) ->
+        "format"
+
+      only_bounded_primitives?(value, @max_date_len) ->
+        nil
+
+      true ->
+        "type"
     end
   end
 
   defp validate("multi_populator", field, value) do
     max_instances =
-      min(Kernel.trunc(Json.num(Field.config(field, "populatorConfig", "maxInstances")) || 10.0), @max_array_len)
+      min(
+        Kernel.trunc(Json.num(Field.config(field, "populatorConfig", "maxInstances")) || 10.0),
+        @max_array_len
+      )
 
     known = instance_value_fields(field.children || [])
 
@@ -524,7 +627,9 @@ defmodule BdStarter.Forms.Rules do
   end
 
   defp validate("date_range", _field, value) do
-    if Json.object?(value) and only_bounded_primitives?(value, @max_date_len), do: nil, else: "type"
+    if Json.object?(value) and only_bounded_primitives?(value, @max_date_len),
+      do: nil,
+      else: "type"
   end
 
   defp validate("time_picker", field, value) do
@@ -555,11 +660,21 @@ defmodule BdStarter.Forms.Rules do
       parts =
         Enum.find_value(value, fn {key, v} ->
           cond do
-            key not in @name_value_keys -> "options"
-            key == "nicknames" or v == nil -> nil
-            not is_binary(v) -> "type"
-            len(v) > if(key in ["full", "short"], do: @max_name_string_len, else: @max_name_part_len) -> "max"
-            true -> nil
+            key not in @name_value_keys ->
+              "options"
+
+            key == "nicknames" or v == nil ->
+              nil
+
+            not is_binary(v) ->
+              "type"
+
+            len(v) >
+                if(key in ["full", "short"], do: @max_name_string_len, else: @max_name_part_len) ->
+              "max"
+
+            true ->
+              nil
           end
         end)
 
@@ -574,10 +689,18 @@ defmodule BdStarter.Forms.Rules do
       slot = value["slotStartAt"]
 
       cond do
-        Map.has_key?(value, "slotStartAt") and not is_binary(slot) -> "type"
-        Map.has_key?(value, "slotStartAt") and len(slot) > @max_date_len -> "max"
-        Map.has_key?(value, "slotStartAt") and Dates.parse_instant(slot) == nil -> "format"
-        Map.has_key?(value, "asap") and not is_boolean(value["asap"]) -> "type"
+        Map.has_key?(value, "slotStartAt") and not is_binary(slot) ->
+          "type"
+
+        Map.has_key?(value, "slotStartAt") and len(slot) > @max_date_len ->
+          "max"
+
+        Map.has_key?(value, "slotStartAt") and Dates.parse_instant(slot) == nil ->
+          "format"
+
+        Map.has_key?(value, "asap") and not is_boolean(value["asap"]) ->
+          "type"
+
         true ->
           Enum.find_value(["days", "times"], fn key ->
             if Map.has_key?(value, key),
@@ -625,9 +748,14 @@ defmodule BdStarter.Forms.Rules do
   # A list of strings, each passing `check`: the first reason, else nil.
   defp string_list(value, check) do
     cond do
-      not is_list(value) -> "type"
-      length(value) > @max_array_len -> "max"
-      true -> Enum.find_value(value, fn item -> if is_binary(item), do: check.(item), else: "type" end)
+      not is_list(value) ->
+        "type"
+
+      length(value) > @max_array_len ->
+        "max"
+
+      true ->
+        Enum.find_value(value, fn item -> if is_binary(item), do: check.(item), else: "type" end)
     end
   end
 
@@ -682,13 +810,18 @@ defmodule BdStarter.Forms.Rules do
 
       matches ->
         {at, _} = List.last(matches)
-        if at == byte_size(email) - 1, do: nil, else: email |> binary_part(at + 1, byte_size(email) - at - 1) |> Js.trim() |> Js.lower()
+
+        if at == byte_size(email) - 1,
+          do: nil,
+          else: email |> binary_part(at + 1, byte_size(email) - at - 1) |> Js.trim() |> Js.lower()
     end
   end
 
   def consumer_email_domain?(host) do
     h = host |> Js.trim() |> Js.lower()
-    MapSet.member?(FormsData.consumer_email_domains(), h) or String.ends_with?(h, ".gmail.com") or String.ends_with?(h, ".googlemail.com")
+
+    MapSet.member?(FormsData.consumer_email_domains(), h) or String.ends_with?(h, ".gmail.com") or
+      String.ends_with?(h, ".googlemail.com")
   end
 
   # ── Required walk (server findMissingRequiredFields) ──────────────────────
@@ -708,7 +841,10 @@ defmodule BdStarter.Forms.Rules do
   def resolver(scope, resolve_match) do
     fn rule ->
       raw = Map.get(scope, Json.str(rule["fieldId"]) || "", :undefined)
-      if not is_binary(rule["matchField"]) or resolve_match == nil, do: raw, else: resolve_match.(rule, raw)
+
+      if not is_binary(rule["matchField"]) or resolve_match == nil,
+        do: raw,
+        else: resolve_match.(rule, raw)
     end
   end
 
@@ -727,7 +863,14 @@ defmodule BdStarter.Forms.Rules do
           filled = Enum.map(children, &subtree_has_value?([&1], scope, resolve_match))
 
           if children != [] and true not in filled do
-            [%{id: f.id, label: if(f.label == "", do: "Either side required", else: f.label), path: prefix <> f.id} | acc]
+            [
+              %{
+                id: f.id,
+                label: if(f.label == "", do: "Either side required", else: f.label),
+                path: prefix <> f.id
+              }
+              | acc
+            ]
           else
             children
             |> Enum.zip(filled)
@@ -745,23 +888,48 @@ defmodule BdStarter.Forms.Rules do
           filled =
             (Json.list(Map.get(scope, f.id)) || [])
             |> Enum.with_index()
-            |> Enum.filter(fn {instance, _} -> Json.object?(instance) and instance_has_value?(instance) end)
+            |> Enum.filter(fn {instance, _} ->
+              Json.object?(instance) and instance_has_value?(instance)
+            end)
 
           if f.required and filled == [] do
-            [%{id: f.id, label: if(f.label == "", do: "At least one entry required", else: f.label), path: prefix <> f.id} | acc]
+            [
+              %{
+                id: f.id,
+                label: if(f.label == "", do: "At least one entry required", else: f.label),
+                path: prefix <> f.id
+              }
+              | acc
+            ]
           else
             Enum.reduce(filled, acc, fn {instance, index}, acc ->
-              walk_required(f.children || [], instance, "#{prefix}#{f.id}[#{index}].", resolve_match, acc)
+              walk_required(
+                f.children || [],
+                instance,
+                "#{prefix}#{f.id}[#{index}].",
+                resolve_match,
+                acc
+              )
             end)
           end
 
         t ->
           cond do
-            t in @static_or_layout -> acc
-            (f.required or Field.must_be_true?(f)) and empty?(f, Map.get(scope, f.id)) ->
-              [%{id: f.id, label: if(f.label == "", do: "Untitled", else: f.label), path: prefix <> f.id} | acc]
+            t in @static_or_layout ->
+              acc
 
-            true -> acc
+            (f.required or Field.must_be_true?(f)) and empty?(f, Map.get(scope, f.id)) ->
+              [
+                %{
+                  id: f.id,
+                  label: if(f.label == "", do: "Untitled", else: f.label),
+                  path: prefix <> f.id
+                }
+                | acc
+              ]
+
+            true ->
+              acc
           end
       end
     end)
@@ -774,7 +942,8 @@ defmodule BdStarter.Forms.Rules do
     Enum.any?(nodes, fn f ->
       case f.type do
         "condition_block" ->
-          eval_condition(Field.rule(f), resolve) and subtree_has_value?(f.children || [], data, resolve_match)
+          eval_condition(Field.rule(f), resolve) and
+            subtree_has_value?(f.children || [], data, resolve_match)
 
         t when t in ["or_condition", "input_group", "flex_row"] ->
           node_visible?(f, resolve) and subtree_has_value?(f.children || [], data, resolve_match)
@@ -831,13 +1000,16 @@ defmodule BdStarter.Forms.Rules do
       raw = Map.get(data, field.id)
 
       out =
-        if field.type == "checkbox" and Field.bool(field, "explodeOptions") == true and options not in [nil, []] do
+        if field.type == "checkbox" and Field.bool(field, "explodeOptions") == true and
+             options not in [nil, []] do
           picked = Json.strings(raw)
 
           field
           |> key_base()
           |> checkbox_option_keys(options)
-          |> Enum.reduce(out, fn {key, option}, out -> Map.put(out, "#{field.id}::#{key}", option in picked) end)
+          |> Enum.reduce(out, fn {key, option}, out ->
+            Map.put(out, "#{field.id}::#{key}", option in picked)
+          end)
         else
           out
         end
@@ -854,7 +1026,11 @@ defmodule BdStarter.Forms.Rules do
         end
 
       if field.type == "name" do
-        optional = Enum.filter(~w(prefix middle suffix nicknames), &(Field.config(field, "nameConfig", &1) == true))
+        optional =
+          Enum.filter(
+            ~w(prefix middle suffix nicknames),
+            &(Field.config(field, "nameConfig", &1) == true)
+          )
 
         Enum.reduce(~w(first last full short) ++ optional, out, fn part, out ->
           Map.put(out, "#{field.id}::#{part}", name_part_value(raw, part))
@@ -911,7 +1087,9 @@ defmodule BdStarter.Forms.Rules do
 
   @doc "Every node, containers and repeaters' children included, in form order."
   def fields_in_order(fields) do
-    Enum.flat_map(fields, fn f -> [f | if(f.children != nil, do: fields_in_order(f.children), else: [])] end)
+    Enum.flat_map(fields, fn f ->
+      [f | if(f.children != nil, do: fields_in_order(f.children), else: [])]
+    end)
   end
 
   # ── Output keys ───────────────────────────────────────────────────────────
@@ -944,7 +1122,11 @@ defmodule BdStarter.Forms.Rules do
 
         key =
           if MapSet.member?(used, key) do
-            n = Enum.find(Stream.iterate(2, &(&1 + 1)), fn n -> not MapSet.member?(used, "#{key}#{n}") end)
+            n =
+              Enum.find(Stream.iterate(2, &(&1 + 1)), fn n ->
+                not MapSet.member?(used, "#{key}#{n}")
+              end)
+
             "#{key}#{n}"
           else
             key
@@ -1013,8 +1195,9 @@ defmodule BdStarter.Forms.Rules do
 
         true ->
           value =
-            if f.type not in @no_seed_static and f.type not in @step_containers and f.type != "flex_row",
-              do: default_value(f)
+            if f.type not in @no_seed_static and f.type not in @step_containers and
+                 f.type != "flex_row",
+               do: default_value(f)
 
           out = if value != nil, do: Map.put(out, f.id, value), else: out
           if f.children != nil, do: Map.merge(out, seed_initial_data(f.children)), else: out
@@ -1036,10 +1219,12 @@ defmodule BdStarter.Forms.Rules do
 
       "measurement" ->
         category = Units.category_of(field)
-        first = case category.units do
-          [{symbol, _} | _] -> symbol
-          [] -> ""
-        end
+
+        first =
+          case category.units do
+            [{symbol, _} | _] -> symbol
+            [] -> ""
+          end
 
         %{
           "value" => "",
@@ -1132,7 +1317,11 @@ defmodule BdStarter.Forms.Rules do
       if f.type == "multi_populator" do
         Map.put(out, f.id, f)
       else
-        out = if f.type not in @static_or_layout or f.type == "stepper", do: Map.put(out, f.id, f), else: out
+        out =
+          if f.type not in @static_or_layout or f.type == "stepper",
+            do: Map.put(out, f.id, f),
+            else: out
+
         if f.children != nil, do: Map.merge(out, flatten_value_fields(f.children)), else: out
       end
     end)
@@ -1156,12 +1345,23 @@ defmodule BdStarter.Forms.Rules do
     Enum.reduce(nodes, acc, fn f, acc ->
       case f.type do
         t when t in ["condition_block", "input_group", "flex_row", "or_condition"] ->
-          visible = if t == "condition_block", do: eval_condition(Field.rule(f), resolve), else: node_visible?(f, resolve)
-          if visible, do: walk_values(f.children || [], scope, prefix, resolve_match, acc), else: acc
+          visible =
+            if t == "condition_block",
+              do: eval_condition(Field.rule(f), resolve),
+              else: node_visible?(f, resolve)
+
+          if visible,
+            do: walk_values(f.children || [], scope, prefix, resolve_match, acc),
+            else: acc
 
         "multi_populator" ->
           instances = Json.list(Map.get(scope, f.id)) || []
-          max = min(Kernel.trunc(Json.num(Field.config(f, "populatorConfig", "maxInstances")) || 10.0), @max_array_len)
+
+          max =
+            min(
+              Kernel.trunc(Json.num(Field.config(f, "populatorConfig", "maxInstances")) || 10.0),
+              @max_array_len
+            )
 
           acc =
             if length(instances) > max,
@@ -1172,7 +1372,14 @@ defmodule BdStarter.Forms.Rules do
           |> Enum.with_index()
           |> Enum.reduce(acc, fn {instance, index}, acc ->
             if Json.object?(instance),
-              do: walk_values(f.children || [], instance, "#{prefix}#{f.id}[#{index}].", resolve_match, acc),
+              do:
+                walk_values(
+                  f.children || [],
+                  instance,
+                  "#{prefix}#{f.id}[#{index}].",
+                  resolve_match,
+                  acc
+                ),
               else: acc
           end)
 
@@ -1180,12 +1387,17 @@ defmodule BdStarter.Forms.Rules do
           value = Map.get(scope, f.id)
 
           cond do
-            t in @layout_only or t == "calculation" -> acc
-            pending_upload?(value) -> acc
+            t in @layout_only or t == "calculation" ->
+              acc
+
+            pending_upload?(value) ->
+              acc
+
             reason = validate_value(f, value) || client_only_rule(f, value) ->
               [%{id: f.id, label: f.label, path: prefix <> f.id, reason: reason} | acc]
 
-            true -> acc
+            true ->
+              acc
           end
       end
     end)
@@ -1193,17 +1405,30 @@ defmodule BdStarter.Forms.Rules do
 
   @doc "Checks the server doesn't make but a visitor should hear about: a range ending before it starts."
   def client_only_rule(field, value) do
-    time_block = field.type == "time_picker" and Field.config(field, "timeConfig", "mode") == "time_block"
+    time_block =
+      field.type == "time_picker" and Field.config(field, "timeConfig", "mode") == "time_block"
+
     s = Json.str(Json.get(value, "start"))
     e = Json.str(Json.get(value, "end"))
 
     cond do
-      field.type != "date_range" and not time_block -> nil
-      s in [nil, ""] or e in [nil, ""] -> nil
-      time_block -> if e <= s, do: "range_order"
-      e < s -> "range_order"
-      e == s and Field.config(field, "dateRangeConfig", "allowSameDay") == false -> "range_same_day"
-      true -> nil
+      field.type != "date_range" and not time_block ->
+        nil
+
+      s in [nil, ""] or e in [nil, ""] ->
+        nil
+
+      time_block ->
+        if e <= s, do: "range_order"
+
+      e < s ->
+        "range_order"
+
+      e == s and Field.config(field, "dateRangeConfig", "allowSameDay") == false ->
+        "range_same_day"
+
+      true ->
+        nil
     end
   end
 
@@ -1213,11 +1438,18 @@ defmodule BdStarter.Forms.Rules do
   A picked file waiting for submit: a placeholder in the value tree, so
   required checks and file counts see it, swapped for the stored file on submit.
   """
-  def pending_upload?(value), do: Json.get(value, "pending") == true and is_binary(Json.get(value, "localId"))
+  def pending_upload?(value),
+    do: Json.get(value, "pending") == true and is_binary(Json.get(value, "localId"))
 
   @doc "The author's allowed types, plus the formats phones produce for them (HEIC, QuickTime)."
   def expand_allowed_types(allowed) do
-    image = Enum.any?(allowed, &(&1 == "image/*" or (String.starts_with?(&1, "image/") and not String.contains?(&1, "heic"))))
+    image =
+      Enum.any?(
+        allowed,
+        &(&1 == "image/*" or
+            (String.starts_with?(&1, "image/") and not String.contains?(&1, "heic")))
+      )
+
     video = Enum.any?(allowed, &(&1 == "video/*" or String.starts_with?(&1, "video/")))
 
     extra =
@@ -1234,8 +1466,12 @@ defmodule BdStarter.Forms.Rules do
 
     ext =
       case :binary.matches(name, ".") do
-        [] -> ""
-        matches -> {at, _} = List.last(matches); name |> binary_part(at, byte_size(name) - at) |> String.downcase(:ascii)
+        [] ->
+          ""
+
+        matches ->
+          {at, _} = List.last(matches)
+          name |> binary_part(at, byte_size(name) - at) |> String.downcase(:ascii)
       end
 
     allowed
@@ -1285,9 +1521,14 @@ defmodule BdStarter.Forms.Rules do
       n = byte_size(digits)
 
       cond do
-        n <= 3 -> digits
-        n <= 6 -> "(#{binary_part(digits, 0, 3)}) #{binary_part(digits, 3, n - 3)}"
-        true -> "(#{binary_part(digits, 0, 3)}) #{binary_part(digits, 3, 3)}-#{String.slice(digits, 6, 4)}"
+        n <= 3 ->
+          digits
+
+        n <= 6 ->
+          "(#{binary_part(digits, 0, 3)}) #{binary_part(digits, 3, n - 3)}"
+
+        true ->
+          "(#{binary_part(digits, 0, 3)}) #{binary_part(digits, 3, 3)}-#{String.slice(digits, 6, 4)}"
       end
     end
   end
@@ -1349,7 +1590,10 @@ defmodule BdStarter.Forms.Rules do
 
       true ->
         haystack = (Field.key(field) || "") <> " " <> field.label
-        Enum.find_value(@autofill, fn {pattern, token} -> if Regex.match?(Re.get(pattern, "i"), haystack), do: token end)
+
+        Enum.find_value(@autofill, fn {pattern, token} ->
+          if Regex.match?(Re.get(pattern, "i"), haystack), do: token
+        end)
     end
   end
 end

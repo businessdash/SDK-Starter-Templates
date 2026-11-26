@@ -15,7 +15,15 @@ export function PostMeta({
 }) {
 	return (
 		<p class="post__meta">
-			{authorAvatarUrl ? <img alt="" referrerPolicy="no-referrer" src={authorAvatarUrl} /> : null}
+			{authorAvatarUrl ? (
+				<img
+					width={32}
+					height={32}
+					alt=""
+					referrerPolicy="no-referrer"
+					src={authorAvatarUrl}
+				/>
+			) : null}
 			{authorName ? <span>{authorName}</span> : null}
 			<span>{formatPostDate(publishedAt)}</span>
 			<span>· {minutes} min read</span>

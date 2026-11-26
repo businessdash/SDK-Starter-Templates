@@ -49,11 +49,13 @@ class BdSignInOptions {
     this.logoUrl,
   });
 
-  factory BdSignInOptions.fromJson(Map<String, dynamic> json) => BdSignInOptions(
+  factory BdSignInOptions.fromJson(Map<String, dynamic> json) =>
+      BdSignInOptions(
         name: _string(json['name']),
         password: json['password'] != false,
         oauth: [
-          for (final p in (json['oauth'] is List ? json['oauth'] as List : const []))
+          for (final p
+              in (json['oauth'] is List ? json['oauth'] as List : const []))
             if (BdOAuthProvider.fromWire(p) case final provider?) provider,
         ],
         primaryColor: _string(json['primaryColor']),
@@ -84,7 +86,8 @@ class BdCodeSent {
   factory BdCodeSent.fromJson(Map<String, dynamic> json) {
     final pendingId = _string(json['pendingId']);
     if (pendingId == null) throw BdSignInException.unavailable();
-    return BdCodeSent(pendingId: pendingId, expiresAt: _string(json['expiresAt']) ?? '');
+    return BdCodeSent(
+        pendingId: pendingId, expiresAt: _string(json['expiresAt']) ?? '');
   }
 
   final String pendingId;
@@ -93,7 +96,8 @@ class BdCodeSent {
 
 @immutable
 class BdSignInUser {
-  const BdSignInUser({required this.id, this.email, this.firstName, this.lastName});
+  const BdSignInUser(
+      {required this.id, this.email, this.firstName, this.lastName});
 
   factory BdSignInUser.fromJson(Map<String, dynamic> json) => BdSignInUser(
         id: _string(json['id']) ?? '',
@@ -160,11 +164,12 @@ final class BdConfirmEmail extends BdPasswordSignIn {
 class BdSignInException implements Exception {
   const BdSignInException(this.code, this.message);
 
-  factory BdSignInException.unavailable() =>
-      const BdSignInException('unavailable', "Sign-in isn't available just now. Try again in a minute.");
+  factory BdSignInException.unavailable() => const BdSignInException(
+      'unavailable',
+      "Sign-in isn't available just now. Try again in a minute.");
 
-  factory BdSignInException.offline() =>
-      const BdSignInException('offline', "You're offline. Check your connection and try again.");
+  factory BdSignInException.offline() => const BdSignInException(
+      'offline', "You're offline. Check your connection and try again.");
 
   final String code;
   final String message;
@@ -184,7 +189,8 @@ class BdSignInCancelled implements Exception {
 /// and returns the URL it comes back to on [callbackScheme]. Throw
 /// [BdSignInCancelled] when the person closes it. `flutter_web_auth_2`'s
 /// `FlutterWebAuth2.authenticate` does exactly this.
-typedef BdWebAuthenticate = Future<Uri> Function(Uri url, String callbackScheme);
+typedef BdWebAuthenticate = Future<Uri> Function(
+    Uri url, String callbackScheme);
 
 // ── Where sign-in goes ───────────────────────────────────────────────────────
 
@@ -204,7 +210,8 @@ abstract interface class BdSignInBackend {
   Future<BdCodeSent> startReset(String email);
 
   /// The emailed code: makes the account, or sets [newPassword], and signs in.
-  Future<BdSignInSession> verify({required String pendingId, required String code, String? newPassword});
+  Future<BdSignInSession> verify(
+      {required String pendingId, required String code, String? newPassword});
 
   /// WorkOS's page for [provider]; it comes back to [redirectUri] with a code.
   Future<Uri> startOAuth({
@@ -214,7 +221,8 @@ abstract interface class BdSignInBackend {
   });
 
   /// Redeems the code a provider sign-in came back with.
-  Future<BdSignInSession> finishOAuth({required String code, required String codeVerifier});
+  Future<BdSignInSession> finishOAuth(
+      {required String code, required String codeVerifier});
 }
 
 /// Straight to BD with the business's publishable `pk_…` key — what an app
@@ -230,7 +238,8 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
     // A throw, not an assert: release builds drop asserts, and they're the
     // ones that ship. Allow, don't deny: secret keys start with bd_.
     if (_key.isNotEmpty && !_key.startsWith('pk_')) {
-      throw ArgumentError('An app holds the publishable pk_ key, never a secret key.');
+      throw ArgumentError(
+          'An app holds the publishable pk_ key, never a secret key.');
     }
   }
 
@@ -238,10 +247,12 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
   final Uri _base;
   final http.Client _http;
 
-  static Uri _customerBase(Uri host) =>
-      host.replace(path: '${host.path.replaceAll(RegExp(r'/+$'), '')}/api/package/v1/auth/customer');
+  static Uri _customerBase(Uri host) => host.replace(
+      path:
+          '${host.path.replaceAll(RegExp(r'/+$'), '')}/api/package/v1/auth/customer');
 
-  Future<Map<String, dynamic>> _call(String path, [Map<String, Object?>? body]) async {
+  Future<Map<String, dynamic>> _call(String path,
+      [Map<String, Object?>? body]) async {
     final uri = _base.replace(path: '${_base.path}/$path');
     final headers = {
       'Authorization': 'Bearer $_key',
@@ -272,7 +283,8 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
         throw BdSignInException(code is String ? code : 'failed', message);
       }
       throw response.statusCode == 429
-          ? const BdSignInException('too_many_tries', "That's a lot of tries. Wait a few minutes, then try again.")
+          ? const BdSignInException('too_many_tries',
+              "That's a lot of tries. Wait a few minutes, then try again.")
           : BdSignInException.unavailable();
     }
     if (parsed is! Map<String, dynamic>) throw BdSignInException.unavailable();
@@ -280,7 +292,8 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
   }
 
   @override
-  Future<BdSignInOptions> options() async => BdSignInOptions.fromJson(await _call('options'));
+  Future<BdSignInOptions> options() async =>
+      BdSignInOptions.fromJson(await _call('options'));
 
   @override
   Future<BdPasswordSignIn> signIn(String email, String password) async {
@@ -310,7 +323,10 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
       BdCodeSent.fromJson(await _call('forgot-password', {'email': email}));
 
   @override
-  Future<BdSignInSession> verify({required String pendingId, required String code, String? newPassword}) async =>
+  Future<BdSignInSession> verify(
+          {required String pendingId,
+          required String code,
+          String? newPassword}) async =>
       BdSignInSession.fromJson(await _call('verify', {
         'pendingId': pendingId,
         'code': code,
@@ -335,8 +351,10 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
   }
 
   @override
-  Future<BdSignInSession> finishOAuth({required String code, required String codeVerifier}) async =>
-      BdSignInSession.fromJson(await _call('oauth/exchange', {'code': code, 'codeVerifier': codeVerifier}));
+  Future<BdSignInSession> finishOAuth(
+          {required String code, required String codeVerifier}) async =>
+      BdSignInSession.fromJson(await _call(
+          'oauth/exchange', {'code': code, 'codeVerifier': codeVerifier}));
 }
 
 /// A PKCE pair (RFC 7636, S256): the verifier stays in the app, the
@@ -344,11 +362,13 @@ class BdBusinessDashSignInBackend implements BdSignInBackend {
 ({String verifier, String challenge}) bdNewPkcePair([math.Random? random]) {
   final r = random ?? math.Random.secure();
   final verifier = _base64Url(List<int>.generate(32, (_) => r.nextInt(256)));
-  final challenge = _base64Url(crypto.sha256.convert(ascii.encode(verifier)).bytes);
+  final challenge =
+      _base64Url(crypto.sha256.convert(ascii.encode(verifier)).bytes);
   return (verifier: verifier, challenge: challenge);
 }
 
-String _base64Url(List<int> bytes) => base64Url.encode(bytes).replaceAll('=', '');
+String _base64Url(List<int> bytes) =>
+    base64Url.encode(bytes).replaceAll('=', '');
 
 // ── Words ────────────────────────────────────────────────────────────────────
 
@@ -360,7 +380,8 @@ class BdSignInStrings {
   const BdSignInStrings({
     this.signInTitle = 'Sign in to {name}',
     this.createTitle = 'Create your {name} account',
-    this.createSubtitle = "Your account with {name}. We'll email you a code to confirm it.",
+    this.createSubtitle =
+        "Your account with {name}. We'll email you a code to confirm it.",
     this.signInTitleNoName = 'Sign in',
     this.createTitleNoName = 'Create your account',
     this.createSubtitleNoName = "We'll email you a code to confirm it.",
@@ -368,7 +389,8 @@ class BdSignInStrings {
     this.forgotSubtitle = "Enter your email and we'll send you a code.",
     this.codeTitle = 'Check your email',
     this.codeSubtitle = 'We sent a 6-digit code to {email}.',
-    this.codeResetSubtitle = 'We sent a 6-digit code to {email}. Enter it with your new password.',
+    this.codeResetSubtitle =
+        'We sent a 6-digit code to {email}. Enter it with your new password.',
     this.email = 'Email',
     this.password = 'Password',
     this.newPassword = 'New password',
@@ -458,8 +480,8 @@ class BdSignInStrings {
       };
 }
 
-String _fill(String template, Map<String, String> values) =>
-    template.replaceAllMapped(RegExp(r'\{(\w+)\}'), (m) => values[m[1]] ?? m[0]!);
+String _fill(String template, Map<String, String> values) => template
+    .replaceAllMapped(RegExp(r'\{(\w+)\}'), (m) => values[m[1]] ?? m[0]!);
 
 // ── Checks ───────────────────────────────────────────────────────────────────
 
@@ -494,12 +516,16 @@ abstract final class BdSignInChecks {
       case BdSignInBox.email:
         final email = value.trim();
         if (email.isEmpty) return strings.enterEmail;
-        if (email.length > maxEmailLength || !_email.hasMatch(email)) return strings.invalidEmail;
+        if (email.length > maxEmailLength || !_email.hasMatch(email)) {
+          return strings.invalidEmail;
+        }
         return null;
       case BdSignInBox.password:
         if (newPassword) return _choosing(value, strings);
         if (value.isEmpty) return strings.enterPassword;
-        return value.length > maxPasswordLength ? strings.passwordTooLong : null;
+        return value.length > maxPasswordLength
+            ? strings.passwordTooLong
+            : null;
       case BdSignInBox.newPassword:
         return _choosing(value, strings);
       case BdSignInBox.code:
@@ -516,7 +542,10 @@ abstract final class BdSignInChecks {
   /// BD's answers that are about one box, so they show under it.
   static BdSignInBox? boxFor(String code, List<BdSignInBox> shown) {
     final candidates = switch (code) {
-      'weak_password' || 'password_too_short' => [BdSignInBox.newPassword, BdSignInBox.password],
+      'weak_password' || 'password_too_short' => [
+          BdSignInBox.newPassword,
+          BdSignInBox.password
+        ],
       'invalid_code' || 'code_expired' => [BdSignInBox.code],
       'invalid_email' => [BdSignInBox.email],
       _ => const <BdSignInBox>[],
@@ -557,7 +586,10 @@ class BdSignInPalette {
     final linkBase = _Rgb.parse(secondary) ?? accent;
     return BdSignInPalette(
       accent: accent.color,
-      onAccent: (accent.contrast(_Rgb.white) >= accent.contrast(_Rgb.ink) ? _Rgb.white : _Rgb.ink).color,
+      onAccent: (accent.contrast(_Rgb.white) >= accent.contrast(_Rgb.ink)
+              ? _Rgb.white
+              : _Rgb.ink)
+          .color,
       linkLight: linkBase.legible(_Rgb.white, 4.5).color,
       linkDark: linkBase.legible(_Rgb.ink, 4.5).color,
     );
@@ -594,7 +626,9 @@ class _Rgb {
   double get luminance {
     double lin(int c) {
       final v = c / 255;
-      return v <= 0.03928 ? v / 12.92 : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
+      return v <= 0.03928
+          ? v / 12.92
+          : math.pow((v + 0.055) / 1.055, 2.4).toDouble();
     }
 
     return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
@@ -659,14 +693,21 @@ final class BdSignInStepForgot extends BdSignInStep {
 enum BdCodePurpose { signUp, reset, verify }
 
 final class BdSignInStepCode extends BdSignInStep {
-  const BdSignInStepCode({required this.sent, required this.purpose, required this.email});
+  const BdSignInStepCode(
+      {required this.sent, required this.purpose, required this.email});
   final BdCodeSent sent;
   final BdCodePurpose purpose;
   final String email;
 }
 
 /// The links under the button.
-enum BdSignInLink { forgotPassword, createAccount, haveAccount, backToSignIn, resendCode }
+enum BdSignInLink {
+  forgotPassword,
+  createAccount,
+  haveAccount,
+  backToSignIn,
+  resendCode
+}
 
 /// The sign-in screen's logic, without the drawing — what `BdSignIn` shows.
 /// The same steps as the SDK's `createSignInController`.
@@ -680,7 +721,9 @@ class BdSignInController extends ChangeNotifier {
     this.strings = const BdSignInStrings(),
     this.authenticate,
     this.callbackScheme,
-  }) : _step = start == BdSignInStart.createAccount ? const BdSignInStepCreate() : const BdSignInStepSignIn();
+  }) : _step = start == BdSignInStart.createAccount
+            ? const BdSignInStepCreate()
+            : const BdSignInStepSignIn();
 
   final BdSignInBackend backend;
   final FutureOr<void> Function(BdSignInSession session) onSignedIn;
@@ -696,7 +739,9 @@ class BdSignInController extends ChangeNotifier {
   final String? callbackScheme;
 
   BdSignInStep _step;
-  final Map<BdSignInBox, String> _values = {for (final b in BdSignInBox.values) b: ''};
+  final Map<BdSignInBox, String> _values = {
+    for (final b in BdSignInBox.values) b: ''
+  };
   Map<BdSignInBox, String> _errors = {};
   final Set<BdSignInBox> _edited = {};
   bool _busy = false;
@@ -747,8 +792,12 @@ class BdSignInController extends ChangeNotifier {
   String get title {
     final name = _name;
     return switch (_step) {
-      BdSignInStepSignIn() => name == null ? strings.signInTitleNoName : _fill(strings.signInTitle, {'name': name}),
-      BdSignInStepCreate() => name == null ? strings.createTitleNoName : _fill(strings.createTitle, {'name': name}),
+      BdSignInStepSignIn() => name == null
+          ? strings.signInTitleNoName
+          : _fill(strings.signInTitle, {'name': name}),
+      BdSignInStepCreate() => name == null
+          ? strings.createTitleNoName
+          : _fill(strings.createTitle, {'name': name}),
       BdSignInStepForgot() => strings.forgotTitle,
       BdSignInStepCode() => strings.codeTitle,
     };
@@ -757,12 +806,16 @@ class BdSignInController extends ChangeNotifier {
   String? get subtitle {
     final name = _name;
     return switch (_step) {
-      BdSignInStepSignIn() => (tagline ?? '').trim().isEmpty ? null : tagline!.trim(),
-      BdSignInStepCreate() =>
-        name == null ? strings.createSubtitleNoName : _fill(strings.createSubtitle, {'name': name}),
+      BdSignInStepSignIn() =>
+        (tagline ?? '').trim().isEmpty ? null : tagline!.trim(),
+      BdSignInStepCreate() => name == null
+          ? strings.createSubtitleNoName
+          : _fill(strings.createSubtitle, {'name': name}),
       BdSignInStepForgot() => strings.forgotSubtitle,
       BdSignInStepCode(:final purpose, :final email) => _fill(
-          purpose == BdCodePurpose.reset ? strings.codeResetSubtitle : strings.codeSubtitle,
+          purpose == BdCodePurpose.reset
+              ? strings.codeResetSubtitle
+              : strings.codeSubtitle,
           {'email': email},
         ),
     };
@@ -771,7 +824,8 @@ class BdSignInController extends ChangeNotifier {
   /// Under the password box: the new-password rule, when it applies.
   String? get hint => switch (_step) {
         BdSignInStepCreate() => strings.passwordRule,
-        BdSignInStepCode(:final purpose) when purpose == BdCodePurpose.reset => strings.passwordRule,
+        BdSignInStepCode(:final purpose) when purpose == BdCodePurpose.reset =>
+          strings.passwordRule,
         _ => null,
       };
 
@@ -789,8 +843,12 @@ class BdSignInController extends ChangeNotifier {
                 (BdSignInLink.createAccount, strings.noAccount),
               ]
             : const [],
-        BdSignInStepCreate() => [(BdSignInLink.haveAccount, strings.haveAccount)],
-        BdSignInStepForgot() => [(BdSignInLink.backToSignIn, strings.backToSignIn)],
+        BdSignInStepCreate() => [
+            (BdSignInLink.haveAccount, strings.haveAccount)
+          ],
+        BdSignInStepForgot() => [
+            (BdSignInLink.backToSignIn, strings.backToSignIn)
+          ],
         BdSignInStepCode() => [
             (BdSignInLink.resendCode, strings.resendCode),
             (BdSignInLink.backToSignIn, strings.backToSignIn),
@@ -801,7 +859,9 @@ class BdSignInController extends ChangeNotifier {
   /// has switched on, when the app can open a browser auth session.
   List<BdOAuthProvider> get providers {
     final offers = _step is BdSignInStepSignIn || _step is BdSignInStepCreate;
-    if (!offers || authenticate == null || (callbackScheme ?? '').isEmpty) return const [];
+    if (!offers || authenticate == null || (callbackScheme ?? '').isEmpty) {
+      return const [];
+    }
     return [
       for (final p in BdOAuthProvider.values)
         if (_options.oauth.contains(p)) p,
@@ -835,8 +895,8 @@ class BdSignInController extends ChangeNotifier {
     _emit();
   }
 
-  String? _check(BdSignInBox box) =>
-      BdSignInChecks.problem(box, value(box), newPassword: _newPassword, strings: strings);
+  String? _check(BdSignInBox box) => BdSignInChecks.problem(box, value(box),
+      newPassword: _newPassword, strings: strings);
 
   void _setError(BdSignInBox box, String? message) {
     if (message != null) {
@@ -916,7 +976,10 @@ class BdSignInController extends ChangeNotifier {
     if (_errors.containsKey(box)) _setError(box, _check(box));
     _emit();
     final step = _step;
-    if (box == BdSignInBox.code && next.length == 6 && step is BdSignInStepCode && step.purpose != BdCodePurpose.reset) {
+    if (box == BdSignInBox.code &&
+        next.length == 6 &&
+        step is BdSignInStepCode &&
+        step.purpose != BdCodePurpose.reset) {
       unawaited(submit());
     }
   }
@@ -942,7 +1005,8 @@ class BdSignInController extends ChangeNotifier {
           switch (await backend.signIn(to, value(BdSignInBox.password))) {
             case BdConfirmEmail(:final sent):
               // WorkOS wants the email confirmed; it has sent a code.
-              _go(BdSignInStepCode(sent: sent, purpose: BdCodePurpose.verify, email: to));
+              _go(BdSignInStepCode(
+                  sent: sent, purpose: BdCodePurpose.verify, email: to));
             case BdSignedIn(:final session):
               await onSignedIn(session);
           }
@@ -956,20 +1020,24 @@ class BdSignInController extends ChangeNotifier {
             firstName: _clean(value(BdSignInBox.firstName)),
             lastName: _clean(value(BdSignInBox.lastName)),
           );
-          _go(BdSignInStepCode(sent: sent, purpose: BdCodePurpose.signUp, email: to));
+          _go(BdSignInStepCode(
+              sent: sent, purpose: BdCodePurpose.signUp, email: to));
         });
       case BdSignInStepForgot():
         return _run(() async {
           final to = _email;
           final sent = await backend.startReset(to);
-          _go(BdSignInStepCode(sent: sent, purpose: BdCodePurpose.reset, email: to));
+          _go(BdSignInStepCode(
+              sent: sent, purpose: BdCodePurpose.reset, email: to));
         });
       case BdSignInStepCode(:final sent, :final purpose):
         return _run(() async {
           await onSignedIn(await backend.verify(
             pendingId: sent.pendingId,
             code: value(BdSignInBox.code),
-            newPassword: purpose == BdCodePurpose.reset ? value(BdSignInBox.newPassword) : null,
+            newPassword: purpose == BdCodePurpose.reset
+                ? value(BdSignInBox.newPassword)
+                : null,
           ));
         });
     }
@@ -990,7 +1058,8 @@ class BdSignInController extends ChangeNotifier {
             lastName: _clean(value(BdSignInBox.lastName)),
           );
         case BdCodePurpose.verify:
-          switch (await backend.signIn(step.email, value(BdSignInBox.password))) {
+          switch (
+              await backend.signIn(step.email, value(BdSignInBox.password))) {
             case BdSignedIn(:final session):
               await onSignedIn(session);
               return;
@@ -1000,7 +1069,8 @@ class BdSignInController extends ChangeNotifier {
         case BdCodePurpose.reset:
           sent = await backend.startReset(step.email);
       }
-      _step = BdSignInStepCode(sent: sent, purpose: step.purpose, email: step.email);
+      _step = BdSignInStepCode(
+          sent: sent, purpose: step.purpose, email: step.email);
       _values[BdSignInBox.code] = '';
       _setError(BdSignInBox.code, null);
       _notice = strings.codeResent;
@@ -1027,7 +1097,12 @@ class BdSignInController extends ChangeNotifier {
   Future<void> continueWith(BdOAuthProvider provider) async {
     final open = authenticate;
     final scheme = callbackScheme;
-    if (_busy || open == null || scheme == null || !providers.contains(provider)) return;
+    if (_busy ||
+        open == null ||
+        scheme == null ||
+        !providers.contains(provider)) {
+      return;
+    }
     _problem = null;
     await _run(() async {
       final pkce = bdNewPkcePair();
@@ -1048,14 +1123,18 @@ class BdSignInController extends ChangeNotifier {
         final message = back.queryParameters['bd_oauth_message'];
         throw BdSignInException(
           'oauth_failed',
-          message != null && message.isNotEmpty ? message : "Sign-in didn't finish. Try again.",
+          message != null && message.isNotEmpty
+              ? message
+              : "Sign-in didn't finish. Try again.",
         );
       }
       final code = back.queryParameters['bd_oauth_code'];
       if (code == null || code.isEmpty) {
-        throw const BdSignInException('oauth_failed', "Sign-in didn't finish. Try again.");
+        throw const BdSignInException(
+            'oauth_failed', "Sign-in didn't finish. Try again.");
       }
-      await onSignedIn(await backend.finishOAuth(code: code, codeVerifier: pkce.verifier));
+      await onSignedIn(
+          await backend.finishOAuth(code: code, codeVerifier: pkce.verifier));
     });
   }
 
@@ -1066,4 +1145,5 @@ class BdSignInController extends ChangeNotifier {
   }
 }
 
-String? _string(Object? value) => value is String && value.isNotEmpty ? value : null;
+String? _string(Object? value) =>
+    value is String && value.isNotEmpty ? value : null;

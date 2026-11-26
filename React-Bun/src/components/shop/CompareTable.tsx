@@ -34,6 +34,7 @@ export function CompareTable({
 		if (ids.length > 0) return;
 		const saved = compareList.read().map((item) => item.id);
 		if (saved.length > 0) onIdsChange(saved);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const views = useMemo(

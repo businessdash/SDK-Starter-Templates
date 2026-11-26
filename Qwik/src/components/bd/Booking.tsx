@@ -134,8 +134,7 @@ export const Booking = component$<{ eventTypes: EventType[] }>(
 				});
 				confirmation.value = `Booking confirmed (#${result.bookingId.slice(0, 8)}). Check ${inviteeEmail.value} for details.`;
 			} catch (err) {
-				error.value =
-					err instanceof Error ? err.message : "Couldn't confirm.";
+				error.value = err instanceof Error ? err.message : "Couldn't confirm.";
 			} finally {
 				confirming.value = false;
 			}

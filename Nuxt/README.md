@@ -92,7 +92,7 @@ Tailwind is set up for your own markup: `app/assets/css/tailwind.css` is in `nux
 | **Booking** | Event-type list server-rendered; slots + confirm via `/api/bd/scheduling/{slots,bookings}` | `bd.scheduling.listEventTypes()`, `getAvailableSlots(...)`, `confirmBooking(...)` | <!-- [bd-line:booking] -->
 | **Contact form** | Form schema server-rendered; submit via `/api/bd/forms/[slug]` | `bd.forms.schema(slug)`, `bd.forms.submit(...)` |
 | **News banner** | `bundle.banner` surfaced by the home aggregator → `components/bd/NewsBanner.vue` (dismissible bar) | `bd.marketing.getPageBundle(...)` (untyped `banner` passthrough) |
-| **JSON-LD** | `useFetch('/api/bd/jsonld')` → injected into `<head>` via `useHead({ script })` | `localBusiness()` + `website()` + `renderJsonLdToHtml()` from `@businessdash/sdk/seo` |
+| **JSON-LD** | `useFetch('/api/bd/jsonld')` → injected into `<head>` via `useHead({ script })` | `localBusiness()` + `website()` from `@businessdash/sdk/seo`, one script per node |
 
 <!-- [bd:store] -->
 ### Storefront / commerce

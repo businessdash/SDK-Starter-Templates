@@ -6,17 +6,16 @@ import { ProductGrid } from "../components/shop/ProductGrid";
 import {
 	CategoryFilter,
 	ClearFilters,
-	hasFilters as filtersOn,
 	PriceFilter,
-	parseRating,
-	parseSort,
 	RatingFilter,
 	SortSelect,
 	StoreSearch,
 } from "../components/shop/StoreFilters";
+import { hasFilters as filtersOn, parseRating, parseSort } from "../components/shop/store-filters";
 import { bd } from "../lib/bd";
-import { useSearchParams } from "../lib/router";
-import { ErrorBox, useApi } from "./ui";
+import { useSearchParams } from "../lib/route";
+import { ErrorBox } from "./ui";
+import { useApi } from "./use-api";
 
 function parseCents(raw: string | null): number | undefined {
 	if (!raw) return undefined;

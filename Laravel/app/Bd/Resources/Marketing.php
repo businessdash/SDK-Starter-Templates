@@ -14,9 +14,7 @@ use App\Bd\Client;
  */
 class Marketing
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /** @return array<string, mixed> */
     public function getPageBundle(string $pageKey = 'home', ?string $locale = null): array

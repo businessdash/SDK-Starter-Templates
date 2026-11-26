@@ -31,7 +31,8 @@ defmodule BdStarterWeb.ShopComponents do
       <div class="store-nav__links">
         <a href={~p"/store/wishlist"}>Wishlist<bd-saved-count data-list="wishlist"></bd-saved-count></a>
         <a href={~p"/store/compare"}>Compare<bd-saved-count data-list="compare"></bd-saved-count></a>
-        <a class="store-nav__cart" href={~p"/cart"}>Cart<bd-cart-count data-count={@count}><span :if={@count > 0} class="store-nav__badge">{@count}</span></bd-cart-count></a>
+        <%!-- On one line: a line break inside would put a space between "Cart" and the badge. --%>
+        <a class="store-nav__cart" href={~p"/cart"} phx-no-format>Cart<bd-cart-count data-count={@count}><span :if={@count > 0} class="store-nav__badge">{@count}</span></bd-cart-count></a>
       </div>
     </nav>
     """
@@ -44,14 +45,18 @@ defmodule BdStarterWeb.ShopComponents do
     assigns = assign(assigns, :rating, to_float(assigns.rating))
 
     ~H"""
-    <span aria-label={"#{:erlang.float_to_binary(@rating, decimals: 1)} out of 5"} class="stars" role="img"><span
-        :for={i <- 1..5}
-        class={[
-          "stars__star",
-          @rating >= i && "stars__star--on",
-          @rating < i and @rating >= i - 0.5 && "stars__star--half"
-        ]}
-      >★</span></span>
+    <span
+      aria-label={"#{:erlang.float_to_binary(@rating, decimals: 1)} out of 5"}
+      class="stars"
+      role="img"
+    ><span
+      :for={i <- 1..5}
+      class={[
+        "stars__star",
+        @rating >= i && "stars__star--on",
+        (@rating < i and @rating >= i - 0.5) && "stars__star--half"
+      ]}
+    >★</span></span>
     """
   end
 
@@ -67,7 +72,9 @@ defmodule BdStarterWeb.ShopComponents do
     assigns = assign(assigns, :json, json(assigns.value))
 
     ~H"""
-    <script type="application/json"><%= Phoenix.HTML.raw(@json) %></script>
+    <script type="application/json">
+      <%= Phoenix.HTML.raw(@json) %>
+    </script>
     """
   end
 

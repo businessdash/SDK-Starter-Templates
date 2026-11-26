@@ -7,9 +7,7 @@ use App\Bd\Client;
 /** Products, categories, and the per-product detail reads behind a shop. */
 class Storefront
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /** @return array<string, mixed> */
     public function listProducts(?int $limit = null, int|string|null $cursor = null, ?string $categoryId = null): array

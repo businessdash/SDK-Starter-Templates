@@ -32,9 +32,9 @@ export const useTodosData = routeLoader$(async () => {
 	const [result, formSchema] = await Promise.all([
 		listTodosWithImages(),
 		bd
-			? (bd.forms.schema(TODO_FORM_SLUG).catch(() => null) as Promise<
-					FormSchema | null
-				>)
+			? (bd.forms
+					.schema(TODO_FORM_SLUG)
+					.catch(() => null) as Promise<FormSchema | null>)
 			: Promise.resolve(null),
 	]);
 	return { result, formSchema };

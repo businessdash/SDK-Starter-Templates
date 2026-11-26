@@ -158,8 +158,8 @@ export type BundleUpdateItem = {
 	postedAt: string | null;
 };
 
+/** A review in the bundle. It has no id, so lists key it by name, date and place. */
 export type BundleReviewItem = {
-	id: string;
 	reviewee: string;
 	rating: number;
 	image: string | null;

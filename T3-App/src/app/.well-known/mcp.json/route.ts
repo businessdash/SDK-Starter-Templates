@@ -12,6 +12,7 @@ const config = getDistributionConfig();
 const handler = config ? mcpManifestHandler(config) : null;
 
 export async function GET(request: Request) {
-	if (!handler) return Response.json({ error: "not_configured" }, { status: 404 });
+	if (!handler)
+		return Response.json({ error: "not_configured" }, { status: 404 });
 	return handler(request);
 }

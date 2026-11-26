@@ -14,11 +14,13 @@ defmodule BdStarter.Forms.Quizzes do
     host = Application.get_env(:bd_starter, :bd_host)
     key = Application.get_env(:bd_starter, :bd_api_key)
 
-    if host not in [nil, ""] and key not in [nil, ""] and Application.get_env(:bd_starter, :bd_site_id) not in [nil, ""] do
+    if host not in [nil, ""] and key not in [nil, ""] and
+         Application.get_env(:bd_starter, :bd_site_id) not in [nil, ""] do
       %__MODULE__{
         endpoint: String.trim_trailing(host, "/") <> "/api/package/v1/quizzes",
         api_key: key,
-        origin: String.trim_trailing(Application.get_env(:bd_starter, :bd_site_origin) || "", "/"),
+        origin:
+          String.trim_trailing(Application.get_env(:bd_starter, :bd_site_origin) || "", "/"),
         session_token: if(session_token in [nil, ""], do: nil, else: session_token)
       }
     end
@@ -26,14 +28,29 @@ defmodule BdStarter.Forms.Quizzes do
 
   # Path segments, each escaped as one.
   defp call(q, parts, method \\ :get, body \\ nil) do
-    url = q.endpoint <> "/" <> Enum.map_join(parts, "/", &URI.encode(&1, fn c -> URI.char_unreserved?(c) end))
+    url =
+      q.endpoint <>
+        "/" <> Enum.map_join(parts, "/", &URI.encode(&1, fn c -> URI.char_unreserved?(c) end))
 
     headers =
-      [{"accept", "application/json"}, {"origin", q.origin}, {"x-bd-client", BdStarter.Bd.Client.client_header()}] ++
+      [
+        {"accept", "application/json"},
+        {"origin", q.origin},
+        {"x-bd-client", BdStarter.Bd.Client.client_header()}
+      ] ++
         if(q.session_token, do: [{"x-bd-session-token", q.session_token}], else: []) ++
         if(body != nil, do: [{"content-type", "application/json"}], else: [])
 
-    opts = [method: method, url: url, auth: {:bearer, q.api_key}, headers: headers, receive_timeout: 15_000, retry: false, decode_body: false]
+    opts = [
+      method: method,
+      url: url,
+      auth: {:bearer, q.api_key},
+      headers: headers,
+      receive_timeout: 15_000,
+      retry: false,
+      decode_body: false
+    ]
+
     opts = if body != nil, do: Keyword.put(opts, :body, Json.encode!(body)), else: opts
 
     case Req.request(opts) do
@@ -47,7 +64,9 @@ defmodule BdStarter.Forms.Quizzes do
 
         cond do
           status not in 200..299 ->
-            raise FormsError, message: Json.str(Json.get(json, "message")) || "BD returned #{status}.", status: status
+            raise FormsError,
+              message: Json.str(Json.get(json, "message")) || "BD returned #{status}.",
+              status: status
 
           not Json.object?(json) ->
             raise FormsError, message: "BD sent something unexpected."
@@ -75,12 +94,24 @@ defmodule BdStarter.Forms.Quizzes do
   def invitation_backend(q, token) do
     %QuizBackend{
       submit: fn answers, _ids ->
-        QuizScoring.read_completion(call(q, ["invitations", token, "submit"], :post, %{"answers" => answers}))
+        QuizScoring.read_completion(
+          call(q, ["invitations", token, "submit"], :post, %{"answers" => answers})
+        )
       end,
       start: fn -> start_info(call(q, ["invitations", token, "start"], :post)) end,
-      save_draft: fn answers -> call(q, ["invitations", token, "draft"], :post, %{"answers" => answers}) end,
+      save_draft: fn answers ->
+        call(q, ["invitations", token, "draft"], :post, %{"answers" => answers})
+      end,
       lock_answer: fn field_id, answer ->
-        QuizScoring.read_result(Json.get(call(q, ["invitations", token, "lock"], :post, %{"fieldId" => field_id, "answer" => answer}), "result"))
+        QuizScoring.read_result(
+          Json.get(
+            call(q, ["invitations", token, "lock"], :post, %{
+              "fieldId" => field_id,
+              "answer" => answer
+            }),
+            "result"
+          )
+        )
       end
     }
   end
@@ -88,10 +119,14 @@ defmodule BdStarter.Forms.Quizzes do
   def practice_backend(q, slug) do
     %QuizBackend{
       submit: fn answers, ids ->
-        QuizScoring.read_completion(call(q, [slug, "score"], :post, %{"answers" => answers, "questionFieldIds" => ids}))
+        QuizScoring.read_completion(
+          call(q, [slug, "score"], :post, %{"answers" => answers, "questionFieldIds" => ids})
+        )
       end,
       lock_answer: fn field_id, answer ->
-        QuizScoring.read_result(call(q, [slug, "check"], :post, %{"fieldId" => field_id, "answer" => answer}))
+        QuizScoring.read_result(
+          call(q, [slug, "check"], :post, %{"fieldId" => field_id, "answer" => answer})
+        )
       end
     }
   end

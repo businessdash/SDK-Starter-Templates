@@ -1,11 +1,10 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-
 import {
 	legalPageSeo,
 	renderLegalPageHtml,
 	resolveLegalPage,
 } from "@businessdash/sdk/legal";
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 
 import { getBd } from "@/server/lib/bd";
 
@@ -64,6 +63,7 @@ export default async function CatchAllPage({ params }: Props) {
 			 * ships unstyled so it inherits your site rather than fighting it.
 			 */}
 			<div
+				// biome-ignore lint/security/noDangerouslySetInnerHtml: sanitised when saved, see above
 				dangerouslySetInnerHTML={{ __html: renderLegalPageHtml(document) }}
 			/>
 		</main>

@@ -53,11 +53,15 @@ export function Reviews({ reviews }: { reviews: BundleReviews | null }) {
 			) : (
 				<>
 					<ul className="bd-grid-3 review-wall">
-						{items.map((r) => {
+						{items.map((r, i) => {
 							const avatar = safeImage(r.image);
 							const platform = platformName(r.platform);
 							return (
-								<li className="review-card" key={r.id}>
+								<li
+									className="review-card"
+									// biome-ignore lint/suspicious/noArrayIndexKey: bundle reviews have no id, and the list never reorders
+									key={`${r.reviewee}-${r.date}-${i}`}
+								>
 									<div className="review-card__head">
 										{avatar ? (
 											<img

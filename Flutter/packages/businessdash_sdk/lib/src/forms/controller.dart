@@ -19,12 +19,14 @@ class BdFieldPath {
   final List<BdEntry> entries;
 
   /// `email`, or `kids[1].name` inside a repeater. Errors are keyed by this.
-  String get key => '${entries.map((e) => '${e.repeaterId}[${e.index}].').join()}$fieldId';
+  String get key =>
+      '${entries.map((e) => '${e.repeaterId}[${e.index}].').join()}$fieldId';
 
   BdFieldPath child(String id) => BdFieldPath(id, entries);
 
   /// The entries a field inside this repeater's entry [index] sits in.
-  List<BdEntry> entry(int index) => [...entries, (repeaterId: fieldId, index: index)];
+  List<BdEntry> entry(int index) =>
+      [...entries, (repeaterId: fieldId, index: index)];
 
   @override
   bool operator ==(Object other) => other is BdFieldPath && other.key == key;
@@ -176,7 +178,8 @@ class BdFormState {
         movingForward: movingForward ?? this.movingForward,
         isSubmitting: isSubmitting ?? this.isSubmitting,
         uploadingCount: uploadingCount ?? this.uploadingCount,
-        result: identical(result, _keep) ? this.result : result as BdSubmitResult?,
+        result:
+            identical(result, _keep) ? this.result : result as BdSubmitResult?,
         hasAttempted: hasAttempted ?? this.hasAttempted,
         errorScrollToken: errorScrollToken ?? this.errorScrollToken,
         collectionOptions: collectionOptions ?? this.collectionOptions,
@@ -185,11 +188,13 @@ class BdFormState {
 }
 
 /// What a visitor reads for a problem: `(reason, label, field) → message`.
-typedef BdMessages = String Function(String reason, String label, BdFormField? field);
+typedef BdMessages = String Function(
+    String reason, String label, BdFormField? field);
 
 /// Collects a card for a `credit_card` field and returns the confirmed
 /// intent id.
-typedef BdPaymentHandler = Future<String> Function(BdPaymentIntent intent, BdFormField field);
+typedef BdPaymentHandler = Future<String> Function(
+    BdPaymentIntent intent, BdFormField field);
 
 /// The headless form: state and behaviour, no UI.
 ///
@@ -213,11 +218,14 @@ typedef BdPaymentHandler = Future<String> Function(BdPaymentIntent intent, BdFor
 /// State lives in [state]; every mutation publishes a new snapshot and calls
 /// the listeners. Call it from the UI isolate, as a UI does.
 class BdFormController {
-  BdFormController(this.form, {required BdFormsBackend this.backend, this.submitOptions = const BdSubmitOptions()});
+  BdFormController(this.form,
+      {required BdFormsBackend this.backend,
+      this.submitOptions = const BdSubmitOptions()});
 
   /// A form you already have (prefetched, bundled, or built in code). Pass a
   /// backend to be able to submit it.
-  BdFormController.fromSchema(BdFormSchema schema, {this.backend, this.submitOptions = const BdSubmitOptions()})
+  BdFormController.fromSchema(BdFormSchema schema,
+      {this.backend, this.submitOptions = const BdSubmitOptions()})
       : form = schema.slug {
     _adopt(schema);
   }
@@ -272,7 +280,8 @@ class BdFormController {
   /// What a visitor reads for a problem. Replace to localize or reword.
   BdMessages messages = BdFormMessages.message;
 
-  String _message(String reason, String label, BdFormField? field) => messages(reason, label, field);
+  String _message(String reason, String label, BdFormField? field) =>
+      messages(reason, label, field);
 
   final _pendingFiles = <String, BdPickedFile>{};
   Map<String, BdJson> _seed = const {};
@@ -286,7 +295,8 @@ class BdFormController {
     if (_state.phase is BdPhaseReady) return;
     final backend = this.backend;
     if (backend == null) {
-      _update((s) => s.copyWith(phase: BdPhaseFailed('No backend to load "$form" from.')));
+      _update((s) =>
+          s.copyWith(phase: BdPhaseFailed('No backend to load "$form" from.')));
       return;
     }
     _update((s) => s.copyWith(phase: const BdPhaseLoading()));
@@ -295,7 +305,8 @@ class BdFormController {
     } on BdFormsException catch (e) {
       _update((s) => s.copyWith(phase: BdPhaseFailed(e.message)));
     } catch (_) {
-      _update((s) => s.copyWith(phase: const BdPhaseFailed("Couldn't load the form.")));
+      _update((s) =>
+          s.copyWith(phase: const BdPhaseFailed("Couldn't load the form.")));
     }
   }
 
@@ -304,8 +315,12 @@ class BdFormController {
     // First definition wins on a duplicate, as on the other platforms.
     final reversed = loaded.businessFunctions.reversed;
     _functionsById = {for (final f in reversed) f.id: f};
-    _userFunctions = BdFormula.userFunctions({for (final f in reversed) f.slug.toUpperCase(): f});
-    _calcFields = [for (final f in _fieldIndex.values) if (f.type == 'calculation') f];
+    _userFunctions = BdFormula.userFunctions(
+        {for (final f in reversed) f.slug.toUpperCase(): f});
+    _calcFields = [
+      for (final f in _fieldIndex.values)
+        if (f.type == 'calculation') f
+    ];
     _seed = _applyCalcs(BdFormRules.seedInitialData(loaded.fields));
     _pendingFiles.clear();
     _update(
@@ -325,7 +340,9 @@ class BdFormController {
     for (final f in _fieldIndex.values) {
       final rule = f.conditionRule;
       final source = rule?.fieldId;
-      if (rule?.matchField != null && source != null) unawaited(loadCollectionOptions(source));
+      if (rule?.matchField != null && source != null) {
+        unawaited(loadCollectionOptions(source));
+      }
     }
   }
 
@@ -336,7 +353,8 @@ class BdFormController {
   Map<String, BdJson> get values => _state.values;
   Map<String, String> get errors => _state.errors;
   List<BdFormField> get fields => _state.schema?.fields ?? const [];
-  BdFormSettings get settings => _state.schema?.settings ?? const BdFormSettings();
+  BdFormSettings get settings =>
+      _state.schema?.settings ?? const BdFormSettings();
 
   BdFormField? field(String id) => _fieldIndex[id];
 
@@ -345,7 +363,8 @@ class BdFormController {
   /// The steps the visitor will walk: one holding everything, or one per
   /// visible top-level element. Re-derived as answers change, because a
   /// condition can add or remove a page.
-  List<List<BdFormField>> get steps => BdFormRules.computeSteps(fields, isConsecutive, resolver(const []));
+  List<List<BdFormField>> get steps =>
+      BdFormRules.computeSteps(fields, isConsecutive, resolver(const []));
 
   int get stepCount => max(steps.length, 1);
   int get currentStep => _state.step.clamp(0, stepCount - 1);
@@ -362,7 +381,9 @@ class BdFormController {
 
   String stepTitle(int index) {
     final all = steps;
-    final f = index >= 0 && index < all.length && all[index].isNotEmpty ? all[index].first : null;
+    final f = index >= 0 && index < all.length && all[index].isNotEmpty
+        ? all[index].first
+        : null;
     if (f?.stepTitle case final title?) return title;
     if (f != null && f.label.isNotEmpty) return f.label;
     return 'Step ${index + 1}';
@@ -370,7 +391,8 @@ class BdFormController {
 
   bool get canAdvance {
     final all = steps;
-    return _problems(currentStep < all.length ? all[currentStep] : const []).isEmpty;
+    return _problems(currentStep < all.length ? all[currentStep] : const [])
+        .isEmpty;
   }
 
   bool get canSubmit => _problems(fields).isEmpty;
@@ -386,7 +408,8 @@ class BdFormController {
   BdJson? value(String id) => _state.values[id];
 
   void setValueAt(BdJson? value, BdFieldPath path) {
-    _update((s) => s.copyWith(values: _applyCalcs(write(value, path, s.values))));
+    _update(
+        (s) => s.copyWith(values: _applyCalcs(write(value, path, s.values))));
     _revalidate(path);
   }
 
@@ -397,7 +420,10 @@ class BdFormController {
     var scope = _state.values;
     for (final e in entries) {
       final list = scope[e.repeaterId]?.arrayValue;
-      scope = (list != null && e.index < list.length ? list[e.index].objectValue : null) ?? const {};
+      scope = (list != null && e.index < list.length
+              ? list[e.index].objectValue
+              : null) ??
+          const {};
     }
     return scope;
   }
@@ -423,7 +449,8 @@ class BdFormController {
 
   List<Map<String, BdJson>> entries(BdFieldPath repeater) {
     final objects = [
-      for (final item in valueAt(repeater)?.arrayValue ?? const <BdJson>[]) item.objectValue ?? const <String, BdJson>{},
+      for (final item in valueAt(repeater)?.arrayValue ?? const <BdJson>[])
+        item.objectValue ?? const <String, BdJson>{},
     ];
     return objects.isEmpty ? [const {}] : objects;
   }
@@ -433,7 +460,11 @@ class BdFormController {
     if (f == null) return;
     final list = entries(repeater);
     if (list.length >= (f.populatorConfig?.maxInstances ?? 10)) return;
-    setValueAt(BdArr([for (final e in [...list, const <String, BdJson>{}]) BdObj(e)]), repeater);
+    setValueAt(
+        BdArr([
+          for (final e in [...list, const <String, BdJson>{}]) BdObj(e)
+        ]),
+        repeater);
   }
 
   void removeEntry(int index, BdFieldPath repeater) {
@@ -458,7 +489,8 @@ class BdFormController {
   /// Resolve the value a condition compares, inside the given entries.
   BdRuleResolver resolver(List<BdEntry> entries) {
     final scope = entries.isEmpty
-        ? BdFormRules.withDerivedFieldValues(fields, BdFormRules.deriveReferenceValues(fields, _state.values))
+        ? BdFormRules.withDerivedFieldValues(
+            fields, BdFormRules.deriveReferenceValues(fields, _state.values))
         : scopeValues(entries);
     return BdFormRules.resolver(scope, _matchResolver);
   }
@@ -494,7 +526,9 @@ class BdFormController {
       }
 
       final arr = raw?.arrayValue;
-      if (arr != null) return BdStr(arr.map((v) => BdJS.string(one(v))).join(', '));
+      if (arr != null) {
+        return BdStr(arr.map((v) => BdJS.string(one(v))).join(', '));
+      }
       return raw == null ? null : one(raw);
     };
   }
@@ -514,7 +548,8 @@ class BdFormController {
       out[m.path] = _message('required', m.label, field(m.id));
     }
     for (final bad in BdFormRules.findInvalidValues(nodes, values, match)) {
-      out.putIfAbsent(bad.path, () => _message(bad.reason, bad.label, field(bad.id)));
+      out.putIfAbsent(
+          bad.path, () => _message(bad.reason, bad.label, field(bad.id)));
     }
     return out;
   }
@@ -527,7 +562,8 @@ class BdFormController {
     final value = scopeValues(path.entries)[path.fieldId];
     final reason = BdFormRules.isPendingUpload(value)
         ? null
-        : BdFormRules.validateValue(f, value) ?? BdFormRules.clientOnlyRule(f, value);
+        : BdFormRules.validateValue(f, value) ??
+            BdFormRules.clientOnlyRule(f, value);
     String? problem;
     if (reason != null) {
       problem = _message(reason, f.label, f);
@@ -552,7 +588,8 @@ class BdFormController {
     });
   }
 
-  static String _lastSegment(String key) => key.substring(key.lastIndexOf('.') + 1);
+  static String _lastSegment(String key) =>
+      key.substring(key.lastIndexOf('.') + 1);
 
   /// After an edit: clear a fixed error, refresh one still wrong, and keep
   /// either/or and repeater errors in step.
@@ -564,7 +601,8 @@ class BdFormController {
     final stale = _state.errors.keys.where((key) {
       if (current.containsKey(key)) return false;
       final f = field(_lastSegment(key));
-      return f != null && (f.type == 'or_condition' || f.type == 'multi_populator');
+      return f != null &&
+          (f.type == 'or_condition' || f.type == 'multi_populator');
     }).toSet();
     if (stale.isNotEmpty) {
       _update(
@@ -583,7 +621,9 @@ class BdFormController {
     _update((s) => s.copyWith(hasAttempted: true));
     final found = _problems(fields);
     _update(
-      (s) => s.copyWith(errors: found, errorScrollToken: s.errorScrollToken + (found.isEmpty ? 0 : 1)),
+      (s) => s.copyWith(
+          errors: found,
+          errorScrollToken: s.errorScrollToken + (found.isEmpty ? 0 : 1)),
     );
     return found.isEmpty;
   }
@@ -598,17 +638,20 @@ class BdFormController {
     _update((s) => s.copyWith(hasAttempted: true));
     final found = _problems(all[index]);
     if (found.isNotEmpty) {
-      _update((s) => s.copyWith(errors: found, errorScrollToken: s.errorScrollToken + 1));
+      _update((s) =>
+          s.copyWith(errors: found, errorScrollToken: s.errorScrollToken + 1));
       return false;
     }
-    _update((s) => s.copyWith(errors: const {}, movingForward: true, step: index + 1));
+    _update((s) =>
+        s.copyWith(errors: const {}, movingForward: true, step: index + 1));
     return true;
   }
 
   void back() {
     final index = currentStep;
     if (index <= 0) return;
-    _update((s) => s.copyWith(movingForward: false, step: index - 1, errors: const {}));
+    _update((s) =>
+        s.copyWith(movingForward: false, step: index - 1, errors: const {}));
   }
 
   void goToStep(int index) {
@@ -687,7 +730,8 @@ class BdFormController {
   static var _counter = 0;
 
   BdJson _placeholder(BdPickedFile file, String fieldId) {
-    final id = 'local-${DateTime.now().microsecondsSinceEpoch}-${_counter++}-${_random.nextInt(0x7fffffff)}';
+    final id =
+        'local-${DateTime.now().microsecondsSinceEpoch}-${_counter++}-${_random.nextInt(0x7fffffff)}';
     _pendingFiles[id] = file;
     return BdObj({
       'pending': const BdBool(true),
@@ -701,9 +745,11 @@ class BdFormController {
 
   // ── Remote data ────────────────────────────────────────────────────────
 
-  void _setOptions(String fieldId, BdLoadState<List<BdCollectionOption>>? state) {
+  void _setOptions(
+      String fieldId, BdLoadState<List<BdCollectionOption>>? state) {
     _update((s) {
-      final next = Map<String, BdLoadState<List<BdCollectionOption>>>.of(s.collectionOptions);
+      final next = Map<String, BdLoadState<List<BdCollectionOption>>>.of(
+          s.collectionOptions);
       if (state == null) {
         next.remove(fieldId);
       } else {
@@ -718,12 +764,14 @@ class BdFormController {
     if (current is BdLoaded || current is BdLoading) return;
     final backend = this.backend;
     if (backend == null) {
-      _setOptions(fieldId, const BdLoadFailed("Options can't load without a backend."));
+      _setOptions(
+          fieldId, const BdLoadFailed("Options can't load without a backend."));
       return;
     }
     _setOptions(fieldId, const BdLoading());
     try {
-      _setOptions(fieldId, BdLoaded(await backend.collectionOptions(form, fieldId)));
+      _setOptions(
+          fieldId, BdLoaded(await backend.collectionOptions(form, fieldId)));
     } catch (_) {
       _setOptions(fieldId, const BdLoadFailed("Couldn't load the options."));
     }
@@ -736,7 +784,8 @@ class BdFormController {
   }
 
   void _setSlots(String fieldId, BdLoadState<List<String>> state) {
-    _update((s) => s.copyWith(scheduleSlots: {...s.scheduleSlots, fieldId: state}));
+    _update(
+        (s) => s.copyWith(scheduleSlots: {...s.scheduleSlots, fieldId: state}));
   }
 
   /// Open booking times for an auto-schedule field, three weeks ahead.
@@ -744,13 +793,17 @@ class BdFormController {
     if (!reload && _state.scheduleSlots[fieldId] is BdLoaded) return;
     final backend = this.backend;
     if (backend == null) {
-      _setSlots(fieldId, const BdLoadFailed("Booking times can't load without a backend."));
+      _setSlots(fieldId,
+          const BdLoadFailed("Booking times can't load without a backend."));
       return;
     }
     _setSlots(fieldId, const BdLoading());
     final from = DateTime.now().millisecondsSinceEpoch;
     try {
-      _setSlots(fieldId, BdLoaded(await backend.scheduleSlots(form, fieldId, from, from + 21 * 86400000)));
+      _setSlots(
+          fieldId,
+          BdLoaded(await backend.scheduleSlots(
+              form, fieldId, from, from + 21 * 86400000)));
     } catch (_) {
       _setSlots(fieldId, const BdLoadFailed("Couldn't load open times."));
     }
@@ -772,10 +825,13 @@ class BdFormController {
       setValueAt(BdStr(intentId), path);
       _setError(path.key, null);
     } on BdFormsException catch (e) {
-      _setError(path.key, e.message.trim().isEmpty ? "The card couldn't be saved." : e.message);
+      _setError(path.key,
+          e.message.trim().isEmpty ? "The card couldn't be saved." : e.message);
     } catch (e) {
-      final text = e is Exception ? e.toString().replaceFirst('Exception: ', '') : '';
-      _setError(path.key, text.trim().isEmpty ? "The card couldn't be saved." : text);
+      final text =
+          e is Exception ? e.toString().replaceFirst('Exception: ', '') : '';
+      _setError(
+          path.key, text.trim().isEmpty ? "The card couldn't be saved." : text);
     }
   }
 
@@ -788,11 +844,16 @@ class BdFormController {
     _update((s) => s.copyWith(hasAttempted: true));
     final found = _problems(fields);
     if (found.isNotEmpty) {
-      return _fail(BdSubmitFailureReason.clientValidationFailed, 0, _summary(found.length), found);
+      return _fail(BdSubmitFailureReason.clientValidationFailed, 0,
+          _summary(found.length), found);
     }
     // Form-wide file cap across every file field.
-    final fileFields = [for (final f in _fieldIndex.values) if (f.type == 'file_upload') f];
-    final total = fileFields.fold<int>(0, (n, f) => n + (_state.values[f.id]?.arrayValue?.length ?? 0));
+    final fileFields = [
+      for (final f in _fieldIndex.values)
+        if (f.type == 'file_upload') f
+    ];
+    final total = fileFields.fold<int>(
+        0, (n, f) => n + (_state.values[f.id]?.arrayValue?.length ?? 0));
     if (total > BdFormRules.formWideMaxFiles) {
       final e = <String, String>{
         for (final f in fileFields)
@@ -808,14 +869,16 @@ class BdFormController {
     }
     final backend = this.backend;
     if (backend == null) {
-      return _fail(BdSubmitFailureReason.networkError, 0, 'This form has no backend to submit to.', const {});
+      return _fail(BdSubmitFailureReason.networkError, 0,
+          'This form has no backend to submit to.', const {});
     }
 
     _update((s) => s.copyWith(errors: const {}, isSubmitting: true));
     try {
       // Upload every picked file, swapping placeholders for stored files.
       final uploadErrors = <String, String>{};
-      final uploaded = await _resolveUploads(_state.values, '', backend, uploadErrors);
+      final uploaded =
+          await _resolveUploads(_state.values, '', backend, uploadErrors);
       _update((s) => s.copyWith(values: uploaded));
       if (uploadErrors.isNotEmpty) {
         return _fail(
@@ -855,19 +918,24 @@ class BdFormController {
     }
   }
 
-  static String _summary(int count) => 'Please fix the highlighted field${count == 1 ? '' : 's'}.';
+  static String _summary(int count) =>
+      'Please fix the highlighted field${count == 1 ? '' : 's'}.';
 
-  BdSubmitResult _fail(BdSubmitFailureReason reason, int status, String message, Map<String, String> errors) {
+  BdSubmitResult _fail(BdSubmitFailureReason reason, int status, String message,
+      Map<String, String> errors) {
     final issues = [
       for (final MapEntry(:key, value: msg) in errors.entries)
         BdFormIssue(
           fieldId: _lastSegment(key),
           label: field(_lastSegment(key))?.label ?? _lastSegment(key),
-          reason: reason == BdSubmitFailureReason.clientValidationFailed ? 'invalid' : 'upload',
+          reason: reason == BdSubmitFailureReason.clientValidationFailed
+              ? 'invalid'
+              : 'upload',
           message: msg,
         ),
     ];
-    final failure = BdSubmitFailure(status: status, reason: reason, message: message, issues: issues);
+    final failure = BdSubmitFailure(
+        status: status, reason: reason, message: message, issues: issues);
     _update((s) => s.copyWith(errors: errors, result: failure));
     _jumpToFirstError();
     onFailure?.call(failure);
@@ -884,7 +952,9 @@ class BdFormController {
     final out = <String, String>{};
     for (final issue in issues) {
       if (issue.fieldId.isEmpty) continue;
-      final id = _fieldIndex.containsKey(issue.fieldId) ? issue.fieldId : keyToId[issue.fieldId] ?? issue.fieldId;
+      final id = _fieldIndex.containsKey(issue.fieldId)
+          ? issue.fieldId
+          : keyToId[issue.fieldId] ?? issue.fieldId;
       final f = field(id);
       out[id] = _message(issue.reason, f?.label ?? issue.label, f);
     }
@@ -897,7 +967,8 @@ class BdFormController {
     final first = _state.errors.keys.firstOrNull;
     if (!isConsecutive || first == null) return;
     final rootId = first.split('[').first.split('.').first;
-    final index = steps.indexWhere((step) => step.any((f) => BdFormRules.fieldsById([f]).containsKey(rootId)));
+    final index = steps.indexWhere((step) =>
+        step.any((f) => BdFormRules.fieldsById([f]).containsKey(rootId)));
     if (index < 0 || index == currentStep) return;
     final from = currentStep;
     _update((s) => s.copyWith(movingForward: index > from, step: index));
@@ -925,7 +996,9 @@ class BdFormController {
               done.add(item);
               continue;
             }
-            done.add((await _upload(f, file, id!, prefix + key, errors))?.json ?? item);
+            done.add(
+                (await _upload(f, file, id!, prefix + key, errors))?.json ??
+                    item);
           }
           out[key] = BdArr(done);
         case 'image_input':
@@ -940,7 +1013,8 @@ class BdFormController {
           out[key] = BdArr([
             for (var i = 0; i < list.length; i++)
               if (list[i].objectValue case final o?)
-                BdObj(await _resolveUploads(o, '$prefix$key[$i].', backend, errors))
+                BdObj(await _resolveUploads(
+                    o, '$prefix$key[$i].', backend, errors))
               else
                 list[i],
           ]);
@@ -982,7 +1056,8 @@ class BdFormController {
 
   /// [root] with [value] written at [path], creating repeater entries on
   /// the way as needed.
-  static Map<String, BdJson> write(BdJson? value, BdFieldPath path, Map<String, BdJson> root) {
+  static Map<String, BdJson> write(
+      BdJson? value, BdFieldPath path, Map<String, BdJson> root) {
     Map<String, BdJson> go(Map<String, BdJson> scope, List<BdEntry> entries) {
       final next = Map<String, BdJson>.of(scope);
       if (entries.isEmpty) {
@@ -994,7 +1069,8 @@ class BdFormController {
       while (arr.length <= e.index) {
         arr.add(const BdObj({}));
       }
-      arr[e.index] = BdObj(go(arr[e.index].objectValue ?? const {}, entries.sublist(1)));
+      arr[e.index] =
+          BdObj(go(arr[e.index].objectValue ?? const {}, entries.sublist(1)));
       next[e.repeaterId] = BdArr(arr);
       return next;
     }

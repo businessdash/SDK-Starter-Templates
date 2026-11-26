@@ -6,6 +6,7 @@ export function QuantityStepper(props: {
 }) {
 	const quantity = () => props.quantity ?? 1;
 	return (
+		// biome-ignore lint/a11y/useSemanticElements: a fieldset would bring its own border, padding and min-width to a row of three controls
 		<div aria-label="Quantity" class="qty" role="group">
 			<button
 				aria-label="One fewer"

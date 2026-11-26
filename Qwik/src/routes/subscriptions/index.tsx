@@ -1,6 +1,10 @@
 // [bd-file:subscriptions]
 import { $, component$, useSignal } from "@builder.io/qwik";
-import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city";
+import {
+	type DocumentHead,
+	routeLoader$,
+	server$,
+} from "@builder.io/qwik-city";
 
 import {
 	BdPaymentLapsedError,
@@ -24,7 +28,12 @@ const SIGN_IN = "/my-account?next=/subscriptions";
 export const useSubscriptions = routeLoader$(async ({ cookie }) => {
 	const bd = getBd();
 	if (!bd) {
-		return { configured: false, suspended: false, items: [], signedIn: false } as const;
+		return {
+			configured: false,
+			suspended: false,
+			items: [],
+			signedIn: false,
+		} as const;
 	}
 	try {
 		const [res, session] = await Promise.all([
@@ -42,9 +51,19 @@ export const useSubscriptions = routeLoader$(async ({ cookie }) => {
 			err instanceof BdServiceSuspendedError ||
 			err instanceof BdPaymentLapsedError
 		) {
-			return { configured: true, suspended: true, items: [], signedIn: false } as const;
+			return {
+				configured: true,
+				suspended: true,
+				items: [],
+				signedIn: false,
+			} as const;
 		}
-		return { configured: true, suspended: false, items: [], signedIn: false } as const;
+		return {
+			configured: true,
+			suspended: false,
+			items: [],
+			signedIn: false,
+		} as const;
 	}
 });
 
@@ -118,18 +137,17 @@ export default component$(() => {
 						</div>
 					) : items.length === 0 ? (
 						<div class="bd-empty">
-							No subscription plans yet. Add some in BD at Dashboard →
-							Products → Subscriptions.
+							No subscription plans yet. Add some in BD at Dashboard → Products
+							→ Subscriptions.
 						</div>
 					) : (
 						<div class="bd-grid-3">
 							{items.map((plan) => (
-								<div
-									class="bd-card service-card"
-									key={plan.id}
-								>
+								<div class="bd-card service-card" key={plan.id}>
 									{plan.imageUrl ? (
 										<img
+											width={1200}
+											height={900}
 											alt={plan.name}
 											src={plan.imageUrl}
 											style="border-radius: 0.75rem; aspect-ratio: 4/3; object-fit: cover;"
@@ -179,6 +197,9 @@ export default component$(() => {
 export const head: DocumentHead = {
 	title: "Plans — Your Business",
 	meta: [
-		{ name: "description", content: "Recurring subscription plans via Stripe." },
+		{
+			name: "description",
+			content: "Recurring subscription plans via Stripe.",
+		},
 	],
 };

@@ -15,7 +15,11 @@ import '../forms/demo_quiz.dart';
 /// and the signed-in customer's session on [BdQuizzes] when the invitation
 /// needs their account.
 class QuizPage extends StatefulWidget {
-  const QuizPage({super.key, required this.host, required this.publishableKey, required this.quiz});
+  const QuizPage(
+      {super.key,
+      required this.host,
+      required this.publishableKey,
+      required this.quiz});
 
   final String host;
   final String publishableKey;
@@ -35,7 +39,8 @@ class _QuizPageState extends State<QuizPage> {
   void initState() {
     super.initState();
     if (widget.isLive) {
-      _quizzes = BdQuizzes.packageApi(publishableKey: widget.publishableKey, host: widget.host);
+      _quizzes = BdQuizzes.packageApi(
+          publishableKey: widget.publishableKey, host: widget.host);
     } else {
       _sample = BdQuizController(BdQuizOptions(
         fields: BdFormSchema.parse(demoQuizJson).fields,
@@ -55,7 +60,9 @@ class _QuizPageState extends State<QuizPage> {
 
   void _done(BdQuizCompletion completion) {
     final score = completion.scorePercent ?? completion.provisionalScorePercent;
-    final text = score == null ? 'Quiz submitted' : 'Scored ${BdQuizEngine.percent(score)}%';
+    final text = score == null
+        ? 'Quiz submitted'
+        : 'Scored ${BdQuizEngine.percent(score)}%';
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
   }
 
@@ -63,8 +70,12 @@ class _QuizPageState extends State<QuizPage> {
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(title: const Text('Quiz')),
         body: _quizzes != null
-            ? BdQuiz(source: BdQuizSource.practice(widget.quiz), quizzes: _quizzes!, onDone: _done)
-            : BdQuiz.controller(_sample!, page: BdQuizPage.practice(const _SampleQuiz()), onDone: _done),
+            ? BdQuiz(
+                source: BdQuizSource.practice(widget.quiz),
+                quizzes: _quizzes!,
+                onDone: _done)
+            : BdQuiz.controller(_sample!,
+                page: BdQuizPage.practice(const _SampleQuiz()), onDone: _done),
       );
 }
 

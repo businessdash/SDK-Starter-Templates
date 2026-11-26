@@ -10,7 +10,14 @@
  * The server route checks the review again (`checkReview`) and sends it with
  * the customer's session; it answers `{ ok: true }` or `{ error }`.
  */
-import { define, h, patch, postJson, readJson, upgradeProperty } from "./bd-dom";
+import {
+	define,
+	h,
+	patch,
+	postJson,
+	readJson,
+	upgradeProperty,
+} from "./bd-dom";
 import { checkReview, REVIEW_MAX_LENGTH, REVIEW_SENT } from "./reviews";
 
 class ReviewWriter extends HTMLElement {
@@ -43,7 +50,11 @@ class ReviewWriter extends HTMLElement {
 		event.preventDefault();
 		if (this.#sending) return;
 		const fields = new FormData(form);
-		const checked = checkReview({ rating: this.#rating, title: fields.get("title"), body: fields.get("body") });
+		const checked = checkReview({
+			rating: this.#rating,
+			title: fields.get("title"),
+			body: fields.get("body"),
+		});
 		if (!checked.ok) {
 			this.#error = checked.error;
 			this.render();
@@ -52,14 +63,20 @@ class ReviewWriter extends HTMLElement {
 		this.#sending = true;
 		this.#error = "";
 		this.render();
-		const { status, data } = await postJson<"ok" | "error">(this.getAttribute("data-write-url") ?? "", checked.review);
+		const { status, data } = await postJson<"ok" | "error">(
+			this.getAttribute("data-write-url") ?? "",
+			checked.review,
+		);
 		this.#sending = false;
 		if (data.ok === true) {
 			this.#sent = true;
 		} else if (status === 401) {
 			this.#signedIn = false;
 		} else {
-			this.#error = typeof data.error === "string" ? data.error : "Couldn't send your review. Try again.";
+			this.#error =
+				typeof data.error === "string"
+					? data.error
+					: "Couldn't send your review. Try again.";
 		}
 		this.render();
 	};
@@ -92,15 +109,29 @@ class ReviewWriter extends HTMLElement {
 	render() {
 		const signIn = this.getAttribute("data-sign-in-href") ?? "/my-account";
 		if (this.#sent) {
-			patch(this, [h("p", { class: "review-writer__sent", role: "status" }, REVIEW_SENT)]);
+			patch(this, [
+				h("p", { class: "review-writer__sent", role: "status" }, REVIEW_SENT),
+			]);
 			return;
 		}
 		if (!this.#signedIn) {
-			patch(this, [h("a", { class: "bd-btn bd-btn--ghost", href: signIn }, "Sign in to write a review")]);
+			patch(this, [
+				h(
+					"a",
+					{ class: "bd-btn bd-btn--ghost", href: signIn },
+					"Sign in to write a review",
+				),
+			]);
 			return;
 		}
 		if (!this.#open) {
-			patch(this, [h("button", { class: "bd-btn", "data-open": true, type: "button" }, "Write a review")]);
+			patch(this, [
+				h(
+					"button",
+					{ class: "bd-btn", "data-open": true, type: "button" },
+					"Write a review",
+				),
+			]);
 			return;
 		}
 		patch(this, [
@@ -125,12 +156,33 @@ class ReviewWriter extends HTMLElement {
 						),
 					),
 				),
-				h("label", { class: "bd-label", for: "review-title" }, "Title (optional)"),
-				h("input", { class: "bd-input", id: "review-title", maxlength: 200, name: "title" }),
+				h(
+					"label",
+					{ class: "bd-label", for: "review-title" },
+					"Title (optional)",
+				),
+				h("input", {
+					class: "bd-input",
+					id: "review-title",
+					maxlength: 200,
+					name: "title",
+				}),
 				h("label", { class: "bd-label", for: "review-body" }, "Your review"),
-				h("textarea", { class: "bd-textarea", id: "review-body", maxlength: REVIEW_MAX_LENGTH, name: "body", required: true, rows: 5 }),
-				h("button", { class: "bd-btn", disabled: this.#sending, type: "submit" }, this.#sending ? "Sending…" : "Send review"),
-				this.#error && h("p", { class: "review-writer__error", role: "alert" }, this.#error),
+				h("textarea", {
+					class: "bd-textarea",
+					id: "review-body",
+					maxlength: REVIEW_MAX_LENGTH,
+					name: "body",
+					required: true,
+					rows: 5,
+				}),
+				h(
+					"button",
+					{ class: "bd-btn", disabled: this.#sending, type: "submit" },
+					this.#sending ? "Sending…" : "Send review",
+				),
+				this.#error &&
+					h("p", { class: "review-writer__error", role: "alert" }, this.#error),
 			),
 		]);
 	}

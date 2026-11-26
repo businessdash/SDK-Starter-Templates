@@ -14,9 +14,7 @@ export function BdFooter() {
 			/>
 			<div>
 				Built with
-				<a href="https://github.com/businessdash/platform">
-					@businessdash/sdk
-				</a>
+				<a href="https://github.com/businessdash/platform">@businessdash/sdk</a>
 			</div>
 		</footer>
 	);

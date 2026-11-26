@@ -13,16 +13,31 @@ import {
  * One review: the reviewer's photo or initial, name, stars and date, the
  * text, their photos, and the platform with Verified and "Read on Google".
  */
-export function ReviewCard({ review, index }: { review: WallReview; index: number }) {
+export function ReviewCard({
+	review,
+	index,
+}: {
+	review: WallReview;
+	index: number;
+}) {
 	const avatar = safeImage(review.reviewerImageUrl);
 	const platform = platformName(review.source);
 	const link = reviewLink(review);
-	const photos = (review.photos ?? []).map(safeImage).filter((p): p is string => p !== null);
+	const photos = (review.photos ?? [])
+		.map(safeImage)
+		.filter((p): p is string => p !== null);
 	return (
 		<li class="review-card" id={`review-${index}`}>
 			<div class="review-card__head">
 				{avatar ? (
-					<img class="review-card__avatar" src={avatar} alt="" loading="lazy" width={40} height={40} />
+					<img
+						class="review-card__avatar"
+						src={avatar}
+						alt=""
+						loading="lazy"
+						width={40}
+						height={40}
+					/>
 				) : (
 					<span class="review-card__avatar" aria-hidden="true">
 						{reviewerInitial(review)}
@@ -31,7 +46,11 @@ export function ReviewCard({ review, index }: { review: WallReview; index: numbe
 				<div>
 					<p class="review-card__name">{reviewerName(review)}</p>
 					<p class="review-card__meta">
-						<span class="review-stars" role="img" aria-label={`${review.rating} out of 5`}>
+						<span
+							class="review-stars"
+							role="img"
+							aria-label={`${review.rating} out of 5`}
+						>
 							{reviewStars(review.rating)}
 						</span>{" "}
 						· {formatReviewDate(review.timeCreated)}
@@ -50,10 +69,19 @@ export function ReviewCard({ review, index }: { review: WallReview; index: numbe
 			) : null}
 			{platform || review.verified ? (
 				<p class="review-card__foot">
-					{platform ? <span class="review-card__platform">{platform}</span> : null}
-					{review.verified ? <span class="review-card__verified">✓ Verified</span> : null}
+					{platform ? (
+						<span class="review-card__platform">{platform}</span>
+					) : null}
+					{review.verified ? (
+						<span class="review-card__verified">✓ Verified</span>
+					) : null}
 					{link && platform ? (
-						<a class="review-card__link" href={link} target="_blank" rel="noopener noreferrer">
+						<a
+							class="review-card__link"
+							href={link}
+							target="_blank"
+							rel="noopener noreferrer"
+						>
 							Read on {platform}
 						</a>
 					) : null}

@@ -1,6 +1,10 @@
 // [bd-file:store]
 import { $, component$, useSignal, useTask$ } from "@builder.io/qwik";
-import { type DocumentHead, routeLoader$, server$ } from "@builder.io/qwik-city";
+import {
+	type DocumentHead,
+	routeLoader$,
+	server$,
+} from "@builder.io/qwik-city";
 
 import type { CartSnapshot } from "@businessdash/sdk/contracts";
 
@@ -128,13 +132,18 @@ export default component$(() => {
 							Your cart is empty. <a href="/store">Browse the store →</a>
 						</div>
 					) : (
-						<div class="bd-card" style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;">
+						<div
+							class="bd-card"
+							style="padding: 2rem; display: flex; flex-direction: column; gap: 1.25rem;"
+						>
 							{items.map((item) => (
 								<CartLine
 									disabled={busy.value}
 									item={item}
 									key={item.id}
-									onQuantity$={(quantity) => apply(updateItemRpc(item.id, quantity))}
+									onQuantity$={(quantity) =>
+										apply(updateItemRpc(item.id, quantity))
+									}
 									onRemove$={() => apply(removeItemRpc(item.id))}
 								/>
 							))}

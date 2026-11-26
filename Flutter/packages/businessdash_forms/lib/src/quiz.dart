@@ -20,7 +20,8 @@ sealed class BdQuizSource {
   /// A practice quiz the org lets apps run: graded by BD, never recorded,
   /// and it can be retaken. [seed] pins one order; null shuffles anew each
   /// run. [questionLimit] asks only that many questions.
-  const factory BdQuizSource.practice(String slug, {String? seed, int? questionLimit}) = BdQuizPracticeSource;
+  const factory BdQuizSource.practice(String slug,
+      {String? seed, int? questionLimit}) = BdQuizPracticeSource;
 }
 
 class BdQuizInvitationSource extends BdQuizSource {
@@ -29,7 +30,8 @@ class BdQuizInvitationSource extends BdQuizSource {
   final String token;
 
   @override
-  bool operator ==(Object other) => other is BdQuizInvitationSource && other.token == token;
+  bool operator ==(Object other) =>
+      other is BdQuizInvitationSource && other.token == token;
 
   @override
   int get hashCode => token.hashCode;
@@ -44,7 +46,10 @@ class BdQuizPracticeSource extends BdQuizSource {
 
   @override
   bool operator ==(Object other) =>
-      other is BdQuizPracticeSource && other.slug == slug && other.seed == seed && other.questionLimit == questionLimit;
+      other is BdQuizPracticeSource &&
+      other.slug == slug &&
+      other.seed == seed &&
+      other.questionLimit == questionLimit;
 
   @override
   int get hashCode => Object.hash(slug, seed, questionLimit);
@@ -218,7 +223,10 @@ class _BdQuizState extends State<BdQuiz> {
       setState(() {
         _load = _Load.failed;
         // BD's own words; a transport failure gets the quiz's.
-        _failure = e is BdFormsException && e.status != 0 && e.message.isNotEmpty ? e.message : null;
+        _failure =
+            e is BdFormsException && e.status != 0 && e.message.isNotEmpty
+                ? e.message
+                : null;
       });
     }
   }
@@ -236,15 +244,23 @@ class _BdQuizState extends State<BdQuiz> {
         }
         final page = BdQuizPage.invitation(invitation, words: words);
         if (invitation == null || page.gate != null) return (page, null);
-        final options = invitation.options(signInHref: widget.onSignIn != null ? _signInHref : null, words: words);
+        final options = invitation.options(
+            signInHref: widget.onSignIn != null ? _signInHref : null,
+            words: words);
         return (
           page,
-          BdQuizController(options, backend: quizzes.invitationBackend(token), initial: invitation.initial()),
+          BdQuizController(options,
+              backend: quizzes.invitationBackend(token),
+              initial: invitation.initial()),
         );
       case BdQuizPracticeSource(:final slug, :final seed, :final questionLimit):
         final practice = await quizzes.practice(slug);
-        final options = practice.options(seed: seed, questionLimit: questionLimit, words: words);
-        return (BdQuizPage.practice(practice, words: words), BdQuizController(options, backend: quizzes.practiceBackend(slug)));
+        final options = practice.options(
+            seed: seed, questionLimit: questionLimit, words: words);
+        return (
+          BdQuizPage.practice(practice, words: words),
+          BdQuizController(options, backend: quizzes.practiceBackend(slug))
+        );
     }
   }
 
@@ -262,7 +278,9 @@ class _BdQuizState extends State<BdQuiz> {
     final controller = _attached;
     if (controller == null) return;
     controller.removeListener(_changed);
-    if (!identical(controller, widget.controller) || widget.onDone != null) controller.onDone = null;
+    if (!identical(controller, widget.controller) || widget.onDone != null) {
+      controller.onDone = null;
+    }
     _attached = null;
   }
 
@@ -270,7 +288,9 @@ class _BdQuizState extends State<BdQuiz> {
   /// (Not the "3 of 5 answered" line, which changes with every answer.)
   static String _placeOf(BdQuizController controller) {
     final phase = controller.screen.phase;
-    return phase == BdQuizPhase.all ? 'all' : '${controller.state.index}|${phase == BdQuizPhase.done}';
+    return phase == BdQuizPhase.all
+        ? 'all'
+        : '${controller.state.index}|${phase == BdQuizPhase.done}';
   }
 
   void _changed() {
@@ -282,7 +302,9 @@ class _BdQuizState extends State<BdQuiz> {
       if (widget.scrollable) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           if (mounted && _scroll.hasClients) {
-            unawaited(_scroll.animateTo(0, duration: const Duration(milliseconds: 250), curve: Curves.easeOut));
+            unawaited(_scroll.animateTo(0,
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOut));
           }
         });
       }
@@ -292,7 +314,8 @@ class _BdQuizState extends State<BdQuiz> {
 
   /// A typed answer's text box. The box keeps the text, so the caret never
   /// jumps; the controller gets every change. A retake starts them over.
-  TextEditingController _text(BdQuizController controller, BdQuizQuestion question) {
+  TextEditingController _text(
+      BdQuizController controller, BdQuizQuestion question) {
     if (!identical(_textsFor, controller.config)) {
       for (final text in _texts.values) {
         text.dispose();
@@ -314,7 +337,8 @@ class _BdQuizState extends State<BdQuiz> {
         BdControlStyle.material => false,
         BdControlStyle.cupertino => true,
         BdControlStyle.adaptive =>
-          defaultTargetPlatform == TargetPlatform.iOS || defaultTargetPlatform == TargetPlatform.macOS,
+          defaultTargetPlatform == TargetPlatform.iOS ||
+              defaultTargetPlatform == TargetPlatform.macOS,
       };
 
   @override
@@ -326,21 +350,37 @@ class _BdQuizState extends State<BdQuiz> {
         : base.copyWith(
             colorScheme: base.colorScheme.copyWith(
               primary: tint,
-              onPrimary: ThemeData.estimateBrightnessForColor(tint) == Brightness.dark ? Colors.white : Colors.black,
+              onPrimary:
+                  ThemeData.estimateBrightnessForColor(tint) == Brightness.dark
+                      ? Colors.white
+                      : Colors.black,
             ),
-            cupertinoOverrideTheme: CupertinoThemeData(primaryColor: tint, brightness: base.brightness),
+            cupertinoOverrideTheme: CupertinoThemeData(
+                primaryColor: tint, brightness: base.brightness),
           );
     return Theme(
       data: theme,
       child: Builder(builder: (context) {
         final look = _Look(context, widget.style, _cupertino);
         return switch (_load) {
-          _Load.loading => _centered(look, [look.spinner(), Text(widget.words.loading, style: TextStyle(color: look.muted))]),
+          _Load.loading => _centered(look, [
+              look.spinner(),
+              Text(widget.words.loading, style: TextStyle(color: look.muted))
+            ]),
           _Load.failed => _centered(look, [
-              Icon(look.icon(Icons.warning_amber_rounded, CupertinoIcons.exclamationmark_triangle_fill), color: look.error, size: 40),
-              Text(widget.words.loadFailed, style: look.text.titleMedium, textAlign: TextAlign.center),
-              if (_failure case final message?) Text(message, style: TextStyle(color: look.muted), textAlign: TextAlign.center),
-              look.button(widget.words.tryAgain, () => unawaited(_reload()), primary: false),
+              Icon(
+                  look.icon(Icons.warning_amber_rounded,
+                      CupertinoIcons.exclamationmark_triangle_fill),
+                  color: look.error,
+                  size: 40),
+              Text(widget.words.loadFailed,
+                  style: look.text.titleMedium, textAlign: TextAlign.center),
+              if (_failure case final message?)
+                Text(message,
+                    style: TextStyle(color: look.muted),
+                    textAlign: TextAlign.center),
+              look.button(widget.words.tryAgain, () => unawaited(_reload()),
+                  primary: false),
             ]),
           _Load.ready => _pageView(look),
         };
@@ -353,14 +393,22 @@ class _BdQuizState extends State<BdQuiz> {
       padding: const EdgeInsets.all(32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        children: [for (final child in children) Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: child)],
+        children: [
+          for (final child in children)
+            Padding(
+                padding: const EdgeInsets.symmetric(vertical: 6), child: child)
+        ],
       ),
     );
-    return widget.scrollable ? Center(child: SingleChildScrollView(child: column)) : column;
+    return widget.scrollable
+        ? Center(child: SingleChildScrollView(child: column))
+        : column;
   }
 
   Widget _pageView(_Look look) {
-    final page = widget.controller == null && !widget.showsHeader ? _page.withoutHeader() : (widget.controller != null ? widget.page : _page);
+    final page = widget.controller == null && !widget.showsHeader
+        ? _page.withoutHeader()
+        : (widget.controller != null ? widget.page : _page);
     final controller = _controller;
     final gate = page.gate;
     final content = Column(
@@ -375,9 +423,12 @@ class _BdQuizState extends State<BdQuiz> {
       ]),
     );
     final framed = Center(
-      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 640), child: content),
+      child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 640), child: content),
     );
-    if (!widget.scrollable) return Padding(padding: widget.style.padding, child: framed);
+    if (!widget.scrollable) {
+      return Padding(padding: widget.style.padding, child: framed);
+    }
     return SingleChildScrollView(
       controller: _scroll,
       padding: widget.style.padding,
@@ -393,13 +444,19 @@ class _BdQuizState extends State<BdQuiz> {
         children: [
           Text(
             header.eyebrow.toUpperCase(),
-            style: look.text.labelMedium?.copyWith(color: look.primary, fontWeight: FontWeight.w600, letterSpacing: 0.8),
+            style: look.text.labelMedium?.copyWith(
+                color: look.primary,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.8),
           ),
           const SizedBox(height: 6),
-          Semantics(header: true, child: Text(header.title, style: look.text.headlineSmall)),
+          Semantics(
+              header: true,
+              child: Text(header.title, style: look.text.headlineSmall)),
           if (header.description case final description?) ...[
             const SizedBox(height: 6),
-            Text(description, style: look.text.bodyMedium?.copyWith(color: look.muted)),
+            Text(description,
+                style: look.text.bodyMedium?.copyWith(color: look.muted)),
           ],
           if (header.facts.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -409,9 +466,11 @@ class _BdQuizState extends State<BdQuiz> {
               children: [
                 for (final fact in header.facts)
                   DecoratedBox(
-                    decoration: ShapeDecoration(shape: const StadiumBorder(), color: look.fill),
+                    decoration: ShapeDecoration(
+                        shape: const StadiumBorder(), color: look.fill),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       child: Text(fact, style: look.text.labelMedium),
                     ),
                   ),
@@ -422,7 +481,8 @@ class _BdQuizState extends State<BdQuiz> {
       );
 
   Widget _gate(_Look look, BdQuizGate gate) {
-    final account = gate.kind == BdQuizGateKind.signIn || gate.kind == BdQuizGateKind.switchAccount;
+    final account = gate.kind == BdQuizGateKind.signIn ||
+        gate.kind == BdQuizGateKind.switchAccount;
     final run = switch (gate.action?.id) {
       BdQuizGateKind.signIn => widget.onSignIn,
       BdQuizGateKind.switchAccount => widget.onSwitchAccount,
@@ -433,12 +493,17 @@ class _BdQuizState extends State<BdQuiz> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: _spaced(10, [
           Icon(
-            account ? look.icon(Icons.lock_outline, CupertinoIcons.lock_fill) : look.icon(Icons.info_outline, CupertinoIcons.info),
+            account
+                ? look.icon(Icons.lock_outline, CupertinoIcons.lock_fill)
+                : look.icon(Icons.info_outline, CupertinoIcons.info),
             color: account ? look.primary : look.muted,
           ),
-          if (gate.title case final title?) Text(title, style: look.text.titleMedium),
-          Text(gate.body, style: look.text.bodyMedium?.copyWith(color: look.muted)),
-          if (gate.action case final action? when run != null) look.button(action.label, run),
+          if (gate.title case final title?)
+            Text(title, style: look.text.titleMedium),
+          Text(gate.body,
+              style: look.text.bodyMedium?.copyWith(color: look.muted)),
+          if (gate.action case final action? when run != null)
+            look.button(action.label, run),
         ]),
       ),
     );
@@ -459,24 +524,43 @@ class _BdQuizState extends State<BdQuiz> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: _spaced(16, [
         ...switch (screen.phase) {
-          BdQuizPhase.empty => [Text(screen.empty ?? '', style: TextStyle(color: look.muted))],
-          BdQuizPhase.ready => [if (screen.ready case final ready?) _ready(look, ready)],
-          BdQuizPhase.done => [if (screen.done case final done?) _done(look, done)],
+          BdQuizPhase.empty => [
+              Text(screen.empty ?? '', style: TextStyle(color: look.muted))
+            ],
+          BdQuizPhase.ready => [
+              if (screen.ready case final ready?) _ready(look, ready)
+            ],
+          BdQuizPhase.done => [
+              if (screen.done case final done?) _done(look, done)
+            ],
           BdQuizPhase.question || BdQuizPhase.all || BdQuizPhase.feedback => [
               if (screen.timer case final timer?) _timer(look, timer),
-              if (screen.progress case final progress?) _progress(look, progress),
-              if (screen.notice case final notice?) Text(notice, style: look.text.bodySmall?.copyWith(color: look.muted)),
+              if (screen.progress case final progress?)
+                _progress(look, progress),
+              if (screen.notice case final notice?)
+                Text(notice,
+                    style: look.text.bodySmall?.copyWith(color: look.muted)),
               for (final question in screen.questions)
-                _question(look, controller, question, numbered: screen.phase == BdQuizPhase.all, primary: primary),
-              if (screen.feedback case final feedback?) _BdQuizFeedbackCard(look: look, feedback: feedback),
+                _question(look, controller, question,
+                    numbered: screen.phase == BdQuizPhase.all,
+                    primary: primary),
+              if (screen.feedback case final feedback?)
+                _BdQuizFeedbackCard(look: look, feedback: feedback),
             ],
         },
         if (screen.error case final message?)
           Row(
             children: [
-              Icon(look.icon(Icons.warning_amber_rounded, CupertinoIcons.exclamationmark_triangle_fill), color: look.error, size: 18),
+              Icon(
+                  look.icon(Icons.warning_amber_rounded,
+                      CupertinoIcons.exclamationmark_triangle_fill),
+                  color: look.error,
+                  size: 18),
               const SizedBox(width: 8),
-              Expanded(child: Text(message, style: look.text.bodyMedium?.copyWith(color: look.error))),
+              Expanded(
+                  child: Text(message,
+                      style:
+                          look.text.bodyMedium?.copyWith(color: look.error))),
             ],
           ),
         if (screen.actions.isNotEmpty) _actions(look, controller, screen),
@@ -490,14 +574,19 @@ class _BdQuizState extends State<BdQuiz> {
           children: _spaced(12, [
             look.disc(
               Icon(
-                ready.icon == 'hourglass' ? look.icon(Icons.hourglass_empty, CupertinoIcons.hourglass) : look.icon(Icons.schedule, CupertinoIcons.clock),
+                ready.icon == 'hourglass'
+                    ? look.icon(Icons.hourglass_empty, CupertinoIcons.hourglass)
+                    : look.icon(Icons.schedule, CupertinoIcons.clock),
                 color: look.primary,
                 size: 32,
               ),
               size: 64,
             ),
-            Text(ready.title, style: look.text.titleLarge, textAlign: TextAlign.center),
-            Text(ready.body, style: look.text.bodyMedium?.copyWith(color: look.muted), textAlign: TextAlign.center),
+            Text(ready.title,
+                style: look.text.titleLarge, textAlign: TextAlign.center),
+            Text(ready.body,
+                style: look.text.bodyMedium?.copyWith(color: look.muted),
+                textAlign: TextAlign.center),
           ]),
         ),
       );
@@ -512,7 +601,9 @@ class _BdQuizState extends State<BdQuiz> {
       child: DecoratedBox(
         decoration: BoxDecoration(
           // iOS fills are translucent already; Material's surface needs thinning.
-          color: warn ? look.errorContainer : (look.cupertino ? look.fill : look.fill.withValues(alpha: 0.6)),
+          color: warn
+              ? look.errorContainer
+              : (look.cupertino ? look.fill : look.fill.withValues(alpha: 0.6)),
           borderRadius: BorderRadius.circular(widget.style.cornerRadius),
         ),
         child: Padding(
@@ -522,14 +613,22 @@ class _BdQuizState extends State<BdQuiz> {
               Row(
                 children: [
                   Icon(
-                    timer.countdown ? look.icon(Icons.hourglass_empty, CupertinoIcons.hourglass) : look.icon(Icons.schedule, CupertinoIcons.clock),
+                    timer.countdown
+                        ? look.icon(
+                            Icons.hourglass_empty, CupertinoIcons.hourglass)
+                        : look.icon(Icons.schedule, CupertinoIcons.clock),
                     size: 18,
                     color: foreground,
                   ),
                   const SizedBox(width: 8),
-                  Expanded(child: Text(timer.label, style: look.text.labelLarge?.copyWith(color: foreground))),
+                  Expanded(
+                      child: Text(timer.label,
+                          style: look.text.labelLarge
+                              ?.copyWith(color: foreground))),
                   if (timer.paused) ...[
-                    Text(timer.pausedLabel, style: look.text.labelMedium?.copyWith(color: look.muted)),
+                    Text(timer.pausedLabel,
+                        style:
+                            look.text.labelMedium?.copyWith(color: look.muted)),
                     const SizedBox(width: 8),
                   ],
                   Text(
@@ -557,8 +656,11 @@ class _BdQuizState extends State<BdQuiz> {
         children: [
           Row(
             children: [
-              Expanded(child: Text(progress.position, style: look.text.labelLarge)),
-              if (progress.note case final note?) Text(note, style: look.text.labelMedium?.copyWith(color: look.muted)),
+              Expanded(
+                  child: Text(progress.position, style: look.text.labelLarge)),
+              if (progress.note case final note?)
+                Text(note,
+                    style: look.text.labelMedium?.copyWith(color: look.muted)),
             ],
           ),
           const SizedBox(height: 6),
@@ -579,7 +681,11 @@ class _BdQuizState extends State<BdQuiz> {
       children: _spaced(10, [
         Semantics(
           header: true,
-          child: Text(numbered ? '${question.number}. ${question.label}' : question.label, style: look.text.titleMedium),
+          child: Text(
+              numbered
+                  ? '${question.number}. ${question.label}'
+                  : question.label,
+              style: look.text.titleMedium),
         ),
         if (question.choices case final choices?)
           for (final choice in choices)
@@ -606,13 +712,15 @@ class _BdQuizState extends State<BdQuiz> {
             locked: question.locked,
             onTap: () => controller.chooseDontKnow(id),
           ),
-        if (question.error case final error?) Text(error, style: look.text.bodySmall?.copyWith(color: look.error)),
+        if (question.error case final error?)
+          Text(error, style: look.text.bodySmall?.copyWith(color: look.error)),
       ]),
     );
   }
 
   /// A typed answer: open questions, numbers, yes/no, a dropdown.
-  Widget _answerInput(_Look look, BdQuizController controller, BdQuizQuestion question, BdQuizActionId? primary) {
+  Widget _answerInput(_Look look, BdQuizController controller,
+      BdQuizQuestion question, BdQuizActionId? primary) {
     final field = question.field;
     final id = field.id;
     final enabled = !question.locked;
@@ -632,8 +740,12 @@ class _BdQuizState extends State<BdQuiz> {
               child: CupertinoSlidingSegmentedControl<bool>(
                 groupValue: value,
                 children: {
-                  true: Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Text(words.yes)),
-                  false: Padding(padding: const EdgeInsets.symmetric(vertical: 6), child: Text(words.no)),
+                  true: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(words.yes)),
+                  false: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Text(words.no)),
                 },
                 onValueChanged: (picked) {
                   if (picked != null) controller.setAnswer(id, BdBool(picked));
@@ -652,7 +764,9 @@ class _BdQuizState extends State<BdQuiz> {
           showSelectedIcon: false,
           onSelectionChanged: enabled
               ? (picked) {
-                  if (picked.isNotEmpty) controller.setAnswer(id, BdBool(picked.first));
+                  if (picked.isNotEmpty) {
+                    controller.setAnswer(id, BdBool(picked.first));
+                  }
                 }
               : null,
         );
@@ -663,8 +777,11 @@ class _BdQuizState extends State<BdQuiz> {
             ? _cupertinoSelect(look, controller, question, options, current)
             : InputDecorator(
                 decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(widget.style.cornerRadius)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  border: OutlineInputBorder(
+                      borderRadius:
+                          BorderRadius.circular(widget.style.cornerRadius)),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   enabled: enabled,
                   errorText: question.error == null ? null : '',
                   errorStyle: const TextStyle(height: 0, fontSize: 0),
@@ -674,8 +791,14 @@ class _BdQuizState extends State<BdQuiz> {
                     isExpanded: true,
                     value: options.contains(current) ? current : null,
                     hint: Text(field.placeholder ?? '—'),
-                    items: [for (final option in options) DropdownMenuItem(value: option, child: Text(option))],
-                    onChanged: enabled ? (picked) => controller.setAnswer(id, BdStr(picked ?? '')) : null,
+                    items: [
+                      for (final option in options)
+                        DropdownMenuItem(value: option, child: Text(option))
+                    ],
+                    onChanged: enabled
+                        ? (picked) =>
+                            controller.setAnswer(id, BdStr(picked ?? ''))
+                        : null,
                   ),
                 ),
               );
@@ -695,7 +818,8 @@ class _BdQuizState extends State<BdQuiz> {
           enabled: enabled,
           error: question.error != null,
           placeholder: field.placeholder,
-          keyboard: const TextInputType.numberWithOptions(decimal: true, signed: true),
+          keyboard: const TextInputType.numberWithOptions(
+              decimal: true, signed: true),
           onSubmitted: submit,
           onChanged: (raw) {
             final trimmed = raw.trim();
@@ -743,7 +867,8 @@ class _BdQuizState extends State<BdQuiz> {
                       CupertinoActionSheetAction(
                         isDefaultAction: option == current,
                         onPressed: () {
-                          controller.setAnswer(question.field.id, BdStr(option));
+                          controller.setAnswer(
+                              question.field.id, BdStr(option));
                           Navigator.of(sheet).pop();
                         },
                         child: Text(option),
@@ -751,7 +876,8 @@ class _BdQuizState extends State<BdQuiz> {
                   ],
                   cancelButton: CupertinoActionSheetAction(
                     onPressed: () => Navigator.of(sheet).pop(),
-                    child: Text(MaterialLocalizations.of(context).cancelButtonLabel),
+                    child: Text(
+                        MaterialLocalizations.of(context).cancelButtonLabel),
                   ),
                 ),
               ),
@@ -761,7 +887,8 @@ class _BdQuizState extends State<BdQuiz> {
           decoration: BoxDecoration(
             color: look.fill,
             borderRadius: BorderRadius.circular(widget.style.cornerRadius),
-            border: question.error == null ? null : Border.all(color: look.error),
+            border:
+                question.error == null ? null : Border.all(color: look.error),
           ),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -769,11 +896,15 @@ class _BdQuizState extends State<BdQuiz> {
               children: [
                 Expanded(
                   child: Text(
-                    current.isEmpty ? (question.field.placeholder ?? '—') : current,
-                    style: TextStyle(color: current.isEmpty ? look.muted : look.onSurface),
+                    current.isEmpty
+                        ? (question.field.placeholder ?? '—')
+                        : current,
+                    style: TextStyle(
+                        color: current.isEmpty ? look.muted : look.onSurface),
                   ),
                 ),
-                Icon(CupertinoIcons.chevron_up_chevron_down, size: 16, color: look.muted),
+                Icon(CupertinoIcons.chevron_up_chevron_down,
+                    size: 16, color: look.muted),
               ],
             ),
           ),
@@ -788,9 +919,16 @@ class _BdQuizState extends State<BdQuiz> {
             children: [
               Column(
                 children: _spaced(6, [
-                  Text(done.eyebrow.toUpperCase(), style: look.text.labelMedium?.copyWith(color: look.primary, letterSpacing: 0.8)),
-                  Text(done.score, style: look.text.displayMedium?.copyWith(fontWeight: FontWeight.bold, color: look.onSurface)),
-                  if (done.tally case final tally?) Text(tally, style: look.text.titleSmall?.copyWith(color: look.muted)),
+                  Text(done.eyebrow.toUpperCase(),
+                      style: look.text.labelMedium
+                          ?.copyWith(color: look.primary, letterSpacing: 0.8)),
+                  Text(done.score,
+                      style: look.text.displayMedium?.copyWith(
+                          fontWeight: FontWeight.bold, color: look.onSurface)),
+                  if (done.tally case final tally?)
+                    Text(tally,
+                        style:
+                            look.text.titleSmall?.copyWith(color: look.muted)),
                   Text(
                     done.summary,
                     textAlign: TextAlign.center,
@@ -802,31 +940,60 @@ class _BdQuizState extends State<BdQuiz> {
                       },
                     ),
                   ),
-                  if (done.message case final message?) Text(message, style: look.text.bodyMedium, textAlign: TextAlign.center),
-                  if (done.timing case final timing?) Text(timing, style: look.text.bodySmall?.copyWith(color: look.muted)),
+                  if (done.message case final message?)
+                    Text(message,
+                        style: look.text.bodyMedium,
+                        textAlign: TextAlign.center),
+                  if (done.timing case final timing?)
+                    Text(timing,
+                        style:
+                            look.text.bodySmall?.copyWith(color: look.muted)),
                 ]),
               ),
               const SizedBox(height: 16),
-              for (final item in done.items) _BdQuizResultRow(key: ValueKey('${item.number}|${item.label}'), look: look, item: item),
+              for (final item in done.items)
+                _BdQuizResultRow(
+                    key: ValueKey('${item.number}|${item.label}'),
+                    look: look,
+                    item: item),
             ],
           ),
-        BdQuizSubmitted() => _endCard(look, look.icon(Icons.check_circle, CupertinoIcons.checkmark_circle_fill), done.eyebrow, done.title, done.body),
-        BdQuizResultsLocked() => _endCard(look, look.icon(Icons.lock, CupertinoIcons.lock_fill), done.eyebrow, done.title, done.body),
+        BdQuizSubmitted() => _endCard(
+            look,
+            look.icon(Icons.check_circle, CupertinoIcons.checkmark_circle_fill),
+            done.eyebrow,
+            done.title,
+            done.body),
+        BdQuizResultsLocked() => _endCard(
+            look,
+            look.icon(Icons.lock, CupertinoIcons.lock_fill),
+            done.eyebrow,
+            done.title,
+            done.body),
       };
 
-  Widget _endCard(_Look look, IconData icon, String eyebrow, String title, String body) => Padding(
+  Widget _endCard(_Look look, IconData icon, String eyebrow, String title,
+          String body) =>
+      Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: Column(
           children: _spaced(10, [
             look.disc(Icon(icon, color: look.primary, size: 40), size: 72),
-            Text(eyebrow.toUpperCase(), style: look.text.labelMedium?.copyWith(color: look.primary, letterSpacing: 0.8)),
-            Text(title, style: look.text.headlineSmall, textAlign: TextAlign.center),
-            Text(body, style: look.text.bodyMedium?.copyWith(color: look.muted), textAlign: TextAlign.center),
+            Text(eyebrow.toUpperCase(),
+                style: look.text.labelMedium
+                    ?.copyWith(color: look.primary, letterSpacing: 0.8)),
+            Text(title,
+                style: look.text.headlineSmall, textAlign: TextAlign.center),
+            Text(body,
+                style: look.text.bodyMedium?.copyWith(color: look.muted),
+                textAlign: TextAlign.center),
           ]),
         ),
       );
 
-  Widget _actions(_Look look, BdQuizController controller, BdQuizScreen screen) => Row(
+  Widget _actions(
+          _Look look, BdQuizController controller, BdQuizScreen screen) =>
+      Row(
         children: _spaced(
           12,
           [
@@ -851,9 +1018,13 @@ class _BdQuizState extends State<BdQuiz> {
       );
 }
 
-List<Widget> _spaced(double gap, List<Widget> children, {bool horizontal = false}) => [
+List<Widget> _spaced(double gap, List<Widget> children,
+        {bool horizontal = false}) =>
+    [
       for (var i = 0; i < children.length; i++) ...[
-        if (i > 0) SizedBox(width: horizontal ? gap : null, height: horizontal ? null : gap),
+        if (i > 0)
+          SizedBox(
+              width: horizontal ? gap : null, height: horizontal ? null : gap),
         children[i],
       ],
     ];
@@ -873,15 +1044,29 @@ class _Look {
   bool get dark => Theme.of(context).brightness == Brightness.dark;
   Color get primary => scheme.primary;
   Color get onSurface => scheme.onSurface;
-  Color get error => style.errorColor ?? (cupertino ? CupertinoColors.systemRed.resolveFrom(context) : scheme.error);
-  Color get errorContainer => cupertino ? error.withValues(alpha: 0.14) : scheme.errorContainer;
+  Color get error =>
+      style.errorColor ??
+      (cupertino
+          ? CupertinoColors.systemRed.resolveFrom(context)
+          : scheme.error);
+  Color get errorContainer =>
+      cupertino ? error.withValues(alpha: 0.14) : scheme.errorContainer;
   Color get onErrorContainer => cupertino ? error : scheme.onErrorContainer;
-  Color get muted => cupertino ? CupertinoColors.secondaryLabel.resolveFrom(context) : scheme.onSurfaceVariant;
-  Color get outline => cupertino ? CupertinoColors.separator.resolveFrom(context) : scheme.outlineVariant;
-  Color get fill => cupertino ? CupertinoColors.tertiarySystemFill.resolveFrom(context) : scheme.surfaceContainerHighest;
-  Color get surface => cupertino ? CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context) : scheme.surfaceContainerLow;
+  Color get muted => cupertino
+      ? CupertinoColors.secondaryLabel.resolveFrom(context)
+      : scheme.onSurfaceVariant;
+  Color get outline => cupertino
+      ? CupertinoColors.separator.resolveFrom(context)
+      : scheme.outlineVariant;
+  Color get fill => cupertino
+      ? CupertinoColors.tertiarySystemFill.resolveFrom(context)
+      : scheme.surfaceContainerHighest;
+  Color get surface => cupertino
+      ? CupertinoColors.secondarySystemGroupedBackground.resolveFrom(context)
+      : scheme.surfaceContainerLow;
 
-  IconData icon(IconData material, IconData cupertinoIcon) => cupertino ? cupertinoIcon : material;
+  IconData icon(IconData material, IconData cupertinoIcon) =>
+      cupertino ? cupertinoIcon : material;
 
   Color tone(BdQuizTone tone) => switch (tone) {
         BdQuizTone.correct => cupertino
@@ -891,22 +1076,31 @@ class _Look {
             ? CupertinoColors.systemOrange.resolveFrom(context)
             : (dark ? const Color(0xFFFDD663) : const Color(0xFFB06000)),
         BdQuizTone.incorrect => error,
-        BdQuizTone.pending => cupertino ? CupertinoColors.systemIndigo.resolveFrom(context) : scheme.tertiary,
+        BdQuizTone.pending => cupertino
+            ? CupertinoColors.systemIndigo.resolveFrom(context)
+            : scheme.tertiary,
         BdQuizTone.unscored || BdQuizTone.unsure => muted,
       };
 
-  static Color on(Color color) => ThemeData.estimateBrightnessForColor(color) == Brightness.dark ? Colors.white : Colors.black;
+  static Color on(Color color) =>
+      ThemeData.estimateBrightnessForColor(color) == Brightness.dark
+          ? Colors.white
+          : Colors.black;
 
   Widget spinner({double size = 28, Color? color}) => cupertino
       ? CupertinoActivityIndicator(radius: size / 2.4, color: color)
-      : SizedBox.square(dimension: size, child: CircularProgressIndicator(strokeWidth: size < 20 ? 2 : 3, color: color));
+      : SizedBox.square(
+          dimension: size,
+          child: CircularProgressIndicator(
+              strokeWidth: size < 20 ? 2 : 3, color: color));
 
   Widget bar(double percent, Color color) {
     final value = (percent / 100).clamp(0.0, 1.0);
     if (!cupertino) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(2),
-        child: LinearProgressIndicator(value: value, color: color, backgroundColor: fill, minHeight: 4),
+        child: LinearProgressIndicator(
+            value: value, color: color, backgroundColor: fill, minHeight: 4),
       );
     }
     return ClipRRect(
@@ -933,34 +1127,51 @@ class _Look {
         width: size,
         height: size,
         alignment: Alignment.center,
-        decoration: BoxDecoration(shape: BoxShape.circle, color: primary.withValues(alpha: 0.14)),
+        decoration: BoxDecoration(
+            shape: BoxShape.circle, color: primary.withValues(alpha: 0.14)),
         child: child,
       );
 
   Widget card(Widget child) => DecoratedBox(
-        decoration: BoxDecoration(color: surface, borderRadius: BorderRadius.circular(style.cornerRadius)),
+        decoration: BoxDecoration(
+            color: surface,
+            borderRadius: BorderRadius.circular(style.cornerRadius)),
         child: Padding(padding: const EdgeInsets.all(20), child: child),
       );
 
-  Widget button(String label, VoidCallback? onPressed, {bool primary = true, bool busy = false}) {
+  Widget button(String label, VoidCallback? onPressed,
+      {bool primary = true, bool busy = false}) {
     final content = Row(
       mainAxisSize: MainAxisSize.min,
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (busy) ...[spinner(size: 16, color: cupertino ? null : muted), const SizedBox(width: 8)],
+        if (busy) ...[
+          spinner(size: 16, color: cupertino ? null : muted),
+          const SizedBox(width: 8)
+        ],
         Flexible(child: Text(label, overflow: TextOverflow.ellipsis)),
       ],
     );
     if (cupertino) {
       return primary
-          ? CupertinoButton.filled(onPressed: onPressed, borderRadius: BorderRadius.circular(style.cornerRadius), child: content)
+          ? CupertinoButton.filled(
+              onPressed: onPressed,
+              borderRadius: BorderRadius.circular(style.cornerRadius),
+              child: content)
           : CupertinoButton(onPressed: onPressed, child: content);
     }
-    final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(style.cornerRadius));
+    final shape = RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(style.cornerRadius));
     final padding = const EdgeInsets.symmetric(horizontal: 20, vertical: 14);
     return primary
-        ? FilledButton(onPressed: onPressed, style: FilledButton.styleFrom(shape: shape, padding: padding), child: content)
-        : OutlinedButton(onPressed: onPressed, style: OutlinedButton.styleFrom(shape: shape, padding: padding), child: content);
+        ? FilledButton(
+            onPressed: onPressed,
+            style: FilledButton.styleFrom(shape: shape, padding: padding),
+            child: content)
+        : OutlinedButton(
+            onPressed: onPressed,
+            style: OutlinedButton.styleFrom(shape: shape, padding: padding),
+            child: content);
   }
 
   Widget textBox({
@@ -976,7 +1187,8 @@ class _Look {
   }) {
     final multiline = maxLines > 1;
     final action = multiline ? TextInputAction.newline : TextInputAction.done;
-    final type = keyboard ?? (multiline ? TextInputType.multiline : TextInputType.text);
+    final type =
+        keyboard ?? (multiline ? TextInputType.multiline : TextInputType.text);
     if (cupertino) {
       // A locked answer: Cupertino's box has no disabled look of its own here.
       final box = CupertinoTextField(
@@ -1011,8 +1223,15 @@ class _Look {
       decoration: InputDecoration(
         hintText: placeholder,
         border: OutlineInputBorder(borderRadius: radius),
-        enabledBorder: error ? OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: this.error)) : null,
-        focusedBorder: error ? OutlineInputBorder(borderRadius: radius, borderSide: BorderSide(color: this.error, width: 2)) : null,
+        enabledBorder: error
+            ? OutlineInputBorder(
+                borderRadius: radius, borderSide: BorderSide(color: this.error))
+            : null,
+        focusedBorder: error
+            ? OutlineInputBorder(
+                borderRadius: radius,
+                borderSide: BorderSide(color: this.error, width: 2))
+            : null,
       ),
     );
   }
@@ -1048,7 +1267,9 @@ class _BdQuizChoiceRow extends StatelessWidget {
       BdQuizChoiceState.selected => look.primary,
       BdQuizChoiceState.idle || BdQuizChoiceState.dimmed => look.outline,
     };
-    final marked = state == BdQuizChoiceState.correct || state == BdQuizChoiceState.incorrect || state == BdQuizChoiceState.selected;
+    final marked = state == BdQuizChoiceState.correct ||
+        state == BdQuizChoiceState.incorrect ||
+        state == BdQuizChoiceState.selected;
     final radius = BorderRadius.circular(look.style.cornerRadius);
     final row = Padding(
       padding: const EdgeInsets.all(12),
@@ -1058,7 +1279,8 @@ class _BdQuizChoiceRow extends StatelessWidget {
             width: 28,
             height: 28,
             alignment: Alignment.center,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: marked ? accent : look.fill),
+            decoration: BoxDecoration(
+                shape: BoxShape.circle, color: marked ? accent : look.fill),
             child: Text(
               letter,
               style: look.text.labelLarge?.copyWith(
@@ -1070,7 +1292,8 @@ class _BdQuizChoiceRow extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(child: Text(label, style: look.text.bodyLarge)),
           if (state == BdQuizChoiceState.correct)
-            Icon(look.icon(Icons.check, CupertinoIcons.checkmark), color: accent)
+            Icon(look.icon(Icons.check, CupertinoIcons.checkmark),
+                color: accent)
           else if (state == BdQuizChoiceState.incorrect)
             Icon(look.icon(Icons.close, CupertinoIcons.xmark), color: accent),
         ],
@@ -1083,8 +1306,12 @@ class _BdQuizChoiceRow extends StatelessWidget {
         color: marked ? accent.withValues(alpha: 0.08) : null,
       ),
       child: look.cupertino
-          ? GestureDetector(behavior: HitTestBehavior.opaque, onTap: locked ? null : onTap, child: row)
-          : InkWell(borderRadius: radius, onTap: locked ? null : onTap, child: row),
+          ? GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: locked ? null : onTap,
+              child: row)
+          : InkWell(
+              borderRadius: radius, onTap: locked ? null : onTap, child: row),
     );
     return Semantics(
       checked: multiple ? selected : null,
@@ -1109,7 +1336,8 @@ class _BdQuizFeedbackCard extends StatelessWidget {
   Widget _labeled(String label, String text) => Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: look.text.labelMedium?.copyWith(color: look.muted)),
+          Text(label,
+              style: look.text.labelMedium?.copyWith(color: look.muted)),
           const SizedBox(height: 2),
           Text(text, style: look.text.bodyMedium),
         ],
@@ -1135,25 +1363,38 @@ class _BdQuizFeedbackCard extends StatelessWidget {
               Row(
                 children: [
                   DecoratedBox(
-                    decoration: ShapeDecoration(shape: const StadiumBorder(), color: color.withValues(alpha: 0.14)),
+                    decoration: ShapeDecoration(
+                        shape: const StadiumBorder(),
+                        color: color.withValues(alpha: 0.14)),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                      child: Text(feedback.badge.label, style: look.text.labelLarge?.copyWith(color: color, fontWeight: FontWeight.w600)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      child: Text(feedback.badge.label,
+                          style: look.text.labelLarge?.copyWith(
+                              color: color, fontWeight: FontWeight.w600)),
                     ),
                   ),
                   if (feedback.accuracy case final accuracy?) ...[
                     const SizedBox(width: 10),
-                    Text(accuracy, style: look.text.labelMedium?.copyWith(color: look.muted)),
+                    Text(accuracy,
+                        style:
+                            look.text.labelMedium?.copyWith(color: look.muted)),
                   ],
                 ],
               ),
               _labeled(feedback.answerLabel, feedback.answer),
-              if (feedback.accepted case final accepted?) _labeled(feedback.acceptedLabel, accepted),
-              if (feedback.why case final why?) _labeled(feedback.whyLabel, why),
-              for (final note in feedback.selected) _labeled(note.option, note.explanation),
+              if (feedback.accepted case final accepted?)
+                _labeled(feedback.acceptedLabel, accepted),
+              if (feedback.why case final why?)
+                _labeled(feedback.whyLabel, why),
+              for (final note in feedback.selected)
+                _labeled(note.option, note.explanation),
               if (feedback.others case final others?) ...[
-                Padding(padding: const EdgeInsets.only(top: 4), child: Text(others.label, style: look.text.labelLarge)),
-                for (final note in others.items) _labeled(note.option, note.explanation),
+                Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(others.label, style: look.text.labelLarge)),
+                for (final note in others.items)
+                  _labeled(note.option, note.explanation),
               ],
             ]),
           ),
@@ -1187,14 +1428,23 @@ class _BdQuizResultRowState extends State<_BdQuizResultRow> {
       padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
       child: Row(
         children: [
-          Container(width: 10, height: 10, decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
+          Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(shape: BoxShape.circle, color: color)),
           const SizedBox(width: 10),
-          Expanded(child: Text('${item.number}. ${item.label}', style: look.text.bodyLarge)),
+          Expanded(
+              child: Text('${item.number}. ${item.label}',
+                  style: look.text.bodyLarge)),
           const SizedBox(width: 8),
-          Text(item.feedback.badge.label, style: look.text.labelMedium?.copyWith(color: color)),
+          Text(item.feedback.badge.label,
+              style: look.text.labelMedium?.copyWith(color: color)),
           const SizedBox(width: 4),
           Icon(
-            _open ? look.icon(Icons.keyboard_arrow_up, CupertinoIcons.chevron_up) : look.icon(Icons.keyboard_arrow_down, CupertinoIcons.chevron_down),
+            _open
+                ? look.icon(Icons.keyboard_arrow_up, CupertinoIcons.chevron_up)
+                : look.icon(
+                    Icons.keyboard_arrow_down, CupertinoIcons.chevron_down),
             size: 20,
             color: look.muted,
           ),
@@ -1209,14 +1459,23 @@ class _BdQuizResultRowState extends State<_BdQuizResultRow> {
           button: true,
           expanded: _open,
           child: look.cupertino
-              ? GestureDetector(behavior: HitTestBehavior.opaque, onTap: toggle, child: row)
-              : Material(type: MaterialType.transparency, child: InkWell(borderRadius: radius, onTap: toggle, child: row)),
+              ? GestureDetector(
+                  behavior: HitTestBehavior.opaque, onTap: toggle, child: row)
+              : Material(
+                  type: MaterialType.transparency,
+                  child:
+                      InkWell(borderRadius: radius, onTap: toggle, child: row)),
         ),
         AnimatedSize(
-          duration: look.style.animated ? const Duration(milliseconds: 200) : Duration.zero,
+          duration: look.style.animated
+              ? const Duration(milliseconds: 200)
+              : Duration.zero,
           alignment: Alignment.topCenter,
           child: _open
-              ? Padding(padding: const EdgeInsets.only(bottom: 8), child: _BdQuizFeedbackCard(look: look, feedback: item.feedback))
+              ? Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child:
+                      _BdQuizFeedbackCard(look: look, feedback: item.feedback))
               : const SizedBox(width: double.infinity),
         ),
       ],

@@ -56,7 +56,11 @@ defmodule BdStarter.Shop do
         product["variantImages"]
         |> records()
         |> Enum.map(
-          &%{variant_id: text(&1["variantId"]), url: text(&1["url"]), order: num(&1["order"]) || 0}
+          &%{
+            variant_id: text(&1["variantId"]),
+            url: text(&1["url"]),
+            order: num(&1["order"]) || 0
+          }
         )
         |> Enum.filter(&(&1.url != "")),
       option_titles:
@@ -84,7 +88,8 @@ defmodule BdStarter.Shop do
   end
 
   @doc "The variant a page opens on: the first one that can be bought."
-  def default_variant(view), do: Enum.find(view.variants, & &1.available) || List.first(view.variants)
+  def default_variant(view),
+    do: Enum.find(view.variants, & &1.available) || List.first(view.variants)
 
   @doc "The photos for a variant: its own when it has any, else the product's."
   def gallery_for(view, variant_id) do
@@ -139,7 +144,9 @@ defmodule BdStarter.Shop do
   def price_for(view, variant_id, chosen \\ %{}) do
     variant = Enum.find(view.variants, &(&1.id == variant_id))
     groups = if variant && variant.available, do: option_groups_for(view, variant_id), else: []
-    picks = Enum.map(groups, fn group -> Enum.find(group.values, &(&1.id == chosen[group.id])) end)
+
+    picks =
+      Enum.map(groups, fn group -> Enum.find(group.values, &(&1.id == chosen[group.id])) end)
 
     cond do
       !(variant && variant.available) ->

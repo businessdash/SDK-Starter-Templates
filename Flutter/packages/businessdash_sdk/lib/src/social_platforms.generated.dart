@@ -12,12 +12,14 @@ class SocialPlatform {
 /// Canonical order — the order links should render in.
 const List<SocialPlatform> kSocialPlatforms = <SocialPlatform>[
   SocialPlatform('meta', 'Facebook', 'facebook', 'https://facebook.com/'),
-  SocialPlatform('instagram', 'Instagram', 'instagram', 'https://instagram.com/'),
+  SocialPlatform(
+      'instagram', 'Instagram', 'instagram', 'https://instagram.com/'),
   SocialPlatform('twitterX', 'X', 'x', 'https://x.com/'),
   SocialPlatform('tikTok', 'TikTok', 'tiktok', 'https://tiktok.com/@'),
   SocialPlatform('youTube', 'YouTube', 'youtube', 'https://youtube.com/'),
   SocialPlatform('linkedIn', 'LinkedIn', 'linkedin', 'https://linkedin.com/'),
-  SocialPlatform('pinterest', 'Pinterest', 'pinterest', 'https://pinterest.com/'),
+  SocialPlatform(
+      'pinterest', 'Pinterest', 'pinterest', 'https://pinterest.com/'),
   SocialPlatform('threads', 'Threads', 'threads', 'https://threads.net/@'),
   SocialPlatform('bluesky', 'Bluesky', 'bluesky', null),
   SocialPlatform('mastodon', 'Mastodon', 'mastodon', null),

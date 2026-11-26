@@ -2,7 +2,10 @@
 import { $, component$, useSignal } from "@builder.io/qwik";
 import { useLocation, useNavigate } from "@builder.io/qwik-city";
 
-import type { StorefrontCategory, StorefrontSort } from "@businessdash/sdk/contracts";
+import type {
+	StorefrontCategory,
+	StorefrontSort,
+} from "@businessdash/sdk/contracts";
 
 import { ShopStars } from "../ShopStars";
 
@@ -14,7 +17,13 @@ import { ShopStars } from "../ShopStars";
  * products for it.
  */
 
-export const SORT_VALUES: readonly StorefrontSort[] = ["featured", "newest", "price-asc", "price-desc", "rating-desc"];
+export const SORT_VALUES: readonly StorefrontSort[] = [
+	"featured",
+	"newest",
+	"price-asc",
+	"price-desc",
+	"rating-desc",
+];
 
 export const SORT_LABELS: Record<StorefrontSort, string> = {
 	featured: "Featured",
@@ -33,7 +42,16 @@ export function useStoreFilters() {
 	const sort = (params.get("sort") as StorefrontSort | null) ?? "featured";
 	const price = params.get("price") ?? "";
 	const [min = "", max = ""] = price.split("-");
-	return { search, category, rating, sort, price, min, max, active: Boolean(search || category || rating || price) };
+	return {
+		search,
+		category,
+		rating,
+		sort,
+		price,
+		min,
+		max,
+		active: Boolean(search || category || rating || price),
+	};
 }
 
 /** Sets one filter in the URL (dropped when empty) and opens it. */
@@ -113,7 +131,9 @@ export const CategoryFilter = component$<{
 								type="button"
 							>
 								<span>{c.name}</span>
-								<span class="store-facet__count">{countByCategory.get(c.id) ?? 0}</span>
+								<span class="store-facet__count">
+									{countByCategory.get(c.id) ?? 0}
+								</span>
 							</button>
 						</li>
 					);
@@ -124,7 +144,9 @@ export const CategoryFilter = component$<{
 });
 
 /** Lowest and highest price, with Apply. `range` is what the store's products cost. */
-export const PriceFilter = component$<{ range: { minDollars: number; maxDollars: number } }>(({ range }) => {
+export const PriceFilter = component$<{
+	range: { minDollars: number; maxDollars: number };
+}>(({ range }) => {
 	const { min, max } = useStoreFilters();
 	const setFilter = useSetFilter();
 	const minPrice = useSignal(min);
@@ -196,16 +218,18 @@ export const RatingFilter = component$(() => {
 });
 
 /** Clear all filters, while any is set. */
-export const ClearFilters = component$<{ storeHref?: string }>(({ storeHref = "/store" }) => {
-	const { active } = useStoreFilters();
-	const nav = useNavigate();
-	if (!active) return null;
-	return (
-		<button class="store-clear" onClick$={() => nav(storeHref)} type="button">
-			Clear all filters
-		</button>
-	);
-});
+export const ClearFilters = component$<{ storeHref?: string }>(
+	({ storeHref = "/store" }) => {
+		const { active } = useStoreFilters();
+		const nav = useNavigate();
+		if (!active) return null;
+		return (
+			<button class="store-clear" onClick$={() => nav(storeHref)} type="button">
+				Clear all filters
+			</button>
+		);
+	},
+);
 
 /** Featured, Newest, Price either way, Top rated. */
 export const SortSelect = component$(() => {

@@ -1,4 +1,4 @@
-import { localBusiness, renderJsonLdToHtml, website } from "@businessdash/sdk/seo";
+import { localBusiness, website } from "@businessdash/sdk/seo";
 
 import { getSectionData, type MarketingBundle } from "./bd-bundle.server";
 
@@ -6,10 +6,9 @@ import { getSectionData, type MarketingBundle } from "./bd-bundle.server";
  * Server-rendered JSON-LD (server-only).
  *
  * Builds `localBusiness` + `website` nodes from the marketing bundle's
- * company/brand data (falling back to starter defaults) and serializes them
- * to a `<script type="application/ld+json">` HTML string. The home route
- * injects this string via `dangerouslySetInnerHTML` so crawlers see the
- * structured data on first render.
+ * company/brand data (falling back to starter defaults) and serializes each
+ * to JSON for its own `<script type="application/ld+json">`, which the home
+ * route renders so crawlers see the structured data on first render.
  */
 
 const SITE_URL = process.env["BD_SITE_URL"] ?? "https://example.com";
@@ -22,8 +21,13 @@ const DEFAULTS = {
 	email: "",
 };
 
-/** Build the JSON-LD HTML string for the home page from the bundle. */
-export function buildHomeJsonLd(bundle: MarketingBundle | null): string {
+/**
+ * The home page's JSON-LD, one JSON string per node. Each is the body of a
+ * script tag, not the tag itself: React renders the tag, and a whole
+ * `<script>` inside another would end it early. `<` is escaped so a
+ * value can't close the tag either.
+ */
+export function buildHomeJsonLd(bundle: MarketingBundle | null): string[] {
 	const company = getSectionData(bundle, "companyInfo");
 	const brand = getSectionData(bundle, "brand");
 
@@ -46,7 +50,7 @@ export function buildHomeJsonLd(bundle: MarketingBundle | null): string {
 		website({ siteUrl: SITE_URL, name, description }),
 	];
 
-	return renderJsonLdToHtml(nodes);
+	return nodes.map((node) => JSON.stringify(node).replace(/</g, "\\u003c"));
 }
 
 function pickString(v: unknown): string | undefined {

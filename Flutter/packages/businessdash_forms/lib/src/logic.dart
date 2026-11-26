@@ -69,7 +69,8 @@ const _named = {
   'bull': '•',
 };
 
-String? _codePoint(int? cp) => cp == null || cp < 0 || cp > 0x10FFFF ? null : String.fromCharCode(cp);
+String? _codePoint(int? cp) =>
+    cp == null || cp < 0 || cp > 0x10FFFF ? null : String.fromCharCode(cp);
 
 final _hexEntity = RegExp(r'^#[xX][0-9a-fA-F]+$');
 final _decEntity = RegExp(r'^#\d+$');
@@ -104,8 +105,11 @@ String decodeEntities(String s) {
   return out.toString();
 }
 
-String escapeHtml(String s) =>
-    s.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+String escapeHtml(String s) => s
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
 
 final _scheme = RegExp(r'^([a-z][a-z0-9+.-]*):', caseSensitive: false);
 
@@ -115,7 +119,12 @@ String? safeLink(String? raw) {
   final m = _scheme.firstMatch(s);
   if (m == null) return null;
   final scheme = m[1]!.toLowerCase();
-  return scheme == 'http' || scheme == 'https' || scheme == 'mailto' || scheme == 'tel' ? s : null;
+  return scheme == 'http' ||
+          scheme == 'https' ||
+          scheme == 'mailto' ||
+          scheme == 'tel'
+      ? s
+      : null;
 }
 
 final _httpUrl = RegExp(r'^https?:\/\/[^\s]+$', caseSensitive: false);
@@ -127,7 +136,9 @@ String? safeHttpUrl(String? raw) {
 }
 
 String? _attribute(String name, String tag) {
-  final m = RegExp('$name\\s*=\\s*("([^"]*)"|\'([^\']*)\'|([^\\s>]+))', caseSensitive: false).firstMatch(tag);
+  final m = RegExp('$name\\s*=\\s*("([^"]*)"|\'([^\']*)\'|([^\\s>]+))',
+          caseSensitive: false)
+      .firstMatch(tag);
   if (m == null) return null;
   final v = m[2] ?? m[3] ?? m[4];
   return v == null ? null : decodeEntities(v);
@@ -386,7 +397,9 @@ String htmlToMarkup(String html) {
         final tag = html.substring(i + 1, close);
         i = close + 1;
         final isEnd = tag.startsWith('/');
-        final name = (_tagName.firstMatch(isEnd ? tag.substring(1) : tag)?[0] ?? '').toLowerCase();
+        final name =
+            (_tagName.firstMatch(isEnd ? tag.substring(1) : tag)?[0] ?? '')
+                .toLowerCase();
         switch (name) {
           case 'strong' || 'b':
             out.write('**');
@@ -396,7 +409,16 @@ String htmlToMarkup(String html) {
             out.write('~~');
           case 'br':
             out.write('\n');
-          case 'p' || 'div' || 'pre' || 'blockquote' || 'h1' || 'h2' || 'h3' || 'h4' || 'h5' || 'h6':
+          case 'p' ||
+                'div' ||
+                'pre' ||
+                'blockquote' ||
+                'h1' ||
+                'h2' ||
+                'h3' ||
+                'h4' ||
+                'h5' ||
+                'h6':
             lineBreak();
           case 'ul' || 'ol':
             lineBreak();
@@ -423,7 +445,9 @@ String htmlToMarkup(String html) {
     var next = html.indexOf('<', html[i] == '<' ? i + 1 : i);
     if (next < 0) next = html.length;
     var text = decodeEntities(html.substring(i, next)).replaceAll(_spaces, ' ');
-    if (out.isEmpty || out.toString().endsWith('\n')) text = text.replaceFirst(_leadingSpaces, '');
+    if (out.isEmpty || out.toString().endsWith('\n')) {
+      text = text.replaceFirst(_leadingSpaces, '');
+    }
     out.write(text);
     i = next;
   }
@@ -476,22 +500,38 @@ BdTextState wrapSelection(BdTextState v, String marker) {
     final after = _runOf(text, s, c, true);
     // Pressed again before typing anything: take the empty pair back out.
     if (before == m && after == m) {
-      return (text: text.substring(0, s - m) + text.substring(s + m), start: s - m, end: s - m);
+      return (
+        text: text.substring(0, s - m) + text.substring(s + m),
+        start: s - m,
+        end: s - m
+      );
     }
     // Pressed again at the end of a formatted run: step past the closing
     // marker, so what's typed next is plain.
-    if (after == m && _openBefore(text, s, c, m)) return (text: text, start: s + m, end: s + m);
-    return (text: text.substring(0, s) + marker + marker + text.substring(s), start: s + m, end: s + m);
+    if (after == m && _openBefore(text, s, c, m)) {
+      return (text: text, start: s + m, end: s + m);
+    }
+    return (
+      text: text.substring(0, s) + marker + marker + text.substring(s),
+      start: s + m,
+      end: s + m
+    );
   }
   if (s >= m && text.startsWith(marker, s - m) && text.startsWith(marker, e)) {
     return (
-      text: text.substring(0, s - m) + text.substring(s, e) + text.substring(e + m),
+      text: text.substring(0, s - m) +
+          text.substring(s, e) +
+          text.substring(e + m),
       start: s - m,
       end: e - m,
     );
   }
   return (
-    text: text.substring(0, s) + marker + text.substring(s, e) + marker + text.substring(e),
+    text: text.substring(0, s) +
+        marker +
+        text.substring(s, e) +
+        marker +
+        text.substring(e),
     start: s + m,
     end: e + m,
   );
@@ -512,7 +552,11 @@ BdTextState toggleListLine(BdTextState v, bool ordered) {
     text = text.substring(0, start) + text.substring(start + existing);
     shift -= existing;
     if ((numberLen > 0) == ordered) {
-      return (text: text, start: math.max(v.start + shift, start), end: math.max(v.end + shift, start));
+      return (
+        text: text,
+        start: math.max(v.start + shift, start),
+        end: math.max(v.end + shift, start)
+      );
     }
   }
   var marker = '• ';
@@ -521,7 +565,8 @@ BdTextState toggleListLine(BdTextState v, bool ordered) {
     var n = 1;
     if (start > 0) {
       final prevEnd = start - 1;
-      final prevStart = prevEnd == 0 ? 0 : text.lastIndexOf('\n', prevEnd - 1) + 1;
+      final prevStart =
+          prevEnd == 0 ? 0 : text.lastIndexOf('\n', prevEnd - 1) + 1;
       final prev = _numbered.firstMatch(text.substring(prevStart, prevEnd));
       if (prev != null) n = int.parse(prev[1]!) + 1;
     }
@@ -530,7 +575,11 @@ BdTextState toggleListLine(BdTextState v, bool ordered) {
   text = text.substring(0, start) + marker + text.substring(start);
   shift += marker.length;
   final floor = start + marker.length;
-  return (text: text, start: math.max(v.start + shift, floor), end: math.max(v.end + shift, floor));
+  return (
+    text: text,
+    start: math.max(v.start + shift, floor),
+    end: math.max(v.end + shift, floor)
+  );
 }
 
 // ── Numbers typed as text ────────────────────────────────────────────────
@@ -553,7 +602,9 @@ String sanitizeNumber(String s, bool allowDecimal, bool allowNegative) {
     }
   }
   final start = out.startsWith('-') ? 1 : 0;
-  while (out.length > start + 1 && out[start] == '0' && _digit.hasMatch(out[start + 1])) {
+  while (out.length > start + 1 &&
+      out[start] == '0' &&
+      _digit.hasMatch(out[start + 1])) {
     out = out.substring(0, start) + out.substring(start + 1);
   }
   return out;
@@ -561,7 +612,11 @@ String sanitizeNumber(String s, bool allowDecimal, bool allowNegative) {
 
 double? parseNumber(String s) {
   if (s == '' || s == '-' || s == '.' || s == '-.') return null;
-  final text = s.endsWith('.') ? '${s}0' : (s.startsWith('.') || s.startsWith('-.') ? s.replaceFirst('.', '0.') : s);
+  final text = s.endsWith('.')
+      ? '${s}0'
+      : (s.startsWith('.') || s.startsWith('-.')
+          ? s.replaceFirst('.', '0.')
+          : s);
   final n = double.tryParse(text);
   return n != null && n.isFinite ? n : null;
 }
@@ -581,7 +636,8 @@ String formatPhone(String input, bool international) {
   if (international) {
     final plus = input.trimLeft().startsWith('+') ? '+' : '';
     final d = digits.length > 15 ? digits.substring(0, 15) : digits;
-    return '$plus${d.replaceAllMapped(RegExp(r'(\d{3})(?=\d)'), (m) => '${m[1]} ')}'.trim();
+    return '$plus${d.replaceAllMapped(RegExp(r'(\d{3})(?=\d)'), (m) => '${m[1]} ')}'
+        .trim();
   }
   final d = digits;
   if (d.length <= 3) return d;
@@ -592,8 +648,12 @@ String formatPhone(String input, bool international) {
 /// A table cell in a `check` column: ✓, –, or its own text.
 String tableCheckState(String cell) {
   final v = cell.trim().toLowerCase();
-  if (const ['yes', 'y', 'true', '1', 'x', '✓', '✔', 'check'].contains(v)) return 'yes';
-  if (const ['no', 'n', 'false', '0', '-', '–', '—', ''].contains(v)) return 'no';
+  if (const ['yes', 'y', 'true', '1', 'x', '✓', '✔', 'check'].contains(v)) {
+    return 'yes';
+  }
+  if (const ['no', 'n', 'false', '0', '-', '–', '—', ''].contains(v)) {
+    return 'no';
+  }
   return 'text';
 }
 
@@ -620,10 +680,14 @@ String contrastingText(String? hex) {
   final v = int.parse(n.substring(1), radix: 16);
   double lin(int c) {
     final s = c / 255;
-    return s <= 0.03928 ? s / 12.92 : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
+    return s <= 0.03928
+        ? s / 12.92
+        : math.pow((s + 0.055) / 1.055, 2.4).toDouble();
   }
 
-  final l = 0.2126 * lin((v >> 16) & 255) + 0.7152 * lin((v >> 8) & 255) + 0.0722 * lin(v & 255);
+  final l = 0.2126 * lin((v >> 16) & 255) +
+      0.7152 * lin((v >> 8) & 255) +
+      0.0722 * lin(v & 255);
   return l > 0.45 ? '#000000' : '#FFFFFF';
 }
 
@@ -650,7 +714,8 @@ String formatDay(BdDay day) =>
 
 int daysInMonth(int y, int m) => DateTime.utc(y, m + 1, 0).day;
 
-int compareDays(BdDay a, BdDay b) => a.y != b.y ? a.y - b.y : (a.m != b.m ? a.m - b.m : a.d - b.d);
+int compareDays(BdDay a, BdDay b) =>
+    a.y != b.y ? a.y - b.y : (a.m != b.m ? a.m - b.m : a.d - b.d);
 
 BdDay today() {
   final n = DateTime.now();
@@ -715,5 +780,9 @@ String? formatBytes(num? n) {
 }
 
 /// Toggle `item` in a list of strings.
-List<String> toggled(List<String> list, String item) =>
-    list.contains(item) ? [for (final x in list) if (x != item) x] : [...list, item];
+List<String> toggled(List<String> list, String item) => list.contains(item)
+    ? [
+        for (final x in list)
+          if (x != item) x
+      ]
+    : [...list, item];

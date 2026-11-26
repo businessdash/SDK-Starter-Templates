@@ -59,8 +59,7 @@ export default component$(() => {
 
 					{!data.value.configured ? (
 						<div class="bd-empty">
-							Updates aren't connected yet. Set the BD env vars to pull them
-							in.
+							Updates aren't connected yet. Set the BD env vars to pull them in.
 						</div>
 					) : data.value.items.length === 0 ? (
 						<div class="bd-empty">No updates posted yet.</div>
@@ -70,6 +69,8 @@ export default component$(() => {
 								<article class="bd-card" style="padding: 1.5rem;" key={u.id}>
 									{u.imageUrl ? (
 										<img
+											width={1600}
+											height={900}
 											alt={u.title ?? "Update"}
 											src={u.imageUrl}
 											style="border-radius: 0.75rem; margin-bottom: 1rem; aspect-ratio: 16/9; object-fit: cover;"

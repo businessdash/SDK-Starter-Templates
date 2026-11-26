@@ -17,9 +17,7 @@ use App\Bd\Client;
  */
 class Forms
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /** @return array<string, mixed> */
     public function schema(string $slug): array

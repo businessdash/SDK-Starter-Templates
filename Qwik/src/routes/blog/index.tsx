@@ -34,12 +34,21 @@ export const useBlogIndex = routeLoader$(async ({ cookie, query }) => {
 		categories: [] as BlogCategory[],
 		tags: [] as string[],
 	};
-	const filters = { categoryId, tag, paged: cursor !== null, signedIn: !!session };
+	const filters = {
+		categoryId,
+		tag,
+		paged: cursor !== null,
+		signedIn: !!session,
+	};
 	if (!bd) return { ...empty, ...filters };
 
 	const [page, categories, tags] = await Promise.all([
 		bd.blog
-			.listPosts({ limit: tag ? 50 : PAGE, cursor, categoryId: categoryId || undefined })
+			.listPosts({
+				limit: tag ? 50 : PAGE,
+				cursor,
+				categoryId: categoryId || undefined,
+			})
 			.catch(() => ({ items: [] as BlogPublicPost[], nextCursor: null })),
 		bd.blog
 			.listCategories()
@@ -52,7 +61,10 @@ export const useBlogIndex = routeLoader$(async ({ cookie, query }) => {
 	]);
 	const posts = page.items.filter((post) => !tag || post.tags.includes(tag));
 	return {
-		posts: cursor === null ? [...posts].sort((a, b) => Number(b.isPinned) - Number(a.isPinned)) : posts,
+		posts:
+			cursor === null
+				? [...posts].sort((a, b) => Number(b.isPinned) - Number(a.isPinned))
+				: posts,
 		nextCursor: tag ? null : page.nextCursor,
 		categories,
 		tags,
@@ -62,7 +74,8 @@ export const useBlogIndex = routeLoader$(async ({ cookie, query }) => {
 
 export default component$(() => {
 	const data = useBlogIndex();
-	const { posts, categories, tags, categoryId, tag, paged, nextCursor } = data.value;
+	const { posts, categories, tags, categoryId, tag, paged, nextCursor } =
+		data.value;
 	const activeCategory = categories.find((c) => c.id === categoryId);
 	const olderHref = (() => {
 		if (nextCursor === null) return null;
@@ -78,11 +91,20 @@ export default component$(() => {
 			<main class="bd-page">
 				<div class="bd-section__lead">
 					<span class="bd-section__eyebrow">Blog</span>
-					<h1 class="bd-section__title">{activeCategory?.name ?? "From the blog"}</h1>
-					{activeCategory?.description ? <p class="bd-section__sub">{activeCategory.description}</p> : null}
+					<h1 class="bd-section__title">
+						{activeCategory?.name ?? "From the blog"}
+					</h1>
+					{activeCategory?.description ? (
+						<p class="bd-section__sub">{activeCategory.description}</p>
+					) : null}
 				</div>
 
-				<BlogFilters categories={categories} category={categoryId} tag={tag} tags={tags} />
+				<BlogFilters
+					categories={categories}
+					category={categoryId}
+					tag={tag}
+					tags={tags}
+				/>
 
 				{posts.length === 0 ? (
 					<div class="bd-empty">
@@ -117,6 +139,11 @@ export const head: DocumentHead = ({ resolveValue }) => {
 	const active = data.categories.find((c) => c.id === data.categoryId);
 	return {
 		title: active ? `${active.name} · Blog` : "Blog — Your Business",
-		meta: [{ name: "description", content: "News, guides and stories from the team." }],
+		meta: [
+			{
+				name: "description",
+				content: "News, guides and stories from the team.",
+			},
+		],
 	};
 };

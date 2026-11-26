@@ -91,10 +91,9 @@ export function isSuspensionError(err: unknown): boolean {
  * public-safe values — never the bearer key (the bearer key never
  * leaves this server module).
  *
- * The analytics-core init treats `apiKey` as the public-read key,
- * which is the same as the SDK bearer key for BD. If you want a
- * separate analytics-only key, mint one in BD dashboard → API
- * keys and set it as `BD_PUBLIC_KEY` here.
+ * The key is a browser-safe one: `BD_PUBLIC_KEY` when set, else the
+ * publishable token (`VITE_BD_PK`, `pk_…`). It is never BD_API_KEY,
+ * the secret bearer key. No public key: analytics stays off.
  */
 export function getAnalyticsConfig(): {
 	siteId: string;
@@ -102,7 +101,7 @@ export function getAnalyticsConfig(): {
 	apiKey: string;
 } | null {
 	if (!siteId || !rawBaseUrl) return null;
-	const publicKey = process.env["BD_PUBLIC_KEY"] ?? apiKey;
+	const publicKey = process.env["BD_PUBLIC_KEY"] || process.env["VITE_BD_PK"];
 	if (!publicKey) return null;
 	return {
 		siteId,

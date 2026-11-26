@@ -15,7 +15,7 @@
         </div>
         <ul class="reviews-bars">
             @foreach ($summary['histogram'] as $row)
-                <li aria-label="{{ $row['stars'] }} stars: {{ $row['count'] }}">
+                <li aria-label="{{ $row['stars'] }} {{ $row['stars'] === 1 ? 'star' : 'stars' }}: {{ $row['count'] }}">
                     <span>{{ $row['stars'] }} ★</span>
                     <span class="reviews-bars__track"><span class="reviews-bars__fill" style="width: {{ round($row['share'] * 100) }}%"></span></span>
                     <span>{{ $row['count'] }}</span>

@@ -27,7 +27,7 @@ const { data } = await useFetch<HomeData>("/api/bd/home");
 
 // JSON-LD (LocalBusiness + WebSite) built server-side from the SDK's SEO
 // builders and injected into the head, so crawlers see structured data.
-const { data: jsonld } = await useFetch<{ html: string }>("/api/bd/jsonld");
+const { data: jsonld } = await useFetch<{ nodes: string[] }>("/api/bd/jsonld");
 
 useHead({
 	title: "Your Business — built on BD",
@@ -38,9 +38,7 @@ useHead({
 				"Nuxt 4 starter showing how to consume the BD SDK from a server-only utility, with Nitro endpoints for interactive surfaces.",
 		},
 	],
-	script: jsonld.value?.html
-		? [{ type: "application/ld+json", innerHTML: jsonld.value.html }]
-		: [],
+	script: (jsonld.value?.nodes ?? []).map((json) => ({ type: "application/ld+json", innerHTML: json })),
 });
 </script>
 

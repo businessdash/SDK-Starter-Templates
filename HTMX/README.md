@@ -184,7 +184,7 @@ The Bun server injects the BD analytics config into the shell HTML right before 
 <script>window.__BD_ANALYTICS__={"siteId":"...","baseUrl":"...","apiKey":"..."};</script>
 ```
 
-A `<script type="module">` already in the shell reads that config and dynamically imports `@businessdash/sdk/analytics-core` from esm.sh — only when env is configured. DNT + GPC are honoured by the SDK; no cookies are set.
+The `apiKey` there is the publishable token (`BD_PK`), never the secret `BD_API_KEY`. A `<script type="module">` already in the shell reads that config and dynamically imports `@businessdash/sdk/analytics-core` from esm.sh — only when env is configured. DNT + GPC are honoured by the SDK; no cookies are set.
 
 For production you'd probably swap the esm.sh import for a self-hosted bundle, but for a starter, the CDN import keeps the build step at zero.
 
@@ -275,6 +275,7 @@ There is still no bundler: the server builds the custom elements with
 | Var | Required | Purpose |
 | --- | --- | --- |
 | `BD_API_KEY` / `BD_SITE_ID` / `BD_PACKAGE_API_BASE_URL` | for live data | Server-side SDK credentials |
+| `BD_PK` | for analytics | Publishable token (`pk_…`) for the page's analytics script; the only key the browser sees |
 | `BD_REVALIDATION_SECRET` | for webhook | HMAC secret verifying publish events |
 | `BD_AUTH_CALLBACK_URL` | for auth/portal | This server's `/api/bd-auth/callback` URL (register in WorkOS) |
 | `BD_CONTACT_FORM` | no | The form the home page's contact section shows. Defaults to `general-inquiry` |

@@ -17,8 +17,7 @@ class Checkout
         private readonly Client $client,
         private readonly ?string $visitorToken = null,
         private readonly ?string $sessionToken = null,
-    ) {
-    }
+    ) {}
 
     /**
      * @param  array<string, mixed>  $input  successUrl / cancelUrl / customerEmail …

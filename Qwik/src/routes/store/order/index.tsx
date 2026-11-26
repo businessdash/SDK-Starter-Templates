@@ -40,7 +40,10 @@ export default component$(() => {
 			<SiteHeader signedIn={data.value.signedIn} />
 			<main>
 				<section class="bd-section bd-section--narrow">
-					<div class="bd-card" style="padding: 2.5rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;">
+					<div
+						class="bd-card"
+						style="padding: 2.5rem; display: flex; flex-direction: column; gap: 1rem; align-items: flex-start;"
+					>
 						<span class="bd-badge">{paid ? "Paid" : "Order"}</span>
 						<h1 class="bd-section__title">
 							{paid ? "Thank you for your order!" : "Order received"}

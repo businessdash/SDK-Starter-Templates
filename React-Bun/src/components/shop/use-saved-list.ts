@@ -4,19 +4,14 @@ import type { SavedList, SavedProduct } from "./shop";
 
 /**
  * The items of a saved list (wishlist, compare, recently viewed), kept in
- * step with every change, in this tab or another. Empty until the page is in
- * the browser, since the lists live in localStorage.
+ * step with every change, in this tab or another. The lists live in
+ * localStorage, which this browser-only app can read from the start.
  */
 export function useSavedList(list: SavedList): {
 	items: SavedProduct[];
 	ready: boolean;
 } {
-	const [items, setItems] = useState<SavedProduct[]>([]);
-	const [ready, setReady] = useState(false);
-	useEffect(() => {
-		setItems(list.read());
-		setReady(true);
-		return list.subscribe(setItems);
-	}, [list]);
-	return { items, ready };
+	const [items, setItems] = useState<SavedProduct[]>(() => list.read());
+	useEffect(() => list.subscribe(setItems), [list]);
+	return { items, ready: true };
 }

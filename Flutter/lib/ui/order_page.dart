@@ -29,7 +29,9 @@ class _OrderPageState extends State<OrderPage> {
         ?.checkoutStatus(widget.sessionId)
         .then<CheckoutStatus?>((status) => status, onError: (Object _) => null)
         // A paid order empties the cart.
-        .whenComplete(() => client.cart(scope.visitorToken).then(app.noteCart, onError: (Object _) {}));
+        .whenComplete(() => client
+            .cart(scope.visitorToken)
+            .then(app.noteCart, onError: (Object _) {}));
   }
 
   @override
@@ -40,7 +42,8 @@ class _OrderPageState extends State<OrderPage> {
       body: FutureBuilder<CheckoutStatus?>(
         future: _status,
         builder: (context, snapshot) {
-          if (_status != null && snapshot.connectionState != ConnectionState.done) {
+          if (_status != null &&
+              snapshot.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
           final status = snapshot.data;
@@ -53,9 +56,11 @@ class _OrderPageState extends State<OrderPage> {
                 mainAxisSize: MainAxisSize.min,
                 spacing: 12,
                 children: [
-                  Icon(paid ? Icons.check_circle : Icons.hourglass_top, size: 56, color: theme.colorScheme.primary),
+                  Icon(paid ? Icons.check_circle : Icons.hourglass_top,
+                      size: 56, color: theme.colorScheme.primary),
                   Text(paid ? 'Thank you for your order' : 'Your order',
-                      style: theme.textTheme.headlineSmall, textAlign: TextAlign.center),
+                      style: theme.textTheme.headlineSmall,
+                      textAlign: TextAlign.center),
                   Text(
                     paid
                         ? email != null
@@ -66,7 +71,8 @@ class _OrderPageState extends State<OrderPage> {
                   ),
                   const SizedBox(height: 8),
                   FilledButton(
-                    onPressed: () => AppScope.read(context).showTab(context, AppTab.shop),
+                    onPressed: () =>
+                        AppScope.read(context).showTab(context, AppTab.shop),
                     child: const Text('Continue shopping'),
                   ),
                 ],

@@ -49,8 +49,7 @@ function unavailable(): Response {
 	return new Response(
 		JSON.stringify({
 			ok: false,
-			reason:
-				'BD auth not configured. Set BD_API_KEY and BD_PACKAGE_API_BASE_URL.'
+			reason: 'BD auth not configured. Set BD_API_KEY and BD_PACKAGE_API_BASE_URL.'
 		}),
 		{ status: 503, headers: { 'Content-Type': 'application/json' } }
 	);

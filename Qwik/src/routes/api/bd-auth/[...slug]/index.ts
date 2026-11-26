@@ -48,10 +48,7 @@ const handler =
 		: null;
 
 /** Pipe a web `Response` from the SDK handler back onto Qwik's RequestEvent. */
-async function emit(
-	ev: RequestEvent,
-	method: "GET" | "POST",
-): Promise<void> {
+async function emit(ev: RequestEvent, method: "GET" | "POST"): Promise<void> {
 	if (!handler) {
 		ev.json(500, {
 			ok: false,

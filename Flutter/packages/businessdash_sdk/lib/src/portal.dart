@@ -31,8 +31,7 @@ class PortalResource {
 
   Map<String, String> get _headers => {
         'X-BD-Session-Token': sessionToken,
-        if (organizationId != null)
-          'X-BD-Customer-Portal-Org': organizationId!,
+        if (organizationId != null) 'X-BD-Customer-Portal-Org': organizationId!,
       };
 
   /// Org branding and which portal features are on. Call before rendering.
@@ -133,7 +132,8 @@ class PortalResource {
   /// Takes only the token: the server already knows which destination it was
   /// issued for, and accepting a caller-supplied one would let a token minted
   /// for one address verify another.
-  Future<Map<String, dynamic>> confirmVerification(String token) => _client.post(
+  Future<Map<String, dynamic>> confirmVerification(String token) =>
+      _client.post(
         'notifications/preferences/verify/confirm',
         body: {'token': token},
         headers: _headers,
@@ -142,12 +142,12 @@ class PortalResource {
   // ── Invitations ─────────────────────────────────────────────────────────
 
   /// Hand a customer-portal invite link out again.
-  /// 
+  ///
   /// ROTATES the token — the previous link stops working. That is the point rather
   /// than a side effect: if the reason for resending was "it went to the wrong
   /// address", rotating IS the fix, and reusing the token would leave the wrong
   /// recipient holding a working invitation.
-  /// 
+  ///
   /// Rate limited to one send a minute per invitation, answering 429 with a retry
   /// hint — resend mails an address the caller chose, so an unbounded one is a
   /// mail-bombing tool. Refuses a revoked invitation (resending would quietly
@@ -209,7 +209,8 @@ class PortalResource {
   /// Write a review of the business. It shows once the business approves it.
   /// Check it with `Reviews.check` first.
   Future<Map<String, dynamic>> submitReview(ReviewInput review) =>
-      _client.post('customer-portal/reviews', body: review.toJson(), headers: _headers);
+      _client.post('customer-portal/reviews',
+          body: review.toJson(), headers: _headers);
 
   /// What the subscription entitles them to.
   ///

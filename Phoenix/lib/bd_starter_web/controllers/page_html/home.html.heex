@@ -7,7 +7,13 @@
 --%>
 <section class="hero">
   <h1>{bundle(@bundle, ["sections", "hero", "headline"], "A business, in a box.")}</h1>
-  <p>{bundle(@bundle, ["sections", "hero", "subhead"], "Everything the operation needs, on your own domain.")}</p>
+  <p>
+    {bundle(
+      @bundle,
+      ["sections", "hero", "subhead"],
+      "Everything the operation needs, on your own domain."
+    )}
+  </p>
   <a class="button" href={bundle(@bundle, ["sections", "hero", "ctaHref"], ~p"/store")}>
     {bundle(@bundle, ["sections", "hero", "ctaLabel"], "Browse the store")}
   </a>
@@ -15,7 +21,13 @@
 
 <section class="about">
   <h2>{bundle(@bundle, ["sections", "about", "title"], "About us")}</h2>
-  <p>{bundle(@bundle, ["sections", "about", "body"], "Tell your story here — this copy lives in the BD dashboard once you're connected.")}</p>
+  <p>
+    {bundle(
+      @bundle,
+      ["sections", "about", "body"],
+      "Tell your story here — this copy lives in the BD dashboard once you're connected."
+    )}
+  </p>
 </section>
 
 <section :if={@products != []} class="services">

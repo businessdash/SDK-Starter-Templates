@@ -51,7 +51,8 @@ defmodule BdStarter.Forms.QuizState do
       dont_know: Json.strings(o["dontKnow"]),
       results: Enum.map(Json.list(o["results"]) || [], &QuizScoring.read_result/1),
       revealed: o["revealed"] == true,
-      completion: if(Json.object?(o["completion"]), do: QuizScoring.read_completion(o["completion"])),
+      completion:
+        if(Json.object?(o["completion"]), do: QuizScoring.read_completion(o["completion"])),
       started_at: Json.num(o["startedAt"]),
       deadline_at: Json.num(o["deadlineAt"]),
       clock_offset: Json.num(o["clockOffset"]) || 0.0,
@@ -59,7 +60,10 @@ defmodule BdStarter.Forms.QuizState do
       reveal_started_at: Json.num(o["revealStartedAt"]),
       pending: Json.str(o["pending"]),
       error: Json.str(o["error"]),
-      field_errors: (Json.obj(o["fieldErrors"]) || %{}) |> Enum.filter(fn {_, v} -> is_binary(v) end) |> Map.new(),
+      field_errors:
+        (Json.obj(o["fieldErrors"]) || %{})
+        |> Enum.filter(fn {_, v} -> is_binary(v) end)
+        |> Map.new(),
       time_up: o["timeUp"] == true
     }
   end

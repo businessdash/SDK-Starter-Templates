@@ -15,7 +15,8 @@ defmodule BdStarter.Forms.PackageBackend do
     host = Application.get_env(:bd_starter, :bd_host)
     key = Application.get_env(:bd_starter, :bd_api_key)
 
-    if host not in [nil, ""] and key not in [nil, ""] and Application.get_env(:bd_starter, :bd_site_id) not in [nil, ""] do
+    if host not in [nil, ""] and key not in [nil, ""] and
+         Application.get_env(:bd_starter, :bd_site_id) not in [nil, ""] do
       %__MODULE__{
         endpoint: String.trim_trailing(host, "/") <> "/api/package/v1",
         api_key: key,
@@ -26,7 +27,10 @@ defmodule BdStarter.Forms.PackageBackend do
 
   # `…/forms/<slug>[/<suffix>]`: the slug is one segment, even with a "/" in it.
   defp url(b, form, suffix \\ ""),
-    do: b.endpoint <> "/forms/" <> URI.encode(form, &URI.char_unreserved?/1) <> if(suffix == "", do: "", else: "/" <> suffix)
+    do:
+      b.endpoint <>
+        "/forms/" <>
+        URI.encode(form, &URI.char_unreserved?/1) <> if(suffix == "", do: "", else: "/" <> suffix)
 
   defp request(b, method, url, opts \\ []) do
     [
@@ -49,9 +53,16 @@ defmodule BdStarter.Forms.PackageBackend do
   end
 
   # A JSON body, encoded the way JavaScript would (5.0 is 5).
-  defp post(b, url, body), do: request(b, :post, url, body: Json.encode!(body), headers: json_headers(b))
+  defp post(b, url, body),
+    do: request(b, :post, url, body: Json.encode!(body), headers: json_headers(b))
 
-  defp json_headers(b), do: [{"accept", "application/json"}, {"origin", b.origin}, {"x-bd-client", BdStarter.Bd.Client.client_header()}, {"content-type", "application/json"}]
+  defp json_headers(b),
+    do: [
+      {"accept", "application/json"},
+      {"origin", b.origin},
+      {"x-bd-client", BdStarter.Bd.Client.client_header()},
+      {"content-type", "application/json"}
+    ]
 
   defp decode(body) do
     Json.decode!(body)
@@ -60,7 +71,8 @@ defmodule BdStarter.Forms.PackageBackend do
   end
 
   # The decoded body of a 2xx response; otherwise BD's message as an error.
-  defp json!({:ok, %Req.Response{status: status, body: body}}) when status in 200..299, do: decode(body)
+  defp json!({:ok, %Req.Response{status: status, body: body}}) when status in 200..299,
+    do: decode(body)
 
   defp json!({:ok, %Req.Response{status: status, body: body}}) do
     message = Json.str(Json.get(decode(body), "message"))
@@ -93,7 +105,12 @@ defmodule BdStarter.Forms.PackageBackend do
     case post(b, url(b, form), BdStarter.Forms.Submission.body(submission)) do
       {:ok, %Req.Response{status: status, body: body}} when status in 200..299 ->
         json = decode(body)
-        SubmitResult.success(status, Json.str(Json.get(json, "submissionId")), Json.get(json, "dryRun") == true)
+
+        SubmitResult.success(
+          status,
+          Json.str(Json.get(json, "submissionId")),
+          Json.get(json, "dryRun") == true
+        )
 
       {:ok, %Req.Response{status: status, body: body}} ->
         SubmitResult.from_response(status, decode(body))
@@ -121,7 +138,14 @@ defmodule BdStarter.Forms.PackageBackend do
     if target == nil or storage_id == nil or URI.parse(target).scheme not in ["http", "https"],
       do: raise(FormsError, message: "BD returned an invalid upload URL.")
 
-    case Req.request(method: :put, url: target, body: PickedFile.data(file), headers: [{"content-type", file.mime_type}], receive_timeout: 60_000, retry: false) do
+    case Req.request(
+           method: :put,
+           url: target,
+           body: PickedFile.data(file),
+           headers: [{"content-type", file.mime_type}],
+           receive_timeout: 60_000,
+           retry: false
+         ) do
       {:ok, %Req.Response{status: s}} when s in 200..299 ->
         %{
           "storageId" => storage_id,

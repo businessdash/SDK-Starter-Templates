@@ -3,7 +3,9 @@
 <%!-- One row per variant tuple. This is also what a sitemap iterates. --%>
 <ul :if={@variants != []}>
   <li :for={variant <- @variants}>
-    <a href={~p"/services/#{variant["service"] || get_in(variant, ["params", "service"])}/#{variant["area"] || get_in(variant, ["params", "area"])}"}>
+    <a href={
+      ~p"/services/#{variant["service"] || get_in(variant, ["params", "service"])}/#{variant["area"] || get_in(variant, ["params", "area"])}"
+    }>
       {variant["label"] || "View"}
     </a>
   </li>

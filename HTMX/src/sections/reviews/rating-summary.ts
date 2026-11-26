@@ -26,7 +26,7 @@ export function ratingSummary(
 		</div>
 		<ul class="reviews-bars">
 			${summary.histogram.map(
-				(row) => html`<li aria-label="${`${row.stars} stars: ${row.count}`}">
+				(row) => html`<li aria-label="${`${row.stars} ${row.stars === 1 ? "star" : "stars"}: ${row.count}`}">
 					<span>${row.stars} ★</span>
 					<span class="reviews-bars__track"><span class="reviews-bars__fill" style="${`width:${Math.round(row.share * 100)}%`}"></span></span>
 					<span>${row.count}</span>

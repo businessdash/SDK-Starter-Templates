@@ -25,7 +25,12 @@
 <div :if={@configured and @listing} class="store-layout">
   <aside aria-label="Product filters" class="store-sidebar">
     <.store_search query={@query} />
-    <.category_filter categories={@categories} counts={@counts} query={@query} selected={@filters.category_id} />
+    <.category_filter
+      categories={@categories}
+      counts={@counts}
+      query={@query}
+      selected={@filters.category_id}
+    />
     <.price_filter query={@query} range={@price_range} />
     <.rating_filter query={@query} selected={@filters.min_rating} />
     <.clear_filters :if={@has_filters} />

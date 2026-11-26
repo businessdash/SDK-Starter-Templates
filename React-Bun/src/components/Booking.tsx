@@ -71,14 +71,20 @@ export function Booking() {
 
 	useEffect(() => {
 		if (!selectedSlug) return;
+		let alive = true;
 		const from = startOfTomorrow();
 		const to = endOfTomorrowWeek(from);
-		setSlots(null);
-		setPickedSlot(null);
 		bd.scheduling
 			.getAvailableSlots(selectedSlug, { from, to })
-			.then(setSlots)
-			.catch((err) => setError(err.message));
+			.then((found) => {
+				if (alive) setSlots(found);
+			})
+			.catch((err) => {
+				if (alive) setError(err.message);
+			});
+		return () => {
+			alive = false;
+		};
 	}, [selectedSlug]);
 
 	async function handleConfirm() {
@@ -145,7 +151,11 @@ export function Booking() {
 							<select
 								className="bd-select"
 								id="event-type"
-								onChange={(e) => setSelectedSlug(e.target.value)}
+								onChange={(e) => {
+									setSelectedSlug(e.target.value);
+									setSlots(null);
+									setPickedSlot(null);
+								}}
 								value={selectedSlug ?? ""}
 							>
 								{eventTypes.map((event) => (

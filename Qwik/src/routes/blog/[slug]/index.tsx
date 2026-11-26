@@ -26,13 +26,17 @@ import { readingMinutes, safePostHtml } from "../../../lib/shop/blog";
 export const usePost = routeLoader$(async ({ params, cookie, status }) => {
 	const bd = getBd();
 	const session = await getCustomerSession(cookie);
-	const result = bd ? await bd.blog.getPost(params.slug).catch(() => null) : null;
+	const result = bd
+		? await bd.blog.getPost(params.slug).catch(() => null)
+		: null;
 	if (!bd || !result) {
 		status(404);
 		return { found: false as const, signedIn: !!session };
 	}
 	const [likes, comments] = await Promise.all([
-		(session ? bd.blog.withSession(session.token) : bd.blog).likeStatus(params.slug).catch(() => null),
+		(session ? bd.blog.withSession(session.token) : bd.blog)
+			.likeStatus(params.slug)
+			.catch(() => null),
 		bd.blog
 			.listComments(params.slug, { limit: 50 })
 			.then((res) => res.items)
@@ -109,7 +113,16 @@ export default component$(() => {
 							publishedAt={v.post.publishedAt}
 						/>
 					</header>
-					{v.post.imageUrl ? <img alt="" class="post__cover" referrerPolicy="no-referrer" src={v.post.imageUrl} /> : null}
+					{v.post.imageUrl ? (
+						<img
+							width={1600}
+							height={900}
+							alt=""
+							class="post__cover"
+							referrerPolicy="no-referrer"
+							src={v.post.imageUrl}
+						/>
+					) : null}
 					{v.paywalled ? (
 						<MembersOnly signInHref={signInHref} />
 					) : (
@@ -117,12 +130,26 @@ export default component$(() => {
 						<PostBody html={v.html} />
 					)}
 					{v.post.ctaHref && v.post.ctaLabel ? (
-						<PostCta description={v.post.ctaDescription} href={v.post.ctaHref} label={v.post.ctaLabel} />
+						<PostCta
+							description={v.post.ctaDescription}
+							href={v.post.ctaHref}
+							label={v.post.ctaLabel}
+						/>
 					) : null}
 					<PostTags tags={v.post.tags} />
-					<LikeButton likeUrl={`${api}/like`} likes={v.likes} signInHref={signInHref} signedIn={v.signedIn} />
+					<LikeButton
+						likeUrl={`${api}/like`}
+						likes={v.likes}
+						signInHref={signInHref}
+						signedIn={v.signedIn}
+					/>
 				</article>
-				<Comments commentUrl={`${api}/comment`} comments={v.comments} signInHref={signInHref} signedIn={v.signedIn} />
+				<Comments
+					commentUrl={`${api}/comment`}
+					comments={v.comments}
+					signInHref={signInHref}
+					signedIn={v.signedIn}
+				/>
 			</main>
 			<Footer />
 		</>
@@ -136,11 +163,15 @@ export const head: DocumentHead = ({ resolveValue, url }) => {
 	return {
 		title: `${data.post.title} — Your Business`,
 		meta: [
-			...(data.post.excerpt ? [{ name: "description", content: data.post.excerpt }] : []),
+			...(data.post.excerpt
+				? [{ name: "description", content: data.post.excerpt }]
+				: []),
 			{ property: "og:type", content: "article" },
 			{ property: "og:title", content: data.post.title },
 			{ property: "og:url", content: canonical },
-			...(data.post.imageUrl ? [{ property: "og:image", content: data.post.imageUrl }] : []),
+			...(data.post.imageUrl
+				? [{ property: "og:image", content: data.post.imageUrl }]
+				: []),
 		],
 		links: [{ rel: "canonical", href: canonical }],
 	};

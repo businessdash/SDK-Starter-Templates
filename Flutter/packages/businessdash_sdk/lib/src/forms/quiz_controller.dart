@@ -28,9 +28,13 @@ class BdQuizController {
     BdQuizInitial initial = const BdQuizInitial(),
     this.draftDelay = const Duration(milliseconds: 750),
     double Function()? clock,
-  })  : _clock = clock ?? (() => DateTime.now().millisecondsSinceEpoch.toDouble()),
+  })  : _clock =
+            clock ?? (() => DateTime.now().millisecondsSinceEpoch.toDouble()),
         _local = options.local ?? backend == null,
-        _options = options.copyWith(local: options.local ?? backend == null, canRestart: options.canRestart ?? (options.local ?? backend == null)) {
+        _options = options.copyWith(
+            local: options.local ?? backend == null,
+            canRestart:
+                options.canRestart ?? (options.local ?? backend == null)) {
     config = BdQuizConfig(_options, options.seed ?? BdQuizArrange.randomSeed());
     _state = BdQuizEngine.initialState(config, initial, _clock());
     _lastDraft = _state.answers;
@@ -84,7 +88,14 @@ class BdQuizController {
     if (BdQuizArrange.isMultiSelect(field)) {
       final picked = _state.answers[fieldId]?.arrayValue ?? const <BdJson>[];
       final has = picked.any((p) => p.stringValue == label);
-      setAnswer(fieldId, BdArr(has ? [for (final p in picked) if (p.stringValue != label) p] : [...picked, BdStr(label)]));
+      setAnswer(
+          fieldId,
+          BdArr(has
+              ? [
+                  for (final p in picked)
+                    if (p.stringValue != label) p
+                ]
+              : [...picked, BdStr(label)]));
     } else {
       setAnswer(fieldId, BdStr(label));
     }
@@ -101,7 +112,10 @@ class BdQuizController {
     switch (action) {
       case BdQuizActionId.start:
         await start();
-      case BdQuizActionId.lock || BdQuizActionId.next || BdQuizActionId.submit || BdQuizActionId.finish:
+      case BdQuizActionId.lock ||
+            BdQuizActionId.next ||
+            BdQuizActionId.submit ||
+            BdQuizActionId.finish:
         await advance();
       case BdQuizActionId.back:
         back();
@@ -118,10 +132,17 @@ class BdQuizController {
     final run = _generation;
     _set(_state.copyWith(pending: BdQuizPending.start, error: null));
     try {
-      final info = backend?.start != null ? await backend!.start!() : BdQuizEngine.localStart(config, _clock());
-      if (run == _generation) _set(BdQuizEngine.started(_state, info, _clock()));
+      final info = backend?.start != null
+          ? await backend!.start!()
+          : BdQuizEngine.localStart(config, _clock());
+      if (run == _generation) {
+        _set(BdQuizEngine.started(_state, info, _clock()));
+      }
     } catch (e) {
-      if (run == _generation) _set(BdQuizEngine.failed(_state, _message(e, config.words.startFailed)));
+      if (run == _generation) {
+        _set(
+            BdQuizEngine.failed(_state, _message(e, config.words.startFailed)));
+      }
     }
   }
 
@@ -163,7 +184,9 @@ class BdQuizController {
     }
     final answers = _state.answers;
     _set(BdQuizEngine.timeUp(_state));
-    final saveDraft = config.feedbackMode == BdQuizFeedbackMode.end ? backend?.saveDraft : null;
+    final saveDraft = config.feedbackMode == BdQuizFeedbackMode.end
+        ? backend?.saveDraft
+        : null;
     () async {
       // The submission carries the answers anyway; the draft is a backstop.
       if (saveDraft != null) {
@@ -204,9 +227,13 @@ class BdQuizController {
   }
 
   void _syncClock() {
-    final running = config.timerEnabled && _state.startedAt != null && _state.completion == null && !_disposed;
+    final running = config.timerEnabled &&
+        _state.startedAt != null &&
+        _state.completion == null &&
+        !_disposed;
     if (running && _ticker == null) {
-      _ticker = Timer.periodic(const Duration(milliseconds: 500), (_) => tick());
+      _ticker =
+          Timer.periodic(const Duration(milliseconds: 500), (_) => tick());
     } else if (!running) {
       _ticker?.cancel();
       _ticker = null;
@@ -218,7 +245,9 @@ class BdQuizController {
 
   void _scheduleDraft() {
     final saveDraft = backend?.saveDraft;
-    if (saveDraft == null || config.feedbackMode != BdQuizFeedbackMode.end) return;
+    if (saveDraft == null || config.feedbackMode != BdQuizFeedbackMode.end) {
+      return;
+    }
     if (config.timerEnabled && _state.startedAt == null) return;
     _draftTimer?.cancel();
     final run = _generation;
@@ -229,7 +258,9 @@ class BdQuizController {
       try {
         await saveDraft(answers);
       } catch (e) {
-        if (run == _generation) _set(_state.copyWith(error: _message(e, config.words.draftFailed)));
+        if (run == _generation) {
+          _set(_state.copyWith(error: _message(e, config.words.draftFailed)));
+        }
       }
     });
   }
@@ -239,7 +270,8 @@ class BdQuizController {
     final run = _generation;
     try {
       var completion = backend != null
-          ? await backend!.submit(answers, [for (final q in config.questions) q.id])
+          ? await backend!
+              .submit(answers, [for (final q in config.questions) q.id])
           : BdQuizEngine.localCompletion(config, _state, answers, _clock());
       // Graded by BD but timed here (a practice run): add the timing.
       if (backend != null && config.local) {
@@ -251,7 +283,9 @@ class BdQuizController {
       }
       if (run == _generation) _set(BdQuizEngine.completed(_state, completion));
     } catch (e) {
-      if (run == _generation) _set(BdQuizEngine.failed(_state, _message(e, failure)));
+      if (run == _generation) {
+        _set(BdQuizEngine.failed(_state, _message(e, failure)));
+      }
     }
   }
 
@@ -260,18 +294,27 @@ class BdQuizController {
     try {
       final BdQuizQuestionResult result;
       if (backend != null) {
-        final lockAnswer = backend!.lockAnswer ?? (throw BdFormsException(config.words.unscorable));
+        final lockAnswer = backend!.lockAnswer ??
+            (throw BdFormsException(config.words.unscorable));
         result = await lockAnswer(fieldId, answer);
       } else {
-        result = BdQuizEngine.localResult(config, fieldId, answer) ?? (throw BdFormsException(config.words.unscorable));
+        result = BdQuizEngine.localResult(config, fieldId, answer) ??
+            (throw BdFormsException(config.words.unscorable));
       }
-      if (run == _generation) _set(BdQuizEngine.locked(config, _state, fieldId, answer, result, _clock()));
+      if (run == _generation) {
+        _set(BdQuizEngine.locked(
+            config, _state, fieldId, answer, result, _clock()));
+      }
     } catch (e) {
-      if (run == _generation) _set(BdQuizEngine.failed(_state, _message(e, config.words.lockFailed)));
+      if (run == _generation) {
+        _set(BdQuizEngine.failed(_state, _message(e, config.words.lockFailed)));
+      }
     }
   }
 
   /// BD's own words when it sent some (not a transport failure); otherwise the quiz's.
   static String _message(Object e, String fallback) =>
-      e is BdFormsException && e.status != 0 && e.message.isNotEmpty ? e.message : fallback;
+      e is BdFormsException && e.status != 0 && e.message.isNotEmpty
+          ? e.message
+          : fallback;
 }

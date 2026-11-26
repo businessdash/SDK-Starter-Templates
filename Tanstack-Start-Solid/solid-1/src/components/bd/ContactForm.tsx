@@ -1,11 +1,10 @@
-import { Show, createSignal } from "solid-js";
-
 import {
-	BdForm,
 	type BdClient,
-	type FormSchema as SdkFormSchema,
+	BdForm,
 	type FormSubmitResult,
+	type FormSchema as SdkFormSchema,
 } from "@businessdash/sdk/solid";
+import { createSignal, Show } from "solid-js";
 
 import { type FormSchema, submitContactForm } from "../../lib/bd-server-fns";
 

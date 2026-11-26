@@ -65,7 +65,8 @@ defmodule BdStarter.Forms.QuizOptions do
       show_timer: invitation["showTimer"] == true,
       time_limit_minutes: Json.num(invitation["timeLimitMinutes"]),
       show_score: invitation["showScore"] != false,
-      results_locked: invitation["resultsRequireAccount"] == true and invitation["resultsUnlocked"] != true,
+      results_locked:
+        invitation["resultsRequireAccount"] == true and invitation["resultsUnlocked"] != true,
       sign_in_href: sign_in_href,
       shuffle_choices: taking["shuffleChoices"] == true,
       shuffle_questions: taking["shuffleQuestions"] == true,

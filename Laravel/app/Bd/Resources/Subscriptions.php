@@ -7,9 +7,7 @@ use App\Bd\Client;
 /** Subscription plans + the Stripe checkout hand-off for one. */
 class Subscriptions
 {
-    public function __construct(private readonly Client $client)
-    {
-    }
+    public function __construct(private readonly Client $client) {}
 
     /** @return array<string, mixed> */
     public function list(): array

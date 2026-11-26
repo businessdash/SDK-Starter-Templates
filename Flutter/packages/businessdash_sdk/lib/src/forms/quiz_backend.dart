@@ -15,22 +15,28 @@ import 'schema.dart';
 
 /// What the controller asks of BD. Leave a step null where the quiz has none.
 class BdQuizBackend {
-  const BdQuizBackend({this.start, this.saveDraft, this.lockAnswer, required this.submit});
+  const BdQuizBackend(
+      {this.start, this.saveDraft, this.lockAnswer, required this.submit});
 
   final Future<BdQuizStartInfo> Function()? start;
   final Future<void> Function(Map<String, BdJson> answers)? saveDraft;
-  final Future<BdQuizQuestionResult> Function(String fieldId, BdJson answer)? lockAnswer;
+  final Future<BdQuizQuestionResult> Function(String fieldId, BdJson answer)?
+      lockAnswer;
 
   /// Finish. `questionFieldIds` are the questions this run asked: all, or a
   /// local run's subset.
-  final Future<BdQuizCompletion> Function(Map<String, BdJson> answers, List<String> questionFieldIds) submit;
+  final Future<BdQuizCompletion> Function(
+      Map<String, BdJson> answers, List<String> questionFieldIds) submit;
 }
 
 // ── Wire types ──────────────────────────────────────────────────────────────
 
 /// How a quiz is taken: the builder's quiz switches (`settings.quiz`).
 class BdQuizTakingSettings {
-  const BdQuizTakingSettings({this.shuffleChoices = false, this.shuffleQuestions = false, this.allowDontKnow = false});
+  const BdQuizTakingSettings(
+      {this.shuffleChoices = false,
+      this.shuffleQuestions = false,
+      this.allowDontKnow = false});
 
   factory BdQuizTakingSettings.fromJson(BdJson? settings) {
     final quiz = settings?['quiz'];
@@ -46,11 +52,15 @@ class BdQuizTakingSettings {
   final bool allowDontKnow;
 }
 
-List<BdFormField> _fields(BdJson raw) =>
-    [for (final f in raw['fields']?.arrayValue ?? const <BdJson>[]) BdFormField.make(f)];
+List<BdFormField> _fields(BdJson raw) => [
+      for (final f in raw['fields']?.arrayValue ?? const <BdJson>[])
+        BdFormField.make(f)
+    ];
 
 BdQuizFeedbackMode _mode(BdJson raw) =>
-    raw['feedbackMode']?.stringValue == 'immediate' ? BdQuizFeedbackMode.immediate : BdQuizFeedbackMode.end;
+    raw['feedbackMode']?.stringValue == 'immediate'
+        ? BdQuizFeedbackMode.immediate
+        : BdQuizFeedbackMode.end;
 
 /// An invited quiz, as its taker's page shows it.
 class BdQuizInvitation implements BdQuizInvitationPageInfo {
@@ -61,19 +71,22 @@ class BdQuizInvitation implements BdQuizInvitationPageInfo {
         description = raw['description']?.stringValue ?? '',
         competency = raw['competency']?.stringValue,
         estimatedMinutes = raw['estimatedMinutes']?.doubleValue,
-        passingScore = raw['passingScore']?.doubleValue ?? BdQuizScoring.defaultPassingGrade,
+        passingScore = raw['passingScore']?.doubleValue ??
+            BdQuizScoring.defaultPassingGrade,
         feedbackMode = _mode(raw),
         showScore = raw['showScore']?.boolValue != false,
         resultsRequireAccount = raw['resultsRequireAccount']?.boolValue == true,
         resultsUnlocked = raw['resultsUnlocked']?.boolValue == true,
         requireAuthentication = raw['requireAuthentication']?.boolValue == true,
-        authenticationStatus = raw['authenticationStatus']?.stringValue ?? 'not_required',
+        authenticationStatus =
+            raw['authenticationStatus']?.stringValue ?? 'not_required',
         recipientEmailHint = raw['recipientEmailHint']?.stringValue ?? '',
         showTimer = raw['showTimer']?.boolValue == true,
         timeLimitMinutes = raw['timeLimitMinutes']?.doubleValue,
         startedAt = raw['startedAt']?.stringValue,
         deadlineAt = raw['deadlineAt']?.stringValue,
-        serverNow = raw['serverNow']?.doubleValue ?? DateTime.now().millisecondsSinceEpoch.toDouble(),
+        serverNow = raw['serverNow']?.doubleValue ??
+            DateTime.now().millisecondsSinceEpoch.toDouble(),
         timedOut = raw['timedOut']?.boolValue == true,
         questionFieldIds = raw['questionFieldIds']?.stringArray ?? const [],
         fields = _fields(raw),
@@ -85,9 +98,12 @@ class BdQuizInvitation implements BdQuizInvitationPageInfo {
         active = raw['active']?.boolValue != false,
         lockedAnswers = raw['lockedAnswers']?.objectValue ?? const {},
         lockedResults = [
-          for (final r in raw['lockedResults']?.arrayValue ?? const <BdJson>[]) BdQuizQuestionResult.fromJson(r),
+          for (final r in raw['lockedResults']?.arrayValue ?? const <BdJson>[])
+            BdQuizQuestionResult.fromJson(r),
         ],
-        attempt = quizPresent(raw['attempt']) == null ? null : BdQuizCompletion.fromJson(raw['attempt']!);
+        attempt = quizPresent(raw['attempt']) == null
+            ? null
+            : BdQuizCompletion.fromJson(raw['attempt']!);
 
   final BdJson raw;
   final String id;
@@ -137,7 +153,9 @@ class BdQuizInvitation implements BdQuizInvitationPageInfo {
 
   /// Engine options for this invitation. The seed is the invitation, so a
   /// reload never reorders.
-  BdQuizOptions options({String? signInHref, BdQuizWords words = const BdQuizWords()}) => BdQuizOptions(
+  BdQuizOptions options(
+          {String? signInHref, BdQuizWords words = const BdQuizWords()}) =>
+      BdQuizOptions(
         fields: fields,
         questionFieldIds: questionFieldIds,
         feedbackMode: feedbackMode,
@@ -176,7 +194,8 @@ class BdPracticeQuiz implements BdQuizPageInfo {
         description = raw['description']?.stringValue ?? '',
         competency = raw['competency']?.stringValue,
         estimatedMinutes = raw['estimatedMinutes']?.doubleValue,
-        passingScore = raw['passingScore']?.doubleValue ?? BdQuizScoring.defaultPassingGrade,
+        passingScore = raw['passingScore']?.doubleValue ??
+            BdQuizScoring.defaultPassingGrade,
         feedbackMode = _mode(raw),
         showTimer = raw['showTimer']?.boolValue == true,
         timeLimitMinutes = raw['timeLimitMinutes']?.doubleValue,
@@ -206,7 +225,11 @@ class BdPracticeQuiz implements BdQuizPageInfo {
   /// Engine options: graded by BD (the app never sees answer keys) but run
   /// like a local quiz: the clock pauses on a verdict, it can be retaken, and
   /// a limit asks a subset. A new order each run unless [seed] pins one.
-  BdQuizOptions options({String? seed, int? questionLimit, BdQuizWords words = const BdQuizWords()}) => BdQuizOptions(
+  BdQuizOptions options(
+          {String? seed,
+          int? questionLimit,
+          BdQuizWords words = const BdQuizWords()}) =>
+      BdQuizOptions(
         fields: fields,
         questionFieldIds: questionFieldIds,
         feedbackMode: feedbackMode,
@@ -250,21 +273,25 @@ class BdQuizzes {
     // token" catches every one. Empty means the app has no key yet.
     final key = publishableKey.trim();
     if (key.isNotEmpty && !key.startsWith('pk_')) {
-      throw ArgumentError('BdForms: an app takes a publishable pk_ key only, never a secret key.');
+      throw ArgumentError(
+          'BdForms: an app takes a publishable pk_ key only, never a secret key.');
     }
     return BdQuizzes._(
       '${host.replaceAll(RegExp(r'/+$'), '')}/api/package/v1/quizzes',
       {
         'Authorization': 'Bearer $publishableKey',
-        if (sessionToken != null && sessionToken.isNotEmpty) sessionHeader: sessionToken,
+        if (sessionToken != null && sessionToken.isNotEmpty)
+          sessionHeader: sessionToken,
       },
       httpClient ?? http.Client(),
     );
   }
 
   /// The app's own quiz routes, e.g. `https://example.com/api/bd-auth/quizzes`.
-  factory BdQuizzes.endpoint(String url, {Map<String, String> headers = const {}, http.Client? httpClient}) =>
-      BdQuizzes._(url.replaceAll(RegExp(r'/+$'), ''), {...headers}, httpClient ?? http.Client());
+  factory BdQuizzes.endpoint(String url,
+          {Map<String, String> headers = const {}, http.Client? httpClient}) =>
+      BdQuizzes._(url.replaceAll(RegExp(r'/+$'), ''), {...headers},
+          httpClient ?? http.Client());
 
   static const sessionHeader = 'X-BD-Session-Token';
 
@@ -295,14 +322,18 @@ class BdQuizzes {
       _headers.entries.every((e) => other._headers[e.key] == e.value);
 
   @override
-  int get hashCode => Object.hash(baseUrl, Object.hashAllUnordered(_headers.entries.map((e) => '${e.key}=${e.value}')));
+  int get hashCode => Object.hash(
+      baseUrl,
+      Object.hashAllUnordered(
+          _headers.entries.map((e) => '${e.key}=${e.value}')));
 
   void close() => _http.close();
 
   Future<BdJson> _call(String method, List<String> path, [BdJson? body]) async {
     final http.Response response;
     try {
-      final url = Uri.parse('$baseUrl/${path.map(Uri.encodeComponent).join('/')}');
+      final url =
+          Uri.parse('$baseUrl/${path.map(Uri.encodeComponent).join('/')}');
       final request = http.Request(method, url)
         ..headers.addAll({
           'Accept': 'application/json',
@@ -322,46 +353,65 @@ class BdQuizzes {
       json = null;
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw BdFormsException(json?['message']?.stringValue ?? 'BD returned ${response.statusCode}.', status: response.statusCode);
+      throw BdFormsException(
+          json?['message']?.stringValue ??
+              'BD returned ${response.statusCode}.',
+          status: response.statusCode);
     }
-    return json ?? (throw BdFormsException('BD sent an answer this app can\'t read.', status: response.statusCode));
+    return json ??
+        (throw BdFormsException('BD sent an answer this app can\'t read.',
+            status: response.statusCode));
   }
 
-  Future<BdQuizInvitation> invitation(String token) async => BdQuizInvitation(await _call('GET', ['invitations', token]));
+  Future<BdQuizInvitation> invitation(String token) async =>
+      BdQuizInvitation(await _call('GET', ['invitations', token]));
 
   Future<BdQuizStartInfo> startInvitation(String token) async =>
-      BdQuizStartInfo.fromJson(await _call('POST', ['invitations', token, 'start']));
+      BdQuizStartInfo.fromJson(
+          await _call('POST', ['invitations', token, 'start']));
 
   Future<void> saveInvitationDraft(String token, Map<String, BdJson> answers) =>
-      _call('POST', ['invitations', token, 'draft'], BdObj({'answers': BdObj(answers)}));
+      _call('POST', ['invitations', token, 'draft'],
+          BdObj({'answers': BdObj(answers)}));
 
   /// Lock one answer for good and get its verdict (immediate feedback).
-  Future<BdQuizQuestionResult> lockInvitationAnswer(String token, String fieldId, BdJson answer) async {
-    final response = await _call('POST', ['invitations', token, 'lock'], BdObj({'fieldId': BdStr(fieldId), 'answer': answer}));
+  Future<BdQuizQuestionResult> lockInvitationAnswer(
+      String token, String fieldId, BdJson answer) async {
+    final response = await _call('POST', ['invitations', token, 'lock'],
+        BdObj({'fieldId': BdStr(fieldId), 'answer': answer}));
     return BdQuizQuestionResult.fromJson(response['result'] ?? const BdNull());
   }
 
   /// Immediate-feedback quizzes submit what was locked: pass null.
-  Future<BdQuizCompletion> submitInvitation(String token, Map<String, BdJson>? answers) async =>
+  Future<BdQuizCompletion> submitInvitation(
+          String token, Map<String, BdJson>? answers) async =>
       BdQuizCompletion.fromJson(
-        await _call('POST', ['invitations', token, 'submit'], BdObj({if (answers != null) 'answers': BdObj(answers)})),
+        await _call('POST', ['invitations', token, 'submit'],
+            BdObj({if (answers != null) 'answers': BdObj(answers)})),
       );
 
-  Future<BdPracticeQuiz> practice(String slug) async => BdPracticeQuiz(await _call('GET', [slug]));
+  Future<BdPracticeQuiz> practice(String slug) async =>
+      BdPracticeQuiz(await _call('GET', [slug]));
 
-  Future<BdQuizQuestionResult> checkPracticeAnswer(String slug, String fieldId, BdJson answer) async =>
+  Future<BdQuizQuestionResult> checkPracticeAnswer(
+          String slug, String fieldId, BdJson answer) async =>
       BdQuizQuestionResult.fromJson(
-        await _call('POST', [slug, 'check'], BdObj({'fieldId': BdStr(fieldId), 'answer': answer})),
+        await _call('POST', [slug, 'check'],
+            BdObj({'fieldId': BdStr(fieldId), 'answer': answer})),
       );
 
-  Future<BdQuizCompletion> scorePractice(String slug, Map<String, BdJson> answers, [List<String>? questionFieldIds]) async =>
+  Future<BdQuizCompletion> scorePractice(
+          String slug, Map<String, BdJson> answers,
+          [List<String>? questionFieldIds]) async =>
       BdQuizCompletion.fromJson(
         await _call(
           'POST',
           [slug, 'score'],
           BdObj({
             'answers': BdObj(answers),
-            if (questionFieldIds != null) 'questionFieldIds': BdArr([for (final id in questionFieldIds) BdStr(id)]),
+            if (questionFieldIds != null)
+              'questionFieldIds':
+                  BdArr([for (final id in questionFieldIds) BdStr(id)]),
           }),
         ),
       );
@@ -370,13 +420,15 @@ class BdQuizzes {
   BdQuizBackend invitationBackend(String token) => BdQuizBackend(
         start: () => startInvitation(token),
         saveDraft: (answers) => saveInvitationDraft(token, answers),
-        lockAnswer: (fieldId, answer) => lockInvitationAnswer(token, fieldId, answer),
+        lockAnswer: (fieldId, answer) =>
+            lockInvitationAnswer(token, fieldId, answer),
         submit: (answers, _) => submitInvitation(token, answers),
       );
 
   /// BD's side of a practice run: graded there, never recorded.
   BdQuizBackend practiceBackend(String slug) => BdQuizBackend(
-        lockAnswer: (fieldId, answer) => checkPracticeAnswer(slug, fieldId, answer),
+        lockAnswer: (fieldId, answer) =>
+            checkPracticeAnswer(slug, fieldId, answer),
         submit: (answers, ids) => scorePractice(slug, answers, ids),
       );
 }

@@ -30,7 +30,8 @@ class SchedulingResource {
       'sites/${Uri.encodeComponent(siteId)}/scheduling/$suffix';
 
   /// What the org offers to book.
-  Future<Map<String, dynamic>> eventTypes() => _client.get(_path('event-types'));
+  Future<Map<String, dynamic>> eventTypes() =>
+      _client.get(_path('event-types'));
 
   /// One event type, plus the questions asked when booking it.
   Future<Map<String, dynamic>> eventType(String slug) =>
@@ -60,7 +61,8 @@ class SchedulingResource {
       _client.post(_path('bookings'), body: input);
 
   /// Read a booking with one of its signed tokens.
-  Future<Map<String, dynamic>> booking(String token, {String type = 'manage'}) =>
+  Future<Map<String, dynamic>> booking(String token,
+          {String type = 'manage'}) =>
       _client.get(
         _path('bookings/${Uri.encodeComponent(token)}'),
         query: {'type': type},

@@ -27,7 +27,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			session: null,
 			work: null,
 			// [bd:subscriptions]
-			plan: null,
+			plan: null
 			// [/bd:subscriptions]
 		};
 	}
@@ -39,7 +39,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 			session: null,
 			work: null,
 			// [bd:subscriptions]
-			plan: null,
+			plan: null
 			// [/bd:subscriptions]
 		};
 	}
@@ -53,7 +53,7 @@ export const load: PageServerLoad = async ({ cookies }) => {
 		session: { user: session.user, role: session.role },
 		work,
 		// [bd:subscriptions]
-		plan,
+		plan
 		// [/bd:subscriptions]
 	};
 };

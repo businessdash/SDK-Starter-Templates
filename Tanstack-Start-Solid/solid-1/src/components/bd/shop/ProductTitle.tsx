@@ -16,7 +16,9 @@ export function ProductTitle(props: {
 				<p class="product-detail__eyebrow">{props.product.categoryName}</p>
 			</Show>
 			<h1>{props.product.name}</h1>
-			<Show when={props.reviews && props.reviews.totalCount > 0 && props.reviews}>
+			<Show
+				when={props.reviews && props.reviews.totalCount > 0 && props.reviews}
+			>
 				{(reviews) => (
 					<a class="product-detail__rating" href="#reviews">
 						<ShopStars rating={reviews().avgRating} />

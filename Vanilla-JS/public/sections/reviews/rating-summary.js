@@ -35,7 +35,7 @@ export function ratingSummary(
 				"ul",
 				{ class: "reviews-bars" },
 				summary.histogram.map((row) =>
-					el("li", { "aria-label": `${row.stars} stars: ${row.count}` }, [
+					el("li", { "aria-label": `${row.stars} ${row.stars === 1 ? "star" : "stars"}: ${row.count}` }, [
 						el("span", {}, [`${row.stars} ★`]),
 						el("span", { class: "reviews-bars__track" }, [
 							el("span", { class: "reviews-bars__fill", style: `width: ${Math.round(row.share * 100)}%` }),

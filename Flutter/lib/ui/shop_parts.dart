@@ -14,7 +14,8 @@ const bdSiteUrl = String.fromEnvironment('BD_SITE_URL');
 /// What to tell the customer when a call fails: BD's own message when it
 /// sent one (a coupon it doesn't know, a sold-out size), else [fallback].
 String bdProblem(Object error, String fallback) => switch (error) {
-      BdHttpException(message: final message?) when message.isNotEmpty => message,
+      BdHttpException(message: final message?) when message.isNotEmpty =>
+        message,
       BdAccessRejectedException(:final message) => message,
       _ => fallback,
     };
@@ -36,7 +37,9 @@ class StarRating extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (var i = 0; i < 5; i++) Icon(i < full ? Icons.star : Icons.star_border, size: size, color: color),
+          for (var i = 0; i < 5; i++)
+            Icon(i < full ? Icons.star : Icons.star_border,
+                size: size, color: color),
         ],
       ),
     );
@@ -62,14 +65,15 @@ class Photo extends StatelessWidget {
       semanticLabel: label,
       excludeFromSemantics: label == null,
       errorBuilder: (_, _, _) => ColoredBox(color: soft),
-      loadingBuilder: (context, child, progress) => progress == null ? child : ColoredBox(color: soft),
+      loadingBuilder: (context, child, progress) =>
+          progress == null ? child : ColoredBox(color: soft),
     );
   }
 }
 
 /// A product's page, over the current tab.
-void openProduct(BuildContext context, String id) =>
-    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProductPage(productId: id)));
+void openProduct(BuildContext context, String id) => Navigator.of(context)
+    .push(MaterialPageRoute<void>(builder: (_) => ProductPage(productId: id)));
 
 /// A card in the store grid: photo, badges, stars, "From" and sale prices.
 class ProductCard extends StatelessWidget {
@@ -103,13 +107,20 @@ class ProductCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       spacing: 4,
                       children: [
-                        if (product.isBestSeller == true) const _Badge('Best seller'),
+                        if (product.isBestSeller == true)
+                          const _Badge('Best seller'),
                         if (product.isNew == true) const _Badge('New'),
-                        if (product.isOnSale == true) const _Badge('Sale', sale: true),
+                        if (product.isOnSale == true)
+                          const _Badge('Sale', sale: true),
                       ],
                     ),
                   ),
-                  Positioned(top: 4, right: 4, child: SaveButtons(product: SavedProduct.fromCard(product), compact: true)),
+                  Positioned(
+                      top: 4,
+                      right: 4,
+                      child: SaveButtons(
+                          product: SavedProduct.fromCard(product),
+                          compact: true)),
                 ],
               ),
             ),
@@ -138,18 +149,22 @@ class ProductCard extends StatelessWidget {
                         price == null
                             ? 'View details'
                             : '${product.hasMultipleVariants == true ? 'From ' : ''}${Money.cents(price)}',
-                        style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                        style: theme.textTheme.titleSmall
+                            ?.copyWith(fontWeight: FontWeight.w700),
                       ),
-                      if (product.isOnSale == true && product.comparePriceCents != null)
+                      if (product.isOnSale == true &&
+                          product.comparePriceCents != null)
                         Text(
                           Money.cents(product.comparePriceCents),
-                          style: theme.textTheme.bodySmall?.copyWith(decoration: TextDecoration.lineThrough),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                              decoration: TextDecoration.lineThrough),
                         ),
                     ],
                   ),
                   if (product.isLowStock == true)
                     Text('Low stock',
-                        style: theme.textTheme.labelSmall?.copyWith(color: theme.colorScheme.error)),
+                        style: theme.textTheme.labelSmall
+                            ?.copyWith(color: theme.colorScheme.error)),
                 ],
               ),
             ),
@@ -178,7 +193,10 @@ class _Badge extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
         child: Text(
           label,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: sale ? scheme.onError : scheme.onSurface),
+          style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: sale ? scheme.onError : scheme.onSurface),
         ),
       ),
     );
@@ -216,7 +234,9 @@ class SaveButtons extends StatelessWidget {
             iconSize: 18,
             visualDensity: VisualDensity.compact,
             isSelected: picked,
-            tooltip: picked ? 'Remove from compare' : (full ? 'Compare holds four products' : 'Compare'),
+            tooltip: picked
+                ? 'Remove from compare'
+                : (full ? 'Compare holds four products' : 'Compare'),
             icon: const Icon(Icons.compare_arrows),
             onPressed: full ? null : toggleCompare,
           ),
@@ -227,7 +247,8 @@ class SaveButtons extends StatelessWidget {
       spacing: 8,
       children: [
         FilterChip(
-          avatar: Icon(saved ? Icons.favorite : Icons.favorite_border, size: 18),
+          avatar:
+              Icon(saved ? Icons.favorite : Icons.favorite_border, size: 18),
           showCheckmark: false,
           label: Text(saved ? 'Saved' : 'Save'),
           selected: saved,
@@ -264,12 +285,14 @@ class CompareBar extends StatelessWidget {
           child: Row(
             spacing: 8,
             children: [
-              Expanded(child: Text('$picks of ${compare.limit} picked to compare')),
+              Expanded(
+                  child: Text('$picks of ${compare.limit} picked to compare')),
               TextButton(onPressed: compare.clear, child: const Text('Clear')),
               FilledButton(
                 onPressed: picks < 2
                     ? null
-                    : () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ComparePage())),
+                    : () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        builder: (_) => const ComparePage())),
                 child: Text(picks < 2 ? 'Pick one more' : 'Compare'),
               ),
             ],
@@ -314,10 +337,16 @@ class ProductRail extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(10),
-                        child: SizedBox.square(dimension: 132, child: Photo(product.image)),
+                        child: SizedBox.square(
+                            dimension: 132, child: Photo(product.image)),
                       ),
-                      Text(product.name, maxLines: 2, overflow: TextOverflow.ellipsis, style: theme.textTheme.labelLarge),
-                      if (product.priceCents != null) Text(Money.cents(product.priceCents), style: theme.textTheme.bodySmall),
+                      Text(product.name,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelLarge),
+                      if (product.priceCents != null)
+                        Text(Money.cents(product.priceCents),
+                            style: theme.textTheme.bodySmall),
                     ],
                   ),
                 ),
@@ -344,21 +373,24 @@ class ReviewStrip extends StatelessWidget {
     final theme = Theme.of(context);
     return Semantics(
       button: true,
-      label: 'Rated ${rating.toStringAsFixed(1)} from $total reviews. See all reviews.',
+      label:
+          'Rated ${rating.toStringAsFixed(1)} from $total reviews. See all reviews.',
       excludeSemantics: true,
       child: Material(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.6),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
-          onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const ReviewsPage())),
+          onTap: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(builder: (_) => const ReviewsPage())),
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             child: Row(
               spacing: 8,
               children: [
                 StarRating(rating, size: 14),
-                Text(rating.toStringAsFixed(1), style: theme.textTheme.titleSmall),
+                Text(rating.toStringAsFixed(1),
+                    style: theme.textTheme.titleSmall),
                 Expanded(
                   child: Text(
                     '· $total ${total == 1 ? 'review' : 'reviews'}',
@@ -390,7 +422,9 @@ class EmptyNote extends StatelessWidget {
         child: Column(
           spacing: 6,
           children: [
-            Text(title, textAlign: TextAlign.center, style: Theme.of(context).textTheme.titleMedium),
+            Text(title,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.titleMedium),
             if (detail != null) Text(detail!, textAlign: TextAlign.center),
           ],
         ),

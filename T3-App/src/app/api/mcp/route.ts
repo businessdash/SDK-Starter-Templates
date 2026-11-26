@@ -31,6 +31,7 @@ export async function POST(request: Request) {
 }
 
 export async function GET() {
-	if (!proxy) return new Response(null, { status: 405, headers: { Allow: "POST" } });
+	if (!proxy)
+		return new Response(null, { status: 405, headers: { Allow: "POST" } });
 	return proxy.GET();
 }

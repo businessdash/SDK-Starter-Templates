@@ -7,6 +7,8 @@ import {
 	useLoaderData,
 } from "react-router";
 import type { LinksFunction, LoaderFunctionArgs } from "react-router";
+import { useEffect } from "react";
+import type { BdAnalyticsTracker } from "@businessdash/sdk/analytics-core";
 
 import { SdkSetupBanner } from "./components/SdkSetupBanner";
 import { getAnalyticsConfig } from "./lib/bd.server";
@@ -27,6 +29,32 @@ export async function loader(_: LoaderFunctionArgs) {
 	return { analytics: getAnalyticsConfig() };
 }
 
+/**
+ * Starts BD analytics in the browser. The config comes from the loader, so
+ * the key stays out of the static bundle; the SDK module loads only when
+ * there is a config.
+ */
+function BdAnalytics({ config }: { config: ReturnType<typeof getAnalyticsConfig> }) {
+	// The loader can hand back an equal config as a new object; only a real
+	// change restarts the tracker.
+	const siteId = config?.siteId;
+	const baseUrl = config?.baseUrl;
+	const apiKey = config?.apiKey;
+	useEffect(() => {
+		if (!siteId || !baseUrl || !apiKey) return;
+		let tracker: BdAnalyticsTracker | undefined;
+		let alive = true;
+		void import("@businessdash/sdk/analytics-core").then(({ initBdAnalytics }) => {
+			if (alive) tracker = initBdAnalytics({ siteId, baseUrl, apiKey });
+		});
+		return () => {
+			alive = false;
+			tracker?.stop();
+		};
+	}, [siteId, baseUrl, apiKey]);
+	return null;
+}
+
 export default function App() {
 	const { analytics } = useLoaderData<typeof loader>();
 	return (
@@ -42,33 +70,7 @@ export default function App() {
 				<SdkSetupBanner />
 				<ScrollRestoration />
 				<Scripts />
-				{analytics ? (
-					<script
-						// Server-known config inlined so the public key never lives
-						// in the static client bundle. The dynamic-import below
-						// reads it after hydration.
-						dangerouslySetInnerHTML={{
-							__html: `window.__BD_ANALYTICS__=${JSON.stringify(analytics)};`,
-						}}
-					/>
-				) : null}
-				<script
-					type="module"
-					dangerouslySetInnerHTML={{
-						__html: `
-							const cfg = window.__BD_ANALYTICS__;
-							if (cfg && cfg.siteId && cfg.baseUrl && cfg.apiKey) {
-								import("@businessdash/sdk/analytics-core").then(({ initBdAnalytics }) => {
-									initBdAnalytics({
-										siteId: cfg.siteId,
-										baseUrl: cfg.baseUrl,
-										apiKey: cfg.apiKey,
-									});
-								});
-							}
-						`,
-					}}
-				/>
+				<BdAnalytics config={analytics} />
 			</body>
 		</html>
 	);

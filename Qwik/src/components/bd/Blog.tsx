@@ -42,7 +42,9 @@ export const Blog = component$<{ posts: BlogPost[] }>(({ posts }) => {
 							href={`/blog/${post.slug}`}
 							key={post.id}
 						>
-							<span class="blog-card__meta">{formatDate(post.publishedAt)}</span>
+							<span class="blog-card__meta">
+								{formatDate(post.publishedAt)}
+							</span>
 							<h3>{post.title}</h3>
 							{post.excerpt ? <p>{post.excerpt}</p> : null}
 						</a>

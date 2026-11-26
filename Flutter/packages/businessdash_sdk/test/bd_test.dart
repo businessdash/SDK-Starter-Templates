@@ -127,7 +127,8 @@ void main() {
     // `posts` or `reviews`. Getting it wrong parses to an empty list rather
     // than throwing, so a screen renders "no products" against a full catalog
     // and nothing looks broken. Pinned for that reason.
-    test('list responses parse from `items`, not the plural of the thing', () async {
+    test('list responses parse from `items`, not the plural of the thing',
+        () async {
       final stub = makeClient(jsonEncode({
         'items': [
           {'id': 'p1', 'name': 'Widget', 'cheapestPriceCents': 500}
@@ -163,8 +164,10 @@ void main() {
     });
 
     test('a relation parses from a link object or a bare id', () {
-      DataModelRecord record(Object? todo) =>
-          DataModelRecord.fromJson({'id': 't', 'fields': {'todo': todo}});
+      DataModelRecord record(Object? todo) => DataModelRecord.fromJson({
+            'id': 't',
+            'fields': {'todo': todo}
+          });
 
       expect(record({'id': 'parent-1'}).relationId('todo'), 'parent-1');
       expect(record('parent-2').relationId('todo'), 'parent-2');
@@ -321,8 +324,10 @@ void main() {
   });
 
   group('customer account', () {
-    test('delete account posts the auth session header and reads the answer', () async {
-      final stub = makeClient(jsonEncode({'deleted': true, 'signInKept': false}));
+    test('delete account posts the auth session header and reads the answer',
+        () async {
+      final stub =
+          makeClient(jsonEncode({'deleted': true, 'signInKept': false}));
       final result = await stub.client.deleteAccount('tok');
       expect(result.deleted, isTrue);
       expect(result.signInKept, isFalse);

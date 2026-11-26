@@ -69,7 +69,11 @@ class Product {
 /// The store grid with what a filter UI needs: how many products each
 /// category has, and the catalogue's price range.
 class ProductListing {
-  const ProductListing({required this.items, this.categoryCounts = const {}, this.minDollars, this.maxDollars});
+  const ProductListing(
+      {required this.items,
+      this.categoryCounts = const {},
+      this.minDollars,
+      this.maxDollars});
 
   final List<Product> items;
 
@@ -86,10 +90,13 @@ class ProductListing {
       items: _list(json['items'], Product.fromJson),
       categoryCounts: {
         for (final row in (json['categoryCounts'] as List?) ?? const [])
-          if (row is Map && row['categoryId'] is String) row['categoryId'] as String: (row['count'] as num?)?.toInt() ?? 0,
+          if (row is Map && row['categoryId'] is String)
+            row['categoryId'] as String: (row['count'] as num?)?.toInt() ?? 0,
       },
-      minDollars: range is Map ? (range['minDollars'] as num?)?.toDouble() : null,
-      maxDollars: range is Map ? (range['maxDollars'] as num?)?.toDouble() : null,
+      minDollars:
+          range is Map ? (range['minDollars'] as num?)?.toDouble() : null,
+      maxDollars:
+          range is Map ? (range['maxDollars'] as num?)?.toDouble() : null,
     );
   }
 }
@@ -102,7 +109,8 @@ class ProductCategory {
   final String name;
   final String? slug;
 
-  factory ProductCategory.fromJson(Map<String, dynamic> json) => ProductCategory(
+  factory ProductCategory.fromJson(Map<String, dynamic> json) =>
+      ProductCategory(
         id: json['id'] as String,
         name: json['name'] as String? ?? '',
         slug: json['slug'] as String?,
@@ -112,7 +120,11 @@ class ProductCategory {
 /// "You may also like". Note the price is `minPriceDollars` — **dollars**,
 /// unlike a card's cents — and the photo is `coverImageUrl`.
 class RelatedProduct {
-  const RelatedProduct({required this.id, required this.name, this.coverImageUrl, this.minPriceDollars});
+  const RelatedProduct(
+      {required this.id,
+      required this.name,
+      this.coverImageUrl,
+      this.minPriceDollars});
 
   final String id;
   final String name;
@@ -129,7 +141,13 @@ class RelatedProduct {
 
 /// A customer's review of one product (not a business review: see [Review]).
 class ProductReview {
-  const ProductReview({required this.id, required this.rating, this.title, this.body, this.reviewerName, this.createdAt});
+  const ProductReview(
+      {required this.id,
+      required this.rating,
+      this.title,
+      this.body,
+      this.reviewerName,
+      this.createdAt});
 
   final String id;
   final int rating;
@@ -151,13 +169,15 @@ class ProductReview {
 }
 
 class ProductReviewPage {
-  const ProductReviewPage({required this.items, this.avgRating, required this.totalCount});
+  const ProductReviewPage(
+      {required this.items, this.avgRating, required this.totalCount});
 
   final List<ProductReview> items;
   final double? avgRating;
   final int totalCount;
 
-  factory ProductReviewPage.fromJson(Map<String, dynamic> json) => ProductReviewPage(
+  factory ProductReviewPage.fromJson(Map<String, dynamic> json) =>
+      ProductReviewPage(
         items: _list(json['items'], ProductReview.fromJson),
         avgRating: (json['avgRating'] as num?)?.toDouble(),
         totalCount: (json['totalCount'] as num?)?.toInt() ?? 0,
@@ -192,7 +212,10 @@ class ProductAddon {
 
   factory ProductAddon.fromJson(Map<String, dynamic> json) {
     final variants = json['variants'];
-    final first = variants is List && variants.isNotEmpty && variants.first is Map ? variants.first as Map : null;
+    final first =
+        variants is List && variants.isNotEmpty && variants.first is Map
+            ? variants.first as Map
+            : null;
     // The variant rows' id is `variantId`; `id` is read too, as the web
     // starters do.
     final variantId = first?['variantId'] ?? first?['id'];
@@ -204,7 +227,8 @@ class ProductAddon {
       priceCents: (json['priceCents'] as num?)?.toInt(),
       originalPriceCents: (json['originalPriceCents'] as num?)?.toInt(),
       imageUrl: json['imageUrl'] as String?,
-      firstVariantId: variantId is String && variantId.isNotEmpty ? variantId : null,
+      firstVariantId:
+          variantId is String && variantId.isNotEmpty ? variantId : null,
     );
   }
 }
@@ -277,7 +301,8 @@ class CartSnapshot {
   bool get isEmpty => items.isEmpty;
 
   /// [itemCount], or the lines' quantities added up.
-  int get units => itemCount ?? items.fold(0, (sum, item) => sum + item.quantity);
+  int get units =>
+      itemCount ?? items.fold(0, (sum, item) => sum + item.quantity);
 
   static const empty = CartSnapshot(items: []);
 
@@ -378,7 +403,8 @@ class BlogPost {
         isPinned: json['isPinned'] as bool? ?? false,
         authorName: json['authorName'] as String?,
         authorAvatarUrl: json['authorAvatarUrl'] as String?,
-        tags: ((json['tags'] as List?) ?? const []).whereType<String>().toList(),
+        tags:
+            ((json['tags'] as List?) ?? const []).whereType<String>().toList(),
         likes: (json['likes'] as num?)?.toInt() ?? 0,
         ctaLabel: json['ctaLabel'] as String?,
         ctaHref: json['ctaHref'] as String?,
@@ -400,7 +426,8 @@ class BlogPage {
 }
 
 class BlogCategory {
-  const BlogCategory({required this.id, required this.name, this.slug, this.description});
+  const BlogCategory(
+      {required this.id, required this.name, this.slug, this.description});
 
   final String id;
   final String name;
@@ -430,7 +457,11 @@ class BlogPostDetail {
 }
 
 class BlogComment {
-  const BlogComment({required this.id, required this.content, this.authorName, this.createdAt});
+  const BlogComment(
+      {required this.id,
+      required this.content,
+      this.authorName,
+      this.createdAt});
 
   final String id;
   final String content;
@@ -466,7 +497,8 @@ class CommentPosted {
 
   factory CommentPosted.fromJson(Map<String, dynamic> json) {
     final moderation = json['moderation'];
-    return CommentPosted(isApproved: moderation is Map && moderation['isApproved'] == true);
+    return CommentPosted(
+        isApproved: moderation is Map && moderation['isApproved'] == true);
   }
 }
 
@@ -512,14 +544,17 @@ class Review {
         source: json['source'] as String?,
         verified: json['verified'] as bool?,
         reviewUrl: json['reviewUrl'] as String?,
-        photos: ((json['photos'] as List?) ?? const []).whereType<String>().toList(),
+        photos: ((json['photos'] as List?) ?? const [])
+            .whereType<String>()
+            .toList(),
         timeCreated: json['timeCreated'] as String?,
       );
 }
 
 /// A page of the business's reviews; `nextOffset` is null on the last.
 class ReviewPage {
-  const ReviewPage({required this.items, this.nextOffset, required this.totalCount});
+  const ReviewPage(
+      {required this.items, this.nextOffset, required this.totalCount});
 
   final List<Review> items;
   final int? nextOffset;
@@ -549,13 +584,18 @@ class ReviewTotals {
         counts: [
           for (final row in (json['counts'] as List?) ?? const [])
             if (row is Map && row['rating'] is num && row['count'] is num)
-              (rating: (row['rating'] as num).toInt(), count: (row['count'] as num).toInt()),
+              (
+                rating: (row['rating'] as num).toInt(),
+                count: (row['count'] as num).toInt()
+              ),
         ],
       );
 }
 
 List<T> _list<T>(Object? value, T Function(Map<String, dynamic>) read) =>
-    value is List ? value.whereType<Map<String, dynamic>>().map(read).toList() : <T>[];
+    value is List
+        ? value.whereType<Map<String, dynamic>>().map(read).toList()
+        : <T>[];
 
 class SubscriptionPlan {
   const SubscriptionPlan({

@@ -9,7 +9,13 @@ import type { SavedProduct } from "../../../lib/shop/shop";
  * The element draws what's inside it; `dangerouslySetInnerHTML=""` tells
  * Qwik to leave that alone when the page around it renders again.
  */
-export function RecentlyViewed({ product, storeHref = "/store" }: { product: SavedProduct; storeHref?: string }) {
+export function RecentlyViewed({
+	product,
+	storeHref = "/store",
+}: {
+	product: SavedProduct;
+	storeHref?: string;
+}) {
 	return (
 		<bd-recently-viewed
 			dangerouslySetInnerHTML=""

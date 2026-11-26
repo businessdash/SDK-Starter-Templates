@@ -9,7 +9,7 @@ import * as schema from "./schema";
  * update.
  */
 const globalForDb = globalThis as unknown as {
-  conn: postgres.Sql | undefined;
+	conn: postgres.Sql | undefined;
 };
 
 /**
@@ -22,19 +22,19 @@ const globalForDb = globalThis as unknown as {
  * do — never at import/boot time.
  */
 function createDb(): PostgresJsDatabase<typeof schema> {
-  if (!env.DATABASE_URL) {
-    return new Proxy({} as PostgresJsDatabase<typeof schema>, {
-      get() {
-        throw new Error(
-          "DATABASE_URL is not set. The BD Web Content SDK needs no database; " +
-            "set DATABASE_URL only if you use this starter's example DB features.",
-        );
-      },
-    });
-  }
-  const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
-  if (env.NODE_ENV !== "production") globalForDb.conn = conn;
-  return drizzle(conn, { schema });
+	if (!env.DATABASE_URL) {
+		return new Proxy({} as PostgresJsDatabase<typeof schema>, {
+			get() {
+				throw new Error(
+					"DATABASE_URL is not set. The BD Web Content SDK needs no database; " +
+						"set DATABASE_URL only if you use this starter's example DB features.",
+				);
+			},
+		});
+	}
+	const conn = globalForDb.conn ?? postgres(env.DATABASE_URL);
+	if (env.NODE_ENV !== "production") globalForDb.conn = conn;
+	return drizzle(conn, { schema });
 }
 
 export const db = createDb();

@@ -10,7 +10,8 @@ import 'package:businessdash_sdk/forms.dart';
 import 'package:test/test.dart';
 
 final Map<String, BdJson> fixtures =
-    BdJson.parse(File('test/fixtures/quiz-parity.json').readAsStringSync()).objectValue!;
+    BdJson.parse(File('test/fixtures/quiz-parity.json').readAsStringSync())
+        .objectValue!;
 
 List<Map<String, BdJson>> cases(String key) {
   final list = [for (final c in fixtures[key]!.arrayValue!) c.objectValue!];
@@ -31,7 +32,9 @@ String? diff(BdJson? a, BdJson? b, [String path = r'$']) {
     return x == y || (x - y).abs() <= 1e-9 * scale ? null : '$path: $x ≠ $y';
   }
   if (a is BdArr && b is BdArr) {
-    if (a.items.length != b.items.length) return '$path: ${a.items.length} items ≠ ${b.items.length}';
+    if (a.items.length != b.items.length) {
+      return '$path: ${a.items.length} items ≠ ${b.items.length}';
+    }
     for (var i = 0; i < a.items.length; i++) {
       final d = diff(a.items[i], b.items[i], '$path[$i]');
       if (d != null) return d;
@@ -65,9 +68,11 @@ class _PageInvitation implements BdQuizInvitationPageInfo {
   @override
   String? get recipientName => j['recipientName']?.stringValue;
   @override
-  bool get requireAuthentication => j['requireAuthentication']?.boolValue == true;
+  bool get requireAuthentication =>
+      j['requireAuthentication']?.boolValue == true;
   @override
-  String get authenticationStatus => j['authenticationStatus']?.stringValue ?? 'not_required';
+  String get authenticationStatus =>
+      j['authenticationStatus']?.stringValue ?? 'not_required';
   @override
   String get recipientEmailHint => j['recipientEmailHint']?.stringValue ?? '';
   @override
@@ -97,12 +102,23 @@ void main() {
     expect(diff(json({'a': 1}), json({})), isNotNull);
     expect(diff(json({'a': 'x'}), json({'a': 'y'})), isNotNull);
     expect(diff(json([1, 2]), json([1])), isNotNull);
-    expect(diff(json({'a': {'b': true}}), json({'a': {'b': false}})), isNotNull);
+    expect(
+        diff(
+            json({
+              'a': {'b': true}
+            }),
+            json({
+              'a': {'b': false}
+            })),
+        isNotNull);
     expect(diff(json({'a': null}), json({})), isNull);
   });
 
   test('words', () {
-    final expected = {for (final e in fixtures['words']!.objectValue!.entries) e.key: e.value.stringValue};
+    final expected = {
+      for (final e in fixtures['words']!.objectValue!.entries)
+        e.key: e.value.stringValue
+    };
     expect(const BdQuizWords().toMap(), expected);
   });
 
@@ -111,7 +127,9 @@ void main() {
     for (final c in cases('seedHash')) {
       final text = c['text']!.stringValue!;
       final got = BdQuizArrange.seedHash(text);
-      if (got != c['hash']!.doubleValue!.toInt()) misses.add('hash("$text"): $got');
+      if (got != c['hash']!.doubleValue!.toInt()) {
+        misses.add('hash("$text"): $got');
+      }
     }
     expect(misses, isEmpty);
   });
@@ -121,9 +139,13 @@ void main() {
     for (final c in cases('seededOrder')) {
       final count = c['count']!.doubleValue!.toInt();
       final seed = c['seed']!.stringValue!;
-      final want = [for (final i in c['order']!.arrayValue!) i.doubleValue!.toInt()];
+      final want = [
+        for (final i in c['order']!.arrayValue!) i.doubleValue!.toInt()
+      ];
       final got = BdQuizArrange.seededOrder(count, seed);
-      if (got.join(',') != want.join(',')) misses.add('order($count, "$seed"): $got ≠ $want');
+      if (got.join(',') != want.join(',')) {
+        misses.add('order($count, "$seed"): $got ≠ $want');
+      }
     }
     expect(misses, isEmpty);
   });
@@ -133,7 +155,9 @@ void main() {
     for (final c in cases('durations')) {
       final seconds = c['seconds']!.doubleValue!;
       final got = BdQuizEngine.durationLabel(seconds);
-      if (got != c['label']!.stringValue) misses.add('duration($seconds): $got');
+      if (got != c['label']!.stringValue) {
+        misses.add('duration($seconds): $got');
+      }
     }
     expect(misses, isEmpty);
   });
@@ -142,7 +166,9 @@ void main() {
     final misses = <String>[];
     for (final c in cases('answerText')) {
       final got = BdQuizEngine.answerText(c['value']);
-      if (got != c['text']!.stringValue) misses.add('answerText(${c['value']}): "$got"');
+      if (got != c['text']!.stringValue) {
+        misses.add('answerText(${c['value']}): "$got"');
+      }
     }
     expect(misses, isEmpty);
   });
@@ -150,8 +176,13 @@ void main() {
   test('scoring', () {
     final misses = <String>[];
     for (final c in cases('scoring')) {
-      final fields = [for (final f in c['fields']!.arrayValue!) BdFormField.make(f)];
-      final score = BdQuizScoring.score(fields, c['answers']?.objectValue ?? const {}, c['passingScore']!.doubleValue!);
+      final fields = [
+        for (final f in c['fields']!.arrayValue!) BdFormField.make(f)
+      ];
+      final score = BdQuizScoring.score(
+          fields,
+          c['answers']?.objectValue ?? const {},
+          c['passingScore']!.doubleValue!);
       final d = diff(json(score.toJson()), c['score']);
       if (d != null) misses.add('scoring “${c['name']?.stringValue}”: $d');
     }
@@ -162,7 +193,10 @@ void main() {
     final misses = <String>[];
     for (final c in cases('scoring')) {
       final results = c['score']!['results']!;
-      final again = [for (final r in results.arrayValue!) BdQuizQuestionResult.fromJson(r).toJson()];
+      final again = [
+        for (final r in results.arrayValue!)
+          BdQuizQuestionResult.fromJson(r).toJson()
+      ];
       final d = diff(json(again), results);
       if (d != null) misses.add('round trip “${c['name']?.stringValue}”: $d');
     }
@@ -178,7 +212,9 @@ void main() {
       } else {
         final invitation = c['invitation'];
         page = BdQuizPage.invitation(
-          invitation == null || invitation.isNull ? null : _PageInvitation(invitation),
+          invitation == null || invitation.isNull
+              ? null
+              : _PageInvitation(invitation),
           signInHref: c['links']?['signInHref']?.stringValue,
           switchAccountHref: c['links']?['switchAccountHref']?.stringValue,
         );
@@ -193,15 +229,19 @@ void main() {
     final misses = <String>[];
     for (final run in cases('runs')) {
       final name = run['name']!.stringValue!;
-      final config = BdQuizConfig(BdQuizOptions.fromJson(run['options']!), run['seed']!.stringValue!);
-      final initial = run['initial'] == null ? const BdQuizInitial() : BdQuizInitial.fromJson(run['initial']!);
+      final config = BdQuizConfig(
+          BdQuizOptions.fromJson(run['options']!), run['seed']!.stringValue!);
+      final initial = run['initial'] == null
+          ? const BdQuizInitial()
+          : BdQuizInitial.fromJson(run['initial']!);
       final start = run['start']!.doubleValue!;
       var state = BdQuizEngine.initialState(config, initial, start);
       final views = run['views']!.arrayValue!;
       final states = run['states']!.arrayValue!;
 
       bool check(int i, double at) {
-        final v = diff(json(BdQuizEngine.screen(config, state, at).toJson()), views[i]);
+        final v = diff(
+            json(BdQuizEngine.screen(config, state, at).toJson()), views[i]);
         if (v != null) {
           misses.add('run “$name”, view $i: $v');
           return false;
@@ -219,18 +259,23 @@ void main() {
       for (var i = 0; i < events.length; i++) {
         final e = events[i];
         final at = e['at']!.doubleValue!;
-        BdQuizCompletion completion(Map<String, BdJson> answers) => e['completion'] != null
-            ? BdQuizCompletion.fromJson(e['completion']!)
-            : BdQuizEngine.localCompletion(config, state, answers, at);
+        BdQuizCompletion completion(Map<String, BdJson> answers) =>
+            e['completion'] != null
+                ? BdQuizCompletion.fromJson(e['completion']!)
+                : BdQuizEngine.localCompletion(config, state, answers, at);
         switch (e['do']!.stringValue!) {
           case 'answer':
-            state = BdQuizEngine.setAnswer(config, state, e['fieldId']!.stringValue!, e['value'] ?? const BdNull());
+            state = BdQuizEngine.setAnswer(config, state,
+                e['fieldId']!.stringValue!, e['value'] ?? const BdNull());
           case 'dontKnow':
-            state = BdQuizEngine.chooseDontKnow(config, state, e['fieldId']!.stringValue!);
+            state = BdQuizEngine.chooseDontKnow(
+                config, state, e['fieldId']!.stringValue!);
           case 'back':
             state = BdQuizEngine.back(config, state);
           case 'start':
-            final info = e['info'] != null ? BdQuizStartInfo.fromJson(e['info']!) : BdQuizEngine.localStart(config, at);
+            final info = e['info'] != null
+                ? BdQuizStartInfo.fromJson(e['info']!)
+                : BdQuizEngine.localStart(config, at);
             state = BdQuizEngine.started(state, info, at);
           case 'fail':
             state = BdQuizEngine.failed(state, e['message']!.stringValue!);
@@ -245,7 +290,8 @@ void main() {
                     ? BdQuizQuestionResult.fromJson(e['result']!)
                     : BdQuizEngine.localResult(config, fieldId, answer);
                 state = result != null
-                    ? BdQuizEngine.locked(config, state, fieldId, answer, result, at)
+                    ? BdQuizEngine.locked(
+                        config, state, fieldId, answer, result, at)
                     : BdQuizEngine.failed(state, config.words.unscorable);
               case BdQuizSubmit(:final answers):
                 state = BdQuizEngine.completed(state, completion(answers));

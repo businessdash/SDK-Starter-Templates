@@ -25,7 +25,8 @@ import 'ui/storefront_page.dart';
 ///       --dart-define=BD_FORM=contact   # optional: the Form tab's live form
 ///       --dart-define=BD_QUIZ=onboarding   # optional: the Quiz tab's practice quiz
 ///       --dart-define=BD_SITE_URL=https://…   # optional: a product's "Copy link"
-const _host = String.fromEnvironment('BD_HOST', defaultValue: 'https://businessdash.us');
+const _host =
+    String.fromEnvironment('BD_HOST', defaultValue: 'https://businessdash.us');
 const _siteId = String.fromEnvironment('BD_SITE_ID');
 const _publishableKey = String.fromEnvironment('BD_PK');
 const _form = String.fromEnvironment('BD_FORM');
@@ -39,7 +40,8 @@ Future<void> main() async {
   } on Exception {
     // No storage: the cart and saved lists last until the app closes.
   }
-  runApp(BdStarterApp(visitorToken: _visitorToken(prefs), state: AppState(prefs: prefs)));
+  runApp(BdStarterApp(
+      visitorToken: _visitorToken(prefs), state: AppState(prefs: prefs)));
 }
 
 /// A stable per-install id for the cart, kept on the device so a cart
@@ -49,13 +51,18 @@ String _visitorToken(SharedPreferences? prefs) {
   final kept = prefs?.getString(key);
   if (kept != null && kept.isNotEmpty) return kept;
   final random = Random.secure();
-  final token = List.generate(16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
+  final token = List.generate(
+      16, (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0')).join();
   prefs?.setString(key, token);
   return token;
 }
 
 class BdStarterApp extends StatelessWidget {
-  const BdStarterApp({super.key, required this.visitorToken, required this.state, this.client});
+  const BdStarterApp(
+      {super.key,
+      required this.visitorToken,
+      required this.state,
+      this.client});
 
   final String visitorToken;
   final AppState state;
@@ -72,8 +79,8 @@ class BdStarterApp extends StatelessWidget {
         ((_siteId.isEmpty || _publishableKey.isEmpty)
             ? null
             : BdClient(
-            host: Uri.parse(_host),
-            publishableKey: _publishableKey,
+                host: Uri.parse(_host),
+                publishableKey: _publishableKey,
                 siteId: _siteId,
               ));
 
@@ -84,7 +91,8 @@ class BdStarterApp extends StatelessWidget {
       // too.
       builder: (context, child) => AppScope(
         state: state,
-        child: BdScope(client: client, visitorToken: visitorToken, child: child!),
+        child:
+            BdScope(client: client, visitorToken: visitorToken, child: child!),
       ),
       home: const _Home(),
     );
@@ -109,7 +117,9 @@ class _HomeState extends State<_Home> {
     // The Cart tab's badge, from the cart this device already has.
     final scope = BdScope.of(context);
     final app = AppScope.read(context);
-    scope.client?.cart(scope.visitorToken).then(app.noteCart, onError: (Object _) {});
+    scope.client
+        ?.cart(scope.visitorToken)
+        .then(app.noteCart, onError: (Object _) {});
   }
 
   static Widget _page(AppTab tab) => switch (tab) {
@@ -117,9 +127,12 @@ class _HomeState extends State<_Home> {
         AppTab.cart => const CartPage(),
         AppTab.blog => const BlogTab(),
         AppTab.chat => const ChatPage(),
-        AppTab.form => const FormPage(host: _host, publishableKey: _publishableKey, form: _form),
-        AppTab.quiz => const QuizPage(host: _host, publishableKey: _publishableKey, quiz: _quiz),
-        AppTab.account => const AccountPage(host: _host, publishableKey: _publishableKey),
+        AppTab.form => const FormPage(
+            host: _host, publishableKey: _publishableKey, form: _form),
+        AppTab.quiz => const QuizPage(
+            host: _host, publishableKey: _publishableKey, quiz: _quiz),
+        AppTab.account =>
+          const AccountPage(host: _host, publishableKey: _publishableKey),
       };
 
   @override
@@ -149,7 +162,10 @@ class _HomeState extends State<_Home> {
               ),
             ),
           Expanded(
-            child: MediaQuery.removePadding(context: context, removeTop: !configured, child: _page(app.tab)),
+            child: MediaQuery.removePadding(
+                context: context,
+                removeTop: !configured,
+                child: _page(app.tab)),
           ),
         ],
       ),
@@ -159,16 +175,23 @@ class _HomeState extends State<_Home> {
         labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
         onDestinationSelected: (index) => app.tab = AppTab.values[index],
         destinations: [
-          const NavigationDestination(icon: Icon(Icons.storefront), label: 'Shop'),
+          const NavigationDestination(
+              icon: Icon(Icons.storefront), label: 'Shop'),
           NavigationDestination(
-            icon: Badge.count(count: inCart, isLabelVisible: inCart > 0, child: const Icon(Icons.shopping_cart)),
+            icon: Badge.count(
+                count: inCart,
+                isLabelVisible: inCart > 0,
+                child: const Icon(Icons.shopping_cart)),
             label: 'Cart',
           ),
           const NavigationDestination(icon: Icon(Icons.article), label: 'Blog'),
-          const NavigationDestination(icon: Icon(Icons.chat_bubble), label: 'Chat'),
-          const NavigationDestination(icon: Icon(Icons.assignment), label: 'Form'),
+          const NavigationDestination(
+              icon: Icon(Icons.chat_bubble), label: 'Chat'),
+          const NavigationDestination(
+              icon: Icon(Icons.assignment), label: 'Form'),
           const NavigationDestination(icon: Icon(Icons.quiz), label: 'Quiz'),
-          const NavigationDestination(icon: Icon(Icons.person), label: 'Account'),
+          const NavigationDestination(
+              icon: Icon(Icons.person), label: 'Account'),
         ],
       ),
     );

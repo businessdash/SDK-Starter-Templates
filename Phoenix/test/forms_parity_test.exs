@@ -55,13 +55,25 @@ defmodule BdStarter.FormsParityTest do
         functions = Formula.user_functions(c["functions"] || %{})
         r = Formula.run(c["src"], c["vars"] || %{}, functions)
         want = c["result"]
-        gave = fn -> case r, do: ({:ok, v} -> show(v); {:error, e} -> "error " <> e) end
+
+        gave = fn ->
+          case r,
+            do: (
+              {:ok, v} -> show(v)
+              {:error, e} -> "error " <> e
+            )
+        end
 
         cond do
           want["ok"] == true ->
             case r do
-              {:ok, v} -> if same?(v, untag(want["value"])), do: [], else: ["#{c["src"]} gave #{gave.()}, want #{show(untag(want["value"]))}"]
-              _ -> ["#{c["src"]} gave #{gave.()}, want #{show(untag(want["value"]))}"]
+              {:ok, v} ->
+                if same?(v, untag(want["value"])),
+                  do: [],
+                  else: ["#{c["src"]} gave #{gave.()}, want #{show(untag(want["value"]))}"]
+
+              _ ->
+                ["#{c["src"]} gave #{gave.()}, want #{show(untag(want["value"]))}"]
             end
 
           r == {:error, want["error"]} ->
@@ -91,7 +103,8 @@ defmodule BdStarter.FormsParityTest do
           data <- [if(Map.has_key?(c, "value"), do: %{"a" => c["value"]}, else: %{})],
           got <- [Rules.eval_condition_on(rule, data)],
           got != c["result"],
-          do: "#{Json.encode!(c["rule"])} on #{if Map.has_key?(c, "value"), do: Json.encode!(c["value"]), else: "missing"} gave #{got}"
+          do:
+            "#{Json.encode!(c["rule"])} on #{if Map.has_key?(c, "value"), do: Json.encode!(c["value"]), else: "missing"} gave #{got}"
 
     assert_none(failures)
   end
@@ -101,13 +114,18 @@ defmodule BdStarter.FormsParityTest do
       Enum.flat_map(cases("validation"), fn c ->
         field = Field.new(c["field"])
         value = c["value"]
-        label = "#{field.type} #{if Map.has_key?(c, "value"), do: Json.encode!(value), else: "missing"}"
+
+        label =
+          "#{field.type} #{if Map.has_key?(c, "value"), do: Json.encode!(value), else: "missing"}"
+
         empty = Rules.empty?(field, value)
         reason = Rules.validate_value(field, value)
 
         if(empty != c["empty"], do: ["isEmpty #{label}: want #{c["empty"]}"], else: []) ++
           if(reason != c["reason"],
-            do: ["validate #{label} #{Json.encode!(c["field"])}: gave #{inspect(reason)}, want #{inspect(c["reason"])}"],
+            do: [
+              "validate #{label} #{Json.encode!(c["field"])}: gave #{inspect(reason)}, want #{inspect(c["reason"])}"
+            ],
             else: []
           )
       end)
@@ -124,8 +142,14 @@ defmodule BdStarter.FormsParityTest do
         seed = Rules.seed_initial_data(fields)
         payload = Rules.to_submission_payload(fields, data)
 
-        if(missing != c["missing"], do: ["missing #{c["name"]}: gave #{inspect(missing)}, want #{inspect(c["missing"])}"], else: []) ++
-          if(not same?(seed, c["seed"]), do: ["seed #{c["name"]}: gave #{inspect(seed)}, want #{inspect(c["seed"])}"], else: []) ++
+        if(missing != c["missing"],
+          do: ["missing #{c["name"]}: gave #{inspect(missing)}, want #{inspect(c["missing"])}"],
+          else: []
+        ) ++
+          if(not same?(seed, c["seed"]),
+            do: ["seed #{c["name"]}: gave #{inspect(seed)}, want #{inspect(c["seed"])}"],
+            else: []
+          ) ++
           if(not same?(payload, c["payload"]),
             do: ["payload #{c["name"]}: gave #{inspect(payload)}, want #{inspect(c["payload"])}"],
             else: []
@@ -143,8 +167,14 @@ defmodule BdStarter.FormsParityTest do
         back = if base == nil, do: nil, else: Units.from_base(base, c["unit"], category)
         formatted = Units.format(c["value"], c["unit"], category)
 
-        if(not same?(base, c["base"]), do: ["base #{c["value"]} #{c["unit"]}: gave #{show(base)}"], else: []) ++
-          if(not same?(back, c["back"]), do: ["back #{c["value"]} #{c["unit"]}: gave #{show(back)}"], else: []) ++
+        if(not same?(base, c["base"]),
+          do: ["base #{c["value"]} #{c["unit"]}: gave #{show(base)}"],
+          else: []
+        ) ++
+          if(not same?(back, c["back"]),
+            do: ["back #{c["value"]} #{c["unit"]}: gave #{show(back)}"],
+            else: []
+          ) ++
           if(formatted != c["formatted"],
             do: ["format #{c["value"]} #{c["unit"]}: gave #{formatted}, want #{c["formatted"]}"],
             else: []
@@ -166,8 +196,14 @@ defmodule BdStarter.FormsParityTest do
         label = Json.encode!(c["config"])
 
         if(r.ok != want["ok"], do: ["ok #{label}"], else: []) ++
-          if(not same?(r.value, want["value"]), do: ["value #{label}: gave #{show(r.value)}"], else: []) ++
-          if(r.error != want["error"], do: ["error #{label}: gave #{inspect(r.error)}, want #{inspect(want["error"])}"], else: []) ++
+          if(not same?(r.value, want["value"]),
+            do: ["value #{label}: gave #{show(r.value)}"],
+            else: []
+          ) ++
+          if(r.error != want["error"],
+            do: ["error #{label}: gave #{inspect(r.error)}, want #{inspect(want["error"])}"],
+            else: []
+          ) ++
           if(Map.has_key?(want, "outputs") and not same?(r.outputs, want["outputs"]),
             do: ["outputs #{label}: gave #{show(r.outputs)}"],
             else: []
@@ -186,8 +222,14 @@ defmodule BdStarter.FormsParityTest do
         issues = Enum.map(want["issues"], fn i -> "#{i["scope"]}/#{i["key"]}: #{i["reason"]}" end)
 
         if(r.ok != want["ok"], do: ["ok #{label}"], else: []) ++
-          if(not same?(r.outputs, want["outputs"]), do: ["outputs #{label}: gave #{inspect(r.outputs)}"], else: []) ++
-          if(r.issues != issues, do: ["issues #{label}: gave #{inspect(r.issues)}, want #{inspect(issues)}"], else: [])
+          if(not same?(r.outputs, want["outputs"]),
+            do: ["outputs #{label}: gave #{inspect(r.outputs)}"],
+            else: []
+          ) ++
+          if(r.issues != issues,
+            do: ["issues #{label}: gave #{inspect(r.issues)}, want #{inspect(issues)}"],
+            else: []
+          )
       end)
 
     assert_none(failures)
@@ -199,7 +241,8 @@ defmodule BdStarter.FormsParityTest do
           display <- [if(Field.fits?(c["display"], Field.display_spec()), do: c["display"])],
           got <- [Calculation.format(c["value"], display)],
           got != c["output"],
-          do: "#{inspect(c["value"])} #{Json.encode!(c["display"])}: gave #{got}, want #{c["output"]}"
+          do:
+            "#{inspect(c["value"])} #{Json.encode!(c["display"])}: gave #{got}, want #{c["output"]}"
 
     assert_none(failures)
   end

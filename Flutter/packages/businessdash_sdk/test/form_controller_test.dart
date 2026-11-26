@@ -16,16 +16,19 @@ BdJson str(String s) => BdStr(s);
 /// A backend that records what it was sent and answers from a script.
 class MockBackend implements BdFormsBackend {
   MockBackend(String fields, [String settings = '{}'])
-      : schemaJson = '{"id":"form_1","slug":"contact","name":"Contact","fields":$fields,"settings":$settings,"actions":[]}';
+      : schemaJson =
+            '{"id":"form_1","slug":"contact","name":"Contact","fields":$fields,"settings":$settings,"actions":[]}';
 
   final String schemaJson;
-  (int, Map<String, BdJson>) submitAnswer = (201, {'submissionId': const BdStr('sub_1')});
+  (int, Map<String, BdJson>) submitAnswer =
+      (201, {'submissionId': const BdStr('sub_1')});
   final submissions = <BdSubmission>[];
   final uploads = <String>[];
   var failUploads = false;
   BdFormsException? schemaError;
 
-  Map<String, BdJson> get lastData => submissions.isEmpty ? const {} : submissions.last.data;
+  Map<String, BdJson> get lastData =>
+      submissions.isEmpty ? const {} : submissions.last.data;
 
   @override
   Future<BdFormSchema> schema(String form) async {
@@ -38,14 +41,20 @@ class MockBackend implements BdFormsBackend {
     submissions.add(submission);
     final (status, body) = submitAnswer;
     if (status >= 200 && status < 300) {
-      return BdSubmitSuccess(status: status, submissionId: body['submissionId']?.stringValue, body: body);
+      return BdSubmitSuccess(
+          status: status,
+          submissionId: body['submissionId']?.stringValue,
+          body: body);
     }
     return BdPackageFormsBackend.failure(status, body);
   }
 
   @override
-  Future<BdUploadedFile> upload(String form, String fieldId, BdPickedFile file) async {
-    if (failUploads) throw const BdFormsException('Upload failed.', status: 500);
+  Future<BdUploadedFile> upload(
+      String form, String fieldId, BdPickedFile file) async {
+    if (failUploads) {
+      throw const BdFormsException('Upload failed.', status: 500);
+    }
     uploads.add(file.name);
     return BdUploadedFile(
       storageId: 's/${file.name}',
@@ -57,11 +66,13 @@ class MockBackend implements BdFormsBackend {
   }
 
   @override
-  Future<List<String>> scheduleSlots(String form, String fieldId, int fromMs, int toMs) async =>
+  Future<List<String>> scheduleSlots(
+          String form, String fieldId, int fromMs, int toMs) async =>
       ['2026-11-24T15:00:00Z', '2026-11-24T16:00:00Z', '2026-11-25T15:00:00Z'];
 
   @override
-  Future<BdPaymentIntent> paymentIntent(String form, String fieldId) async => const BdPaymentIntent(
+  Future<BdPaymentIntent> paymentIntent(String form, String fieldId) async =>
+      const BdPaymentIntent(
         mode: 'card_on_file',
         clientSecret: 'cs',
         intentId: 'seti_1',
@@ -70,9 +81,13 @@ class MockBackend implements BdFormsBackend {
       );
 
   @override
-  Future<List<BdCollectionOption>> collectionOptions(String form, String fieldId) async => const [
-        BdCollectionOption(value: 'r1', label: 'Gold', match: {'tier': 'premium'}),
-        BdCollectionOption(value: 'r2', label: 'Basic', match: {'tier': 'standard'}),
+  Future<List<BdCollectionOption>> collectionOptions(
+          String form, String fieldId) async =>
+      const [
+        BdCollectionOption(
+            value: 'r1', label: 'Gold', match: {'tier': 'premium'}),
+        BdCollectionOption(
+            value: 'r2', label: 'Basic', match: {'tier': 'standard'}),
       ];
 }
 
@@ -88,7 +103,8 @@ BdPickedFile file(String name, String type, List<int> bytes) =>
 void main() {
   group('controller', () {
     test('loads and submits with output keys', () async {
-      final b = MockBackend('''[{"id":"f1","type":"text","label":"Your name","required":true,"key":"full_name"},
+      final b = MockBackend(
+          '''[{"id":"f1","type":"text","label":"Your name","required":true,"key":"full_name"},
           {"id":"f2","type":"email","label":"Email","required":true},
           {"id":"t","type":"title","label":"Hello"}]''');
       final c = await loaded(b);
@@ -117,20 +133,25 @@ void main() {
       expect(c.state.errorScrollToken, greaterThan(0));
     });
 
-    test('blur shows format problems, but required only once attempted', () async {
-      final c = await loaded(MockBackend('[{"id":"email","type":"email","label":"Email","required":true}]'));
+    test('blur shows format problems, but required only once attempted',
+        () async {
+      final c = await loaded(MockBackend(
+          '[{"id":"email","type":"email","label":"Email","required":true}]'));
       c.validate(const BdFieldPath('email'));
-      expect(c.error('email'), isNull, reason: 'an untouched required field stays quiet on blur');
+      expect(c.error('email'), isNull,
+          reason: 'an untouched required field stays quiet on blur');
       c.setValue(str('bad'), 'email');
       c.validate(const BdFieldPath('email'));
       expect(c.error('email'), 'Enter a valid email address.');
       c.setValue(str('good@example.com'), 'email');
-      expect(c.error('email'), isNull, reason: 'fixing the value clears the error as they type');
+      expect(c.error('email'), isNull,
+          reason: 'fixing the value clears the error as they type');
     });
 
     test('business email rule', () async {
       final c = await loaded(
-        MockBackend('[{"id":"email","type":"email","label":"Work email","emailConfig":{"businessOnly":true}}]'),
+        MockBackend(
+            '[{"id":"email","type":"email","label":"Work email","emailConfig":{"businessOnly":true}}]'),
       );
       c.setValue(str('someone@gmail.com'), 'email');
       c.validate(const BdFieldPath('email'));
@@ -147,7 +168,8 @@ void main() {
         '{"isConsecutive":true}',
       );
       final c = await loaded(b);
-      expect(c.stepCount, 2, reason: 'the business page is hidden until chosen');
+      expect(c.stepCount, 2,
+          reason: 'the business page is hidden until chosen');
       expect(c.next(), isFalse);
       expect(c.error('kind'), 'Kind is required.');
       c.setValue(str('Business'), 'kind');
@@ -160,7 +182,8 @@ void main() {
       expect(c.errors, isEmpty);
       c.setValue(str('Home'), 'kind');
       expect(c.stepCount, 2);
-      expect((await c.submit()).isSuccess, isTrue, reason: "a hidden required field doesn't block");
+      expect((await c.submit()).isSuccess, isTrue,
+          reason: "a hidden required field doesn't block");
     });
 
     test('repeater errors land on the entry field', () async {
@@ -175,8 +198,10 @@ void main() {
       c.addEntry(kids);
       c.setValueAt(const BdNum(30), BdFieldPath('kage', kids.entry(1)));
       await c.submit();
-      expect(c.errorAt(BdFieldPath('kname', kids.entry(1))), 'Name is required.');
-      expect(c.errorAt(BdFieldPath('kage', kids.entry(1))), 'Enter 17 or less.');
+      expect(
+          c.errorAt(BdFieldPath('kname', kids.entry(1))), 'Name is required.');
+      expect(
+          c.errorAt(BdFieldPath('kage', kids.entry(1))), 'Enter 17 or less.');
       expect(c.errors['kids[1].kage'], isNotNull);
       c.removeEntry(1, kids);
       expect(c.entries(kids).length, 1);
@@ -195,7 +220,8 @@ void main() {
       c.setValue(const BdNum(2.5), 'price');
       expect(c.value('total'), const BdNum(7.5));
       c.setValue(null, 'qty');
-      expect(c.value('total'), const BdNull(), reason: 'a missing input leaves the result empty');
+      expect(c.value('total'), const BdNull(),
+          reason: 'a missing input leaves the result empty');
     });
 
     test('files upload on submit and swap their placeholders', () async {
@@ -204,34 +230,46 @@ void main() {
             {"id":"pic","type":"image_input","label":"Photo"}]''',
       );
       final c = await loaded(b);
-      c.addFiles([file('a.pdf', 'application/pdf', List.filled(10, 1)), file('b.png', 'image/png', List.filled(10, 2))],
-          const BdFieldPath('docs'));
-      expect(c.value('docs')?.arrayValue?.length, 1, reason: "the png isn't an allowed type");
+      c.addFiles([
+        file('a.pdf', 'application/pdf', List.filled(10, 1)),
+        file('b.png', 'image/png', List.filled(10, 2))
+      ], const BdFieldPath('docs'));
+      expect(c.value('docs')?.arrayValue?.length, 1,
+          reason: "the png isn't an allowed type");
       expect(c.error('docs'), 'File type not allowed: image/png');
-      c.setImage(file('me.heic', 'image/heic', [255]), const BdFieldPath('pic'));
+      c.setImage(
+          file('me.heic', 'image/heic', [255]), const BdFieldPath('pic'));
       expect(BdFormRules.isPendingUpload(c.value('pic')), isTrue);
       expect((await c.submit()).isSuccess, isTrue);
       expect([...b.uploads]..sort(), ['a.pdf', 'me.heic']);
-      expect(b.lastData['docs']?.arrayValue?.first['url'], str('https://cdn.example.com/a.pdf'));
+      expect(b.lastData['docs']?.arrayValue?.first['url'],
+          str('https://cdn.example.com/a.pdf'));
       expect(b.lastData['pic'], str('https://cdn.example.com/me.heic'));
     });
 
     test('a failed upload keeps the form open', () async {
-      final b = MockBackend('[{"id":"docs","type":"file_upload","label":"Docs"}]')..failUploads = true;
+      final b =
+          MockBackend('[{"id":"docs","type":"file_upload","label":"Docs"}]')
+            ..failUploads = true;
       final c = await loaded(b);
-      c.addFiles([file('x.txt', 'text/plain', [1])], const BdFieldPath('docs'));
+      c.addFiles([
+        file('x.txt', 'text/plain', [1])
+      ], const BdFieldPath('docs'));
       final f = await c.submit() as BdSubmitFailure;
       expect(f.reason, BdSubmitFailureReason.networkError);
       expect(c.error('docs'), 'Upload failed.');
       expect(b.submissions, isEmpty);
-      expect(BdFormRules.isPendingUpload(c.value('docs')?.arrayValue?.firstOrNull), isTrue,
+      expect(
+          BdFormRules.isPendingUpload(c.value('docs')?.arrayValue?.firstOrNull),
+          isTrue,
           reason: 'the file is still there to retry');
       expect(c.state.isSubmitting, isFalse);
       expect(c.state.uploadingCount, 0);
     });
 
     test('server issues map back to fields', () async {
-      final b = MockBackend('[{"id":"f1","type":"text","label":"Code","key":"promo"}]')
+      final b = MockBackend(
+          '[{"id":"f1","type":"text","label":"Code","key":"promo"}]')
         ..submitAnswer = (
           422,
           json('{"error":"validation_failed","message":"Bad","issues":[{"id":"promo","label":"Code","reason":"regex"}]}')
@@ -250,12 +288,15 @@ void main() {
       expect(reason(401), BdSubmitFailureReason.unauthorized);
       expect(reason(403), BdSubmitFailureReason.forbidden);
       expect(reason(402), BdSubmitFailureReason.planRequired);
-      expect(reason(402, '{"reason":"payment_required"}'), BdSubmitFailureReason.paymentRequired);
-      expect(reason(402, '{"reason":"service_suspended"}'), BdSubmitFailureReason.serviceSuspended);
+      expect(reason(402, '{"reason":"payment_required"}'),
+          BdSubmitFailureReason.paymentRequired);
+      expect(reason(402, '{"reason":"service_suspended"}'),
+          BdSubmitFailureReason.serviceSuspended);
       expect(reason(429), BdSubmitFailureReason.rateLimited);
       expect(reason(404), BdSubmitFailureReason.notFound);
       expect(reason(400), BdSubmitFailureReason.invalidRequest);
-      expect(reason(400, '{"error":"validation_failed"}'), BdSubmitFailureReason.validationFailed);
+      expect(reason(400, '{"error":"validation_failed"}'),
+          BdSubmitFailureReason.validationFailed);
       expect(reason(500), BdSubmitFailureReason.serverError);
     });
 
@@ -277,7 +318,8 @@ void main() {
     });
 
     test('the payment handler stores the intent', () async {
-      final c = await loaded(MockBackend('[{"id":"card","type":"credit_card","label":"Card","required":true}]'));
+      final c = await loaded(MockBackend(
+          '[{"id":"card","type":"credit_card","label":"Card","required":true}]'));
       await c.collectPayment(const BdFieldPath('card'));
       expect(c.error('card'), "Card entry isn't set up in this app.");
       c.paymentHandler = (intent, _) async => intent.intentId;
@@ -287,21 +329,25 @@ void main() {
     });
 
     test('date range order', () async {
-      final c = await loaded(MockBackend('[{"id":"trip","type":"date_range","label":"Trip"}]'));
+      final c = await loaded(
+          MockBackend('[{"id":"trip","type":"date_range","label":"Trip"}]'));
       c.setValue(json('{"start":"2026-12-10","end":"2026-12-01"}'), 'trip');
       c.validate(const BdFieldPath('trip'));
       expect(c.error('trip'), 'The end must come after the start.');
     });
 
     test('custom messages', () async {
-      final c = await loaded(MockBackend('[{"id":"n","type":"text","label":"Nom","required":true}]'));
-      c.messages = (reason, label, _) => reason == 'required' ? '$label est obligatoire.' : reason;
+      final c = await loaded(MockBackend(
+          '[{"id":"n","type":"text","label":"Nom","required":true}]'));
+      c.messages = (reason, label, _) =>
+          reason == 'required' ? '$label est obligatoire.' : reason;
       await c.submit();
       expect(c.error('n'), 'Nom est obligatoire.');
     });
 
     test('reset restores the seed, and dirty tracks edits', () async {
-      final c = await loaded(MockBackend('[{"id":"n","type":"text","label":"N","defaultValue":"hi"}]'));
+      final c = await loaded(MockBackend(
+          '[{"id":"n","type":"text","label":"N","defaultValue":"hi"}]'));
       expect(c.isDirty, isFalse);
       c.setValue(str('changed'), 'n');
       expect(c.isDirty, isTrue);
@@ -312,21 +358,24 @@ void main() {
 
     test('schedule slots load', () async {
       final c = await loaded(
-        MockBackend('[{"id":"when","type":"schedule","label":"When","scheduleConfig":{"mode":"auto"}}]'),
+        MockBackend(
+            '[{"id":"when","type":"schedule","label":"When","scheduleConfig":{"mode":"auto"}}]'),
       );
       await c.loadScheduleSlots('when');
       expect(c.state.scheduleSlots['when']?.valueOrNull?.length, 3);
     });
 
     test('a load failure is a phase, not a throw', () async {
-      final b = MockBackend('[]')..schemaError = const BdFormsException('Form not found.', status: 404);
+      final b = MockBackend('[]')
+        ..schemaError = const BdFormsException('Form not found.', status: 404);
       final c = BdFormController('missing', backend: b);
       await c.load();
       expect((c.phase as BdPhaseFailed).message, 'Form not found.');
     });
 
     test('listeners hear every change', () async {
-      final c = await loaded(MockBackend('[{"id":"n","type":"text","label":"N"}]'));
+      final c =
+          await loaded(MockBackend('[{"id":"n","type":"text","label":"N"}]'));
       var calls = 0;
       void listener() => calls++;
       c.addListener(listener);
@@ -342,7 +391,8 @@ void main() {
   group('package backend', () {
     final seen = <http.Request>[];
 
-    BdPackageFormsBackend backend(Future<http.Response> Function(http.Request) handler) {
+    BdPackageFormsBackend backend(
+        Future<http.Response> Function(http.Request) handler) {
       seen.clear();
       return BdPackageFormsBackend(
         publishableKey: 'pk_test_123',
@@ -355,24 +405,29 @@ void main() {
     }
 
     http.Response ok(String body, [int status = 200]) =>
-        http.Response(body, status, headers: {'content-type': 'application/json'});
+        http.Response(body, status,
+            headers: {'content-type': 'application/json'});
 
     test('refuses a secret key', () {
       // Real secret keys are bd_…; sk_ stays to prove it's an allowlist.
-      expect(() => BdPackageFormsBackend(publishableKey: 'bd_3ZxQf9'), throwsArgumentError);
-      expect(() => BdPackageFormsBackend(publishableKey: 'sk_live_oops'), throwsArgumentError);
+      expect(() => BdPackageFormsBackend(publishableKey: 'bd_3ZxQf9'),
+          throwsArgumentError);
+      expect(() => BdPackageFormsBackend(publishableKey: 'sk_live_oops'),
+          throwsArgumentError);
     });
 
     test('fetches the schema with the publishable key', () async {
       final b = backend(
-        (_) async => ok('{"id":"f","slug":"contact form","name":"Contact","fields":[{"id":"a","type":"text","label":"A"}]}'),
+        (_) async => ok(
+            '{"id":"f","slug":"contact form","name":"Contact","fields":[{"id":"a","type":"text","label":"A"}]}'),
       );
       final schema = await b.schema('contact form');
       expect(schema.title, 'Contact');
       expect(schema.fields.length, 1);
       final req = seen.single;
       // The slug is one path segment, encoded, under the apex /api/package/v1.
-      expect(req.url.toString(), 'https://bd.test/api/package/v1/forms/contact%20form');
+      expect(req.url.toString(),
+          'https://bd.test/api/package/v1/forms/contact%20form');
       expect(req.headers['Authorization'], 'Bearer pk_test_123');
       expect(req.headers['X-BD-Client'], 'dart-forms/1');
     });
@@ -381,13 +436,19 @@ void main() {
       final b = backend((_) async => ok('{"message":"Form not found."}', 404));
       await expectLater(
         b.schema('nope'),
-        throwsA(isA<BdFormsException>().having((e) => e.status, 'status', 404).having((e) => e.message, 'message', 'Form not found.')),
+        throwsA(isA<BdFormsException>()
+            .having((e) => e.status, 'status', 404)
+            .having((e) => e.message, 'message', 'Form not found.')),
       );
     });
 
     test('submits the body and reads the submission id', () async {
-      final b = backend((_) async => ok('{"submissionId":"sub_9","dryRun":false}', 201));
-      final r = await b.submit('contact', const BdSubmission(data: {'email': BdStr('a@b.co')}, source: 'flutter-app'));
+      final b = backend(
+          (_) async => ok('{"submissionId":"sub_9","dryRun":false}', 201));
+      final r = await b.submit(
+          'contact',
+          const BdSubmission(
+              data: {'email': BdStr('a@b.co')}, source: 'flutter-app'));
       expect((r as BdSubmitSuccess).submissionId, 'sub_9');
       final req = seen.single;
       expect(req.method, 'POST');
@@ -402,7 +463,8 @@ void main() {
           422,
         ),
       );
-      final f = await b.submit('contact', const BdSubmission(data: {})) as BdSubmitFailure;
+      final f = await b.submit('contact', const BdSubmission(data: {}))
+          as BdSubmitFailure;
       expect(f.reason, BdSubmitFailureReason.validationFailed);
       expect(f.message, 'Fix it');
       expect(f.issues.single.reason, 'format');
@@ -410,7 +472,8 @@ void main() {
 
     test('an unreachable server is a network failure, not a throw', () async {
       final b = backend((_) async => throw http.ClientException('offline'));
-      final f = await b.submit('contact', const BdSubmission(data: {})) as BdSubmitFailure;
+      final f = await b.submit('contact', const BdSubmission(data: {}))
+          as BdSubmitFailure;
       expect(f.reason, BdSubmitFailureReason.networkError);
       expect(f.status, 0);
     });
@@ -418,30 +481,39 @@ void main() {
     test('uploads through the presigned URL without the key', () async {
       final b = backend((req) async {
         if (req.url.host == 'bd.test') {
-          return ok('{"uploadUrl":"https://storage.test/put/1","storageId":"s1","publicUrl":"https://cdn.test/1"}');
+          return ok(
+              '{"uploadUrl":"https://storage.test/put/1","storageId":"s1","publicUrl":"https://cdn.test/1"}');
         }
         return http.Response('', 200);
       });
-      final stored = await b.upload('contact', 'docs', file('a.txt', 'text/plain', utf8.encode('hello')));
+      final stored = await b.upload(
+          'contact', 'docs', file('a.txt', 'text/plain', utf8.encode('hello')));
       expect(stored.url, 'https://cdn.test/1');
       expect(stored.size, 5);
       final [presign, put] = seen;
-      expect(presign.url.toString(), 'https://bd.test/api/package/v1/forms/contact/upload-url');
-      expect(presign.body, '{"fieldId":"docs","filename":"a.txt","contentType":"text/plain","sizeBytes":5}');
+      expect(presign.url.toString(),
+          'https://bd.test/api/package/v1/forms/contact/upload-url');
+      expect(presign.body,
+          '{"fieldId":"docs","filename":"a.txt","contentType":"text/plain","sizeBytes":5}');
       expect(put.method, 'PUT');
-      expect(put.headers['Authorization'], isNull, reason: 'the presigned URL carries its own authorization');
+      expect(put.headers['Authorization'], isNull,
+          reason: 'the presigned URL carries its own authorization');
       expect(put.body, 'hello');
     });
 
     test('reads collection options and slots', () async {
       final b = backend((req) async {
         if (req.url.path.endsWith('collection-options')) {
-          return ok('{"options":[{"value":"r1","label":"Gold","match":{"tier":"premium"}}]}');
+          return ok(
+              '{"options":[{"value":"r1","label":"Gold","match":{"tier":"premium"}}]}');
         }
         return ok('{"slots":[{"startAt":"2026-11-24T15:00:00Z"}]}');
       });
-      expect((await b.collectionOptions('contact', 'plan')).single.match?['tier'], 'premium');
-      expect(await b.scheduleSlots('contact', 'when', 0, 86400000), ['2026-11-24T15:00:00Z']);
+      expect(
+          (await b.collectionOptions('contact', 'plan')).single.match?['tier'],
+          'premium');
+      expect(await b.scheduleSlots('contact', 'when', 0, 86400000),
+          ['2026-11-24T15:00:00Z']);
       expect(seen[0].url.queryParameters['fieldId'], 'plan');
       expect(seen[1].url.queryParameters['to'], '1970-01-02T00:00:00.000Z');
     });

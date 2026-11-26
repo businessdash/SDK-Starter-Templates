@@ -11,7 +11,17 @@ defmodule BdStarter.Forms.QuizEngine do
   `{:submit, state, answers}`; one that doesn't as `{:none, state}`.
   """
 
-  alias BdStarter.Forms.{Dates, Js, Json, QuizArrange, QuizConfig, QuizScoring, QuizState, QuizWords, Rules}
+  alias BdStarter.Forms.{
+    Dates,
+    Js,
+    Json,
+    QuizArrange,
+    QuizConfig,
+    QuizScoring,
+    QuizState,
+    QuizWords,
+    Rules
+  }
 
   @doc "Epoch ms from BD's number or ISO 8601 instant."
   def timestamp(value) do
@@ -20,7 +30,10 @@ defmodule BdStarter.Forms.QuizEngine do
         if Js.finite?(value), do: Js.f(value)
 
       is_binary(value) and
-          Regex.match?(~r/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})\z/, value) ->
+          Regex.match?(
+            ~r/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})\z/,
+            value
+          ) ->
         case Dates.parse_instant(value) do
           nil -> nil
           ms -> Float.round(ms * 1.0)
@@ -68,7 +81,8 @@ defmodule BdStarter.Forms.QuizEngine do
   defp empty_answer(field), do: if(QuizArrange.multi_select?(field), do: [], else: "")
 
   def set_answer(config, state, field_id, value) do
-    if busy?(state) or locked?(config, state, field_id) or QuizConfig.question(config, field_id) == nil do
+    if busy?(state) or locked?(config, state, field_id) or
+         QuizConfig.question(config, field_id) == nil do
       state
     else
       %{
@@ -87,7 +101,8 @@ defmodule BdStarter.Forms.QuizEngine do
   def choose_dont_know(config, state, field_id) do
     field = QuizConfig.question(config, field_id)
 
-    if field == nil or not offers_dont_know?(config, field) or busy?(state) or locked?(config, state, field_id) do
+    if field == nil or not offers_dont_know?(config, field) or busy?(state) or
+         locked?(config, state, field_id) do
       state
     else
       %{
@@ -102,7 +117,9 @@ defmodule BdStarter.Forms.QuizEngine do
 
   @doc "field id → message, for each required question without an answer."
   def missing(config, state, fields) do
-    for field <- fields, field.required and Rules.empty?(field, Map.get(state.answers, field.id)), into: %{} do
+    for field <- fields,
+        field.required and Rules.empty?(field, Map.get(state.answers, field.id)),
+        into: %{} do
       label = if field.label == "", do: "This question", else: field.label
       {field.id, QuizWords.fill(config.words.required, label: label)}
     end
@@ -147,7 +164,9 @@ defmodule BdStarter.Forms.QuizEngine do
           _ ->
             next = %{state | pending: "lock", error: nil, field_errors: %{}}
             answer = Map.get(state.answers, question.id)
-            {:lock, next, question.id, if(answer == nil, do: empty_answer(question), else: answer)}
+
+            {:lock, next, question.id,
+             if(answer == nil, do: empty_answer(question), else: answer)}
         end
     end
   end
@@ -169,9 +188,10 @@ defmodule BdStarter.Forms.QuizEngine do
   end
 
   def back(config, state) do
-    if busy?(state) or config.feedback_mode != "end" or config.layout != "single" or state.index <= 0,
-      do: state,
-      else: %{state | index: state.index - 1, field_errors: %{}, error: nil}
+    if busy?(state) or config.feedback_mode != "end" or config.layout != "single" or
+         state.index <= 0,
+       do: state,
+       else: %{state | index: state.index - 1, field_errors: %{}, error: nil}
   end
 
   @doc "`info`: `%{started_at:, deadline_at:, server_now:}`."
@@ -190,7 +210,8 @@ defmodule BdStarter.Forms.QuizEngine do
   def local_start(config, now) do
     %{
       started_at: now,
-      deadline_at: if(config.time_limit_minutes != nil, do: now + config.time_limit_minutes * 60_000.0),
+      deadline_at:
+        if(config.time_limit_minutes != nil, do: now + config.time_limit_minutes * 60_000.0),
       server_now: now
     }
   end
@@ -218,7 +239,8 @@ defmodule BdStarter.Forms.QuizEngine do
     }
   end
 
-  def completed(state, completion), do: %{state | pending: nil, error: nil, completion: completion}
+  def completed(state, completion),
+    do: %{state | pending: nil, error: nil, completion: completion}
 
   def failed(state, message), do: %{state | pending: nil, error: message}
 
@@ -228,7 +250,9 @@ defmodule BdStarter.Forms.QuizEngine do
 
     {
       state.deadline_at != nil and clock >= state.deadline_at + state.paused_ms,
-      if(state.started_at != nil, do: max(0.0, Float.floor((clock - state.started_at) / 1000 + 0.5)))
+      if(state.started_at != nil,
+        do: max(0.0, Float.floor((clock - state.started_at) / 1000 + 0.5))
+      )
     }
   end
 
@@ -244,8 +268,14 @@ defmodule BdStarter.Forms.QuizEngine do
 
   def local_result(config, field_id, answer) do
     case QuizConfig.question(config, field_id) do
-      nil -> nil
-      field -> [field] |> QuizScoring.score(%{field_id => answer}, config.passing_score) |> Map.get("results") |> List.first()
+      nil ->
+        nil
+
+      field ->
+        [field]
+        |> QuizScoring.score(%{field_id => answer}, config.passing_score)
+        |> Map.get("results")
+        |> List.first()
     end
   end
 
@@ -267,7 +297,8 @@ defmodule BdStarter.Forms.QuizEngine do
   def deadline_passed?(config, state, now) do
     deadline = effective_deadline(config, state, now)
 
-    deadline != nil and clock(state, now) >= deadline and state.completion == nil and state.pending == nil and
+    deadline != nil and clock(state, now) >= deadline and state.completion == nil and
+      state.pending == nil and
       not state.time_up
   end
 
@@ -291,7 +322,10 @@ defmodule BdStarter.Forms.QuizEngine do
   def answer_text(value, words \\ %QuizWords{})
 
   def answer_text([], words), do: words.no_answer
-  def answer_text(value, words) when is_list(value), do: Enum.map_join(value, ", ", &answer_text(&1, words))
+
+  def answer_text(value, words) when is_list(value),
+    do: Enum.map_join(value, ", ", &answer_text(&1, words))
+
   def answer_text(value, words) when value in [nil, ""], do: words.no_answer
   def answer_text(true, words), do: words.yes
   def answer_text(false, words), do: words.no
@@ -345,7 +379,8 @@ defmodule BdStarter.Forms.QuizEngine do
     rationale = result["rationale"]
 
     picked =
-      for o <- Json.list(Json.get(rationale, "selectedOptions")) || [], is_binary(o["explanation"]),
+      for o <- Json.list(Json.get(rationale, "selectedOptions")) || [],
+          is_binary(o["explanation"]),
           do: %{option: o["option"], explanation: o["explanation"]}
 
     others =
@@ -385,13 +420,19 @@ defmodule BdStarter.Forms.QuizEngine do
           # Against the time allowed, not the stretched deadline: a local
           # run's pauses push the deadline out, and the bar holds still.
           allowed = (state.deadline_at || state.started_at) - state.started_at
-          {seconds, if(allowed > 0, do: (deadline - clock) / allowed * 100 |> min(100.0) |> max(0.0), else: 0.0)}
+
+          {seconds,
+           if(allowed > 0,
+             do: ((deadline - clock) / allowed * 100) |> min(100.0) |> max(0.0),
+             else: 0.0
+           )}
         else
           {max(0, Kernel.trunc(Float.floor((clock - state.started_at) / 1000))), nil}
         end
 
       %{
-        label: if(deadline != nil, do: config.words.time_remaining, else: config.words.elapsed_time),
+        label:
+          if(deadline != nil, do: config.words.time_remaining, else: config.words.elapsed_time),
         value: duration_label(seconds),
         seconds: seconds,
         countdown: deadline != nil,
@@ -478,7 +519,12 @@ defmodule BdStarter.Forms.QuizEngine do
 
     cond do
       not config.show_score ->
-        %{kind: "submitted", eyebrow: w.submitted_eyebrow, title: w.submitted_title, body: w.submitted_body}
+        %{
+          kind: "submitted",
+          eyebrow: w.submitted_eyebrow,
+          title: w.submitted_title,
+          body: w.submitted_body
+        }
 
       config.results_locked ->
         %{kind: "locked", eyebrow: w.locked_eyebrow, title: w.locked_title, body: w.locked_body}
@@ -487,7 +533,10 @@ defmodule BdStarter.Forms.QuizEngine do
         results = Json.list(completion["results"]) || []
 
         score =
-          percent(Json.num(completion["scorePercent"]) || Json.num(completion["provisionalScorePercent"]) || 0.0)
+          percent(
+            Json.num(completion["scorePercent"]) ||
+              Json.num(completion["provisionalScorePercent"]) || 0.0
+          )
 
         scorable = Enum.filter(results, &((Json.num(&1["pointsPossible"]) || 0.0) > 0))
         correct = Enum.count(scorable, &(&1["status"] == "correct"))
@@ -518,7 +567,10 @@ defmodule BdStarter.Forms.QuizEngine do
           kind: "results",
           eyebrow: w.results_eyebrow,
           score: "#{score}%",
-          tally: if(scorable != [], do: QuizWords.fill(w.tally, correct: correct, total: length(scorable))),
+          tally:
+            if(scorable != [],
+              do: QuizWords.fill(w.tally, correct: correct, total: length(scorable))
+            ),
           summary:
             cond do
               pending -> w.provisional
@@ -569,7 +621,8 @@ defmodule BdStarter.Forms.QuizEngine do
           if(locked and config.sign_in_href != nil,
             do: [action("signIn", w.locked_action, true, true, config.sign_in_href)],
             else: []
-          ) ++ if(config.can_restart, do: [action("retake", w.retake, true, not locked)], else: [])
+          ) ++
+            if(config.can_restart, do: [action("retake", w.retake, true, not locked)], else: [])
 
         %{view | phase: "done", done: done, actions: actions}
 
@@ -592,7 +645,14 @@ defmodule BdStarter.Forms.QuizEngine do
               title: w.ready_title,
               body: body
             },
-            actions: [action("start", if(state.pending == "start", do: w.starting, else: w.start), state.pending == nil, true)]
+            actions: [
+              action(
+                "start",
+                if(state.pending == "start", do: w.starting, else: w.start),
+                state.pending == nil,
+                true
+              )
+            ]
         }
 
       true ->
@@ -603,7 +663,14 @@ defmodule BdStarter.Forms.QuizEngine do
   defp running_screen(config, state, _now, view, count) do
     w = config.words
     idle = state.pending == nil
-    submit = action("submit", if(state.pending == "submit", do: w.submitting, else: w.submit), idle, true)
+
+    submit =
+      action(
+        "submit",
+        if(state.pending == "submit", do: w.submitting, else: w.submit),
+        idle,
+        true
+      )
 
     cond do
       config.feedback_mode == "end" and config.layout == "all" ->
@@ -618,7 +685,10 @@ defmodule BdStarter.Forms.QuizEngine do
               percent: done / count * 100
             },
             notice: if(config.show_score, do: w.end_notice, else: w.end_notice_hidden),
-            questions: config.questions |> Enum.with_index() |> Enum.map(fn {q, i} -> question(config, state, q, i) end),
+            questions:
+              config.questions
+              |> Enum.with_index()
+              |> Enum.map(fn {q, i} -> question(config, state, q, i) end),
             actions: [submit]
         }
 
@@ -631,8 +701,15 @@ defmodule BdStarter.Forms.QuizEngine do
         if config.feedback_mode == "immediate" do
           result = QuizState.result(state, field.id)
           showing = state.revealed and result != nil
-          percent = max((if state.revealed, do: length(state.results), else: state.index) / count * 100, 4.0)
-          finish_label = if config.show_score and not config.results_locked, do: w.see_results, else: w.finish
+
+          percent =
+            max(
+              if(state.revealed, do: length(state.results), else: state.index) / count * 100,
+              4.0
+            )
+
+          finish_label =
+            if config.show_score and not config.results_locked, do: w.see_results, else: w.finish
 
           actions =
             if showing do
@@ -671,7 +748,11 @@ defmodule BdStarter.Forms.QuizEngine do
           %{
             view
             | phase: "question",
-              progress: %{position: position, note: nil, percent: max(state.index / count * 100, 4.0)},
+              progress: %{
+                position: position,
+                note: nil,
+                percent: max(state.index / count * 100, 4.0)
+              },
               notice: if(config.show_score, do: w.end_notice, else: w.end_notice_hidden),
               questions: [question(config, state, field, state.index)],
               actions: actions

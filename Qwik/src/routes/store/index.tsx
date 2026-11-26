@@ -76,11 +76,15 @@ export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 
 	const search = query.get("q")?.trim() || undefined;
 	const categoryId = query.get("category") || undefined;
-	const minRating = query.get("rating") ? Number(query.get("rating")) : undefined;
+	const minRating = query.get("rating")
+		? Number(query.get("rating"))
+		: undefined;
 	const sortParam = query.get("sort") as StorefrontSort | null;
 	const sort =
 		sortParam && SORT_VALUES.includes(sortParam) ? sortParam : undefined;
-	const { minDollars, maxDollars } = parsePrice(query.get("price") ?? undefined);
+	const { minDollars, maxDollars } = parsePrice(
+		query.get("price") ?? undefined,
+	);
 
 	try {
 		const [meta, categories, cart, session] = await Promise.all([
@@ -89,8 +93,12 @@ export const useStoreData = routeLoader$(async ({ cookie, query }) => {
 				...(categoryId ? { categoryId } : {}),
 				...(minRating ? { minRating } : {}),
 				...(sort ? { sort } : {}),
-				...(minDollars != null ? { minPriceCents: Math.round(minDollars * 100) } : {}),
-				...(maxDollars != null ? { maxPriceCents: Math.round(maxDollars * 100) } : {}),
+				...(minDollars != null
+					? { minPriceCents: Math.round(minDollars * 100) }
+					: {}),
+				...(maxDollars != null
+					? { maxPriceCents: Math.round(maxDollars * 100) }
+					: {}),
 				limit: 48,
 			}),
 			listStoreCategories(),
@@ -136,7 +144,8 @@ export default component$(() => {
 					<span class="bd-section__eyebrow">Shop</span>
 					<h1 class="bd-section__title">Products</h1>
 					<p class="bd-section__sub">
-						Filter, sort, and open a product to choose its options and add it to your cart.
+						Filter, sort, and open a product to choose its options and add it to
+						your cart.
 					</p>
 				</div>
 
@@ -153,7 +162,10 @@ export default component$(() => {
 					<div class="store-layout">
 						<aside aria-label="Product filters" class="store-sidebar">
 							<StoreSearch />
-							<CategoryFilter categories={data.value.categories} counts={data.value.categoryCounts} />
+							<CategoryFilter
+								categories={data.value.categories}
+								counts={data.value.categoryCounts}
+							/>
 							<PriceFilter range={data.value.priceRange} />
 							<RatingFilter />
 							<ClearFilters />
@@ -162,7 +174,8 @@ export default component$(() => {
 						<div class="store-results">
 							<div class="store-results__bar">
 								<p class="bd-loading">
-									{data.value.items.length} {data.value.items.length === 1 ? "product" : "products"}
+									{data.value.items.length}{" "}
+									{data.value.items.length === 1 ? "product" : "products"}
 								</p>
 								<SortSelect />
 							</div>

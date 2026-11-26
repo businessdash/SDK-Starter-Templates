@@ -4,24 +4,9 @@
  * It tracks the query string too, so a page can keep its filters in the URL
  * (`?category=…&sort=…`) and a filtered view can be shared.
  */
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { AnchorHTMLAttributes, ReactNode } from "react";
-
-type NavigateOptions = {
-	/** Replace the current history entry instead of adding one. */
-	replace?: boolean;
-	/** Scroll to the top after navigating (default true). */
-	scroll?: boolean;
-};
-
-type RouteContext = {
-	path: string;
-	/** The query string, with its `?` (or ""). */
-	search: string;
-	navigate: (to: string, options?: NavigateOptions) => void;
-};
-
-const Ctx = createContext<RouteContext>({ path: "/", search: "", navigate: () => {} });
+import { Ctx, type RouteContext, useRoute } from "./route";
 
 function here() {
 	return { path: window.location.pathname, search: window.location.search };
@@ -55,16 +40,6 @@ export function RouterProvider({ children }: { children: ReactNode }) {
 		[location],
 	);
 	return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
-}
-
-export function useRoute() {
-	return useContext(Ctx);
-}
-
-/** The current query string, parsed. */
-export function useSearchParams(): URLSearchParams {
-	const { search } = useRoute();
-	return useMemo(() => new URLSearchParams(search), [search]);
 }
 
 type LinkProps = {

@@ -1,7 +1,7 @@
 // [bd-file:booking]
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import type { EventType } from "@/server/api/routers/bd";
 import { api } from "@/trpc/react";
@@ -63,10 +63,6 @@ export function Booking({ eventTypes }: { eventTypes: EventType[] }) {
 		},
 	});
 
-	useEffect(() => {
-		setPickedSlot(null);
-	}, [selectedSlug]);
-
 	if (confirmation) {
 		return (
 			<section className="bd-section bd-section--narrow" id="booking">
@@ -107,7 +103,10 @@ export function Booking({ eventTypes }: { eventTypes: EventType[] }) {
 							<select
 								className="bd-select"
 								id="event-type"
-								onChange={(e) => setSelectedSlug(e.target.value)}
+								onChange={(e) => {
+									setSelectedSlug(e.target.value);
+									setPickedSlot(null);
+								}}
 								value={selectedSlug}
 							>
 								{eventTypes.map((ev) => (
@@ -128,19 +127,17 @@ export function Booking({ eventTypes }: { eventTypes: EventType[] }) {
 								</div>
 							) : (
 								<div className="booking__row">
-									{(slotsQuery.data ?? [])
-										.slice(0, 12)
-										.map((slot: Slot) => (
-											<button
-												aria-pressed={pickedSlot === slot.startAt}
-												className="slot-button"
-												key={slot.startAt}
-												onClick={() => setPickedSlot(slot.startAt)}
-												type="button"
-											>
-												{formatSlotTime(slot.startAt)}
-											</button>
-										))}
+									{(slotsQuery.data ?? []).slice(0, 12).map((slot: Slot) => (
+										<button
+											aria-pressed={pickedSlot === slot.startAt}
+											className="slot-button"
+											key={slot.startAt}
+											onClick={() => setPickedSlot(slot.startAt)}
+											type="button"
+										>
+											{formatSlotTime(slot.startAt)}
+										</button>
+									))}
 								</div>
 							)}
 						</div>
@@ -210,9 +207,7 @@ export function Booking({ eventTypes }: { eventTypes: EventType[] }) {
 								<button
 									className="bd-btn"
 									disabled={
-										confirmBooking.isPending ||
-										!invitee.email ||
-										!invitee.name
+										confirmBooking.isPending || !invitee.email || !invitee.name
 									}
 									onClick={() =>
 										confirmBooking.mutate({

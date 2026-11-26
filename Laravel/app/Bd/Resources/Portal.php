@@ -18,8 +18,7 @@ class Portal
         private readonly Client $client,
         private readonly string $sessionToken,
         private readonly ?string $organizationId = null,
-    ) {
-    }
+    ) {}
 
     /** Org branding + which portal features are on. Call before rendering. */
     public function context(): array
@@ -138,12 +137,12 @@ class Portal
 
     /**
      * Hand a customer-portal invite link out again.
-     * 
+     *
      * ROTATES the token — the previous link stops working. That is the point rather
      * than a side effect: if the reason for resending was "it went to the wrong
      * address", rotating IS the fix, and reusing the token would leave the wrong
      * recipient holding a working invitation.
-     * 
+     *
      * Rate limited to one send a minute per invitation, answering 429 with a retry
      * hint — resend mails an address the caller chose, so an unbounded one is a
      * mail-bombing tool. Refuses a revoked invitation (resending would quietly

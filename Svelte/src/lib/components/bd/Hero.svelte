@@ -1,6 +1,6 @@
 <script lang="ts">
 	let {
-		hero,
+		hero
 	}: {
 		hero: {
 			title: string;

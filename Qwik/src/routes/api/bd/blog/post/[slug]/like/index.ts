@@ -9,7 +9,12 @@ import { getCustomerSession } from "../../../../../../../lib/bd-portal";
  * `{ liked, likesCount }`, or `{ error }`. Signed out, it answers 401 and
  * `<bd-post-like>` offers the sign-in link.
  */
-export const onPost: RequestHandler = async ({ params, request, cookie, json }) => {
+export const onPost: RequestHandler = async ({
+	params,
+	request,
+	cookie,
+	json,
+}) => {
 	const bd = getBd();
 	if (!bd) {
 		json(503, { error: "The blog isn't connected yet." });

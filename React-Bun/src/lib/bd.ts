@@ -389,7 +389,8 @@ export const bd = {
 	},
 };
 
-/** Loose shape for surfaces the SDK keeps passthrough/untyped at 0.9.5. */
+/** Loose shape for the JSON the server passes through from surfaces the SDK leaves untyped. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Loose = Record<string, any>;
 
 /** The customer's plan, as the portal reports it. */

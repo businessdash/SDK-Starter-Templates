@@ -28,10 +28,15 @@ class Reviews {
   /// The platforms `source` can filter by.
   static const sources = ['google', 'yelp', 'housecall_pro', 'other'];
 
-  static const _platforms = {'google': 'Google', 'yelp': 'Yelp', 'housecall_pro': 'Housecall Pro'};
+  static const _platforms = {
+    'google': 'Google',
+    'yelp': 'Yelp',
+    'housecall_pro': 'Housecall Pro'
+  };
 
   /// The average, the count and the breakdown; empty stars count 0.
-  static ReviewSummary summarize(ReviewTotals? totals, {int fallbackTotal = 0}) {
+  static ReviewSummary summarize(ReviewTotals? totals,
+      {int fallbackTotal = 0}) {
     final byStars = <int, int>{};
     for (final row in totals?.counts ?? const <StarCount>[]) {
       if (row.rating >= 1 && row.rating <= 5 && row.count > 0) {
@@ -67,7 +72,11 @@ class Reviews {
     final seen = <String>[];
     for (final review in reviews) {
       final source = review.source;
-      if (source != null && sources.contains(source) && !seen.contains(source)) seen.add(source);
+      if (source != null &&
+          sources.contains(source) &&
+          !seen.contains(source)) {
+        seen.add(source);
+      }
     }
     return seen;
   }
@@ -80,7 +89,9 @@ class Reviews {
   static String? safeWebUrl(String? url) {
     if (url == null || url.isEmpty) return null;
     final parsed = Uri.tryParse(url);
-    return parsed != null && (parsed.scheme == 'https' || parsed.scheme == 'http') && parsed.host.isNotEmpty
+    return parsed != null &&
+            (parsed.scheme == 'https' || parsed.scheme == 'http') &&
+            parsed.host.isNotEmpty
         ? url
         : null;
   }
@@ -102,7 +113,20 @@ class Reviews {
     return '★' * full + '☆' * (5 - full);
   }
 
-  static const _shortMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  static const _shortMonths = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec'
+  ];
 
   /// "Nov 20, 2026" (in UTC), or "" for a date that isn't one.
   static String date(String? iso) {
@@ -112,20 +136,32 @@ class Reviews {
   }
 
   /// A written review, checked: what BD takes, or why it can't go.
-  static ReviewCheck check({required int rating, String? title, required String body}) {
-    if (rating < 1 || rating > 5) return const ReviewCheck.problem('Choose a rating from 1 to 5 stars.');
+  static ReviewCheck check(
+      {required int rating, String? title, required String body}) {
+    if (rating < 1 || rating > 5) {
+      return const ReviewCheck.problem('Choose a rating from 1 to 5 stars.');
+    }
     final text = body.trim();
-    if (text.isEmpty) return const ReviewCheck.problem('Write a few words about your experience.');
-    if (text.length > maxLength) return const ReviewCheck.problem('Reviews are up to 5,000 characters.');
+    if (text.isEmpty) {
+      return const ReviewCheck.problem(
+          'Write a few words about your experience.');
+    }
+    if (text.length > maxLength) {
+      return const ReviewCheck.problem('Reviews are up to 5,000 characters.');
+    }
     var heading = title?.trim() ?? '';
-    if (heading.length > maxTitleLength) heading = heading.substring(0, maxTitleLength);
-    return ReviewCheck.ok(ReviewInput(rating: rating, title: heading.isEmpty ? null : heading, body: text));
+    if (heading.length > maxTitleLength) {
+      heading = heading.substring(0, maxTitleLength);
+    }
+    return ReviewCheck.ok(ReviewInput(
+        rating: rating, title: heading.isEmpty ? null : heading, body: text));
   }
 }
 
 /// The rating, the count and a bar per star.
 class ReviewSummary {
-  const ReviewSummary({required this.average, required this.total, required this.histogram});
+  const ReviewSummary(
+      {required this.average, required this.total, required this.histogram});
 
   /// Null when the business has no rated reviews.
   final double? average;
@@ -143,7 +179,8 @@ class ReviewInput {
   final String? title;
   final String body;
 
-  Map<String, Object> toJson() => {'rating': rating, if (title != null) 'title': title!, 'body': body};
+  Map<String, Object> toJson() =>
+      {'rating': rating, if (title != null) 'title': title!, 'body': body};
 }
 
 /// [Reviews.check]'s answer: the review to send, or why it can't go.

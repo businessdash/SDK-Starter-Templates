@@ -12,7 +12,10 @@ defmodule BdStarter.ShopTest do
   alias BdStarter.Shop
 
   # Read as the API's JSON is: integers stay integers.
-  @cases Path.join([__DIR__, "fixtures", "shop-parity.json"]) |> File.read!() |> Jason.decode!() |> Map.fetch!("cases")
+  @cases Path.join([__DIR__, "fixtures", "shop-parity.json"])
+         |> File.read!()
+         |> Jason.decode!()
+         |> Map.fetch!("cases")
 
   test "the product rules agree with TypeScript" do
     refute Enum.empty?(@cases)
@@ -25,11 +28,14 @@ defmodule BdStarter.ShopTest do
         checks =
           [
             {"product_view #{name}", view, c["view"]},
-            {"default_variant #{name}", (Shop.default_variant(view) || %{id: nil}).id, c["defaultVariant"]},
+            {"default_variant #{name}", (Shop.default_variant(view) || %{id: nil}).id,
+             c["defaultVariant"]},
             {"all_option_groups #{name}", Shop.all_option_groups(view), c["allOptionGroups"]},
             {"photo_sets #{name}", Shop.photo_sets(view), c["photoSets"]},
-            {"gallery_for unknown #{name}", Shop.gallery_for(view, "nope"), c["unknownVariant"]["gallery"]},
-            {"price_for unknown #{name}", Shop.price_for(view, "nope"), c["unknownVariant"]["price"]}
+            {"gallery_for unknown #{name}", Shop.gallery_for(view, "nope"),
+             c["unknownVariant"]["gallery"]},
+            {"price_for unknown #{name}", Shop.price_for(view, "nope"),
+             c["unknownVariant"]["price"]}
           ] ++
             Enum.flat_map(c["variants"], fn v ->
               at = "#{name} variant #{v["id"]}"
@@ -42,8 +48,10 @@ defmodule BdStarter.ShopTest do
                   with_chosen = "#{at} chosen #{inspect(row["chosen"])}"
 
                   [
-                    {"price_for #{with_chosen}", Shop.price_for(view, v["id"], row["chosen"]), row["price"]},
-                    {"product_summary #{with_chosen}", Shop.product_summary(view, v["id"], row["chosen"]), row["summary"]}
+                    {"price_for #{with_chosen}", Shop.price_for(view, v["id"], row["chosen"]),
+                     row["price"]},
+                    {"product_summary #{with_chosen}",
+                     Shop.product_summary(view, v["id"], row["chosen"]), row["summary"]}
                   ]
                 end)
             end)
@@ -66,7 +74,10 @@ defmodule BdStarter.ShopTest do
   defp json(value), do: value |> Jason.encode!() |> Jason.decode!() |> camel()
 
   defp camel(map) when is_map(map),
-    do: Map.new(map, fn {k, v} -> {Regex.replace(~r/_([a-z])/, k, fn _, c -> String.upcase(c) end), camel(v)} end)
+    do:
+      Map.new(map, fn {k, v} ->
+        {Regex.replace(~r/_([a-z])/, k, fn _, c -> String.upcase(c) end), camel(v)}
+      end)
 
   defp camel(list) when is_list(list), do: Enum.map(list, &camel/1)
   defp camel(v), do: v

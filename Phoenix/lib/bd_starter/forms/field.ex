@@ -48,7 +48,12 @@ defmodule BdStarter.Forms.Field do
     "imageConfig" => %{"src" => "s", "alt" => "s", "width" => "n", "height" => "n"},
     "fileConfig" => %{"allowedTypes" => "s*", "maxFiles" => "i", "maxSize" => "n"},
     "iconConfig" => %{"set" => "s", "allowedIcons" => "s*", "columns" => "i"},
-    "imageInputConfig" => %{"allowedTypes" => "s*", "maxSize" => "n", "showPreview" => "b", "sources" => "s"},
+    "imageInputConfig" => %{
+      "allowedTypes" => "s*",
+      "maxSize" => "n",
+      "showPreview" => "b",
+      "sources" => "s"
+    },
     "flexConfig" => %{"justify" => "s", "align" => "s", "gap" => "n"},
     "starRatingConfig" => %{"maxStars" => "i", "defaultValue" => "n"},
     "dateRangeConfig" => %{"allowSameDay" => "b"},
@@ -68,7 +73,12 @@ defmodule BdStarter.Forms.Field do
            "href" => "s"
          }}
     },
-    "populatorConfig" => %{"maxInstances" => "i", "minInstances" => "i", "addButtonLabel" => "s", "itemLabel" => "s"},
+    "populatorConfig" => %{
+      "maxInstances" => "i",
+      "minInstances" => "i",
+      "addButtonLabel" => "s",
+      "itemLabel" => "s"
+    },
     "unitConfig" => %{
       "category" => "s",
       "units" => "s*",
@@ -77,7 +87,12 @@ defmodule BdStarter.Forms.Field do
       "outputUnit" => "s",
       "allowDecimal" => "b"
     },
-    "currencyConfig" => %{"currency" => "s", "symbol" => "s", "allowNegative" => "b", "allowDecimal" => "b"},
+    "currencyConfig" => %{
+      "currency" => "s",
+      "symbol" => "s",
+      "allowNegative" => "b",
+      "allowDecimal" => "b"
+    },
     "calculationConfig" => @calculation,
     "paymentConfig" => %{
       "mode" => "s",
@@ -130,7 +145,10 @@ defmodule BdStarter.Forms.Field do
       label: Json.str(raw["label"]) || "",
       required: raw["required"] == true,
       children:
-        if(is_list(kids) and Enum.all?(kids, &Json.object?/1), do: Enum.map(kids, &new/1), else: nil),
+        if(is_list(kids) and Enum.all?(kids, &Json.object?/1),
+          do: Enum.map(kids, &new/1),
+          else: nil
+        ),
       configs: configs
     }
   end
@@ -181,8 +199,12 @@ defmodule BdStarter.Forms.Field do
   def cards(field), do: Json.list(config(field, "choiceConfig", "options")) || []
 
   @doc "The checkbox group / choice cards / collection take several answers."
-  def multi?(%__MODULE__{type: "choice_cards"} = f), do: config(f, "choiceConfig", "mode") == "multi"
-  def multi?(%__MODULE__{type: "collection_select"} = f), do: config(f, "collectionSelectConfig", "multi") == true
+  def multi?(%__MODULE__{type: "choice_cards"} = f),
+    do: config(f, "choiceConfig", "mode") == "multi"
+
+  def multi?(%__MODULE__{type: "collection_select"} = f),
+    do: config(f, "collectionSelectConfig", "multi") == true
+
   def multi?(_), do: false
 
   def time_mode(field), do: Json.str(config(field, "timeConfig", "mode")) || "simple"
@@ -204,7 +226,10 @@ defmodule BdStarter.Forms.Field do
 
   def fits?(value, "s"), do: is_binary(value)
   def fits?(value, "n"), do: Json.number?(value)
-  def fits?(value, "i"), do: (is_float(value) or is_integer(value)) and Float.floor(value * 1.0) == value * 1.0
+
+  def fits?(value, "i"),
+    do: (is_float(value) or is_integer(value)) and Float.floor(value * 1.0) == value * 1.0
+
   def fits?(value, "b"), do: is_boolean(value)
   def fits?(value, "s*"), do: is_list(value) and Enum.all?(value, &is_binary/1)
   def fits?(_, _), do: false

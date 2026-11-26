@@ -6,15 +6,15 @@ namespace App\Bd;
 
 /**
  * Render the org's per-page SEO into head tags.
- * 
+ *
  * The marketing page bundle carries a `seo` object for the page you asked for:
  * title, description, canonical, noIndex, Open Graph, Twitter card, keywords,
  * JSON-LD and hreflang. Reading four of those and forgetting the rest is the
  * normal failure, and the two people forget are `noIndex` and `canonical` --
  * exactly the two where being wrong is expensive and silent.
- * 
+ *
  * Rules that matter, matching the TypeScript `seo-core`:
- * 
+ *
  *   * Open Graph falls back to the page's own title/description. A missing
  *     og:title renders a shared link as a bare URL.
  *   * A RELATIVE canonical is dropped rather than emitted. Crawlers resolve it

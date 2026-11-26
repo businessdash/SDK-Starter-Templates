@@ -54,6 +54,7 @@ export function ProductGallery({
 							aria-current={i === index}
 							aria-label={`Photo ${i + 1} of ${photos.length}`}
 							className={`gallery__thumb${i === index ? " gallery__thumb--on" : ""}`}
+							// biome-ignore lint/suspicious/noArrayIndexKey: a photo can be listed twice
 							key={`${src}${i}`}
 							onClick={() => onIndexChange(i)}
 							type="button"

@@ -28,7 +28,11 @@ defmodule BdStarter.Forms.Dates do
         utc(int(y), int(mo), int(d))
 
       # ISO 8601 with an explicit offset or Z (Temporal.Instant.from).
-      m = Regex.run(~r/^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d{1,9}))?)?([Zz]|[+-]\d{2}:?\d{2})\z/, s) ->
+      m =
+          Regex.run(
+            ~r/^(\d{4})-(\d{2})-(\d{2})[Tt ](\d{2}):(\d{2})(?::(\d{2})(?:[.,](\d{1,9}))?)?([Zz]|[+-]\d{2}:?\d{2})\z/,
+            s
+          ) ->
         [_, y, mo, d, h, mi, sec, frac, zone] = m
         ms = utc(int(y), int(mo), int(d), int(h), int(mi), int(sec))
         ms = if frac != "", do: ms + int(String.pad_trailing(frac, 9, "0")) / 1_000_000, else: ms
@@ -42,9 +46,14 @@ defmodule BdStarter.Forms.Dates do
         end
 
       # Date.parse fallbacks: a date-time without an offset is LOCAL time.
-      m = Regex.run(~r/^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?\z/, s) ->
+      m =
+          Regex.run(
+            ~r/^(\d{4})-(\d{2})-(\d{2})[Tt](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?\z/,
+            s
+          ) ->
         [_, y, mo, d, h, mi | rest] = m ++ ["", ""]
         [sec, frac | _] = rest
+
         local(int(y), int(mo), int(d), int(h), int(mi), int(sec)) +
           if(frac != "", do: int(String.pad_trailing(frac, 3, "0")), else: 0)
 
@@ -81,7 +90,11 @@ defmodule BdStarter.Forms.Dates do
         [_, mo, d, y] = m
         strict(int(y), int(mo), int(d))
 
-      m = Regex.run(~r/^[A-Za-z]{3}, (\d{2}) ([A-Za-z]{3}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) (?:GMT|UTC)\z/, s) ->
+      m =
+          Regex.run(
+            ~r/^[A-Za-z]{3}, (\d{2}) ([A-Za-z]{3}) (\d{4}) (\d{2}):(\d{2}):(\d{2}) (?:GMT|UTC)\z/,
+            s
+          ) ->
         [_, d, name, y, h, mi, sec] = m
 
         with mo when mo != nil <- month(name),
@@ -99,7 +112,9 @@ defmodule BdStarter.Forms.Dates do
   defp month(name) do
     lower = String.downcase(name)
 
-    Enum.find_index(@months, fn full -> full == lower or (byte_size(lower) == 3 and String.starts_with?(full, lower)) end)
+    Enum.find_index(@months, fn full ->
+      full == lower or (byte_size(lower) == 3 and String.starts_with?(full, lower))
+    end)
     |> case do
       nil -> nil
       i -> i + 1
@@ -108,7 +123,8 @@ defmodule BdStarter.Forms.Dates do
 
   defp strict(y, mo, d), do: if(valid?(y, mo, d), do: utc(y, mo, d), else: nil)
 
-  defp valid?(y, mo, d), do: mo in 1..12 and d >= 1 and d <= :calendar.last_day_of_the_month(y, mo)
+  defp valid?(y, mo, d),
+    do: mo in 1..12 and d >= 1 and d <= :calendar.last_day_of_the_month(y, mo)
 
   defp int(""), do: 0
   defp int(s), do: String.to_integer(s)
@@ -117,7 +133,11 @@ defmodule BdStarter.Forms.Dates do
   def utc(year, month, day, hour \\ 0, minute \\ 0, second \\ 0) do
     y = year + Integer.floor_div(month - 1, 12)
     mo = Integer.mod(month - 1, 12) + 1
-    days = :calendar.date_to_gregorian_days(y, mo, 1) - :calendar.date_to_gregorian_days(1970, 1, 1) + (day - 1)
+
+    days =
+      :calendar.date_to_gregorian_days(y, mo, 1) - :calendar.date_to_gregorian_days(1970, 1, 1) +
+        (day - 1)
+
     (days * 86_400 + hour * 3600 + minute * 60 + second) * 1000.0
   end
 
@@ -131,7 +151,10 @@ defmodule BdStarter.Forms.Dates do
   end
 
   defp gregorian(seconds),
-    do: :calendar.gregorian_seconds_to_datetime(seconds + :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}}))
+    do:
+      :calendar.gregorian_seconds_to_datetime(
+        seconds + :calendar.datetime_to_gregorian_seconds({{1970, 1, 1}, {0, 0, 0}})
+      )
 
   @doc "Year, month, day in UTC."
   def utc_parts(ms) do
@@ -145,7 +168,15 @@ defmodule BdStarter.Forms.Dates do
     {{y, mo, d}, {h, mi, s}} = gregorian(seconds)
     millis = Kernel.round(ms - seconds * 1000)
 
-    :io_lib.format("~4..0B-~2..0B-~2..0BT~2..0B:~2..0B:~2..0B.~3..0BZ", [y, mo, d, h, mi, s, millis])
+    :io_lib.format("~4..0B-~2..0B-~2..0BT~2..0B:~2..0B:~2..0B.~3..0BZ", [
+      y,
+      mo,
+      d,
+      h,
+      mi,
+      s,
+      millis
+    ])
     |> IO.iodata_to_binary()
   end
 end

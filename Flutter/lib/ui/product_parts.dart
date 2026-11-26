@@ -40,7 +40,10 @@ class ProductGallery extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 2),
                     child: ClipRRect(
                       borderRadius: BorderRadius.circular(14),
-                      child: Photo(url, label: urls.length > 1 ? '$name, photo ${index + 1} of ${urls.length}' : name),
+                      child: Photo(url,
+                          label: urls.length > 1
+                              ? '$name, photo ${index + 1} of ${urls.length}'
+                              : name),
                     ),
                   ),
               ],
@@ -64,7 +67,8 @@ class ProductTitle extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       mainAxisSize: MainAxisSize.min,
       children: [
-        if (categoryName != null) Text(categoryName!, style: theme.textTheme.bodySmall),
+        if (categoryName != null)
+          Text(categoryName!, style: theme.textTheme.bodySmall),
         Text(name, style: theme.textTheme.headlineSmall),
       ],
     );
@@ -82,7 +86,9 @@ class ProductPriceText extends StatelessWidget {
   Widget build(BuildContext context) {
     final amount = price.amount;
     return Text(
-      amount == null ? 'Unavailable' : '${price.from ? 'From ' : ''}${Money.amount(amount)}',
+      amount == null
+          ? 'Unavailable'
+          : '${price.from ? 'From ' : ''}${Money.amount(amount)}',
       style: Theme.of(context).textTheme.titleLarge,
     );
   }
@@ -97,17 +103,24 @@ class StockNote extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stock = this.stock;
-    if (stock == null || stock <= 0 || stock > 5) return const SizedBox.shrink();
+    if (stock == null || stock <= 0 || stock > 5) {
+      return const SizedBox.shrink();
+    }
     final theme = Theme.of(context);
     return Text('Only $stock left',
-        style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.error, fontWeight: FontWeight.w600));
+        style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.error, fontWeight: FontWeight.w600));
   }
 }
 
 /// A chip per variant (the style), the chosen one selected; sold-out ones
 /// can't be chosen. Nothing shows for a product with one variant.
 class VariantPicker extends StatelessWidget {
-  const VariantPicker({super.key, required this.variants, required this.selected, required this.onSelect});
+  const VariantPicker(
+      {super.key,
+      required this.variants,
+      required this.selected,
+      required this.onSelect});
 
   final List<ProductVariant> variants;
   final String? selected;
@@ -118,7 +131,10 @@ class VariantPicker extends StatelessWidget {
     if (variants.length <= 1) return const SizedBox.shrink();
     return OptionRow(
       title: 'Style',
-      options: [for (final variant in variants) (id: variant.id, label: variant.name, available: variant.available)],
+      options: [
+        for (final variant in variants)
+          (id: variant.id, label: variant.name, available: variant.available)
+      ],
       selected: selected,
       onSelect: onSelect,
     );
@@ -127,9 +143,14 @@ class VariantPicker extends StatelessWidget {
 
 /// One option group (Size, Colour…): a chip per value.
 class OptionPicker extends StatelessWidget {
-  const OptionPicker({super.key, required this.group, required this.selected, required this.onSelect});
+  const OptionPicker(
+      {super.key,
+      required this.group,
+      required this.selected,
+      required this.onSelect});
 
   final OptionGroup group;
+
   /// The chosen value's id.
   final String? selected;
   final ValueChanged<String> onSelect;
@@ -137,7 +158,10 @@ class OptionPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) => OptionRow(
         title: group.title,
-        options: [for (final value in group.values) (id: value.id, label: value.value, available: value.available)],
+        options: [
+          for (final value in group.values)
+            (id: value.id, label: value.value, available: value.available)
+        ],
         selected: selected,
         onSelect: onSelect,
       );
@@ -145,7 +169,12 @@ class OptionPicker extends StatelessWidget {
 
 /// A titled row of choice chips, the chosen one named beside the title.
 class OptionRow extends StatelessWidget {
-  const OptionRow({super.key, required this.title, required this.options, required this.selected, required this.onSelect});
+  const OptionRow(
+      {super.key,
+      required this.title,
+      required this.options,
+      required this.selected,
+      required this.onSelect});
 
   final String title;
   final List<ChoiceOption> options;
@@ -154,14 +183,16 @@ class OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final current = options.where((option) => option.id == selected).firstOrNull;
+    final current =
+        options.where((option) => option.id == selected).firstOrNull;
     return Padding(
       padding: const EdgeInsets.only(top: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         spacing: 8,
         children: [
-          Text(current == null ? title : '$title: ${current.label}', style: Theme.of(context).textTheme.labelLarge),
+          Text(current == null ? title : '$title: ${current.label}',
+              style: Theme.of(context).textTheme.labelLarge),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -170,8 +201,10 @@ class OptionRow extends StatelessWidget {
                 ChoiceChip(
                   label: Text(option.label),
                   selected: option.id == selected,
-                  onSelected: option.available ? (_) => onSelect(option.id) : null,
-                  tooltip: option.available ? null : '${option.label} is sold out',
+                  onSelected:
+                      option.available ? (_) => onSelect(option.id) : null,
+                  tooltip:
+                      option.available ? null : '${option.label} is sold out',
                 ),
             ],
           ),
@@ -183,7 +216,11 @@ class OptionRow extends StatelessWidget {
 
 /// − and + around how many to add, from 1 up to [max].
 class QuantityStepper extends StatelessWidget {
-  const QuantityStepper({super.key, required this.quantity, required this.max, required this.onChanged});
+  const QuantityStepper(
+      {super.key,
+      required this.quantity,
+      required this.max,
+      required this.onChanged});
 
   final int quantity;
   final int max;
@@ -233,6 +270,7 @@ class AddToCartButton extends StatelessWidget {
 
   final ProductPrice price;
   final bool adding;
+
   /// The chosen variant has option groups (so "Choose options", not
   /// Unavailable, until they're picked).
   final bool hasOptions;
@@ -260,15 +298,21 @@ class ProductNotice extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.only(top: 8),
-        child: Text(message, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+        child: Text(message,
+            style: TextStyle(color: Theme.of(context).colorScheme.error)),
       );
 }
 
 /// The add-ons ("Goes well with"), each with Add. Nothing shows without any.
 class ProductAddons extends StatelessWidget {
-  const ProductAddons({super.key, required this.addons, this.added = const {}, required this.onAdd});
+  const ProductAddons(
+      {super.key,
+      required this.addons,
+      this.added = const {},
+      required this.onAdd});
 
   final List<ProductAddon> addons;
+
   /// The ids of the add-ons already added.
   final Set<String> added;
   final ValueChanged<ProductAddon> onAdd;
@@ -281,9 +325,13 @@ class ProductAddons extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 24),
-        Text(addons.first.groupLabel ?? 'Goes well with', style: Theme.of(context).textTheme.titleMedium),
+        Text(addons.first.groupLabel ?? 'Goes well with',
+            style: Theme.of(context).textTheme.titleMedium),
         for (final addon in addons)
-          AddonTile(addon: addon, added: added.contains(addon.id), onAdd: () => onAdd(addon)),
+          AddonTile(
+              addon: addon,
+              added: added.contains(addon.id),
+              onAdd: () => onAdd(addon)),
       ],
     );
   }
@@ -291,7 +339,11 @@ class ProductAddons extends StatelessWidget {
 
 /// One add-on: photo, name, price and Add.
 class AddonTile extends StatelessWidget {
-  const AddonTile({super.key, required this.addon, required this.added, required this.onAdd});
+  const AddonTile(
+      {super.key,
+      required this.addon,
+      required this.added,
+      required this.onAdd});
 
   final ProductAddon addon;
   final bool added;
@@ -305,7 +357,9 @@ class AddonTile extends StatelessWidget {
           child: SizedBox.square(dimension: 48, child: Photo(addon.imageUrl)),
         ),
         title: Text(addon.name),
-        subtitle: addon.priceCents == null ? null : Text(Money.cents(addon.priceCents)),
+        subtitle: addon.priceCents == null
+            ? null
+            : Text(Money.cents(addon.priceCents)),
         trailing: OutlinedButton(
           onPressed: added ? null : onAdd,
           child: Text(added ? 'Added' : 'Add'),
@@ -315,10 +369,18 @@ class AddonTile extends StatelessWidget {
 
 /// The description, the features, then each group of specs.
 class ProductDetails extends StatelessWidget {
-  const ProductDetails({super.key, required this.description, required this.features, required this.specs});
+  const ProductDetails(
+      {super.key,
+      required this.description,
+      required this.features,
+      required this.specs});
 
   ProductDetails.of(ProductView view, {Key? key})
-      : this(key: key, description: view.description, features: view.features, specs: view.specs);
+      : this(
+            key: key,
+            description: view.description,
+            features: view.features,
+            specs: view.specs);
 
   final String description;
   final List<String> features;
@@ -359,7 +421,10 @@ class ProductDetails extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(child: Text(row.label, style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor))),
+                  Expanded(
+                      child: Text(row.label,
+                          style: theme.textTheme.bodyMedium
+                              ?.copyWith(color: theme.hintColor))),
                   Expanded(child: Text(row.value)),
                 ],
               ),
@@ -373,7 +438,8 @@ class ProductDetails extends StatelessWidget {
 /// The product's reviews: the average, each review, and Show more reviews
 /// (when [onMore] is set and there are more).
 class ProductReviews extends StatelessWidget {
-  const ProductReviews({super.key, required this.page, this.loading = false, this.onMore});
+  const ProductReviews(
+      {super.key, required this.page, this.loading = false, this.onMore});
 
   final ProductReviewPage? page;
   final bool loading;
@@ -389,7 +455,8 @@ class ProductReviews extends StatelessWidget {
         spacing: 4,
         children: [
           Text('Reviews', style: theme.textTheme.titleMedium),
-          Text(page == null && loading ? 'Loading…' : 'No reviews yet.', style: theme.textTheme.bodyMedium),
+          Text(page == null && loading ? 'Loading…' : 'No reviews yet.',
+              style: theme.textTheme.bodyMedium),
         ],
       );
     }
@@ -402,7 +469,9 @@ class ProductReviews extends StatelessWidget {
           children: [
             Text('Reviews', style: theme.textTheme.titleMedium),
             StarRating(page.avgRating ?? 0),
-            Text('${(page.avgRating ?? 0).toStringAsFixed(1)} · ${page.totalCount}', style: theme.textTheme.bodySmall),
+            Text(
+                '${(page.avgRating ?? 0).toStringAsFixed(1)} · ${page.totalCount}',
+                style: theme.textTheme.bodySmall),
           ],
         ),
         for (final review in page.items) ProductReviewTile(review: review),
@@ -430,10 +499,13 @@ class ProductReviewTile extends StatelessWidget {
       spacing: 4,
       children: [
         StarRating(review.rating.toDouble(), size: 13),
-        if (review.title?.isNotEmpty ?? false) Text(review.title!, style: theme.textTheme.titleSmall),
+        if (review.title?.isNotEmpty ?? false)
+          Text(review.title!, style: theme.textTheme.titleSmall),
         if (review.body?.isNotEmpty ?? false) Text(review.body!),
         Text(
-          [review.reviewerName ?? 'Customer', Reviews.date(review.createdAt)].where((part) => part.isNotEmpty).join(' · '),
+          [review.reviewerName ?? 'Customer', Reviews.date(review.createdAt)]
+              .where((part) => part.isNotEmpty)
+              .join(' · '),
           style: theme.textTheme.bodySmall,
         ),
       ],
