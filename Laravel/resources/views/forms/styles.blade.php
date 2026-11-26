@@ -4,5 +4,5 @@
     version on purpose: a CDN link has no lockfile, so @latest would roll
     this page forward on somebody else's release.
 --}}
-<link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.97/bd-forms.css">
+<link rel="stylesheet" href="https://esm.sh/@businessdash/sdk@0.9.98/bd-forms.css">
 <link rel="stylesheet" href="/forms.css">

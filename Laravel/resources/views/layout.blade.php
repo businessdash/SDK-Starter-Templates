@@ -84,7 +84,7 @@
     {{-- Records this page view and the time spent on it; it needs the publishable key. --}}
     @if (\App\Bd\Bd::configured() && config('bd.publishable_key'))
         <script type="module">
-            import { initBdAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.97/analytics-core";
+            import { initBdAnalytics } from "https://esm.sh/@businessdash/sdk@0.9.98/analytics-core";
             initBdAnalytics({
                 siteId: @json(config('bd.site_id')),
                 baseUrl: @json(rtrim(config('bd.host'), '/') . '/api/package/v1'),
