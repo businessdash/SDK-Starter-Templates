@@ -25,6 +25,14 @@ import type {
 	GalleryField,
 	GalleryItemFor,
 } from "@businessdash/sdk";
+// [bd:ordering]
+import type {
+	RestaurantMenu,
+	RestaurantPlacedTableOrder,
+	RestaurantTable,
+	RestaurantTableOrderInput,
+} from "@businessdash/sdk/contracts";
+// [/bd:ordering]
 // [bd:booking]
 import type {
 	SchedulingBookingResult,
@@ -96,6 +104,41 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 	}
 	return (await res.json()) as T;
 }
+
+// [bd:ordering]
+/**
+ * A refusal from the proxy, carrying BD's status and JSON body as they came
+ * (`{ error, message, issues }`), so the ordering controller can put the
+ * kitchen's objections on the right tray lines.
+ */
+export class BdProxyError extends Error {
+	readonly status: number;
+	readonly body: unknown;
+
+	constructor(status: number, body: unknown) {
+		const message =
+			typeof body === "object" && body !== null && "message" in body && typeof body.message === "string"
+				? body.message
+				: `Request failed (${status}).`;
+		super(message);
+		this.name = "BdProxyError";
+		this.status = status;
+		this.body = body;
+	}
+}
+
+async function sendJson<T>(path: string, init?: { method: "POST"; body: unknown }): Promise<T> {
+	const res = await fetch(
+		path,
+		init
+			? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(init.body) }
+			: undefined,
+	);
+	const body: unknown = await res.json().catch(() => null);
+	if (!res.ok) throw new BdProxyError(res.status, body);
+	return body as T;
+}
+// [/bd:ordering]
 
 export const bd = {
 	marketing: {
@@ -323,6 +366,27 @@ export const bd = {
 			return await getJson<Loose>(`/api/bd/reviews${query.toString() ? `?${query}` : ""}`);
 		},
 	},
+	// [bd:ordering]
+	/**
+	 * The restaurant's menu, and rounds sent from a table's QR code. Shaped
+	 * like the SDK's `client.restaurant`, so `useTableOrder({ client: bd })`
+	 * drives the ordering screen through this proxy.
+	 */
+	restaurant: {
+		async menu(): Promise<RestaurantMenu> {
+			return await sendJson<RestaurantMenu>("/api/bd/restaurant/menu");
+		},
+		async table(token: string): Promise<RestaurantTable> {
+			return await sendJson<RestaurantTable>(`/api/bd/restaurant/tables/${encodeURIComponent(token)}`);
+		},
+		async placeTableOrder(token: string, input: RestaurantTableOrderInput): Promise<RestaurantPlacedTableOrder> {
+			return await sendJson<RestaurantPlacedTableOrder>(
+				`/api/bd/restaurant/tables/${encodeURIComponent(token)}/orders`,
+				{ method: "POST", body: input },
+			);
+		},
+	},
+	// [/bd:ordering]
 	// [bd:store]
 	cart: {
 		async get(): Promise<Loose> {

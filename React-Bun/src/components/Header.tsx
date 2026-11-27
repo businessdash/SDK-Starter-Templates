@@ -11,6 +11,9 @@ export function Header() {
 					{/* [bd:store] */}
 					<Link to="/store">Store</Link>
 					{/* [/bd:store] */}
+					{/* [bd:ordering] */}
+					<Link to="/order">Menu</Link>
+					{/* [/bd:ordering] */}
 					{/* [bd:subscriptions] */}
 					{/* [bd:!store] */}
 					<Link to="/subscriptions">Plans</Link>

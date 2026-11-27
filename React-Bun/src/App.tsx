@@ -6,6 +6,9 @@ import "./bd-shop.css";
 // [bd:blog]
 import "./bd-blog.css";
 // [/bd:blog]
+// [bd:ordering]
+import "./bd-order.css";
+// [/bd:ordering]
 import { BDAnalytics } from "@businessdash/sdk/react-analytics";
 import { About } from "./components/About";
 import { Banner } from "./components/Banner";
@@ -33,6 +36,9 @@ import { Cart } from "./pages/Cart";
 import { Compare } from "./pages/Compare";
 // [/bd:store]
 import { MyAccount } from "./pages/MyAccount";
+// [bd:ordering]
+import { Order } from "./pages/Order";
+// [/bd:ordering]
 // [bd:store]
 import { Product } from "./pages/Product";
 // [/bd:store]
@@ -93,6 +99,9 @@ function Routed() {
 	// [bd:subscriptions]
 	if (path === "/subscriptions") return <Subscriptions />;
 	// [/bd:subscriptions]
+	// [bd:ordering]
+	if (path === "/order") return <Order />;
+	// [/bd:ordering]
 	if (path === "/reviews") return <Reviews />;
 	if (path === "/updates") return <Updates />;
 	if (path === "/todos") return <Todos />;

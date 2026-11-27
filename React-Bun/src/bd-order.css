@@ -1,0 +1,739 @@
+/* [bd-file:ordering] */
+/*
+ * The ordering screen: menu sections, dish cards, the choice sheet and the
+ * tray. Built on the theme tokens in index.css (--accent, --card, --border,
+ * ...), so a new palette restyles it with the rest of the site.
+ */
+
+.order-page {
+	max-width: 80rem;
+	padding-bottom: 6rem;
+}
+
+/* ── Head ──────────────────────────────────────────────────────── */
+.order-head {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: flex-end;
+	justify-content: space-between;
+	gap: 1rem 2rem;
+	margin-bottom: 1.5rem;
+}
+.order-head__eyebrow {
+	font-size: 0.75rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--accent);
+}
+.order-head__title {
+	margin: 0.25rem 0 0;
+	font-size: clamp(1.6rem, 3vw, 2.1rem);
+	color: var(--title);
+}
+.order-head__sub {
+	margin: 0.35rem 0 0;
+	color: var(--text-muted);
+	max-width: 36rem;
+}
+.order-search {
+	width: min(100%, 20rem);
+	padding: 0.6rem 0.9rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 0.65rem;
+	background: var(--card);
+	color: var(--title);
+	font: inherit;
+}
+.order-search:focus {
+	outline: 2px solid var(--accent-border);
+	outline-offset: 1px;
+}
+.order-loading,
+.order-none {
+	color: var(--text-muted);
+	padding: 2rem 0;
+}
+.order-link {
+	background: none;
+	border: none;
+	padding: 0;
+	color: var(--link);
+	font: inherit;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* ── Layout: menu | tray ───────────────────────────────────────── */
+.order-layout {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	gap: 1.5rem;
+}
+@media (min-width: 960px) {
+	.order-layout {
+		grid-template-columns: minmax(0, 1fr) 22rem;
+		align-items: start;
+	}
+	.order-layout--browse {
+		grid-template-columns: minmax(0, 1fr);
+	}
+}
+.order-menu {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	min-width: 0;
+}
+
+/* ── Sections ──────────────────────────────────────────────────── */
+.order-cats {
+	display: flex;
+	gap: 0.6rem;
+	overflow-x: auto;
+	padding-bottom: 0.25rem;
+	scrollbar-width: thin;
+}
+.order-cat {
+	flex: 0 0 auto;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: 0.15rem;
+	min-width: 7.5rem;
+	padding: 0.7rem 0.95rem;
+	border: 1px solid var(--border);
+	border-radius: 0.8rem;
+	background: var(--card);
+	color: var(--title);
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	transition:
+		border-color 0.12s ease,
+		background 0.12s ease;
+}
+.order-cat:hover {
+	border-color: var(--accent-border);
+}
+.order-cat--on {
+	border-color: var(--accent);
+	background: var(--accent-bg);
+}
+.order-cat__name {
+	font-weight: 600;
+	font-size: 0.92rem;
+}
+.order-cat__count {
+	font-size: 0.75rem;
+	color: var(--text-muted);
+}
+
+.order-seg {
+	display: inline-flex;
+	align-self: flex-start;
+	padding: 0.2rem;
+	border: 1px solid var(--border);
+	border-radius: 999px;
+	background: var(--bg-soft);
+}
+.order-seg__opt {
+	padding: 0.35rem 0.85rem;
+	border: none;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--text);
+	font: inherit;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+.order-seg__opt--on {
+	background: var(--card);
+	color: var(--title);
+	font-weight: 600;
+	box-shadow: 0 1px 3px var(--card-neu-shadow);
+}
+
+/* ── Dish cards ────────────────────────────────────────────────── */
+.order-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
+	gap: 1rem;
+}
+.order-item {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid var(--border);
+	border-radius: 0.9rem;
+	background: var(--card);
+	overflow: hidden;
+}
+.order-item__media {
+	position: relative;
+	display: block;
+	aspect-ratio: 4 / 3;
+	padding: 0;
+	border: none;
+	background: var(--bg-soft);
+	cursor: pointer;
+}
+/* Phone: each dish is a row, photo on the left, so more of the menu fits. */
+@media (max-width: 560px) {
+	.order-grid {
+		grid-template-columns: minmax(0, 1fr);
+		gap: 0.75rem;
+	}
+	.order-item {
+		flex-direction: row;
+	}
+	.order-item__media {
+		flex: 0 0 6.5rem;
+		aspect-ratio: auto;
+		min-height: 6.5rem;
+	}
+	.order-item__body {
+		min-width: 0;
+		padding: 0.7rem 0.8rem;
+	}
+	.order-item__initial {
+		font-size: 1.5rem;
+	}
+}
+.order-item__media img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	display: block;
+}
+.order-item__initial {
+	display: grid;
+	place-items: center;
+	height: 100%;
+	font-size: 2rem;
+	font-weight: 700;
+	color: var(--accent);
+}
+.order-item__badge {
+	position: absolute;
+	top: 0.5rem;
+	left: 0.5rem;
+	padding: 0.15rem 0.5rem;
+	border-radius: 999px;
+	background: var(--accent);
+	color: #fff;
+	font-size: 0.72rem;
+	font-weight: 600;
+}
+.order-item__body {
+	display: flex;
+	flex-direction: column;
+	gap: 0.35rem;
+	flex: 1;
+	padding: 0.8rem 0.9rem 0.9rem;
+}
+.order-item__name {
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+	margin: 0;
+	font-size: 0.98rem;
+	color: var(--title);
+}
+.order-item__name button {
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+}
+.order-item__desc {
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 0.83rem;
+	line-height: 1.4;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+.order-item__foot {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	margin-top: auto;
+	padding-top: 0.35rem;
+}
+.order-item__price {
+	font-weight: 700;
+	color: var(--title);
+}
+.order-item__from {
+	font-weight: 400;
+	font-size: 0.78rem;
+	color: var(--text-muted);
+}
+.order-item__add {
+	padding: 0.4rem 0.9rem;
+	border: 1px solid var(--accent);
+	border-radius: 999px;
+	background: var(--accent);
+	color: #fff;
+	font: inherit;
+	font-size: 0.82rem;
+	font-weight: 600;
+	cursor: pointer;
+}
+.order-item__add:hover {
+	background: var(--accent-strong);
+}
+
+.order-diet {
+	display: inline-grid;
+	place-items: center;
+	flex: 0 0 auto;
+	min-width: 1.35rem;
+	height: 1.1rem;
+	padding: 0 0.2rem;
+	border: 1.5px solid var(--success);
+	border-radius: 0.25rem;
+	color: var(--success);
+	font-size: 0.62rem;
+	font-weight: 800;
+	line-height: 1;
+}
+.order-diet--vegan {
+	background: var(--success-bg);
+}
+
+/* ── Quantity ──────────────────────────────────────────────────── */
+.order-qty {
+	display: inline-flex;
+	align-items: center;
+	border: 1px solid var(--border-strong);
+	border-radius: 999px;
+}
+.order-qty__btn {
+	width: 1.9rem;
+	height: 1.9rem;
+	border: none;
+	border-radius: 999px;
+	background: transparent;
+	color: var(--title);
+	font-size: 1rem;
+	cursor: pointer;
+}
+.order-qty__btn:disabled {
+	opacity: 0.35;
+	cursor: default;
+}
+.order-qty__value {
+	min-width: 1.4rem;
+	text-align: center;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--title);
+}
+
+/* ── Tray ──────────────────────────────────────────────────────── */
+.order-tray,
+.order-placed {
+	display: flex;
+	flex-direction: column;
+	gap: 0.9rem;
+	padding: 1.15rem;
+	border: 1px solid var(--border);
+	border-radius: 1rem;
+	background: var(--card);
+	/* Clear the site header (two rows on a phone) when #order-tray is jumped to. */
+	scroll-margin-top: 7rem;
+}
+@media (min-width: 960px) {
+	.order-tray,
+	.order-placed {
+		position: sticky;
+		top: 5.5rem;
+	}
+}
+.order-tray__head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+.order-tray__title {
+	margin: 0;
+	font-size: 1.1rem;
+	color: var(--title);
+}
+.order-tray__table {
+	padding: 0.2rem 0.6rem;
+	border-radius: 999px;
+	background: var(--accent-bg);
+	color: var(--accent);
+	font-size: 0.8rem;
+	font-weight: 600;
+}
+.order-tray__empty {
+	margin: 0;
+	padding: 1.5rem 0;
+	color: var(--text-muted);
+	text-align: center;
+	font-size: 0.9rem;
+}
+.order-tray__lines {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+}
+.order-line {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto 4.5rem;
+	align-items: center;
+	gap: 0.6rem;
+	padding: 0.65rem 0;
+	border-bottom: 1px solid var(--border);
+}
+.order-line__main {
+	display: flex;
+	flex-direction: column;
+	gap: 0.1rem;
+	min-width: 0;
+}
+.order-line__name {
+	font-weight: 600;
+	color: var(--title);
+	font-size: 0.9rem;
+}
+.order-line__detail {
+	color: var(--text-muted);
+	font-size: 0.78rem;
+}
+.order-line__problem {
+	color: var(--danger);
+	font-size: 0.78rem;
+}
+.order-line--problem .order-line__name {
+	color: var(--danger);
+}
+.order-line__total {
+	text-align: right;
+	font-weight: 600;
+	font-variant-numeric: tabular-nums;
+	color: var(--title);
+}
+.order-tray__name {
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+	font-size: 0.8rem;
+	color: var(--text-muted);
+}
+.order-tray__name input {
+	padding: 0.55rem 0.75rem;
+	border: 1px solid var(--border-strong);
+	border-radius: 0.6rem;
+	background: var(--bg);
+	color: var(--title);
+	font: inherit;
+	font-size: 0.9rem;
+}
+.order-tray__sum {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	color: var(--text);
+}
+.order-tray__sum strong {
+	font-size: 1.25rem;
+	color: var(--title);
+	font-variant-numeric: tabular-nums;
+}
+.order-tray__error,
+.order-tray__note {
+	margin: 0;
+	padding: 0.6rem 0.75rem;
+	border-radius: 0.6rem;
+	font-size: 0.85rem;
+}
+.order-tray__error {
+	background: var(--danger-bg);
+	color: var(--danger);
+}
+.order-tray__note {
+	background: var(--bg-soft);
+	color: var(--text);
+}
+.order-tray__send {
+	width: 100%;
+	padding-block: 0.8rem;
+	border-radius: 0.75rem;
+	font-size: 1rem;
+}
+.order-tray__fine {
+	margin: 0;
+	color: var(--text-muted);
+	font-size: 0.75rem;
+	text-align: center;
+}
+.order-tray__clear {
+	align-self: center;
+	padding: 0;
+	border: none;
+	background: none;
+	color: var(--text-muted);
+	font: inherit;
+	font-size: 0.8rem;
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+/* ── Placed ────────────────────────────────────────────────────── */
+.order-placed {
+	align-items: stretch;
+	text-align: center;
+}
+.order-placed__tick {
+	align-self: center;
+	display: grid;
+	place-items: center;
+	width: 3rem;
+	height: 3rem;
+	border-radius: 999px;
+	background: var(--success-bg);
+	color: var(--success);
+	font-size: 1.4rem;
+	font-weight: 700;
+}
+.order-placed__title {
+	margin: 0;
+	font-size: 1.25rem;
+	color: var(--title);
+}
+.order-placed__sub {
+	margin: -0.5rem 0 0;
+	color: var(--text-muted);
+	font-size: 0.85rem;
+}
+.order-placed__lines {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	text-align: left;
+}
+.order-placed__lines li {
+	display: flex;
+	justify-content: space-between;
+	gap: 1rem;
+	padding: 0.45rem 0;
+	border-bottom: 1px solid var(--border);
+	font-size: 0.9rem;
+	color: var(--title);
+}
+.order-placed__lines small {
+	display: block;
+	color: var(--text-muted);
+}
+.order-placed__sum {
+	margin: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 0.3rem;
+}
+.order-placed__sum div {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.9rem;
+}
+.order-placed__sum dt {
+	color: var(--text-muted);
+}
+.order-placed__sum dd {
+	margin: 0;
+	font-weight: 600;
+	color: var(--title);
+}
+
+/* ── Phone: a bar to jump to the tray ──────────────────────────── */
+.order-bar {
+	position: fixed;
+	left: 1rem;
+	right: 1rem;
+	bottom: 1rem;
+	z-index: 30;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.85rem 1.1rem;
+	border-radius: 0.9rem;
+	background: var(--accent);
+	color: #fff;
+	text-decoration: none;
+	font-weight: 600;
+	box-shadow: 0 10px 30px var(--card-neu-shadow);
+}
+@media (min-width: 960px) {
+	.order-bar {
+		display: none;
+	}
+}
+
+/* ── Choice sheet ──────────────────────────────────────────────── */
+.order-sheet {
+	position: fixed;
+	inset: 0;
+	z-index: 50;
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	background: rgba(8, 6, 13, 0.45);
+}
+@media (min-width: 640px) {
+	.order-sheet {
+		align-items: center;
+		padding: 2rem;
+	}
+}
+.order-sheet__panel {
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	width: min(100%, 32rem);
+	max-height: 92vh;
+	border-radius: 1.1rem 1.1rem 0 0;
+	background: var(--bg);
+	overflow: hidden;
+	outline: none;
+}
+@media (min-width: 640px) {
+	.order-sheet__panel {
+		border-radius: 1.1rem;
+	}
+}
+.order-sheet__img {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	object-fit: cover;
+	flex: 0 0 auto;
+}
+.order-sheet__close {
+	position: absolute;
+	top: 0.75rem;
+	right: 0.75rem;
+	width: 2.1rem;
+	height: 2.1rem;
+	border: none;
+	border-radius: 999px;
+	background: var(--card);
+	color: var(--title);
+	font-size: 1.3rem;
+	line-height: 1;
+	cursor: pointer;
+	box-shadow: 0 2px 8px var(--card-neu-shadow);
+}
+.order-sheet__body {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	padding: 1.25rem;
+	overflow-y: auto;
+}
+.order-sheet__title {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin: 0;
+	padding-right: 2.5rem;
+	font-size: 1.3rem;
+	color: var(--title);
+}
+.order-sheet__desc {
+	margin: -0.5rem 0 0;
+	color: var(--text);
+}
+.order-sheet__allergens {
+	margin: -0.5rem 0 0;
+	color: var(--text-muted);
+	font-size: 0.82rem;
+}
+.order-group {
+	margin: 0;
+	padding: 0;
+	border: none;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
+}
+.order-group__label {
+	display: flex;
+	justify-content: space-between;
+	align-items: baseline;
+	width: 100%;
+	padding: 0 0 0.25rem;
+	font-weight: 700;
+	color: var(--title);
+}
+.order-group__hint {
+	font-weight: 400;
+	font-size: 0.78rem;
+	color: var(--text-muted);
+}
+.order-opt {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto;
+	align-items: center;
+	gap: 0.65rem;
+	padding: 0.6rem 0.8rem;
+	border: 1px solid var(--border);
+	border-radius: 0.65rem;
+	background: var(--card);
+	cursor: pointer;
+}
+.order-opt:has(input:checked) {
+	border-color: var(--accent);
+	background: var(--accent-bg);
+}
+.order-opt--off {
+	opacity: 0.5;
+	cursor: default;
+}
+.order-opt input {
+	accent-color: var(--accent);
+	margin: 0;
+}
+.order-opt__name {
+	color: var(--title);
+	font-size: 0.92rem;
+}
+.order-opt__price {
+	color: var(--text-muted);
+	font-size: 0.85rem;
+	font-variant-numeric: tabular-nums;
+}
+.order-sheet__problems {
+	flex: 1 0 100%;
+	margin: 0;
+	padding: 0.65rem 0.8rem 0.65rem 1.9rem;
+	border-radius: 0.6rem;
+	background: var(--danger-bg);
+	color: var(--danger);
+	font-size: 0.85rem;
+}
+.order-sheet__foot {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 0.75rem;
+	padding: 0.9rem 1.25rem calc(0.9rem + env(safe-area-inset-bottom));
+	border-top: 1px solid var(--border);
+	background: var(--bg);
+}
+.order-sheet__add {
+	flex: 1;
+	padding-block: 0.75rem;
+	border-radius: 0.75rem;
+}

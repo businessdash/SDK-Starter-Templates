@@ -26,6 +26,9 @@ import {
 	createBdApiClient,
 	getTenantSession,
 } from "@businessdash/sdk";
+// [bd:ordering]
+import { BdApiError } from "@businessdash/sdk";
+// [/bd:ordering]
 import { createGenericRevalidateHandler } from "@businessdash/sdk/adapters/revalidate";
 import { llmsTxtHandler } from "@businessdash/sdk/distribution";
 // [bd:store]
@@ -83,6 +86,26 @@ const bd =
 // above. Used by the /api/bd/todos route.
 const bdDev =
 	apiKey && siteId && packageBase ? createBdApiClient({ apiKey, baseUrl: packageBase }) : null;
+
+// [bd:ordering]
+// Table ordering. The guest's phone talks to this server, never to BD with a
+// key: the QR code's token is the only secret it holds, and BD prices every
+// round itself from the menu.
+const restaurant =
+	apiKey && packageBase ? createBdApiClient({ apiKey, baseUrl: packageBase }).restaurant : null;
+
+/** Pass BD's refusal through as it came, so the page can explain it. */
+function orderingError(err: unknown): Response {
+	// The SDK checks the order's shape before sending it.
+	if (err instanceof Error && err.name === "ZodError") {
+		return jsonResponse({ error: "bad_request", message: "That order couldn't be read. Refresh and try again." }, 400);
+	}
+	if (err instanceof BdApiError && err.status >= 400 && err.status < 500) {
+		return jsonResponse(err.body ?? { error: err.code, message: err.message }, err.status);
+	}
+	return errResponse(err);
+}
+// [/bd:ordering]
 
 // AEO + MCP proxies live on the platform ORIGIN (`…/api/public/ai-feed/…`,
 // `…/api/public/mcp/…`), not the package API — derive the bare origin from
@@ -1154,6 +1177,39 @@ const server = Bun.serve({
 		}
 
 		// [/bd:store]
+
+		// [bd:ordering]
+		if (method === "GET" && pathname === "/api/bd/restaurant/menu") {
+			if (!restaurant) return notConfigured();
+			try {
+				// Short-lived: a dish switched off in BusinessDash leaves the menu
+				// within half a minute (and the kitchen refuses it either way).
+				return jsonResponse(await cached("restaurant:menu", ["bd:catalog"], () => restaurant.menu()));
+			} catch (err) {
+				return orderingError(err);
+			}
+		}
+		const tableMatch = pathname.match(/^\/api\/bd\/restaurant\/tables\/([^/]+)(\/orders)?$/);
+		if (tableMatch) {
+			if (!restaurant) return notConfigured();
+			const token = decodeURIComponent(tableMatch[1] ?? "");
+			try {
+				// Never cached: whether the kitchen is open changes by the minute.
+				if (method === "GET" && !tableMatch[2]) return jsonResponse(await restaurant.table(token));
+				if (method === "POST" && tableMatch[2]) {
+					const input = await req.json().catch(() => null);
+					if (!input || typeof input !== "object") {
+						return jsonResponse({ error: "bad_request", message: "Send the order as JSON." }, 400);
+					}
+					return jsonResponse(
+						await restaurant.placeTableOrder(token, input as Parameters<typeof restaurant.placeTableOrder>[1]),
+					);
+				}
+			} catch (err) {
+				return orderingError(err);
+			}
+		}
+		// [/bd:ordering]
 
 		// Static API routes.
 		const route = routes[`${method} ${pathname}`];
